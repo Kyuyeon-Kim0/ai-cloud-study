@@ -5,7 +5,7 @@ TASK.md 및 AGENT_WORKFLOW.md에 따라 구성한 Flask 서비스와 규칙 기�
 ## 실행 (PowerShell)
 
 ```powershell
-cd C:\ai-starter\Day02\tago-train-api
+cd C:\ai-starter\2026-09\09-10\tago-train-api
 .\.venv\Scripts\python.exe app.py
 ```
 
