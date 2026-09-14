@@ -1,0 +1,14 @@
+# Python virtual environments and generated cache
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Local credentials (keep the shareable example)
+.env
+.env.*
+!.env.example
+
+# Runtime logs and local preview metadata
+*.log
+.preview-url
