@@ -1,5 +1,7 @@
 # TAGO 기차 시간표와 운영 에이전트
 
+학습 날짜: 2026-09-10 (목)
+
 TASK.md 및 AGENT_WORKFLOW.md에 따라 구성한 Flask 서비스와 규칙 기반 운영 에이전트입니다. LLM이나 별도 OpenAI 키는 필요하지 않습니다.
 
 ## 실행 (PowerShell)
