@@ -24,6 +24,8 @@
 
 ## 실습 파일
 
+- [wallpaper/Set-AM-PMWallpaper.ps1](wallpaper/Set-AM-PMWallpaper.ps1): 오전에는 `am.png`, 오후에는 `pm.png`로 배경화면을 변경하고 같은 폴더의 `wallpaper.log`에 실행 기록 저장
+
 - `system_monitor.ps1`: 컴퓨터 성능 및 시스템 정보 조회
 - `system-info.ps1`: 시스템 정보 확인
 - `tasks/`: PowerShell 실행 작업 지시서

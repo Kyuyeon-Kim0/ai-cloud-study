@@ -2,9 +2,9 @@ $ErrorActionPreference = 'Stop'
 
 $now = Get-Date
 $wallpaper = if ($now.Hour -lt 12) {
-    'C:\ai-starter\wallpaper\am.png'
+    (Join-Path $PSScriptRoot 'am.png')
 } else {
-    'C:\ai-starter\wallpaper\pm.png'
+    (Join-Path $PSScriptRoot 'pm.png')
 }
 
 if (-not (Test-Path -LiteralPath $wallpaper -PathType Leaf)) {
@@ -26,4 +26,4 @@ if (-not $success) {
     throw "SystemParametersInfo failed with Win32 error $errorCode"
 }
 
-Add-Content -LiteralPath 'C:\ai-starter\wallpaper\wallpaper.log' -Value "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') Applied $wallpaper"
+Add-Content -LiteralPath (Join-Path $PSScriptRoot 'wallpaper.log') -Value "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') Applied $wallpaper"
