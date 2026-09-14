@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>시스템 엔지니어와 MSP · 클라우드 인프라</title><style>
+:root{
+  --ink:#1c1b19; --paper:#ffffff; --soft:#f7f6f3; --soft2:#efedea;
+  --line:#e3e0db; --line2:#cfcbc4; --muted:#86827b; --muted2:#5b574f;
+  --accent:#b23c0a; --accent-soft:#fdf3ec; --ink2:#2f2d2a;
+  --pn:#b23c0a; --pnb:#e8c3ad; --pns:#fdf5f0;
+  --pv:#1d4ed8; --pvb:#c3d0f2; --pvs:#f2f5fd;
+  --pa:#15803d; --pab:#bcdcc8; --pas:#f1f7f3;
+  --pd:#6d28d9; --pdb:#d4c6f5; --pds:#f7f3fe;
+  --px:#b91c1c; --pxb:#f0c3c3; --pxs:#fdf2f2;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+body{font-family:'Noto Sans KR','Malgun Gothic',sans-serif;color:var(--ink);
+  background:#eceae5;line-height:1.65;font-weight:400;letter-spacing:-.003em}
+
+.page{width:210mm;min-height:297mm;background:var(--paper);margin:8mm auto;
+  padding:17mm 18mm 14mm;position:relative;box-shadow:0 1px 14px rgba(0,0,0,.07)}
+@page{size:A4 portrait;margin:0}
+@media print{
+  body{background:#fff}
+  .page{margin:0;box-shadow:none;page-break-after:always;break-after:page}
+  .page:last-child{page-break-after:auto}
+}
+
+/* ── 러닝헤드 ── */
+.rh{display:flex;justify-content:space-between;align-items:baseline;
+  margin-bottom:22px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+.rh .l{font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--muted2)}
+.rh .l b{color:var(--accent)}
+.rh .r{font-size:10.5px;color:var(--muted);letter-spacing:.04em;display:flex;align-items:baseline;gap:12px}
+.rh .r .pg{font-family:'Consolas','JetBrains Mono',monospace;font-size:12px;font-weight:700;
+  color:var(--ink);letter-spacing:.06em;border:1px solid var(--line2);padding:1px 7px;border-radius:3px}
+
+/* ── 제목 ── */
+.kicker{font-size:11px;font-weight:700;letter-spacing:.12em;color:var(--accent);margin-bottom:7px}
+h1{font-size:26px;font-weight:900;line-height:1.25;letter-spacing:-.02em;margin-bottom:9px}
+.lede{font-size:13px;color:var(--muted2);line-height:1.7;margin-bottom:14px;max-width:96%}
+.lede em,em{font-style:normal;color:var(--accent);font-weight:700}
+h2{font-size:12.5px;font-weight:700;letter-spacing:.09em;color:var(--accent);
+  margin:17px 0 9px;display:flex;align-items:center;gap:10px}
+h2::after{content:"";flex:1;height:1px;background:var(--line)}
+h3{font-size:15px;font-weight:700;margin:14px 0 5px}
+p{font-size:13px;line-height:1.75;margin:8px 0;color:var(--ink2)}
+strong{font-weight:700;color:var(--ink)}
+.mn{font-size:11.5px;color:var(--muted);margin-top:5px}
+code{font-family:'Consolas','JetBrains Mono',monospace;background:var(--soft2);
+  padding:1px 5px;border-radius:3px;font-size:12px;color:var(--accent)}
+
+ul,ol{margin:9px 0;padding-left:0;list-style:none}
+li{font-size:13px;line-height:1.7;margin:8px 0;padding-left:010px;padding-left:22px;position:relative;color:var(--ink2)}
+ul li::before{content:"";position:absolute;left:3px;top:10px;width:5px;height:5px;
+  background:var(--accent);border-radius:50%}
+li strong{color:var(--ink)}
+
+/* ── 표 ── */
+table{width:100%;border-collapse:collapse;margin:13px 0;font-size:12.5px}
+th,td{padding:9px 12px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line)}
+thead th{border-bottom:1.5px solid var(--ink);font-weight:700;font-size:11.5px;color:var(--ink);background:var(--soft)}
+tbody td{color:var(--muted2)}
+tbody td b{color:var(--ink);font-weight:700}
+table.zebra tbody tr:nth-child(even) td{background:#faf9f7}
+
+/* ── 그리드 카드 ── */
+.grid{display:grid;gap:1px;background:var(--line);border:1px solid var(--line);margin:14px 0}
+.grid.g3{grid-template-columns:repeat(3,1fr)}
+.grid.g2{grid-template-columns:repeat(2,1fr)}
+.grid.g4{grid-template-columns:repeat(4,1fr)}
+.cell{background:var(--paper);padding:15px 14px}
+.cell .num{font-size:10.5px;font-weight:700;letter-spacing:.08em;color:var(--accent)}
+.cell h4{font-size:13.5px;font-weight:700;margin:6px 0 4px;line-height:1.35}
+.cell p{font-size:11.5px;color:var(--muted2);margin:0;line-height:1.6}
+
+/* ── 강조 박스 ── */
+.point{border-left:2.5px solid var(--accent);padding:3px 0 3px 16px;margin:16px 0}
+.point .pl{font-size:10.5px;font-weight:700;letter-spacing:.09em;color:var(--accent);margin-bottom:4px}
+.point p{margin:0;font-size:13px;color:var(--ink2)}
+.note{background:var(--soft);border:1px solid var(--line);border-radius:4px;
+  padding:12px 15px;margin:14px 0;font-size:12.5px;color:var(--muted2);line-height:1.7}
+.note strong{color:var(--accent)}
+.warn{background:var(--pxs);border:1px solid var(--pxb);border-radius:4px;
+  padding:12px 15px;margin:14px 0;font-size:12.5px;color:var(--ink2);line-height:1.7}
+.warn b{color:var(--px)}
+
+.mission{border:1px solid var(--line2);border-left:3px solid var(--accent);
+  background:var(--accent-soft);padding:13px 16px;margin:13px 0;border-radius:4px}
+.mission b{font-size:10.5px;font-weight:700;letter-spacing:.1em;color:var(--accent)}
+.mission h3{font-size:14px;margin:4px 0 0;line-height:1.5}
+.mission .wy{margin:9px 0 0;padding-top:8px;border-top:1px solid var(--line2);font-size:12px;color:var(--muted2);line-height:1.65}
+.mission .wy b{color:var(--ink);font-size:10.5px;letter-spacing:.06em}
+.why{background:var(--soft);border:1px solid var(--line2);border-left:3px solid var(--ink);
+  padding:12px 16px;margin:13px 0;border-radius:4px}
+.why p{color:var(--ink2);margin:0;font-size:12.5px}
+.why b{color:var(--ink);font-size:10.5px;letter-spacing:.08em}
+
+.kw{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
+.kw span{background:#fff;border:1px solid var(--line2);padding:4px 10px;border-radius:20px;
+  font-size:11px;font-weight:700;color:var(--ink2)}
+.kw span::before{content:"# ";color:var(--accent)}
+
+/* ── 정의 목록 / 비유 ── */
+.deflist{margin:12px 0}
+.deflist .d{display:flex;gap:16px;padding:11px 0;border-bottom:1px solid var(--line)}
+.deflist .d:last-child{border-bottom:none}
+.deflist .dt{flex:0 0 27%;font-weight:700;font-size:13px}
+.deflist .dt small{display:block;font-weight:400;color:var(--muted);font-size:11px;margin-top:1px}
+.deflist .dd{flex:1;font-size:12.5px;color:var(--muted2);line-height:1.65}
+
+/* ── 실습 박스 (검정 헤더 제거) ── */
+.lab{margin:16px 0;border:1.5px solid var(--ink);background:#fff}
+.lab-head{padding:10px 18px;display:flex;align-items:center;gap:12px;
+  border-bottom:1.5px solid var(--ink);background:var(--soft)}
+.lab-head .badge{font-size:10px;font-weight:700;letter-spacing:.1em;
+  border:1px solid var(--ink);padding:2px 9px;border-radius:2px;color:var(--ink);background:#fff}
+.lab-head h3{font-size:16px;margin:0;font-weight:700;color:var(--ink)}
+.lab-head .t{margin-left:auto;font-size:10.5px;color:var(--muted);font-family:'Consolas',monospace}
+.lab-body{padding:15px 18px 16px}
+.steps{counter-reset:st;list-style:none;padding:0;margin:0}
+.steps>li{counter-increment:st;position:relative;padding:0 0 13px 40px;margin:0;font-size:13.5px;
+  line-height:1.55;border-left:1px solid var(--line2);margin-left:13px}
+.steps>li:last-child{border-left:1px solid transparent;padding-bottom:0}
+.steps>li::before{content:counter(st);position:absolute;left:-13px;top:-2px;width:26px;height:26px;
+  background:#fff;border:1.5px solid var(--ink);color:var(--ink);border-radius:50%;
+  display:grid;place-items:center;font-weight:700;font-size:12.5px}
+.steps>li .lt{font-weight:700;color:var(--ink)}
+.steps>li .ls{display:block;font-size:12px;color:var(--muted);font-weight:400;margin-top:2px;line-height:1.6}
+
+/* ── 프롬프트 박스 ── */
+.say{margin:10px 0;background:#fff;border:1px solid var(--line2);border-left:3px solid var(--accent);
+  border-radius:4px;padding:10px 13px}
+.say .sl{font-size:10.5px;font-weight:700;letter-spacing:.05em;color:var(--accent);
+  margin-bottom:4px;display:flex;align-items:center;gap:6px}
+.say .sc{font-family:'Consolas','JetBrains Mono',monospace;font-size:12px;line-height:1.65;
+  color:var(--ink);font-weight:500;white-space:pre-wrap}
+.copybtn{margin-left:auto;font-family:'Noto Sans KR',sans-serif;font-size:10px;font-weight:700;
+  letter-spacing:0;color:var(--muted2);background:#fff;border:1px solid var(--line2);
+  border-radius:3px;padding:2px 9px;cursor:pointer;line-height:1.4}
+.copybtn:hover{border-color:var(--accent);color:var(--accent)}
+@media print{.copybtn{display:none}}
+
+/* ── 품사/토큰 칩 ── */
+.chip{display:inline-flex;align-items:baseline;gap:5px;font-size:12px;font-weight:700;
+  padding:3px 8px;border-radius:3px;border:1px solid;margin:3px 4px 3px 0;line-height:1.3}
+.c-n{color:var(--pn);border-color:var(--pnb);background:var(--pns)}
+.c-v{color:var(--pv);border-color:var(--pvb);background:var(--pvs)}
+.c-a{color:var(--pa);border-color:var(--pab);background:var(--pas)}
+.c-d{color:var(--pd);border-color:var(--pdb);background:var(--pds)}
+.c-x{color:var(--px);border-color:var(--pxb);background:var(--pxs)}
+.c-o{color:var(--muted);border-color:var(--line2);background:var(--soft);font-weight:400}
+
+.parse{border:1px solid var(--line2);background:#fff;margin:13px 0}
+.parse .ph{background:var(--soft);border-bottom:1px solid var(--line);padding:6px 14px;
+  font-size:10.5px;font-weight:700;letter-spacing:.06em;color:var(--muted2);display:flex;justify-content:space-between}
+.parse .pb{padding:13px 14px 14px}
+.parse .src{font-size:14.5px;font-weight:500;color:var(--ink);line-height:1.7}
+.parse .arw{font-size:10.5px;color:var(--muted);letter-spacing:.06em;margin:11px 0 7px;
+  display:flex;align-items:center;gap:10px}
+.parse .arw::after{content:"";flex:1;height:1px;background:var(--line)}
+
+/* ── before / after ── */
+.ba{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);
+  border:1px solid var(--line);margin:13px 0}
+.ba>div{background:#fff;padding:12px 14px}
+.ba .h{font-size:10.5px;font-weight:700;letter-spacing:.06em;margin-bottom:8px}
+.ba .bad .h{color:var(--muted)}
+.ba .bad .h::before{content:"✕ ";color:var(--px)}
+.ba .good .h{color:var(--accent)}
+.ba .good .h::before{content:"✓ ";color:var(--pa)}
+.ba .m{font-family:'Consolas','JetBrains Mono',monospace;font-size:11px;line-height:1.7;color:var(--ink2)}
+.ba .m u{text-decoration:none;background:var(--pxs);color:var(--px);padding:0 3px;border-radius:2px}
+.ba .m b{background:var(--pas);color:var(--pa);padding:0 3px;border-radius:2px;font-weight:500}
+.ba .why2{font-size:11px;color:var(--muted);margin-top:8px;line-height:1.6}
+
+/* ── 막대 ── */
+.bars{margin:12px 0}
+.bars .b{display:flex;align-items:center;gap:10px;margin:7px 0}
+.bars .bl{flex:0 0 26%;font-size:12px;font-weight:700;color:var(--ink)}
+.bars .bt{flex:1;height:13px;background:var(--soft2);border:1px solid var(--line)}
+.bars .bf{height:100%;background:var(--accent)}
+.bars .bf.q{background:var(--line2)}
+.bars .bv{flex:0 0 60px;text-align:right;font-family:'Consolas',monospace;font-size:11px;color:var(--muted2)}
+
+/* ── 흐름 ── */
+.flow{display:flex;gap:5px;align-items:center;flex-wrap:wrap;margin:11px 0}
+.flow span{border:1px solid var(--line2);padding:6px 10px;background:#fff;border-radius:4px;
+  font-size:11.5px;font-weight:700}
+.flow i{font-style:normal;color:var(--accent);font-weight:900}
+
+/* ══════ 목업 컴포넌트 ══════ */
+/* 탐색기 / 창 */
+.win{border:1px solid var(--line2);margin:13px 0;background:#fff}
+.win .tb{display:flex;align-items:center;gap:9px;padding:6px 11px;background:var(--soft2);
+  border-bottom:1px solid var(--line2);font-size:11px;color:var(--muted2);font-weight:700}
+.win .tb .dots{display:flex;gap:4px}
+.win .tb .dots i{width:8px;height:8px;border-radius:50%;border:1px solid var(--line2);background:#fff;display:block}
+.win .tb .rt{margin-left:auto;font-weight:400;color:var(--muted);font-size:10px;letter-spacing:.04em}
+.win .addr{display:flex;align-items:center;gap:7px;padding:6px 11px;border-bottom:1px solid var(--line);
+  font-family:'Consolas',monospace;font-size:11px;color:var(--ink2);background:#fff}
+.win .addr .ic{font-size:10px;color:var(--muted)}
+.win .addr .path{border:1px solid var(--line);border-radius:3px;padding:3px 8px;flex:1;background:var(--soft)}
+.win .addr .path b{color:var(--accent);font-weight:700}
+.win table{margin:0;font-size:11px}
+.win th,.win td{padding:5px 11px;border-bottom:1px solid var(--line)}
+.win thead th{background:var(--soft);font-size:10px;border-bottom:1px solid var(--line2);color:var(--muted2)}
+.win tbody td{color:var(--ink2)}
+.win tbody tr.sel td{background:var(--accent-soft)}
+.win td.ic{width:22px;text-align:center;color:var(--muted);font-family:'Consolas',monospace;font-size:9.5px}
+.win .sb{padding:5px 11px;border-top:1px solid var(--line);background:var(--soft);
+  font-size:10px;color:var(--muted);display:flex;justify-content:space-between}
+.capt{font-size:10.5px;color:var(--muted);margin:-6px 0 13px;padding-left:2px}
+.capt b{color:var(--muted2);font-weight:700}
+
+/* 터미널 */
+.term{border:1px solid var(--line2);background:#fbfaf8;margin:13px 0}
+.term .th{background:var(--soft2);padding:5px 12px;font-size:10.5px;color:var(--muted2);
+  border-bottom:1px solid var(--line2);letter-spacing:.04em;font-weight:700;
+  font-family:'Consolas',monospace;display:flex;justify-content:space-between}
+.term .tb2{padding:11px 13px;font-family:'Consolas','JetBrains Mono',monospace;
+  font-size:11px;line-height:1.8;color:var(--ink2);white-space:pre-wrap}
+.term .p{color:var(--accent);font-weight:700}
+.term .c{color:var(--ink);font-weight:700}
+.term .g{color:var(--pa)}
+.term .d{color:var(--muted)}
+
+/* 폴더 트리 */
+.tree{font-family:'Consolas','JetBrains Mono',monospace;font-size:11px;line-height:1.85;
+  color:var(--ink2);background:var(--soft);border:1px solid var(--line);
+  padding:11px 14px;margin:13px 0;white-space:pre;overflow:hidden}
+.tree b{color:var(--accent);font-weight:700}
+.tree u{text-decoration:none;color:var(--px)}
+.tree i{font-style:normal;color:var(--muted)}
+.ba .tree{margin:0;border:none;background:none;padding:0;font-size:10.5px;line-height:1.8}
+
+/* HEX 뷰어 */
+.hex{border:1px solid var(--line2);margin:13px 0;background:#fff;font-family:'Consolas',monospace}
+.hex .hh{background:var(--soft);border-bottom:1px solid var(--line);padding:5px 12px;
+  font-size:10px;color:var(--muted2);letter-spacing:.06em;font-weight:700;display:flex;justify-content:space-between}
+.hex .hr{display:flex;gap:14px;padding:4px 12px;font-size:11px;border-bottom:1px solid #f2f0ec}
+.hex .hr:last-child{border-bottom:none}
+.hex .of{color:var(--muted);flex:0 0 52px}
+.hex .by{flex:1;color:var(--ink2);letter-spacing:.06em}
+.hex .by b{color:var(--accent);background:var(--accent-soft);padding:1px 2px;font-weight:700}
+.hex .as{flex:0 0 90px;color:var(--muted2);border-left:1px solid var(--line);padding-left:12px}
+.hex .as b{color:var(--accent);font-weight:700}
+
+/* JSON 뷰어 */
+.jsonv{border:1px solid var(--line2);margin:13px 0;background:#fff}
+.jsonv .jh{background:var(--soft);border-bottom:1px solid var(--line);padding:5px 12px;
+  font-size:10.5px;color:var(--muted2);font-weight:700;font-family:'Consolas',monospace;
+  display:flex;justify-content:space-between}
+.jsonv .jb{padding:11px 14px;font-family:'Consolas','JetBrains Mono',monospace;
+  font-size:11.5px;line-height:1.9;white-space:pre;color:var(--muted2)}
+.jk{color:var(--pv);font-weight:700}
+.jv{color:var(--pa);font-weight:700}
+.jnum{color:var(--accent);font-weight:700}
+.jp{color:var(--muted)}
+.jmark{background:#fff7ed;outline:1px solid var(--pnb)}
+
+/* 브라우저 목업 */
+.bw{border:1px solid var(--line2);margin:13px 0;background:#fff}
+.bw .bt{background:var(--soft2);padding:6px 11px;display:flex;gap:8px;align-items:center;
+  font-size:10.5px;font-family:'Consolas',monospace;color:var(--muted2);border-bottom:1px solid var(--line2)}
+.bw .bt .dots{display:flex;gap:4px}
+.bw .bt .dots i{width:8px;height:8px;border-radius:50%;border:1px solid var(--line2);background:#fff;display:block}
+.bw .bt .url{flex:1;background:#fff;border:1px solid var(--line);border-radius:11px;padding:3px 10px;color:var(--ink2)}
+.bw .bc{padding:16px 18px}
+.appttl{font-size:15px;font-weight:800;margin-bottom:2px}
+.appsub{font-size:11px;color:var(--muted);margin-bottom:12px}
+.fld{border:1px solid var(--line2);border-radius:4px;padding:8px 11px;background:#fff;
+  display:flex;justify-content:space-between;align-items:center;
+  font-family:'Consolas',monospace;font-size:12.5px;color:var(--ink);margin:6px 0}
+.fld .u{color:var(--muted);font-size:11px}
+.flbl{font-size:10.5px;font-weight:700;color:var(--muted2);letter-spacing:.04em;margin-top:9px}
+.btn{display:inline-block;border:1.5px solid var(--accent);color:var(--accent);background:var(--accent-soft);
+  border-radius:4px;padding:7px 18px;font-size:12px;font-weight:700;margin-top:11px}
+.res{border:1px solid var(--line);border-radius:4px;margin-top:12px}
+.res .rr{display:flex;justify-content:space-between;padding:8px 12px;border-bottom:1px solid var(--line);font-size:12.5px}
+.res .rr:last-child{border-bottom:none}
+.res .rr .k{color:var(--muted2);font-weight:700}
+.res .rr .v{font-family:'Consolas',monospace;font-weight:700;color:var(--ink)}
+.res .rr.hi{background:var(--accent-soft)}
+.res .rr.hi .v{color:var(--accent)}
+.stamp{font-size:10.5px;color:var(--muted);margin-top:9px;font-family:'Consolas',monospace}
+
+/* URL 분해 */
+.urlx{border:1px solid var(--line2);background:var(--soft);padding:13px 15px;margin:13px 0}
+.urlx .u1{font-family:'Consolas',monospace;font-size:13px;line-height:2.2;word-break:break-all}
+.urlx .u1 span{padding:2px 3px;border-bottom:2.5px solid}
+.urlx .s1{border-color:var(--pv);color:var(--pv)}
+.urlx .s2{border-color:var(--accent);color:var(--accent)}
+.urlx .s3{border-color:var(--pa);color:var(--pa)}
+.urlx .s4{border-color:var(--pd);color:var(--pd)}
+.urlx .lg{margin-top:11px;display:grid;grid-template-columns:repeat(2,1fr);gap:6px 16px}
+.urlx .lg div{font-size:11.5px;color:var(--muted2);display:flex;gap:8px;align-items:baseline}
+.urlx .lg b{flex:0 0 78px;font-family:'Consolas',monospace;font-size:11px}
+
+/* 다이어그램 */
+.dia{border:1px solid var(--line);background:#fff;padding:12px;margin:13px 0}
+.dia svg{display:block;width:100%;height:auto}
+
+/* 체크리스트 */
+.chk{margin:11px 0}
+.chk li{padding-left:26px;font-size:12.5px;margin:7px 0}
+.chk li::before{content:"";position:absolute;left:2px;top:4px;width:13px;height:13px;
+  border:1.5px solid var(--muted2);border-radius:2px;background:#fff}
+.kbd{display:inline-block;border:1px solid var(--line2);border-bottom:2px solid var(--line2);
+  border-radius:4px;padding:1px 8px;font-family:'Consolas',monospace;font-size:11.5px;
+  background:var(--soft);font-weight:700;color:var(--ink);margin:0 1px}
+
+/* 확인 문제 */
+.qa{border:1px solid var(--line2);border-top:2.5px solid var(--ink);padding:12px 15px;margin-top:18px;background:#fff}
+.qa .ql{font-size:10.5px;font-weight:700;letter-spacing:.09em;color:var(--accent);margin-bottom:6px}
+.qa ol{counter-reset:q;margin:0}
+.qa ol li{counter-increment:q;padding-left:22px;font-size:12.5px;margin:7px 0;color:var(--ink2)}
+.qa ol li::before{content:counter(q) ".";position:absolute;left:2px;top:0;font-weight:700;color:var(--muted2);font-size:12px}
+.qa .blank{display:inline-block;border-bottom:1px solid var(--line2);min-width:90px;height:14px;margin:0 3px}
+
+/* 표지 · 간지 (검정 배경 제거 → 테두리 프레임) */
+.cover{padding:12mm;display:flex}
+.cover .fr{flex:1;border:2px solid var(--ink);padding:5px;display:flex}
+.cover .fr2{flex:1;border:1px solid var(--line2);padding:14mm 13mm 10mm;display:flex;flex-direction:column}
+.cover .ck{font-size:11px;font-weight:700;letter-spacing:.16em;color:var(--accent);
+  display:flex;align-items:center;gap:11px}
+.cover .ck::after{content:"";flex:1;height:1px;background:var(--line2)}
+.cover h1{font-size:40px;line-height:1.18;margin:18px 0 12px;letter-spacing:-.03em}
+.cover .cs{font-size:14.5px;color:var(--muted2);line-height:1.7;max-width:88%}
+.cover .cs b{color:var(--ink);font-weight:700}
+.hero{margin:24px 0 0;border:1px solid var(--line2);background:var(--soft);padding:17px 19px}
+.hero .hl{font-size:10.5px;letter-spacing:.1em;color:var(--accent);font-weight:700;margin-bottom:9px}
+.hero .hs{font-size:15.5px;color:var(--ink);font-weight:500;line-height:1.6}
+.hero .hs b{font-weight:800}
+.hero .hd{margin:14px 0 11px;height:1px;background:var(--line2)}
+.hero .hrow{display:flex;align-items:baseline;gap:12px;padding:4px 0}
+.hero .hk{flex:0 0 54px;font-size:10.5px;font-weight:700;color:var(--accent);text-align:right}
+.hero .hv{flex:1;font-size:12.5px;color:var(--ink2)}
+.cover .crow{margin-top:20px;display:flex;border-top:1px solid var(--line2);border-bottom:1px solid var(--line2)}
+.cover .ci{flex:1;padding:13px 0;border-right:1px solid var(--line2)}
+.cover .ci:last-child{border-right:none;padding-left:20px}
+.cover .ci:first-child{padding-right:20px}
+.cover .ci .cl{font-size:10px;letter-spacing:.09em;color:var(--muted);font-weight:700}
+.cover .ci .cv{font-size:12.5px;margin-top:5px;color:var(--ink2);line-height:1.5}
+.cover .ci .cv b{color:var(--accent);font-weight:700}
+.cover .toc{margin-top:auto}
+.cover .toc .th{font-size:10.5px;font-weight:700;letter-spacing:.11em;color:var(--accent);margin-bottom:2px}
+.toc-list{list-style:none;padding:0;margin:0}
+.toc-list li{display:flex;align-items:baseline;gap:14px;padding:8px 0;
+  border-bottom:1px solid var(--line);font-size:13px;color:var(--ink2);margin:0;padding-left:0}
+.toc-list li::before{display:none}
+.toc-list li .ti{font-family:'Consolas',monospace;font-size:11px;color:var(--accent);flex:0 0 34px;font-weight:700}
+.toc-list li .tt{flex:1}
+.toc-list li .tg{font-size:10.5px;color:var(--muted);font-family:'Consolas',monospace}
+.cover .sig{margin-top:16px;display:flex;justify-content:space-between;align-items:baseline;
+  border-top:2px solid var(--ink);padding-top:9px}
+.cover .sig .n{font-size:12px;color:var(--ink);font-weight:700}
+.cover .sig .n span{color:var(--muted);font-family:'Consolas',monospace;font-size:10.5px;margin-left:7px;font-weight:400}
+.cover .sig .b{font-size:10.5px;color:var(--muted);letter-spacing:.07em}
+
+.divider{padding:12mm;display:flex}
+.divider .fr{flex:1;border:2px solid var(--ink);padding:5px;display:flex}
+.divider .fr2{flex:1;border:1px solid var(--line2);padding:26mm 18mm;display:flex;flex-direction:column;justify-content:center}
+.divider .part{color:var(--accent);font-size:12px;font-weight:800;letter-spacing:.16em;
+  display:flex;align-items:center;gap:12px}
+.divider .part::after{content:"";flex:1;height:1px;background:var(--line2)}
+.divider h1{font-size:42px;margin:16px 0 12px;line-height:1.18}
+.divider p{font-size:14.5px;color:var(--muted2);max-width:84%;line-height:1.75}
+.divider .route{margin-top:24px;border-top:1px solid var(--line2);padding-top:14px;
+  line-height:2.1;color:var(--muted2);font-size:12.5px}
+.divider .route b{color:var(--accent);font-family:'Consolas',monospace;font-size:11.5px}
+.divider .goal{margin-top:20px;border:1px solid var(--line2);background:var(--soft);padding:14px 16px}
+.divider .goal .gl{font-size:10.5px;font-weight:700;letter-spacing:.09em;color:var(--accent);margin-bottom:6px}
+.divider .goal ul{margin:0}
+.divider .goal li{font-size:12.5px;margin:5px 0}
+
+.pagenum{position:absolute;bottom:9mm;right:18mm;font-size:10.5px;color:var(--muted);
+  font-family:'Consolas',monospace}
+.brand{position:absolute;bottom:9mm;left:18mm;font-size:9px;color:var(--muted);letter-spacing:.03em}
+.brand b{color:var(--muted2);font-weight:500}
+
+@media print{
+  .page{overflow:hidden}
+}
+.page{overflow:hidden}
+
+
+/* ── 작업 관리자 목업 ── */
+.tm{display:flex}
+.tm .nav{flex:0 0 116px;border-right:1px solid var(--line);padding:6px 0;background:var(--soft)}
+.tm .nav div{font-size:10.5px;padding:5px 11px;color:var(--muted2)}
+.tm .nav div.on{background:#fff;color:var(--ink);font-weight:700;border-left:2px solid var(--accent)}
+.tm .bd{flex:1;min-width:0}
+.tm table{margin:0}
+.tm .hdr{display:flex;justify-content:space-between;padding:7px 12px;border-bottom:1px solid var(--line);
+  font-size:11.5px;font-weight:700;color:var(--ink)}
+.tm .hdr span{font-size:10.5px;color:var(--muted);font-weight:400}
+
+/* ── 코드 목업 ── */
+.code{border:1px solid var(--line2);margin:13px 0;background:#fff}
+.code .ch2{background:var(--soft);border-bottom:1px solid var(--line);padding:5px 12px;
+  font-family:'Consolas',monospace;font-size:10.5px;color:var(--muted2);font-weight:700;
+  display:flex;justify-content:space-between}
+.code .cb2{padding:11px 14px;font-family:'Consolas','JetBrains Mono',monospace;
+  font-size:11.5px;line-height:1.85;white-space:pre;color:var(--ink2);overflow:hidden}
+.tag{color:var(--pv);font-weight:700}
+.att{color:var(--pd)}
+.str{color:var(--pa)}
+.cmt{color:var(--muted)}
+.fn{color:var(--accent);font-weight:700}
+.hl2{background:#fff7ed;outline:1px solid var(--pnb)}
+
+/* ── 작업 진행 표시 ── */
+.chat .wk{font-size:10px;color:var(--muted);font-family:'Consolas',monospace;margin:0 0 5px}
+.chat .bub .ok{color:var(--pa);font-weight:700}
+.chat .bub .no{color:var(--px);font-weight:700}
+.chat .bub code{font-size:11px}
+/* ── 속성창 목업 ── */
+.props{border:1px solid var(--line2);margin:13px 0;background:#fff;max-width:72%}
+.props .ph2{background:var(--soft2);border-bottom:1px solid var(--line2);padding:6px 12px;
+  font-size:11px;font-weight:700;color:var(--muted2)}
+.props .tabs{display:flex;gap:0;border-bottom:1px solid var(--line);font-size:10.5px}
+.props .tabs span{padding:5px 12px;color:var(--muted);border-right:1px solid var(--line)}
+.props .tabs span.on{background:#fff;color:var(--ink);font-weight:700;border-bottom:2px solid var(--accent)}
+.props .pr{display:flex;padding:6px 14px;border-bottom:1px solid #f2f0ec;font-size:11.5px}
+.props .pr b{flex:0 0 84px;color:var(--muted2);font-weight:700}
+.props .pr span{flex:1;color:var(--ink2);font-family:'Consolas',monospace;font-size:11px}
+/* ── 슬래시 명령 목록 ── */
+.slash{border:1px solid var(--line2);margin:13px 0;background:#fff}
+.slash .sh{background:var(--soft);border-bottom:1px solid var(--line);padding:5px 12px;
+  font-size:10.5px;font-weight:700;color:var(--muted2);font-family:'Consolas',monospace;
+  display:flex;justify-content:space-between}
+.slash .sr{display:flex;gap:12px;padding:6px 14px;border-bottom:1px solid #f4f2ef;font-size:11.5px;align-items:baseline}
+.slash .sr:last-child{border-bottom:none}
+.slash .sc2{flex:0 0 92px;font-family:'Consolas',monospace;font-weight:700;color:var(--accent)}
+.slash .sd2{flex:1;color:var(--ink2)}
+
+/* ── 결과 이미지 예시 ── */
+.shots{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:13px 0}
+.shots figure{margin:0}
+.shots img{width:100%;display:block;border:1px solid var(--line2);border-radius:3px}
+.shots figcaption{font-size:10.5px;color:var(--muted2);margin-top:5px;font-family:'Consolas',monospace}
+.shots figcaption b{color:var(--accent)}
+
+/* ── 토크나이저 비교 ── */
+.tok{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);
+  border:1px solid var(--line);margin:13px 0}
+.tok>div{background:#fff;padding:12px 14px}
+.tok .tkh{font-size:9.5px;font-weight:700;letter-spacing:.07em;color:var(--muted);margin-bottom:6px}
+.tok .in{border:1px solid var(--line2);border-radius:4px;padding:9px 11px;font-size:14px;
+  font-family:'Consolas',monospace;background:var(--soft);color:var(--ink)}
+.tok .in i{font-style:normal;color:var(--muted);font-size:11px}
+.tok .nums{display:flex;gap:26px;margin-top:11px}
+.tok .nl{font-size:9.5px;font-weight:700;letter-spacing:.06em;color:var(--muted)}
+.tok .n{font-size:21px;font-weight:800;font-family:'Consolas',monospace;line-height:1.2;color:var(--ink)}
+.tok .n.acc{color:var(--accent)}
+.tok .ids{margin-top:10px;font-family:'Consolas',monospace;font-size:11px;color:var(--muted2);
+  background:var(--soft);border:1px solid var(--line);padding:6px 9px;border-radius:3px}
+
+/* ── 목차 ── */
+.tocx{margin:2px 0 0}
+.tocx .g{font-size:11px;font-weight:700;letter-spacing:.08em;color:var(--accent);
+  margin:14px 0 4px;padding-bottom:5px;border-bottom:1.5px solid var(--ink);
+  display:flex;justify-content:space-between;align-items:baseline}
+.tocx .g em{font-style:normal;color:var(--muted);font-weight:400;letter-spacing:0;font-size:11px}
+.tocx .it{display:flex;gap:12px;align-items:baseline;padding:6px 0;border-bottom:1px solid var(--line)}
+.tocx .no{flex:0 0 30px;font-family:'Consolas',monospace;font-size:11.5px;font-weight:700;color:var(--accent)}
+.tocx .tt{flex:1}
+.tocx .tt b{font-size:13px;font-weight:700;color:var(--ink);display:block;line-height:1.4}
+.tocx .tt span{font-size:11.5px;color:var(--muted2);display:block;margin-top:1px;line-height:1.5}
+.tocx .pgn{flex:0 0 24px;text-align:right;font-family:'Consolas',monospace;font-size:11.5px;color:var(--muted2)}
+.tocinfo{margin-top:16px;border:1px solid var(--line2);background:var(--soft);padding:12px 15px}
+.tocinfo .til{font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--accent);margin-bottom:6px}
+.tocinfo .row{display:flex;gap:10px;font-size:11.5px;color:var(--ink2);padding:3px 0;align-items:baseline}
+.tocinfo .row b{flex:0 0 88px;color:var(--ink)}
+
+/* ── 난이도 배지 ── */
+.lv{display:inline-block;font-size:9.5px;font-weight:700;border:1px solid;border-radius:10px;
+  padding:1px 8px;letter-spacing:.03em;line-height:1.6;white-space:nowrap}
+.lv1{color:var(--pv);border-color:var(--pvb);background:var(--pvs)}
+.lv2{color:var(--muted2);border-color:var(--line2);background:var(--soft)}
+.lv3{color:var(--accent);border-color:var(--pnb);background:var(--pns)}
+.lvrow{display:flex;gap:8px;align-items:center;margin:10px 0 4px}
+
+/* ── 난이도 보조 상자 ── */
+.tier{border:1px solid var(--line2);border-radius:4px;padding:11px 14px;margin:12px 0}
+.tier .tl{font-size:10px;font-weight:700;letter-spacing:.06em;margin-bottom:5px;
+  display:flex;gap:8px;align-items:center}
+.tier p{margin:0;font-size:12.5px}
+.tier ul{margin:4px 0 0}
+.tier li{font-size:12.5px;margin:5px 0}
+.tier.b{background:var(--soft)}
+.tier.b .tl{color:var(--muted2)}
+.tier.a{background:#fff;border-style:dashed}
+.tier.a .tl{color:var(--accent)}
+.tier .say{margin:8px 0 0}
+
+/* ── 자동화 회로 ── */
+.auto{border:1px solid var(--line2);border-left:3px solid var(--accent);background:var(--soft);
+  padding:10px 14px;margin:14px 0}
+.auto .al{font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--accent);margin-bottom:6px}
+.auto .ar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.auto .ar span{font-size:12px;color:var(--ink2);background:#fff;border:1px solid var(--line2);
+  border-radius:3px;padding:5px 9px}
+.auto .ar span b{color:var(--accent);font-weight:700;margin-right:5px}
+.auto .ar i{font-style:normal;color:var(--accent);font-weight:900}
+
+/* ── AI 낚시 찾기 ── */
+.trap{border:1.5px dashed var(--line2);border-radius:4px;padding:12px 15px;margin:14px 0;background:#fff}
+.trap .trl{font-size:10.5px;font-weight:700;letter-spacing:.06em;color:var(--px);margin-bottom:7px}
+.trap .fake{border:1px solid var(--line);border-left:2.5px solid var(--line2);background:var(--soft);
+  padding:10px 12px;font-size:12.5px;line-height:1.7;color:var(--ink2)}
+.trap .ask{font-size:12px;color:var(--muted2);margin-top:8px}
+.trap .ask b{color:var(--ink)}
+
+/* ── 메모 영역 (여백 활용) ── */
+.memo{margin-top:26px;border-top:1px solid var(--line);padding-top:9px}
+.memo .ml{font-size:9.5px;font-weight:700;letter-spacing:.12em;color:var(--muted);margin-bottom:8px}
+.memo .line{height:25px;border-bottom:1px dotted var(--line2)}
+
+/* ── 채팅 목업 ── */
+.chat{border:1px solid var(--line2);margin:13px 0;background:#fff}
+.chat .ch{background:var(--soft);border-bottom:1px solid var(--line);padding:6px 12px;
+  font-size:10.5px;font-weight:700;color:var(--muted2);display:flex;justify-content:space-between;
+  font-family:'Consolas',monospace}
+.chat .cb{padding:12px 13px}
+.msg{margin:8px 0;display:flex;gap:10px;align-items:flex-start}
+.msg .av{flex:0 0 44px;font-size:9.5px;font-weight:700;letter-spacing:.05em;color:var(--muted);
+  text-align:right;padding-top:9px}
+.msg .bub{flex:1;border:1px solid var(--line);border-radius:5px;padding:9px 12px;
+  font-size:12px;line-height:1.7;color:var(--ink2);background:#fff}
+.msg.u .bub{background:var(--soft);border-color:var(--line2)}
+.msg.a .bub{border-left:2.5px solid var(--accent)}
+.msg .bub b{color:var(--ink)}
+.msg .bub .tbl{margin-top:6px;font-family:'Consolas',monospace;font-size:10.5px;
+  color:var(--muted2);line-height:1.7;white-space:pre}
+
+/* ── 스펙 카드 ── */
+.stat{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);
+  border:1px solid var(--line);margin:13px 0}
+.stat>div{background:#fff;padding:11px 12px}
+.stat .sl2{font-size:9.5px;font-weight:700;color:var(--accent);letter-spacing:.07em}
+.stat .sv{font-size:14px;font-weight:800;margin-top:3px;font-family:'Consolas',monospace;line-height:1.3}
+.stat .sd{font-size:10px;color:var(--muted);margin-top:3px;line-height:1.5}
+
+/* ── 좌우 2단 ── */
+.split{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:13px 0}
+.split h3{margin-top:0}
+
+</style></head><body>
+
+<section class="page cover"><div class="fr"><div class="fr2">
+<div class="ck">청년취업사관학교 동대문4기</div>
+<h1>Part4. 시스템 엔지니어와<br>클라우드 인프라</h1>
+<div class="cs">기업연계형 AI 서비스·클라우드 실무 과정<br>
+<b>시스템 엔지니어 · 온프레미스 · 클라우드 · MSP · 클라우드 플랫폼</b></div>
+<div class="hero">
+  <div class="hl">오늘의 한 줄 목표</div>
+  <div class="hs">서버를 운영하는 사람의 역할부터 <b>온프레미스·클라우드·MSP의 차이</b>까지 한 흐름으로 이해합니다.</div>
+  <div class="hd"></div>
+  <div class="hrow"><div class="hk">STEP 1</div><div class="hv">시스템 엔지니어 — 무엇을 관리하는 사람인가</div></div>
+  <div class="hrow"><div class="hk">STEP 2</div><div class="hv">핵심 스킬 — OS · 네트워크 · 자동화</div></div>
+  <div class="hrow"><div class="hk">STEP 3</div><div class="hv">온프레미스와 클라우드 — 어디서 운영하는가</div></div>
+  <div class="hrow"><div class="hk">STEP 4</div><div class="hv">MSP와 MSP 엔지니어 — 누가 대신 운영하는가</div></div>
+  <div class="hrow"><div class="hk">STEP 5</div><div class="hv">AWS · Azure · GCP — 플랫폼 비교와 학습 로드맵</div></div>
+</div>
+<div class="toc">
+  <div class="th">핵심 키워드</div>
+  <ul class="toc-list">
+    <li><span class="ti">01</span><span class="tt">System Engineer</span><span class="tg">OS · Server</span></li>
+    <li><span class="ti">02</span><span class="tt">On-Premise / Cloud</span><span class="tg">Infra</span></li>
+    <li><span class="ti">03</span><span class="tt">MSP</span><span class="tg">Managed Service</span></li>
+    <li><span class="ti">04</span><span class="tt">AWS · Azure · GCP</span><span class="tg">Cloud Platform</span></li>
+  </ul>
+</div>
+<div class="sig"><div class="n">부성순 <span>/ AI SERVICE · CLOUD PRACTICE</span></div><div class="b">SYSTEM · MSP · CLOUD</div></div>
+</div></div></section>
+
+<section class="page"><div class="rh"><div class="l"><b>시스템 엔지니어</b> · STEP 1</div><div class="r">직군 이해<span class="pg">02</span></div></div>
+<div class="kicker">SYSTEM ENGINEER</div><h1>컴퓨터 한 대에서 수백 대까지 관리하는 사람</h1>
+<div class="mission"><b>TODAY'S MISSION</b><h3>시스템 엔지니어가 <b>무엇을 관리하고, 어떤 문제를 해결하는지</b> 설명할 수 있게 된다.</h3><p class="wy"><b>WHY</b> 클라우드와 DevOps도 결국 서버·운영체제·네트워크 위에서 동작합니다. 기본 직군을 이해하면 뒤의 기술이 연결됩니다.</p></div>
+<div class="grid g3">
+<div class="cell"><div class="num">01</div><h4>서버</h4><p>Windows/Linux 서버의 상태, 용량, 프로세스, 서비스를 관리합니다.</p></div>
+<div class="cell"><div class="num">02</div><h4>네트워크</h4><p>IP, DNS, Port, Firewall, 연결 상태를 확인합니다.</p></div>
+<div class="cell"><div class="num">03</div><h4>장애 대응</h4><p>CPU·RAM·Disk·로그를 확인해 원인을 찾고 조치합니다.</p></div>
+</div>
+<h2>직군별로 보면</h2>
+<table class="zebra"><thead><tr><th>직군</th><th>주요 업무</th><th>핵심 기술</th></tr></thead><tbody>
+<tr><td><b>시스템 엔지니어</b></td><td>서버 구축·운영·장애 대응</td><td>Windows/Linux, PowerShell, Bash</td></tr>
+<tr><td><b>네트워크 엔지니어</b></td><td>통신 경로와 장비 관리</td><td>TCP/IP, DNS, Routing, Firewall</td></tr>
+<tr><td><b>클라우드 엔지니어</b></td><td>가상 서버·네트워크·권한 운영</td><td>AWS, Azure, GCP</td></tr>
+<tr><td><b>DevOps 엔지니어</b></td><td>개발·배포·운영 자동화</td><td>Git, CI/CD, Docker, Terraform</td></tr>
+<tr><td><b>SRE</b></td><td>서비스 안정성·장애 예방</td><td>Monitoring, Automation, Kubernetes</td></tr>
+</tbody></table>
+<div class="point"><div class="pl">한 문장</div><p><strong>시스템 엔지니어 = 서버와 운영 환경이 안정적으로 돌아가도록 관리하는 사람</strong></p></div>
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b></div><div class="pagenum">02</div></section>
+
+<section class="page"><div class="rh"><div class="l"><b>시스템 엔지니어</b> · STEP 2</div><div class="r">핵심 스킬<span class="pg">03</span></div></div>
+<div class="kicker">OS · NETWORK · AUTOMATION</div><h1>신입이 먼저 가져야 할 기본기</h1>
+<div class="stat"><div><div class="sl2">BASE</div><div class="sv">OS</div><div class="sd">Windows / Linux</div></div><div><div class="sl2">CONNECT</div><div class="sv">NET</div><div class="sd">IP / DNS / Port</div></div><div><div class="sl2">SCRIPT</div><div class="sv">PS / Bash</div><div class="sd">반복 작업 자동화</div></div><div><div class="sl2">CODE</div><div class="sv">Git</div><div class="sd">변경 이력 관리</div></div></div>
+<h2>시스템 문제를 보는 순서</h2>
+<div class="flow"><span>CPU</span><i>→</i><span>RAM</span><i>→</i><span>Disk</span><i>→</i><span>Process</span><i>→</i><span>Service</span><i>→</i><span>Network</span><i>→</i><span>Log</span></div>
+<div class="term"><div class="th"><span>PowerShell</span><span>기초 점검 명령</span></div><div class="tb2"><span class="c">Get-ComputerInfo</span>       <span class="d"># 시스템 정보</span>
+<span class="c">Get-Process</span>            <span class="d"># 프로세스</span>
+<span class="c">Get-Service</span>            <span class="d"># 서비스</span>
+<span class="c">Get-Volume</span>             <span class="d"># 디스크</span>
+<span class="c">Get-NetIPAddress</span>       <span class="d"># IP 주소</span>
+<span class="c">Get-NetTCPConnection</span>   <span class="d"># 네트워크 연결</span>
+<span class="c">Get-WinEvent</span>           <span class="d"># 이벤트 로그</span></div></div>
+<div class="auto"><div class="al">자동화가 되는 순간</div><div class="ar"><span><b>조회</b> CPU·RAM·Disk</span><i>→</i><span><b>판단</b> 임계치 초과?</span><i>→</i><span><b>기록</b> 로그 저장</span><i>→</i><span><b>보고</b> 이상 상태 알림</span></div></div>
+<div class="note"><strong>핵심</strong> 서버가 한 대면 손으로 볼 수 있지만, 서버가 많아지면 <b>스크립트와 자동화</b>가 필수입니다.</div>
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b></div><div class="pagenum">03</div></section>
+
+<section class="page divider"><div class="fr"><div class="fr2"><div class="part">PART A</div><h1>온프레미스와<br>클라우드</h1><p>같은 서버라도 <b>어디에 두고, 누가 물리 장비를 책임지는지</b>에 따라 운영 방식이 달라집니다.</p><div class="route"><b>ON-PREMISE</b> 직접 보유 · 직접 운영<br><b>CLOUD</b> 빌려 쓰기 · 빠른 확장</div><div class="goal"><div class="gl">이 파트가 끝나면</div><ul><li>온프레미스와 클라우드의 차이를 설명할 수 있다.</li><li>하이브리드 클라우드의 의미를 말할 수 있다.</li></ul></div></div></div></section>
+
+<section class="page"><div class="rh"><div class="l"><b>인프라</b> · STEP 3</div><div class="r">온프레미스 vs 클라우드<span class="pg">05</span></div></div>
+<div class="kicker">ON-PREMISE · CLOUD</div><h1>직접 사서 운영할까, 빌려서 쓸까</h1>
+<div class="ba"><div class="bad"><div class="h">ON-PREMISE</div><div class="m">회사 서버실<br>물리 서버<br>스토리지<br>네트워크 장비<br>전원 · 냉각<br>직접 유지보수</div><div class="why2">통제력은 높지만 구축과 증설에 시간이 듭니다.</div></div><div class="good"><div class="h">CLOUD</div><div class="m">AWS / Azure / GCP<br>가상 서버<br>클라우드 스토리지<br>가상 네트워크<br>필요할 때 생성<br>사용량 기반 과금</div><div class="why2">빠르게 만들고 늘릴 수 있습니다.</div></div></div>
+<table class="zebra"><thead><tr><th>구분</th><th>온프레미스</th><th>클라우드</th></tr></thead><tbody>
+<tr><td><b>서버 위치</b></td><td>회사·자체 데이터센터</td><td>클라우드 사업자 데이터센터</td></tr>
+<tr><td><b>장비 소유</b></td><td>회사</td><td>클라우드 사업자</td></tr>
+<tr><td><b>초기 비용</b></td><td>장비 구매 중심</td><td>상대적으로 낮음</td></tr>
+<tr><td><b>확장 속도</b></td><td>구매·설치 필요</td><td>몇 분 안에 증설 가능</td></tr>
+<tr><td><b>유지보수</b></td><td>회사가 직접</td><td>물리 장비는 사업자가 담당</td></tr>
+<tr><td><b>통제력</b></td><td>매우 높음</td><td>서비스 범위 내에서 통제</td></tr>
+</tbody></table>
+<div class="point"><div class="pl">외우는 법</div><p><strong>온프레미스 = 내가 산 서버</strong> · <strong>클라우드 = 내가 빌린 서버</strong></p></div>
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b></div><div class="pagenum">05</div></section>
+
+<section class="page"><div class="rh"><div class="l"><b>인프라</b> · STEP 3</div><div class="r">하이브리드<span class="pg">06</span></div></div>
+<div class="kicker">HYBRID CLOUD</div><h1>실무에서는 둘을 섞어 쓰기도 한다</h1>
+<div class="dia"><svg viewBox="0 0 660 220" xmlns="http://www.w3.org/2000/svg" font-family="Noto Sans KR, sans-serif"><rect x="20" y="55" width="220" height="120" rx="6" fill="#f7f6f3" stroke="#1c1b19"/><text x="130" y="90" text-anchor="middle" font-size="16" font-weight="700" fill="#1c1b19">회사 데이터센터</text><text x="130" y="122" text-anchor="middle" font-size="12" fill="#5b574f">서버 · DB · 내부 시스템</text><text x="130" y="146" text-anchor="middle" font-size="12" fill="#5b574f">ON-PREMISE</text><rect x="420" y="55" width="220" height="120" rx="6" fill="#fdf3ec" stroke="#b23c0a"/><text x="530" y="90" text-anchor="middle" font-size="16" font-weight="700" fill="#1c1b19">Cloud</text><text x="530" y="122" text-anchor="middle" font-size="12" fill="#5b574f">AWS · Azure · GCP</text><text x="530" y="146" text-anchor="middle" font-size="12" fill="#5b574f">가상 서버 · Storage</text><line x1="240" y1="115" x2="420" y2="115" stroke="#b23c0a" stroke-width="2"/><text x="330" y="100" text-anchor="middle" font-size="12" font-weight="700" fill="#b23c0a">VPN / 전용선</text></svg></div>
+<div class="capt"><b>하이브리드 클라우드</b>는 온프레미스와 클라우드를 연결해 함께 사용하는 방식입니다.</div>
+<h2>시스템 엔지니어의 관점</h2><table class="zebra"><thead><tr><th>환경</th><th>주로 다루는 것</th></tr></thead><tbody><tr><td><b>온프레미스</b></td><td>물리 서버, RAID, Storage, VMware/Hyper-V, Windows/Linux</td></tr><tr><td><b>클라우드</b></td><td>VM, VPC/VNet, IAM, Load Balancer, Monitoring, Terraform</td></tr></tbody></table>
+<div class="why"><p><b>WHY</b> 온프레미스 기본기를 알면 클라우드의 가상 서버·가상 네트워크 개념이 훨씬 쉽게 이해됩니다.</p></div>
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b></div><div class="pagenum">06</div></section>
+
+<section class="page divider"><div class="fr"><div class="fr2"><div class="part">PART B</div><h1>MSP와<br>MSP 엔지니어</h1><p>인프라를 어디에 두는지와 별개로, <b>그 인프라를 누가 대신 관리하는가</b>라는 관점이 있습니다.</p><div class="route"><b>MSP</b> Managed Service Provider<br><b>ENGINEER</b> 고객 환경 구축 · 운영 · 장애 대응</div><div class="goal"><div class="gl">한 문장</div><ul><li>MSP = 고객 대신 IT 인프라를 운영해 주는 전문 업체</li></ul></div></div></div></section>
+
+<section class="page"><div class="rh"><div class="l"><b>MSP</b> · STEP 4</div><div class="r">서비스 구조<span class="pg">08</span></div></div>
+<div class="kicker">MANAGED SERVICE PROVIDER</div><h1>고객 대신 인프라를 운영한다</h1>
+<div class="flow"><span>고객사</span><i>→</i><span>MSP</span><i>→</i><span>AWS / Azure / GCP 또는 온프레미스</span></div>
+<div class="grid g2"><div class="cell"><div class="num">BUILD</div><h4>구축</h4><p>서버, 네트워크, 계정, 보안 정책을 설계하고 만듭니다.</p></div><div class="cell"><div class="num">OPERATE</div><h4>운영</h4><p>모니터링, 백업, 패치, 장애 대응을 지속적으로 수행합니다.</p></div><div class="cell"><div class="num">OPTIMIZE</div><h4>최적화</h4><p>비용, 성능, 보안, 사용하지 않는 자원을 점검합니다.</p></div><div class="cell"><div class="num">REPORT</div><h4>고객 대응</h4><p>작업·장애 내용을 티켓과 보고서로 설명합니다.</p></div></div>
+<div class="note"><strong>중요</strong> MSP는 특정 기술 이름이 아니라 <b>서비스 제공 방식</b>입니다. 클라우드만 관리하는 것이 아니라 온프레미스 환경도 관리할 수 있습니다.</div>
+<div class="point"><div class="pl">구분</div><p>온프레미스/클라우드 = <strong>어디에 두는가</strong> · MSP = <strong>누가 대신 관리하는가</strong></p></div>
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b></div><div class="pagenum">08</div></section>
+
+<section class="page"><div class="rh"><div class="l"><b>MSP</b> · STEP 4</div><div class="r">MSP 엔지니어<span class="pg">09</span></div></div>
+<div class="kicker">MSP ENGINEER</div><h1>여러 고객사의 시스템을 관리하는 엔지니어</h1>
+<table class="zebra"><thead><tr><th>업무</th><th>예시</th><th>필요한 기초</th></tr></thead><tbody>
+<tr><td><b>서버</b></td><td>VM 생성, 상태 확인</td><td>Windows, Linux</td></tr><tr><td><b>네트워크</b></td><td>VPC, Subnet, VPN, Firewall</td><td>IP, DNS, Port</td></tr><tr><td><b>모니터링</b></td><td>CPU, RAM, Disk 확인</td><td>CloudWatch, Grafana</td></tr><tr><td><b>장애 대응</b></td><td>원인 분석 → 조치 → 보고</td><td>로그 분석</td></tr><tr><td><b>자동화</b></td><td>반복 점검 자동화</td><td>PowerShell, Bash, Python</td></tr><tr><td><b>IaC</b></td><td>인프라를 코드로 배포</td><td>Terraform, Ansible</td></tr>
+</tbody></table>
+<h2>장애 요청이 들어오면</h2><div class="flow"><span>접수</span><i>→</i><span>서버 접속</span><i>→</i><span>CPU/RAM</span><i>→</i><span>Disk</span><i>→</i><span>Service</span><i>→</i><span>Network</span><i>→</i><span>Log</span><i>→</i><span>조치·보고</span></div>
+<div class="warn"><b>신입에게 중요한 것</b> 정답을 바로 맞히는 것보다 <strong>어떤 순서로 확인했는지 설명할 수 있는 능력</strong>이 중요합니다.</div>
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b></div><div class="pagenum">09</div></section>
+
+<section class="page divider"><div class="fr"><div class="fr2"><div class="part">PART C</div><h1>클라우드 플랫폼</h1><p>AWS, Azure, GCP는 이름은 다르지만 <b>서버·저장소·네트워크·DB·권한</b>이라는 기본 구성은 비슷합니다.</p><div class="route"><b>AWS</b> Amazon Web Services<br><b>AZURE</b> Microsoft Azure<br><b>GCP</b> Google Cloud Platform</div></div></div></section>
+
+<section class="page"><div class="rh"><div class="l"><b>Cloud Platform</b> · STEP 5</div><div class="r">플랫폼 비교<span class="pg">11</span></div></div>
+<div class="kicker">AWS · AZURE · GCP</div><h1>이름보다 기능을 연결해서 본다</h1>
+<table class="zebra"><thead><tr><th>기능</th><th>AWS</th><th>Azure</th><th>GCP</th></tr></thead><tbody>
+<tr><td><b>가상 서버</b></td><td>EC2</td><td>Virtual Machines</td><td>Compute Engine</td></tr>
+<tr><td><b>객체 저장소</b></td><td>S3</td><td>Blob Storage</td><td>Cloud Storage</td></tr>
+<tr><td><b>가상 네트워크</b></td><td>VPC</td><td>VNet</td><td>VPC</td></tr>
+<tr><td><b>관리형 DB</b></td><td>RDS</td><td>Azure SQL 등</td><td>Cloud SQL</td></tr>
+<tr><td><b>Kubernetes</b></td><td>EKS</td><td>AKS</td><td>GKE</td></tr>
+<tr><td><b>권한</b></td><td>IAM</td><td>Entra ID + RBAC</td><td>Cloud IAM</td></tr>
+<tr><td><b>모니터링</b></td><td>CloudWatch</td><td>Azure Monitor</td><td>Cloud Monitoring</td></tr>
+</tbody></table>
+<div class="grid g3"><div class="cell"><div class="num">AWS</div><h4>범용·서비스 다양성</h4><p>서버, 스토리지, DB 등 서비스 폭이 매우 넓습니다.</p></div><div class="cell"><div class="num">AZURE</div><h4>Microsoft 연계</h4><p>Windows, Microsoft 365, 기업 환경과의 연결이 강합니다.</p></div><div class="cell"><div class="num">GCP</div><h4>데이터·AI·Kubernetes</h4><p>Google의 데이터·AI 생태계와 Kubernetes 계열 서비스가 강점입니다.</p></div></div>
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b></div><div class="pagenum">11</div></section>
+
+<section class="page"><div class="rh"><div class="l"><b>Cloud Platform</b> · STEP 5</div><div class="r">GCP 시작점<span class="pg">12</span></div></div>
+<div class="kicker">GOOGLE CLOUD</div><h1>GCP에서 가장 먼저 볼 것</h1>
+<div class="deflist"><div class="d"><div class="dt">Compute Engine<small>가상 서버</small></div><div class="dd">AWS의 EC2와 비슷한 역할. Linux/Windows VM을 생성합니다.</div></div><div class="d"><div class="dt">VPC<small>가상 네트워크</small></div><div class="dd">VM이 연결되는 네트워크 영역입니다.</div></div><div class="d"><div class="dt">Cloud Storage<small>객체 저장소</small></div><div class="dd">파일과 데이터를 저장하는 서비스입니다.</div></div><div class="d"><div class="dt">Cloud IAM<small>권한 관리</small></div><div class="dd">누가 어떤 리소스에 접근할 수 있는지 정합니다.</div></div></div>
+<h2>공식 사이트</h2>
+<div class="bw"><div class="bt"><span class="dots"><i></i><i></i><i></i></span><span class="url">https://cloud.google.com/?hl=ko</span></div><div class="bc"><div class="appttl">Google Cloud</div><div class="appsub">공식 소개 및 서비스 안내</div><div class="fld">cloud.google.com<span class="u">공식 사이트</span></div><div class="fld">console.cloud.google.com<span class="u">Google Cloud Console</span></div><div class="fld">cloud.google.com/docs<span class="u">공식 문서</span></div></div></div>
+<div class="note"><strong>실습 시작</strong> Google Cloud Console → 프로젝트 생성 → Compute Engine → VM 인스턴스 순서로 들어가면 됩니다.</div>
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b></div><div class="pagenum">12</div></section>
+
+<section class="page"><div class="rh"><div class="l"><b>학습 로드맵</b> · FINAL</div><div class="r">신입 준비<span class="pg">13</span></div></div>
+<div class="kicker">ROADMAP</div><h1>무엇부터 공부해야 할까</h1>
+<div class="flow"><span>컴퓨터 기본</span><i>→</i><span>Windows/Linux</span><i>→</i><span>PowerShell/Bash</span><i>→</i><span>Network</span><i>→</i><span>Git</span><i>→</i><span>Cloud</span><i>→</i><span>Terraform</span><i>→</i><span>Docker/Kubernetes</span></div>
+<div class="tier b"><div class="tl"><span class="lv lv1">LV.1 기본</span> 지금 먼저</div><ul><li>CPU · RAM · Disk · Process · Service 이해</li><li>PowerShell 기본 명령</li><li>IP · DNS · Port · Gateway 이해</li><li>Windows/Linux 기본 조작</li></ul></div>
+<div class="tier a"><div class="tl"><span class="lv lv3">LV.2 확장</span> 그다음</div><ul><li>AWS 또는 Azure 한 플랫폼 집중</li><li>Monitoring과 장애 대응 연습</li><li>Git으로 스크립트 관리</li><li>Terraform으로 인프라 코드화</li></ul></div>
+<div class="mission"><b>PRACTICE PROJECT</b><h3><code>system_monitor.ps1</code>을 발전시켜 CPU·RAM·Disk·Service·Network를 점검하고 결과를 파일로 저장한다.</h3><p class="wy"><b>NEXT</b> 임계치를 넘으면 경고 → 여러 서버 점검 → 클라우드 VM 점검으로 확장합니다.</p></div>
+<div class="point"><div class="pl">마지막 정리</div><p><strong>시스템 엔지니어는 기반을 운영하고, 클라우드는 그 기반을 빌려 쓰는 방식이며, MSP는 그 운영을 고객 대신 수행하는 서비스입니다.</strong></p></div>
+<div class="qa"><div class="ql">확인 문제</div><ol><li>온프레미스와 클라우드의 가장 큰 차이를 한 문장으로 설명해 보세요.</li><li>MSP는 기술 이름일까요, 서비스 형태일까요?</li><li>AWS EC2와 GCP Compute Engine의 공통점은 무엇인가요?</li><li>MSP 신입 엔지니어가 장애 접수 후 먼저 확인할 항목 3개를 적어 보세요.</li></ol></div>
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b></div><div class="pagenum">13</div></section>
+
+<script>
+document.querySelectorAll(".say").forEach(function(box){
+  var sc=box.querySelector(".sc"), sl=box.querySelector(".sl"); if(!sc||!sl)return;
+  var b=document.createElement("button"); b.className="copybtn"; b.textContent="복사"; b.type="button";
+  b.onclick=function(){navigator.clipboard.writeText(sc.innerText).then(function(){b.textContent="복사됨";setTimeout(function(){b.textContent="복사"},1200)})};
+  sl.appendChild(b);
+});
+</script></body></html>
