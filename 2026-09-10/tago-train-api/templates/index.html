@@ -1,0 +1,12 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>TAGO 기차 시간표</title><link rel="stylesheet" href="/static/style.css"></head>
+<body><main><p class="eyebrow">TAGO · TRAIN TIMETABLE</p><h1>어디로 떠나시나요?</h1><p>지역과 역을 선택하고 기차 시간표를 확인하세요.</p>
+<form id="search-form"><div class="grid">
+<label>출발 지역<select id="departure-city" required></select></label><label>출발역<select id="departure" required disabled></select></label>
+<label>도착 지역<select id="arrival-city" required></select></label><label>도착역<select id="arrival" required disabled></select></label>
+<label>열차 종류<select id="train_type"><option value="">전체</option></select></label><label>조회 날짜<input id="date" type="date" required></label>
+<label>시작 시간<input id="start_time" type="time" value="00:00" required></label><label>종료 시간<input id="end_time" type="time" value="23:59" required></label>
+</div><button id="submit">시간표 조회</button></form>
+<p id="status" role="status" aria-live="polite">지역 목록을 불러오는 중입니다.</p>
+<div class="table-wrap"><table><thead><tr><th>열차 종류</th><th>열차번호</th><th>출발역</th><th>출발시간</th><th>도착역</th><th>도착시간</th></tr></thead><tbody id="results"></tbody></table></div>
+</main><script src="/static/app.js"></script></body></html>
