@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>내 집에서 구글까지 — 네트워크 구성 쉽게 이해하기</title>
+<style>
+  :root{
+    --ink:#17324d;
+    --muted:#66788a;
+    --line:#d9e3ec;
+    --soft:#f6f9fc;
+    --blue:#2474e8;
+    --green:#18a66a;
+    --orange:#f39c3d;
+    --red:#e75a5a;
+    --purple:#7557d9;
+    --card:#ffffff;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    font-family:"Segoe UI","Noto Sans KR",Arial,sans-serif;
+    background:#eef4f8;
+    color:var(--ink);
+    line-height:1.65;
+  }
+  .wrap{max-width:1180px;margin:0 auto;padding:28px}
+  .hero{
+    background:linear-gradient(135deg,#123e6d,#0f2f53);
+    color:white;border-radius:22px;padding:34px 38px;margin-bottom:24px;
+    box-shadow:0 12px 30px rgba(26,61,93,.14);
+  }
+  .hero .kicker{font-size:13px;letter-spacing:.12em;font-weight:700;opacity:.8}
+  .hero h1{font-size:40px;line-height:1.2;margin:8px 0 10px}
+  .hero p{margin:0;font-size:18px;opacity:.92}
+  .one-line{
+    background:#eaf3ff;border-left:5px solid var(--blue);
+    padding:18px 20px;border-radius:12px;margin:20px 0 26px;
+    font-size:18px;font-weight:700;
+  }
+  .network{
+    display:grid;
+    grid-template-columns:1.1fr .8fr .9fr .8fr 1fr;
+    gap:14px;align-items:center;margin:24px 0;
+  }
+  .node{
+    background:var(--card);border:1px solid var(--line);border-radius:18px;
+    padding:20px;text-align:center;min-height:180px;
+    box-shadow:0 8px 20px rgba(49,72,94,.07);
+  }
+  .icon{font-size:52px;line-height:1;margin-bottom:12px}
+  .node h3{margin:0 0 4px;font-size:20px}
+  .node p{margin:0;color:var(--muted);font-size:14px}
+  .arrow{text-align:center;font-size:34px;color:var(--blue);font-weight:800}
+  h2{font-size:28px;margin:34px 0 12px}
+  .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  .step{
+    background:white;border:1px solid var(--line);border-radius:16px;padding:18px;
+  }
+  .step .num{
+    width:34px;height:34px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;
+    background:var(--blue);color:white;font-weight:800;margin-bottom:10px
+  }
+  .step h3{font-size:18px;margin:0 0 6px}
+  .step p{margin:0;color:var(--muted);font-size:14px}
+  table{
+    width:100%;border-collapse:collapse;background:white;border-radius:16px;overflow:hidden;
+    border:1px solid var(--line);margin:14px 0 24px;
+  }
+  th,td{padding:14px 16px;border-bottom:1px solid var(--line);text-align:left}
+  th{background:#f1f6fb;font-size:14px}
+  tr:last-child td{border-bottom:none}
+  code{font-family:Consolas,monospace;background:#eef3f8;padding:2px 6px;border-radius:6px}
+  .mock{
+    display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:18px
+  }
+  .browser,.terminal{
+    background:white;border:1px solid var(--line);border-radius:16px;overflow:hidden;
+    box-shadow:0 8px 20px rgba(49,72,94,.07);
+  }
+  .bar{background:#edf2f6;padding:10px 14px;font-size:13px;color:var(--muted)}
+  .screen{padding:22px}
+  .google{text-align:center;padding:32px 12px}
+  .google .logo{font-size:52px;font-weight:800;letter-spacing:-2px}
+  .search{margin:16px auto 0;max-width:440px;border:1px solid #ccd8e3;border-radius:25px;padding:10px 16px;color:#9aa7b5}
+  pre{
+    margin:0;background:#111923;color:#d7e4ef;padding:20px;overflow:auto;
+    font:14px/1.7 Consolas,monospace;
+  }
+  .callout{
+    background:#fff8e9;border:1px solid #f3d9a5;border-left:5px solid var(--orange);
+    border-radius:12px;padding:16px 18px;margin:18px 0
+  }
+  .danger{
+    background:#fff0f0;border:1px solid #f2c6c6;border-left:5px solid var(--red);
+    border-radius:12px;padding:16px 18px;margin:18px 0
+  }
+  .summary{
+    background:white;border-radius:18px;padding:22px;border:1px solid var(--line);margin-top:24px
+  }
+  .summary strong{color:var(--blue)}
+  footer{color:#718397;text-align:center;font-size:13px;padding:26px 0}
+  @media(max-width:900px){
+    .network{grid-template-columns:1fr}
+    .arrow{transform:rotate(90deg)}
+    .steps{grid-template-columns:1fr}
+    .mock{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <section class="hero">
+    <div class="kicker">NETWORK BASICS · 비전공자용</div>
+    <h1>내 집에서 구글까지<br>인터넷은 어떻게 연결될까?</h1>
+    <p>주소창에 <b>google.com</b>을 입력한 뒤 화면이 뜨기까지의 길을 아주 쉽게 따라가 봅니다.</p>
+  </section>
+
+  <div class="one-line">
+    한 줄 요약: <b>내 PC → Wi‑Fi → 공유기 → 통신사 → 인터넷 → 구글 서버</b> 순서로 데이터가 이동합니다.
+  </div>
+
+  <h2>1. 전체 네트워크 구성</h2>
+
+  <div class="network">
+    <div class="node">
+      <div class="icon">💻</div>
+      <h3>내 컴퓨터</h3>
+      <p>웹 브라우저에서 google.com을 입력합니다.</p>
+    </div>
+    <div class="arrow">→</div>
+    <div class="node">
+      <div class="icon">📶</div>
+      <h3>공유기</h3>
+      <p>집 안 기기들을 인터넷으로 연결하는 출입구입니다.</p>
+    </div>
+    <div class="arrow">→</div>
+    <div class="node">
+      <div class="icon">🏢</div>
+      <h3>통신사</h3>
+      <p>KT, SK브로드밴드, LG U+ 같은 인터넷 사업자입니다.</p>
+    </div>
+  </div>
+
+  <div class="network" style="grid-template-columns:1fr .25fr 1fr .25fr 1fr">
+    <div class="node">
+      <div class="icon">🌐</div>
+      <h3>인터넷</h3>
+      <p>전 세계 수많은 네트워크가 서로 연결된 거대한 통신망입니다.</p>
+    </div>
+    <div class="arrow">→</div>
+    <div class="node">
+      <div class="icon">🧭</div>
+      <h3>DNS</h3>
+      <p>google.com이라는 이름을 실제 IP 주소로 바꿔 줍니다.</p>
+    </div>
+    <div class="arrow">→</div>
+    <div class="node">
+      <div class="icon">🗄️</div>
+      <h3>구글 서버</h3>
+      <p>요청을 받고 검색 화면과 데이터를 다시 보내 줍니다.</p>
+    </div>
+  </div>
+
+  <h2>2. 실제로 무슨 일이 일어날까?</h2>
+  <div class="steps">
+    <div class="step"><div class="num">1</div><h3>주소 입력</h3><p>브라우저에 <code>google.com</code>을 입력합니다.</p></div>
+    <div class="step"><div class="num">2</div><h3>DNS 조회</h3><p>컴퓨터는 “google.com의 실제 IP가 뭐지?”라고 DNS 서버에 물어봅니다.</p></div>
+    <div class="step"><div class="num">3</div><h3>공유기로 전달</h3><p>내 PC의 요청이 Wi‑Fi를 통해 공유기로 이동합니다.</p></div>
+    <div class="step"><div class="num">4</div><h3>통신사로 이동</h3><p>공유기는 데이터를 집 밖의 통신사 네트워크로 보냅니다.</p></div>
+    <div class="step"><div class="num">5</div><h3>구글 서버 도착</h3><p>인터넷의 여러 장비를 거쳐 구글 서버에 요청이 도착합니다.</p></div>
+    <div class="step"><div class="num">6</div><h3>화면 응답</h3><p>구글 서버가 HTML, 이미지, 데이터 등을 다시 보내고 브라우저가 화면을 그립니다.</p></div>
+  </div>
+
+  <h2>3. 집 안에서 쓰는 IP와 인터넷에서 보이는 IP</h2>
+  <table>
+    <thead><tr><th>구분</th><th>예시</th><th>쉽게 말하면</th></tr></thead>
+    <tbody>
+      <tr><td>사설 IP</td><td><code>192.168.0.15</code></td><td>우리 집 안에서 쓰는 방 번호</td></tr>
+      <tr><td>게이트웨이</td><td><code>192.168.0.1</code></td><td>건물 밖으로 나가는 정문</td></tr>
+      <tr><td>공인 IP</td><td>통신사가 할당</td><td>인터넷 세상에서 우리 집을 구분하는 주소</td></tr>
+      <tr><td>DNS</td><td><code>8.8.8.8</code> 등</td><td>google.com 같은 이름을 IP 주소로 찾아주는 전화번호부</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout">
+    <b>비유:</b> 내 컴퓨터는 아파트의 한 세대, 공유기는 아파트 정문, 통신사는 큰 도로, 인터넷은 전국 도로망, 구글 서버는 목적지 건물이라고 생각하면 쉽습니다.
+  </div>
+
+  <h2>4. 화면으로 보면 이렇게 보입니다</h2>
+  <div class="mock">
+    <div class="browser">
+      <div class="bar">브라우저 · https://www.google.com</div>
+      <div class="screen google">
+        <div class="logo">
+          <span style="color:#4285F4">G</span><span style="color:#EA4335">o</span><span style="color:#FBBC05">o</span><span style="color:#4285F4">g</span><span style="color:#34A853">l</span><span style="color:#EA4335">e</span>
+        </div>
+        <div class="search">🔎 검색어를 입력하세요</div>
+      </div>
+    </div>
+
+    <div class="terminal">
+      <div class="bar">PowerShell · 네트워크 확인</div>
+      <pre>PS C:\> ipconfig
+
+IPv4 주소        : 192.168.0.15
+기본 게이트웨이 : 192.168.0.1
+
+PS C:\> ping 8.8.8.8
+응답: 바이트=32 시간=15ms TTL=117
+
+PS C:\> ping google.com
+응답: 바이트=32 시간=18ms TTL=115</pre>
+    </div>
+  </div>
+
+  <h2>5. "Wi‑Fi 연결됨"인데 인터넷이 안 되는 이유</h2>
+  <table>
+    <thead><tr><th>문제 위치</th><th>무슨 뜻?</th><th>먼저 확인할 것</th></tr></thead>
+    <tbody>
+      <tr><td>내 PC</td><td>IP를 못 받았거나 어댑터 문제</td><td><code>ipconfig</code></td></tr>
+      <tr><td>공유기</td><td>게이트웨이까지 못 감</td><td><code>ping 192.168.0.1</code></td></tr>
+      <tr><td>외부 인터넷</td><td>통신사 또는 회선 문제 가능</td><td><code>ping 8.8.8.8</code></td></tr>
+      <tr><td>DNS</td><td>IP는 되지만 이름 변환 실패</td><td><code>ping google.com</code></td></tr>
+      <tr><td>특정 사이트</td><td>상대 서버 문제 가능</td><td>다른 사이트와 비교</td></tr>
+    </tbody>
+  </table>
+
+  <div class="danger">
+    <b>주의:</b> ping이 실패했다고 무조건 인터넷 고장은 아닙니다. 보안 정책에 따라 ICMP(ping)를 차단하는 서버도 있습니다.
+  </div>
+
+  <div class="summary">
+    <h2 style="margin-top:0">6. 이것만 기억하세요</h2>
+    <p><strong>Wi‑Fi</strong>는 내 PC와 공유기를 연결하는 방법입니다.</p>
+    <p><strong>공유기</strong>는 집 안 네트워크와 인터넷을 연결하는 출입구입니다.</p>
+    <p><strong>IP</strong>는 컴퓨터가 서로를 찾는 주소입니다.</p>
+    <p><strong>DNS</strong>는 사람에게 쉬운 이름을 IP 주소로 바꿔 줍니다.</p>
+    <p><strong>인터넷</strong>은 전 세계 수많은 네트워크가 연결된 거대한 통신망입니다.</p>
+  </div>
+
+  <footer>네트워크 기초 학습용 HTML · 비전공자용</footer>
+</div>
+</body>
+</html>
