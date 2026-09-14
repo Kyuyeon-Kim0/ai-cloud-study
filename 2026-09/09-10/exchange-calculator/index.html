@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>환율 계산기</title>
+<style>
+:root{font-family:system-ui,"Malgun Gothic",sans-serif;color:#172b48;background:#eef3f9;font-size:16px}*{box-sizing:border-box}body{margin:0;padding:48px 20px}main{max-width:780px;margin:auto}header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:28px}h1{font-size:28px;margin:0}.badge{font-size:14px;color:#135c55;background:#d7eee8;padding:8px 12px;border-radius:30px}.card{background:white;border:1px solid #dce4ee;border-radius:20px;padding:30px;box-shadow:0 12px 40px #16335608}label{display:block;font-size:14px;font-weight:600;margin-bottom:9px}input,select,button{font:inherit}input[type=number],select{width:100%;border:1px solid #b9c7d9;border-radius:10px;padding:14px;background:#fff;color:inherit}input[type=number]{font-size:24px}.currencies{display:grid;grid-template-columns:1fr 48px 1fr;gap:14px;align-items:end;margin-top:22px}button{cursor:pointer;border:1px solid #b9c7d9;border-radius:10px;padding:12px;background:#fff;color:inherit}button:hover{background:#edf4ff}button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #729feb;outline-offset:3px}#swap{height:52px}.result{background:#123967;color:white;border-radius:14px;padding:25px;margin-top:26px}.result p{margin:0 0 10px;color:#ccdff8;font-size:14px}output{display:block;font-size:clamp(26px,6vw,40px);font-weight:700;overflow-wrap:anywhere}#unit{margin:14px 0 0;color:#dae7f9}.meta{color:#56677d;font-size:14px;line-height:1.7}table{width:100%;border-collapse:collapse;margin-top:20px;font-size:16px}caption{text-align:left;font-weight:600;margin-bottom:8px}th,td{padding:13px 0;border-bottom:1px solid #e6ebf2;text-align:left}td:last-child,th:last-child{text-align:right}th{color:#56677d;font-size:14px;font-weight:500}.files{margin-top:24px;padding-top:18px;border-top:1px solid #e6ebf2}input[type=file]{font-size:14px;max-width:100%}#status{margin:0 0 12px}a{color:#1758a8}footer{margin-top:18px;font-size:14px;color:#56677d;line-height:1.8}fieldset{border:0;margin:0;padding:0;min-width:0}fieldset:disabled{opacity:.55}@media(max-width:520px){body{padding:26px 14px}.card{padding:20px}header{align-items:flex-start;flex-direction:column}.currencies{grid-template-columns:1fr 42px 1fr;gap:8px}select{padding:12px 6px}}
+</style>
+</head>
+<body><main>
+<header><h1>환율 계산기</h1><span class="badge" id="date">자료를 불러오는 중</span></header>
+<section class="card" aria-label="환율 계산">
+<fieldset id="controls" disabled>
+<label for="amount">환산할 금액</label><input id="amount" type="number" min="0" step="any" value="100" inputmode="decimal">
+<div class="currencies"><div><label for="from">보내는 통화</label><select id="from"><option value="USD">USD · 달러</option value="KRW">KRW · 원</option><option value="JPY">JPY · 엔</option><option value="EUR">EUR · 유로</option></select></div>
+<button id="swap" type="button" aria-label="보내는 통화와 받는 통화 바꾸기">⇄</button>
+<div><label for="to">받는 통화</label><select id="to"><option value="KRW">KRW · 원</option><option value="USD">USD · 달러</option><option value="JPY">JPY · 엔</option><option value="EUR">EUR · 유로</option></select></div></div>
+</fieldset>
+<div class="result" aria-live="polite"><p>환산 결과</p><output id="result">—</output><p id="unit">CSV 자료를 기다리고 있습니다.</p></div>
+<table><caption>저장된 환율 · 1 USD 기준</caption><thead><tr><th scope="col">통화</th><th scope="col">환율</th></tr></thead><tbody id="rates"></tbody></table>
+<div class="files"><p id="status" class="meta" role="status">CSV를 읽고 있습니다.</p><label for="file">다른 환율 CSV 선택</label><input id="file" type="file" accept=".csv,text/csv"><p class="meta"><a href="data/exchange-rates.csv" download>저장된 CSV 다운로드</a> · <button id="reload" type="button">CSV 다시 읽기</button></p></div>
+</section>
+<footer>출처: <a href="https://api.frankfurter.dev/v1/latest?from=USD&amp;to=KRW,JPY,EUR" target="_blank" rel="noopener">Frankfurter API</a><br>표시된 기준일의 참고 환율입니다. 실제 환전 수수료와 은행별 적용 환율은 포함하지 않습니다.</footer>
+</main><script src="calculator.js"></script><script>
+'use strict';
+const $ = id => document.getElementById(id);
+let data = null;
+const format = (value, digits = 2) => new Intl.NumberFormat('ko-KR', { maximumFractionDigits: digits }).format(value);
+function render() {
+  if (!data) return;
+  try {
+    if (!$('amount').value.trim()) throw new Error('금액을 입력하세요.');
+    const from = $('from').value, to = $('to').value;
+    const value = Exchange.convert(Number($('amount').value), from, to, data.rates);
+    $('result').textContent = `${format(value)} ${to}`;
+    $('unit').textContent = `1 ${from} = ${format(data.rates[to] / data.rates[from], 6)} ${to}`;
+  } catch (error) { $('result').textContent = '—'; $('unit').textContent = error.message; }
+}
+function acceptCSV(text, name) {
+  data = Exchange.readRates(text);
+  $('controls').disabled = false;
+  $('date').textContent = `기준일 ${data.date}`;
+  $('status').textContent = `${name} 자료를 불러왔습니다.`;
+  $('rates').replaceChildren(...['KRW','JPY','EUR'].map(code => {
+    const row = document.createElement('tr');
+    for (const value of [code, format(data.rates[code], 6)]) { const cell = document.createElement('td'); cell.textContent = value; row.append(cell); }
+    return row;
+  }));
+  render();
+}
+function fail(message) {
+  data = null; $('controls').disabled = true; $('result').textContent = '—'; $('unit').textContent = '환율 CSV를 불러와 주세요.';
+  $('date').textContent = '자료 없음'; $('rates').replaceChildren(); $('status').textContent = message;
+}
+async function load() {
+  if (location.protocol === 'file:') { fail('HTML을 직접 여셨습니다. 아래에서 data 폴더의 exchange-rates.csv를 선택하세요. start.cmd로 열면 자동으로 읽습니다.'); return; }
+  try {
+    const response = await fetch('data/exchange-rates.csv', { cache: 'no-store' });
+    if (!response.ok) throw new Error(`CSV 불러오기 실패 (${response.status})`);
+    acceptCSV(await response.text(), '저장된 CSV');
+  } catch (error) { fail(`${error.message}. 아래에서 CSV 파일을 직접 선택할 수 있습니다.`); }
+}
+$('file').addEventListener('change', async event => {
+  const file = event.target.files[0]; if (!file) return;
+  try { acceptCSV(await file.text(), file.name); } catch (error) { fail(error.message); }
+});
+for (const id of ['amount','from','to']) $(id).addEventListener('input', render);
+$('swap').addEventListener('click', () => { const before = $('from').value; $('from').value = $('to').value; $('to').value = before; render(); });
+$('reload').addEventListener('click', load);
+load();
+</script></body></html>

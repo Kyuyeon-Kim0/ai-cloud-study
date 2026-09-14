@@ -1,0 +1,4 @@
+"date","base","currency","rate","fetched_at_utc","source"
+"2026-09-09","USD","KRW","1336.2","2026-09-10T05:33:53.8465090Z","https://api.frankfurter.dev/v1/latest?from=USD&to=KRW,JPY,EUR"
+"2026-09-09","USD","JPY","153.27","2026-09-10T05:33:53.8465090Z","https://api.frankfurter.dev/v1/latest?from=USD&to=KRW,JPY,EUR"
+"2026-09-09","USD","EUR","0.85822","2026-09-10T05:33:53.8465090Z","https://api.frankfurter.dev/v1/latest?from=USD&to=KRW,JPY,EUR"
