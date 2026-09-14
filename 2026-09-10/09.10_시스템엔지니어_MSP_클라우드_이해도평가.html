@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>시스템 엔지니어 · MSP · 클라우드 이해도 평가</title>
+<style>
+:root{
+  --ink:#1c1b19; --paper:#fff; --soft:#f7f6f3; --soft2:#efedea;
+  --line:#e3e0db; --line2:#cfcbc4; --muted:#86827b; --muted2:#5b574f;
+  --accent:#b23c0a; --accent-soft:#fdf3ec; --green:#15803d; --green-soft:#f1f7f3;
+  --red:#b91c1c; --red-soft:#fdf2f2; --blue:#1d4ed8; --blue-soft:#f2f5fd;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;font-family:'Noto Sans KR','Malgun Gothic',sans-serif;color:var(--ink);background:#eceae5}
+button,input,label{font:inherit}
+.app{min-height:100vh;display:flex;flex-direction:column}
+.topbar{height:58px;display:flex;align-items:center;gap:18px;padding:0 28px;background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
+.brand{font-size:13px;font-weight:800;white-space:nowrap}.brand b{color:var(--accent)}
+.progress-wrap{flex:1;display:flex;align-items:center;gap:12px}.progress{height:7px;flex:1;background:var(--soft2);border-radius:10px;overflow:hidden}.progress>div{height:100%;background:var(--accent);width:6.67%;transition:.25s}.count{font-family:Consolas,monospace;font-size:12px;color:var(--muted2);min-width:48px;text-align:right}
+.screen{flex:1;display:grid;place-items:center;padding:28px}
+.card{width:min(980px,100%);min-height:min(720px,calc(100vh - 114px));background:#fff;border:1px solid var(--line2);box-shadow:0 3px 18px rgba(0,0,0,.05);display:flex;flex-direction:column;padding:34px 42px 26px;position:relative}
+.meta{display:flex;align-items:center;gap:9px;margin-bottom:20px}.level{font-size:11px;font-weight:800;border-radius:20px;padding:4px 10px;letter-spacing:.05em;border:1px solid}.low{color:var(--blue);background:var(--blue-soft);border-color:#c3d0f2}.mid{color:#6b5c00;background:#fff9df;border-color:#e7db99}.high{color:var(--accent);background:var(--accent-soft);border-color:#e8c3ad}.qno{font-family:Consolas,monospace;font-size:11px;color:var(--muted);letter-spacing:.08em}
+h1{font-size:31px;line-height:1.42;margin:0 0 14px;letter-spacing:-.025em}.hint{font-size:13px;color:var(--muted2);margin-bottom:18px}.divider{height:1px;background:var(--line);margin-bottom:16px}
+.options{display:grid;gap:11px}.option{display:flex;align-items:flex-start;gap:13px;border:1px solid var(--line2);padding:15px 17px;border-radius:5px;cursor:pointer;background:#fff;transition:.12s}.option:hover{border-color:var(--accent);background:#fffdfa}.option input{margin-top:3px;accent-color:var(--accent);width:17px;height:17px}.option .n{font-family:Consolas,monospace;color:var(--accent);font-weight:800;min-width:20px}.option .txt{font-size:15px;line-height:1.55}.option.selected{border-color:var(--accent);background:var(--accent-soft)}
+.result{margin-top:18px;border-radius:5px;padding:14px 16px;display:none;border:1px solid}.result.ok{display:block;background:var(--green-soft);border-color:#bcdcc8;color:#105d2b}.result.bad{display:block;background:var(--red-soft);border-color:#f0c3c3;color:#8f1717}.result .rtitle{font-size:15px;font-weight:900;margin-bottom:3px}.result .answerline{font-size:12.5px;line-height:1.6}
+.explain{display:none;margin-top:12px;border-left:3px solid var(--accent);background:var(--soft);padding:13px 16px;color:var(--ink);font-size:13px;line-height:1.75}.explain.show{display:block}.explain b{color:var(--accent)}
+.spacer{flex:1}.actions{display:flex;align-items:center;gap:10px;margin-top:20px;padding-top:17px;border-top:1px solid var(--line)}
+.btn{border:1px solid var(--line2);background:#fff;color:var(--ink);padding:10px 17px;border-radius:4px;font-size:13px;font-weight:800;cursor:pointer}.btn:hover{border-color:var(--ink)}.btn.primary{margin-left:auto;background:var(--accent);border-color:var(--accent);color:#fff}.btn.primary:disabled{opacity:.45;cursor:not-allowed}.btn.next{background:#fff;border-color:var(--accent);color:var(--accent)}
+.summary{display:none}.summary.show{display:block}.score{font-size:70px;font-weight:900;line-height:1;color:var(--accent);letter-spacing:-.05em}.score small{font-size:20px;color:var(--muted2);letter-spacing:0}.grade{font-size:22px;font-weight:800;margin:14px 0}.scoregrid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line);margin:22px 0}.scoregrid>div{background:#fff;padding:16px}.scoregrid .k{font-size:11px;color:var(--muted);font-weight:800;letter-spacing:.06em}.scoregrid .v{font-size:26px;font-weight:900;margin-top:5px}.summary p{color:var(--muted2);line-height:1.75}.restart{margin-top:20px}
+@media(max-width:700px){.topbar{padding:0 14px}.brand{font-size:11px}.screen{padding:10px}.card{min-height:calc(100vh - 78px);padding:24px 18px 18px;border-left:none;border-right:none}.card h1{font-size:24px}.option{padding:13px}.option .txt{font-size:14px}.actions{position:sticky;bottom:0;background:#fff;padding-bottom:2px}.btn{padding:9px 12px}.scoregrid{grid-template-columns:1fr}.meta{margin-bottom:14px}}
+@media print{body{background:#fff}.topbar{display:none}.screen{display:block;padding:0}.card{box-shadow:none;border:none;width:100%;min-height:100vh;page-break-after:always}.actions{display:none}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <div class="brand"><b>이해도 평가</b> · 시스템 엔지니어 / MSP / 클라우드</div>
+    <div class="progress-wrap"><div class="progress"><div id="bar"></div></div><div class="count" id="count">1 / 15</div></div>
+  </div>
+  <main class="screen"><section class="card" id="quizCard"></section></main>
+</div>
+<script>
+const qs = [
+{level:'하', cls:'low', q:'시스템 엔지니어의 주된 역할로 가장 알맞은 것은?', opts:['웹페이지 디자인만 담당한다','서버 구축·운영과 장애 대응을 수행한다','광고 문구를 작성한다','회계 장부만 관리한다'], a:1, exp:'교안에서 시스템 엔지니어는 <b>서버 구축·운영·장애 대응</b>을 담당하는 직군으로 설명합니다. Windows/Linux, PowerShell, Bash 등이 핵심 기초입니다.'},
+{level:'하', cls:'low', q:'온프레미스(On-Premise)를 가장 쉽게 설명한 것은?', opts:['회사가 직접 서버를 보유하고 운영하는 방식','인터넷이 없는 컴퓨터','무조건 무료인 서버','MSP가 반드시 운영하는 서버'], a:0, exp:'온프레미스는 <b>회사나 자체 데이터센터에 장비를 두고 직접 보유·운영</b>하는 방식입니다. 교안의 암기 문장은 “온프레미스 = 내가 산 서버”입니다.'},
+{level:'하', cls:'low', q:'클라우드 환경의 대표적인 특징은?', opts:['서버를 반드시 회사 서버실에 둔다','필요할 때 가상 서버를 빠르게 만들고 확장할 수 있다','물리 서버를 직접 조립해야 한다','네트워크를 사용할 수 없다'], a:1, exp:'클라우드는 AWS·Azure·GCP 같은 사업자의 인프라를 이용해 <b>가상 서버와 저장소를 필요할 때 만들고 확장</b>할 수 있습니다.'},
+{level:'하', cls:'low', q:'MSP의 의미로 가장 알맞은 것은?', opts:['Managed Service Provider','Main System Program','Microsoft Server Platform','Multi Storage Protocol'], a:0, exp:'MSP는 <b>Managed Service Provider</b>의 약자로, 고객 대신 IT 인프라를 구축·운영·관리하는 전문 업체를 뜻합니다.'},
+{level:'하', cls:'low', q:'다음 중 대표적인 퍼블릭 클라우드 플랫폼 3개 조합은?', opts:['AWS · Azure · GCP','Windows · Linux · macOS','PowerShell · Bash · Python','Git · HTML · CSS'], a:0, exp:'교안에서 대표 클라우드 플랫폼으로 <b>AWS, Microsoft Azure, Google Cloud(GCP)</b>를 비교합니다.'},
+
+{level:'중', cls:'mid', q:'온프레미스와 클라우드의 차이를 구분하는 핵심 기준으로 가장 적절한 것은?', opts:['프로그래밍 언어가 무엇인지','서버를 어디에 두고 누가 물리 장비를 책임지는지','사용자가 몇 명인지','문서 파일 확장자가 무엇인지'], a:1, exp:'두 방식의 핵심 차이는 <b>서버의 위치·소유·물리 장비 책임</b>입니다. 온프레미스는 회사가 직접 보유하고, 클라우드는 사업자의 인프라를 빌려 씁니다.'},
+{level:'중', cls:'mid', q:'하이브리드 클라우드에 대한 설명으로 맞는 것은?', opts:['AWS와 Azure 중 하나만 사용하는 방식','온프레미스와 클라우드를 연결하여 함께 사용하는 방식','모든 서버를 폐기하는 방식','인터넷을 사용하지 않는 방식'], a:1, exp:'하이브리드 클라우드는 <b>회사 데이터센터의 온프레미스 환경과 클라우드를 VPN/전용선 등으로 연결</b>해 함께 사용하는 방식입니다.'},
+{level:'중', cls:'mid', q:'MSP에 대한 설명 중 틀린 것은?', opts:['MSP는 서비스 제공 방식에 가깝다','MSP는 고객 인프라의 운영을 대신할 수 있다','MSP는 반드시 클라우드만 관리한다','MSP 엔지니어는 장애 대응과 모니터링을 수행할 수 있다'], a:2, exp:'교안에서 강조한 핵심은 <b>MSP는 클라우드만 관리하는 것이 아니라 온프레미스 환경도 관리할 수 있다</b>는 점입니다.'},
+{level:'중', cls:'mid', q:'AWS EC2와 GCP Compute Engine의 공통 역할은?', opts:['가상 서버(VM)를 생성하고 실행한다','객체 저장소만 제공한다','사용자 비밀번호만 관리한다','소스코드를 버전 관리한다'], a:0, exp:'AWS의 <b>EC2</b>와 GCP의 <b>Compute Engine</b>은 모두 Linux/Windows 같은 가상 서버(VM)를 생성해 실행하는 컴퓨팅 서비스입니다.'},
+{level:'중', cls:'mid', q:'MSP 엔지니어가 고객의 “서버가 느리다”는 장애를 받았을 때 교안의 점검 흐름에 가장 가까운 것은?', opts:['바로 서버를 삭제한다','CPU/RAM → Disk → Service → Network → Log 순으로 원인을 좁힌다','먼저 새 클라우드 계정을 만든다','무조건 인터넷 회선만 교체한다'], a:1, exp:'MSP 장애 대응은 한 번에 추측하지 않고 <b>CPU/RAM, Disk, Service, Network, Log</b>처럼 계층적으로 확인해 원인을 좁히는 것이 중요합니다.'},
+
+{level:'상', cls:'high', q:'다음 상황에서 “온프레미스/클라우드”와 “MSP”를 가장 정확히 구분한 설명은?\n\nA사는 AWS를 사용하고 있으며 운영은 외부 전문 업체 B사에 맡겼다.', opts:['AWS는 MSP이고 B사는 클라우드다','AWS는 인프라가 있는 방식/플랫폼이고, B사는 운영을 대신하는 MSP다','A사는 온프레미스만 사용한다','B사가 있기 때문에 AWS는 더 이상 클라우드가 아니다'], a:1, exp:'교안의 핵심 구분은 <b>온프레미스/클라우드 = 어디에 두는가</b>, <b>MSP = 누가 대신 관리하는가</b>입니다. 두 개념은 서로 다른 축입니다.'},
+{level:'상', cls:'high', q:'다음 중 클라우드 서비스 대응 관계가 모두 맞는 것은?', opts:['AWS EC2 — Azure Virtual Machines — GCP Compute Engine','AWS S3 — Azure VM — GCP IAM','AWS IAM — Azure Blob Storage — GCP Compute Engine','AWS RDS — Azure VNet — GCP Cloud Storage'], a:0, exp:'세 플랫폼에서 가상 서버 역할은 각각 <b>EC2 · Virtual Machines · Compute Engine</b>입니다. 이름보다 “기능”을 연결해 기억하는 것이 교안의 학습 방식입니다.'},
+{level:'상', cls:'high', q:'다음 중 시스템 엔지니어가 클라우드로 업무 영역을 확장할 때 가장 자연스러운 연결은?', opts:['물리 서버/OS/네트워크 이해 → VM/VPC/IAM/모니터링 이해','HTML 문법 → 회계 → 영상 편집','문서 작성 → 프린터 → 디자인','클라우드는 시스템 기초와 무관하므로 바로 Kubernetes만 학습'], a:0, exp:'교안은 <b>온프레미스 기본기와 시스템 기초를 알면 클라우드의 가상 서버·가상 네트워크가 더 쉽게 이해된다</b>고 설명합니다.'},
+{level:'상', cls:'high', q:'신입 MSP 엔지니어의 학습 순서로 교안의 로드맵에 가장 가까운 것은?', opts:['Docker → Kubernetes → Terraform → 운영체제','컴퓨터 기본 → Windows/Linux → PowerShell/Bash → Network → Git → Cloud → Terraform → Docker/Kubernetes','GCP → Photoshop → Excel → Linux','Terraform → CPU/RAM 개념 → 네트워크'], a:1, exp:'교안의 로드맵은 <b>컴퓨터 기본 → OS → 셸 → 네트워크 → Git → Cloud → Terraform → Docker/Kubernetes</b> 순서입니다. 기본기를 먼저 만들고 고급 자동화/컨테이너로 확장합니다.'},
+{level:'상', cls:'high', q:'다음 중 system_monitor.ps1 프로젝트를 MSP 실무 연습으로 발전시키는 방향으로 가장 적절한 것은?', opts:['CPU·RAM·Disk·Service·Network 점검 → 결과 저장 → 임계치 경고 → 여러 서버로 확장','파일 이름만 계속 바꾼다','PowerShell을 사용하지 않고 결과를 손으로만 기록한다','모든 장애에서 원인 확인 없이 재부팅만 수행한다'], a:0, exp:'교안의 실습 프로젝트는 <b>시스템 자원 점검 → 결과 파일 저장 → 임계치 경고 → 여러 서버/클라우드 VM 점검</b>으로 확장하도록 제안합니다. 이것이 운영 자동화의 기본 흐름입니다.'}
+];
+let idx=0, answers=Array(qs.length).fill(null), checked=Array(qs.length).fill(false);
+const card=document.getElementById('quizCard'), bar=document.getElementById('bar'), count=document.getElementById('count');
+function esc(s){return s.replace(/\n/g,'<br>')}
+function render(){
+ const q=qs[idx], selected=answers[idx];
+ count.textContent=`${idx+1} / ${qs.length}`; bar.style.width=`${((idx+1)/qs.length)*100}%`;
+ card.innerHTML=`
+   <div class="meta"><span class="level ${q.cls}">${q.level} 난이도</span><span class="qno">QUESTION ${String(idx+1).padStart(2,'0')}</span></div>
+   <h1>${esc(q.q)}</h1>
+   <div class="hint">가장 알맞은 답 하나를 고른 뒤 <b>정답 체크</b>를 누르세요.</div>
+   <div class="divider"></div>
+   <div class="options">${q.opts.map((o,i)=>`<label class="option ${selected===i?'selected':''}"><input type="radio" name="opt" value="${i}" ${selected===i?'checked':''}><span class="n">${i+1}</span><span class="txt">${o}</span></label>`).join('')}</div>
+   <div id="result" class="result"></div>
+   <div id="explain" class="explain"><b>해설</b><br>${q.exp}</div>
+   <div class="spacer"></div>
+   <div class="actions">
+     <button class="btn" id="prev" ${idx===0?'disabled':''}>이전</button>
+     <button class="btn primary" id="checkBtn">정답 체크</button>
+     <button class="btn next" id="next">${idx===qs.length-1?'결과 보기':'다음 문제'}</button>
+   </div>`;
+ document.querySelectorAll('input[name=opt]').forEach(el=>el.addEventListener('change',e=>{answers[idx]=+e.target.value;document.querySelectorAll('.option').forEach((x,i)=>x.classList.toggle('selected',i===answers[idx]));hideFeedback();}));
+ document.getElementById('checkBtn').onclick=checkAnswer;
+ document.getElementById('prev').onclick=()=>{if(idx>0){idx--;render(); if(checked[idx])showFeedback();}};
+ document.getElementById('next').onclick=()=>{if(idx<qs.length-1){idx++;render();if(checked[idx])showFeedback();}else showSummary();};
+ if(checked[idx]) showFeedback();
+}
+function hideFeedback(){document.getElementById('result').className='result';document.getElementById('result').innerHTML='';document.getElementById('explain').className='explain';checked[idx]=false;}
+function checkAnswer(){if(answers[idx]===null){const r=document.getElementById('result');r.className='result bad';r.innerHTML='<div class="rtitle">답을 먼저 선택하세요.</div><div class="answerline">보기 중 하나를 클릭한 뒤 다시 정답 체크를 눌러주세요.</div>';return;} checked[idx]=true;showFeedback();}
+function showFeedback(){if(answers[idx]===null)return;const q=qs[idx], ok=answers[idx]===q.a, r=document.getElementById('result');r.className='result '+(ok?'ok':'bad');r.innerHTML=`<div class="rtitle">${ok?'✓ 정답입니다.':'✕ 오답입니다.'}</div><div class="answerline">정답: ${q.a+1}번 · ${q.opts[q.a]}</div>`;document.getElementById('explain').className='explain show';}
+function showSummary(){
+ const score=qs.reduce((s,q,i)=>s+(answers[i]===q.a?1:0),0);
+ const byLevel={하:[0,5],중:[5,10],상:[10,15]};
+ const vals={}; Object.entries(byLevel).forEach(([k,[a,b]])=>vals[k]=qs.slice(a,b).reduce((s,q,j)=>s+(answers[a+j]===q.a?1:0),0));
+ const pct=Math.round(score/qs.length*100); let grade=pct>=87?'개념 연결이 매우 좋습니다':pct>=67?'기본 개념은 잘 잡혀 있습니다':pct>=47?'핵심 개념을 한 번 더 복습해 보세요':'교안을 처음부터 천천히 다시 확인해 보세요';
+ count.textContent='결과';bar.style.width='100%';
+ card.innerHTML=`<div class="summary show"><div class="meta"><span class="level high">평가 완료</span><span class="qno">15 QUESTIONS</span></div><h1>이해도 평가 결과</h1><div class="score">${score}<small> / 15</small></div><div class="grade">${grade}</div><div class="scoregrid"><div><div class="k">하 난이도</div><div class="v">${vals['하']} / 5</div></div><div><div class="k">중 난이도</div><div class="v">${vals['중']} / 5</div></div><div><div class="k">상 난이도</div><div class="v">${vals['상']} / 5</div></div></div><p>틀린 문제는 이전으로 돌아가 다시 정답 체크를 누르면 정답과 해설을 확인할 수 있습니다. 특히 <b>온프레미스/클라우드 = 어디에 두는가</b>, <b>MSP = 누가 운영하는가</b>, <b>클라우드 플랫폼은 이름보다 기능을 연결해서 본다</b>는 세 문장을 기억해 두세요.</p><button class="btn restart" id="restart">처음부터 다시 풀기</button></div>`;
+ document.getElementById('restart').onclick=()=>{idx=0;answers.fill(null);checked.fill(false);render();};
+}
+render();
+</script>
+</body>
+</html>
