@@ -1,0 +1,1258 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>정적과 동적 · 운영자를 위한 웹 이해</title><style>
+:root{
+  --ink:#1c1b19; --paper:#ffffff; --soft:#f7f6f3; --soft2:#efedea;
+  --line:#e3e0db; --line2:#cfcbc4; --muted:#86827b; --muted2:#5b574f;
+  --accent:#b23c0a; --accent-soft:#fdf3ec; --ink2:#2f2d2a;
+  --pn:#b23c0a; --pnb:#e8c3ad; --pns:#fdf5f0;
+  --pv:#1d4ed8; --pvb:#c3d0f2; --pvs:#f2f5fd;
+  --pa:#15803d; --pab:#bcdcc8; --pas:#f1f7f3;
+  --pd:#6d28d9; --pdb:#d4c6f5; --pds:#f7f3fe;
+  --px:#b91c1c; --pxb:#f0c3c3; --pxs:#fdf2f2;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+body{font-family:'Noto Sans KR','Malgun Gothic',sans-serif;color:var(--ink);
+  background:#eceae5;line-height:1.65;font-weight:400;letter-spacing:-.003em}
+
+.page{width:210mm;min-height:297mm;background:var(--paper);margin:8mm auto;
+  padding:17mm 18mm 14mm;position:relative;box-shadow:0 1px 14px rgba(0,0,0,.07)}
+@page{size:A4 portrait;margin:0}
+@media print{
+  body{background:#fff}
+  .page{margin:0;box-shadow:none;page-break-after:always;break-after:page}
+  .page:last-child{page-break-after:auto}
+}
+
+/* ── 러닝헤드 ── */
+.rh{display:flex;justify-content:space-between;align-items:baseline;
+  margin-bottom:22px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+.rh .l{font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--muted2)}
+.rh .l b{color:var(--accent)}
+.rh .r{font-size:10.5px;color:var(--muted);letter-spacing:.04em;display:flex;align-items:baseline;gap:12px}
+.rh .r .pg{font-family:'Consolas','JetBrains Mono',monospace;font-size:12px;font-weight:700;
+  color:var(--ink);letter-spacing:.06em;border:1px solid var(--line2);padding:1px 7px;border-radius:3px}
+
+/* ── 제목 ── */
+.kicker{font-size:11px;font-weight:700;letter-spacing:.12em;color:var(--accent);margin-bottom:7px}
+h1{font-size:26px;font-weight:900;line-height:1.25;letter-spacing:-.02em;margin-bottom:9px}
+.lede{font-size:13px;color:var(--muted2);line-height:1.7;margin-bottom:14px;max-width:96%}
+.lede em,em{font-style:normal;color:var(--accent);font-weight:700}
+h2{font-size:12.5px;font-weight:700;letter-spacing:.09em;color:var(--accent);
+  margin:17px 0 9px;display:flex;align-items:center;gap:10px}
+h2::after{content:"";flex:1;height:1px;background:var(--line)}
+h3{font-size:15px;font-weight:700;margin:14px 0 5px}
+p{font-size:13px;line-height:1.75;margin:8px 0;color:var(--ink2)}
+strong{font-weight:700;color:var(--ink)}
+.mn{font-size:11.5px;color:var(--muted);margin-top:5px}
+code{font-family:'Consolas','JetBrains Mono',monospace;background:var(--soft2);
+  padding:1px 5px;border-radius:3px;font-size:12px;color:var(--accent)}
+
+ul,ol{margin:9px 0;padding-left:0;list-style:none}
+li{font-size:13px;line-height:1.7;margin:8px 0;padding-left:010px;padding-left:22px;position:relative;color:var(--ink2)}
+ul li::before{content:"";position:absolute;left:3px;top:10px;width:5px;height:5px;
+  background:var(--accent);border-radius:50%}
+li strong{color:var(--ink)}
+
+/* ── 표 ── */
+table{width:100%;border-collapse:collapse;margin:13px 0;font-size:12.5px}
+th,td{padding:9px 12px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line)}
+thead th{border-bottom:1.5px solid var(--ink);font-weight:700;font-size:11.5px;color:var(--ink);background:var(--soft)}
+tbody td{color:var(--muted2)}
+tbody td b{color:var(--ink);font-weight:700}
+table.zebra tbody tr:nth-child(even) td{background:#faf9f7}
+
+/* ── 그리드 카드 ── */
+.grid{display:grid;gap:1px;background:var(--line);border:1px solid var(--line);margin:14px 0}
+.grid.g3{grid-template-columns:repeat(3,1fr)}
+.grid.g2{grid-template-columns:repeat(2,1fr)}
+.grid.g4{grid-template-columns:repeat(4,1fr)}
+.cell{background:var(--paper);padding:15px 14px}
+.cell .num{font-size:10.5px;font-weight:700;letter-spacing:.08em;color:var(--accent)}
+.cell h4{font-size:13.5px;font-weight:700;margin:6px 0 4px;line-height:1.35}
+.cell p{font-size:11.5px;color:var(--muted2);margin:0;line-height:1.6}
+
+/* ── 강조 박스 ── */
+.point{border-left:2.5px solid var(--accent);padding:3px 0 3px 16px;margin:16px 0}
+.point .pl{font-size:10.5px;font-weight:700;letter-spacing:.09em;color:var(--accent);margin-bottom:4px}
+.point p{margin:0;font-size:13px;color:var(--ink2)}
+.note{background:var(--soft);border:1px solid var(--line);border-radius:4px;
+  padding:12px 15px;margin:14px 0;font-size:12.5px;color:var(--muted2);line-height:1.7}
+.note strong{color:var(--accent)}
+.warn{background:var(--pxs);border:1px solid var(--pxb);border-radius:4px;
+  padding:12px 15px;margin:14px 0;font-size:12.5px;color:var(--ink2);line-height:1.7}
+.warn b{color:var(--px)}
+
+.mission{border:1px solid var(--line2);border-left:3px solid var(--accent);
+  background:var(--accent-soft);padding:13px 16px;margin:13px 0;border-radius:4px}
+.mission b{font-size:10.5px;font-weight:700;letter-spacing:.1em;color:var(--accent)}
+.mission h3{font-size:14px;margin:4px 0 0;line-height:1.5}
+.mission .wy{margin:9px 0 0;padding-top:8px;border-top:1px solid var(--line2);font-size:12px;color:var(--muted2);line-height:1.65}
+.mission .wy b{color:var(--ink);font-size:10.5px;letter-spacing:.06em}
+.why{background:var(--soft);border:1px solid var(--line2);border-left:3px solid var(--ink);
+  padding:12px 16px;margin:13px 0;border-radius:4px}
+.why p{color:var(--ink2);margin:0;font-size:12.5px}
+.why b{color:var(--ink);font-size:10.5px;letter-spacing:.08em}
+
+.kw{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
+.kw span{background:#fff;border:1px solid var(--line2);padding:4px 10px;border-radius:20px;
+  font-size:11px;font-weight:700;color:var(--ink2)}
+.kw span::before{content:"# ";color:var(--accent)}
+
+/* ── 정의 목록 / 비유 ── */
+.deflist{margin:12px 0}
+.deflist .d{display:flex;gap:16px;padding:11px 0;border-bottom:1px solid var(--line)}
+.deflist .d:last-child{border-bottom:none}
+.deflist .dt{flex:0 0 27%;font-weight:700;font-size:13px}
+.deflist .dt small{display:block;font-weight:400;color:var(--muted);font-size:11px;margin-top:1px}
+.deflist .dd{flex:1;font-size:12.5px;color:var(--muted2);line-height:1.65}
+
+/* ── 실습 박스 (검정 헤더 제거) ── */
+.lab{margin:16px 0;border:1.5px solid var(--ink);background:#fff}
+.lab-head{padding:10px 18px;display:flex;align-items:center;gap:12px;
+  border-bottom:1.5px solid var(--ink);background:var(--soft)}
+.lab-head .badge{font-size:10px;font-weight:700;letter-spacing:.1em;
+  border:1px solid var(--ink);padding:2px 9px;border-radius:2px;color:var(--ink);background:#fff}
+.lab-head h3{font-size:16px;margin:0;font-weight:700;color:var(--ink)}
+.lab-head .t{margin-left:auto;font-size:10.5px;color:var(--muted);font-family:'Consolas',monospace}
+.lab-body{padding:15px 18px 16px}
+.steps{counter-reset:st;list-style:none;padding:0;margin:0}
+.steps>li{counter-increment:st;position:relative;padding:0 0 13px 40px;margin:0;font-size:13.5px;
+  line-height:1.55;border-left:1px solid var(--line2);margin-left:13px}
+.steps>li:last-child{border-left:1px solid transparent;padding-bottom:0}
+.steps>li::before{content:counter(st);position:absolute;left:-13px;top:-2px;width:26px;height:26px;
+  background:#fff;border:1.5px solid var(--ink);color:var(--ink);border-radius:50%;
+  display:grid;place-items:center;font-weight:700;font-size:12.5px}
+.steps>li .lt{font-weight:700;color:var(--ink)}
+.steps>li .ls{display:block;font-size:12px;color:var(--muted);font-weight:400;margin-top:2px;line-height:1.6}
+
+/* ── 프롬프트 박스 ── */
+.say{margin:10px 0;background:#fff;border:1px solid var(--line2);border-left:3px solid var(--accent);
+  border-radius:4px;padding:10px 13px}
+.say .sl{font-size:10.5px;font-weight:700;letter-spacing:.05em;color:var(--accent);
+  margin-bottom:4px;display:flex;align-items:center;gap:6px}
+.say .sc{font-family:'Consolas','JetBrains Mono',monospace;font-size:12px;line-height:1.65;
+  color:var(--ink);font-weight:500;white-space:pre-wrap}
+.copybtn{margin-left:auto;font-family:'Noto Sans KR',sans-serif;font-size:10px;font-weight:700;
+  letter-spacing:0;color:var(--muted2);background:#fff;border:1px solid var(--line2);
+  border-radius:3px;padding:2px 9px;cursor:pointer;line-height:1.4}
+.copybtn:hover{border-color:var(--accent);color:var(--accent)}
+@media print{.copybtn{display:none}}
+
+/* ── 품사/토큰 칩 ── */
+.chip{display:inline-flex;align-items:baseline;gap:5px;font-size:12px;font-weight:700;
+  padding:3px 8px;border-radius:3px;border:1px solid;margin:3px 4px 3px 0;line-height:1.3}
+.c-n{color:var(--pn);border-color:var(--pnb);background:var(--pns)}
+.c-v{color:var(--pv);border-color:var(--pvb);background:var(--pvs)}
+.c-a{color:var(--pa);border-color:var(--pab);background:var(--pas)}
+.c-d{color:var(--pd);border-color:var(--pdb);background:var(--pds)}
+.c-x{color:var(--px);border-color:var(--pxb);background:var(--pxs)}
+.c-o{color:var(--muted);border-color:var(--line2);background:var(--soft);font-weight:400}
+
+.parse{border:1px solid var(--line2);background:#fff;margin:13px 0}
+.parse .ph{background:var(--soft);border-bottom:1px solid var(--line);padding:6px 14px;
+  font-size:10.5px;font-weight:700;letter-spacing:.06em;color:var(--muted2);display:flex;justify-content:space-between}
+.parse .pb{padding:13px 14px 14px}
+.parse .src{font-size:14.5px;font-weight:500;color:var(--ink);line-height:1.7}
+.parse .arw{font-size:10.5px;color:var(--muted);letter-spacing:.06em;margin:11px 0 7px;
+  display:flex;align-items:center;gap:10px}
+.parse .arw::after{content:"";flex:1;height:1px;background:var(--line)}
+
+/* ── before / after ── */
+.ba{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);
+  border:1px solid var(--line);margin:13px 0}
+.ba>div{background:#fff;padding:12px 14px}
+.ba .h{font-size:10.5px;font-weight:700;letter-spacing:.06em;margin-bottom:8px}
+.ba .bad .h{color:var(--muted)}
+.ba .bad .h::before{content:"✕ ";color:var(--px)}
+.ba .good .h{color:var(--accent)}
+.ba .good .h::before{content:"✓ ";color:var(--pa)}
+.ba .m{font-family:'Consolas','JetBrains Mono',monospace;font-size:11px;line-height:1.7;color:var(--ink2)}
+.ba .m u{text-decoration:none;background:var(--pxs);color:var(--px);padding:0 3px;border-radius:2px}
+.ba .m b{background:var(--pas);color:var(--pa);padding:0 3px;border-radius:2px;font-weight:500}
+.ba .why2{font-size:11px;color:var(--muted);margin-top:8px;line-height:1.6}
+
+/* ── 막대 ── */
+.bars{margin:12px 0}
+.bars .b{display:flex;align-items:center;gap:10px;margin:7px 0}
+.bars .bl{flex:0 0 26%;font-size:12px;font-weight:700;color:var(--ink)}
+.bars .bt{flex:1;height:13px;background:var(--soft2);border:1px solid var(--line)}
+.bars .bf{height:100%;background:var(--accent)}
+.bars .bf.q{background:var(--line2)}
+.bars .bv{flex:0 0 60px;text-align:right;font-family:'Consolas',monospace;font-size:11px;color:var(--muted2)}
+
+/* ── 흐름 ── */
+.flow{display:flex;gap:5px;align-items:center;flex-wrap:wrap;margin:11px 0}
+.flow span{border:1px solid var(--line2);padding:6px 10px;background:#fff;border-radius:4px;
+  font-size:11.5px;font-weight:700}
+.flow i{font-style:normal;color:var(--accent);font-weight:900}
+
+/* ══════ 목업 컴포넌트 ══════ */
+/* 탐색기 / 창 */
+.win{border:1px solid var(--line2);margin:13px 0;background:#fff}
+.win .tb{display:flex;align-items:center;gap:9px;padding:6px 11px;background:var(--soft2);
+  border-bottom:1px solid var(--line2);font-size:11px;color:var(--muted2);font-weight:700}
+.win .tb .dots{display:flex;gap:4px}
+.win .tb .dots i{width:8px;height:8px;border-radius:50%;border:1px solid var(--line2);background:#fff;display:block}
+.win .tb .rt{margin-left:auto;font-weight:400;color:var(--muted);font-size:10px;letter-spacing:.04em}
+.win .addr{display:flex;align-items:center;gap:7px;padding:6px 11px;border-bottom:1px solid var(--line);
+  font-family:'Consolas',monospace;font-size:11px;color:var(--ink2);background:#fff}
+.win .addr .ic{font-size:10px;color:var(--muted)}
+.win .addr .path{border:1px solid var(--line);border-radius:3px;padding:3px 8px;flex:1;background:var(--soft)}
+.win .addr .path b{color:var(--accent);font-weight:700}
+.win table{margin:0;font-size:11px}
+.win th,.win td{padding:5px 11px;border-bottom:1px solid var(--line)}
+.win thead th{background:var(--soft);font-size:10px;border-bottom:1px solid var(--line2);color:var(--muted2)}
+.win tbody td{color:var(--ink2)}
+.win tbody tr.sel td{background:var(--accent-soft)}
+.win td.ic{width:22px;text-align:center;color:var(--muted);font-family:'Consolas',monospace;font-size:9.5px}
+.win .sb{padding:5px 11px;border-top:1px solid var(--line);background:var(--soft);
+  font-size:10px;color:var(--muted);display:flex;justify-content:space-between}
+.capt{font-size:10.5px;color:var(--muted);margin:-6px 0 13px;padding-left:2px}
+.capt b{color:var(--muted2);font-weight:700}
+
+/* 터미널 */
+.term{border:1px solid var(--line2);background:#fbfaf8;margin:13px 0}
+.term .th{background:var(--soft2);padding:5px 12px;font-size:10.5px;color:var(--muted2);
+  border-bottom:1px solid var(--line2);letter-spacing:.04em;font-weight:700;
+  font-family:'Consolas',monospace;display:flex;justify-content:space-between}
+.term .tb2{padding:11px 13px;font-family:'Consolas','JetBrains Mono',monospace;
+  font-size:11px;line-height:1.8;color:var(--ink2);white-space:pre-wrap}
+.term .p{color:var(--accent);font-weight:700}
+.term .c{color:var(--ink);font-weight:700}
+.term .g{color:var(--pa)}
+.term .d{color:var(--muted)}
+
+/* 폴더 트리 */
+.tree{font-family:'Consolas','JetBrains Mono',monospace;font-size:11px;line-height:1.85;
+  color:var(--ink2);background:var(--soft);border:1px solid var(--line);
+  padding:11px 14px;margin:13px 0;white-space:pre;overflow:hidden}
+.tree b{color:var(--accent);font-weight:700}
+.tree u{text-decoration:none;color:var(--px)}
+.tree i{font-style:normal;color:var(--muted)}
+.ba .tree{margin:0;border:none;background:none;padding:0;font-size:10.5px;line-height:1.8}
+
+/* HEX 뷰어 */
+.hex{border:1px solid var(--line2);margin:13px 0;background:#fff;font-family:'Consolas',monospace}
+.hex .hh{background:var(--soft);border-bottom:1px solid var(--line);padding:5px 12px;
+  font-size:10px;color:var(--muted2);letter-spacing:.06em;font-weight:700;display:flex;justify-content:space-between}
+.hex .hr{display:flex;gap:14px;padding:4px 12px;font-size:11px;border-bottom:1px solid #f2f0ec}
+.hex .hr:last-child{border-bottom:none}
+.hex .of{color:var(--muted);flex:0 0 52px}
+.hex .by{flex:1;color:var(--ink2);letter-spacing:.06em}
+.hex .by b{color:var(--accent);background:var(--accent-soft);padding:1px 2px;font-weight:700}
+.hex .as{flex:0 0 90px;color:var(--muted2);border-left:1px solid var(--line);padding-left:12px}
+.hex .as b{color:var(--accent);font-weight:700}
+
+/* JSON 뷰어 */
+.jsonv{border:1px solid var(--line2);margin:13px 0;background:#fff}
+.jsonv .jh{background:var(--soft);border-bottom:1px solid var(--line);padding:5px 12px;
+  font-size:10.5px;color:var(--muted2);font-weight:700;font-family:'Consolas',monospace;
+  display:flex;justify-content:space-between}
+.jsonv .jb{padding:11px 14px;font-family:'Consolas','JetBrains Mono',monospace;
+  font-size:11.5px;line-height:1.9;white-space:pre;color:var(--muted2)}
+.jk{color:var(--pv);font-weight:700}
+.jv{color:var(--pa);font-weight:700}
+.jnum{color:var(--accent);font-weight:700}
+.jp{color:var(--muted)}
+.jmark{background:#fff7ed;outline:1px solid var(--pnb)}
+
+/* 브라우저 목업 */
+.bw{border:1px solid var(--line2);margin:13px 0;background:#fff}
+.bw .bt{background:var(--soft2);padding:6px 11px;display:flex;gap:8px;align-items:center;
+  font-size:10.5px;font-family:'Consolas',monospace;color:var(--muted2);border-bottom:1px solid var(--line2)}
+.bw .bt .dots{display:flex;gap:4px}
+.bw .bt .dots i{width:8px;height:8px;border-radius:50%;border:1px solid var(--line2);background:#fff;display:block}
+.bw .bt .url{flex:1;background:#fff;border:1px solid var(--line);border-radius:11px;padding:3px 10px;color:var(--ink2)}
+.bw .bc{padding:16px 18px}
+.appttl{font-size:15px;font-weight:800;margin-bottom:2px}
+.appsub{font-size:11px;color:var(--muted);margin-bottom:12px}
+.fld{border:1px solid var(--line2);border-radius:4px;padding:8px 11px;background:#fff;
+  display:flex;justify-content:space-between;align-items:center;
+  font-family:'Consolas',monospace;font-size:12.5px;color:var(--ink);margin:6px 0}
+.fld .u{color:var(--muted);font-size:11px}
+.flbl{font-size:10.5px;font-weight:700;color:var(--muted2);letter-spacing:.04em;margin-top:9px}
+.btn{display:inline-block;border:1.5px solid var(--accent);color:var(--accent);background:var(--accent-soft);
+  border-radius:4px;padding:7px 18px;font-size:12px;font-weight:700;margin-top:11px}
+.res{border:1px solid var(--line);border-radius:4px;margin-top:12px}
+.res .rr{display:flex;justify-content:space-between;padding:8px 12px;border-bottom:1px solid var(--line);font-size:12.5px}
+.res .rr:last-child{border-bottom:none}
+.res .rr .k{color:var(--muted2);font-weight:700}
+.res .rr .v{font-family:'Consolas',monospace;font-weight:700;color:var(--ink)}
+.res .rr.hi{background:var(--accent-soft)}
+.res .rr.hi .v{color:var(--accent)}
+.stamp{font-size:10.5px;color:var(--muted);margin-top:9px;font-family:'Consolas',monospace}
+
+/* URL 분해 */
+.urlx{border:1px solid var(--line2);background:var(--soft);padding:13px 15px;margin:13px 0}
+.urlx .u1{font-family:'Consolas',monospace;font-size:13px;line-height:2.2;word-break:break-all}
+.urlx .u1 span{padding:2px 3px;border-bottom:2.5px solid}
+.urlx .s1{border-color:var(--pv);color:var(--pv)}
+.urlx .s2{border-color:var(--accent);color:var(--accent)}
+.urlx .s3{border-color:var(--pa);color:var(--pa)}
+.urlx .s4{border-color:var(--pd);color:var(--pd)}
+.urlx .lg{margin-top:11px;display:grid;grid-template-columns:repeat(2,1fr);gap:6px 16px}
+.urlx .lg div{font-size:11.5px;color:var(--muted2);display:flex;gap:8px;align-items:baseline}
+.urlx .lg b{flex:0 0 78px;font-family:'Consolas',monospace;font-size:11px}
+
+/* 다이어그램 */
+.dia{border:1px solid var(--line);background:#fff;padding:12px;margin:13px 0}
+.dia svg{display:block;width:100%;height:auto}
+
+/* 체크리스트 */
+.chk{margin:11px 0}
+.chk li{padding-left:26px;font-size:12.5px;margin:7px 0}
+.chk li::before{content:"";position:absolute;left:2px;top:4px;width:13px;height:13px;
+  border:1.5px solid var(--muted2);border-radius:2px;background:#fff}
+.kbd{display:inline-block;border:1px solid var(--line2);border-bottom:2px solid var(--line2);
+  border-radius:4px;padding:1px 8px;font-family:'Consolas',monospace;font-size:11.5px;
+  background:var(--soft);font-weight:700;color:var(--ink);margin:0 1px}
+
+/* 확인 문제 */
+.qa{border:1px solid var(--line2);border-top:2.5px solid var(--ink);padding:12px 15px;margin-top:18px;background:#fff}
+.qa .ql{font-size:10.5px;font-weight:700;letter-spacing:.09em;color:var(--accent);margin-bottom:6px}
+.qa ol{counter-reset:q;margin:0}
+.qa ol li{counter-increment:q;padding-left:22px;font-size:12.5px;margin:7px 0;color:var(--ink2)}
+.qa ol li::before{content:counter(q) ".";position:absolute;left:2px;top:0;font-weight:700;color:var(--muted2);font-size:12px}
+.qa .blank{display:inline-block;border-bottom:1px solid var(--line2);min-width:90px;height:14px;margin:0 3px}
+
+/* 표지 · 간지 (검정 배경 제거 → 테두리 프레임) */
+.cover{padding:12mm;display:flex}
+.cover .fr{flex:1;border:2px solid var(--ink);padding:5px;display:flex}
+.cover .fr2{flex:1;border:1px solid var(--line2);padding:14mm 13mm 10mm;display:flex;flex-direction:column}
+.cover .ck{font-size:11px;font-weight:700;letter-spacing:.16em;color:var(--accent);
+  display:flex;align-items:center;gap:11px}
+.cover .ck::after{content:"";flex:1;height:1px;background:var(--line2)}
+.cover h1{font-size:40px;line-height:1.18;margin:18px 0 12px;letter-spacing:-.03em}
+.cover .cs{font-size:14.5px;color:var(--muted2);line-height:1.7;max-width:88%}
+.cover .cs b{color:var(--ink);font-weight:700}
+.hero{margin:24px 0 0;border:1px solid var(--line2);background:var(--soft);padding:17px 19px}
+.hero .hl{font-size:10.5px;letter-spacing:.1em;color:var(--accent);font-weight:700;margin-bottom:9px}
+.hero .hs{font-size:15.5px;color:var(--ink);font-weight:500;line-height:1.6}
+.hero .hs b{font-weight:800}
+.hero .hd{margin:14px 0 11px;height:1px;background:var(--line2)}
+.hero .hrow{display:flex;align-items:baseline;gap:12px;padding:4px 0}
+.hero .hk{flex:0 0 54px;font-size:10.5px;font-weight:700;color:var(--accent);text-align:right}
+.hero .hv{flex:1;font-size:12.5px;color:var(--ink2)}
+.cover .crow{margin-top:20px;display:flex;border-top:1px solid var(--line2);border-bottom:1px solid var(--line2)}
+.cover .ci{flex:1;padding:13px 0;border-right:1px solid var(--line2)}
+.cover .ci:last-child{border-right:none;padding-left:20px}
+.cover .ci:first-child{padding-right:20px}
+.cover .ci .cl{font-size:10px;letter-spacing:.09em;color:var(--muted);font-weight:700}
+.cover .ci .cv{font-size:12.5px;margin-top:5px;color:var(--ink2);line-height:1.5}
+.cover .ci .cv b{color:var(--accent);font-weight:700}
+.cover .toc{margin-top:auto}
+.cover .toc .th{font-size:10.5px;font-weight:700;letter-spacing:.11em;color:var(--accent);margin-bottom:2px}
+.toc-list{list-style:none;padding:0;margin:0}
+.toc-list li{display:flex;align-items:baseline;gap:14px;padding:8px 0;
+  border-bottom:1px solid var(--line);font-size:13px;color:var(--ink2);margin:0;padding-left:0}
+.toc-list li::before{display:none}
+.toc-list li .ti{font-family:'Consolas',monospace;font-size:11px;color:var(--accent);flex:0 0 34px;font-weight:700}
+.toc-list li .tt{flex:1}
+.toc-list li .tg{font-size:10.5px;color:var(--muted);font-family:'Consolas',monospace}
+.cover .sig{margin-top:16px;display:flex;justify-content:space-between;align-items:baseline;
+  border-top:2px solid var(--ink);padding-top:9px}
+.cover .sig .n{font-size:12px;color:var(--ink);font-weight:700}
+.cover .sig .n span{color:var(--muted);font-family:'Consolas',monospace;font-size:10.5px;margin-left:7px;font-weight:400}
+.cover .sig .b{font-size:10.5px;color:var(--muted);letter-spacing:.07em}
+
+.divider{padding:12mm;display:flex}
+.divider .fr{flex:1;border:2px solid var(--ink);padding:5px;display:flex}
+.divider .fr2{flex:1;border:1px solid var(--line2);padding:26mm 18mm;display:flex;flex-direction:column;justify-content:center}
+.divider .part{color:var(--accent);font-size:12px;font-weight:800;letter-spacing:.16em;
+  display:flex;align-items:center;gap:12px}
+.divider .part::after{content:"";flex:1;height:1px;background:var(--line2)}
+.divider h1{font-size:42px;margin:16px 0 12px;line-height:1.18}
+.divider p{font-size:14.5px;color:var(--muted2);max-width:84%;line-height:1.75}
+.divider .route{margin-top:24px;border-top:1px solid var(--line2);padding-top:14px;
+  line-height:2.1;color:var(--muted2);font-size:12.5px}
+.divider .route b{color:var(--accent);font-family:'Consolas',monospace;font-size:11.5px}
+.divider .goal{margin-top:20px;border:1px solid var(--line2);background:var(--soft);padding:14px 16px}
+.divider .goal .gl{font-size:10.5px;font-weight:700;letter-spacing:.09em;color:var(--accent);margin-bottom:6px}
+.divider .goal ul{margin:0}
+.divider .goal li{font-size:12.5px;margin:5px 0}
+
+.pagenum{position:absolute;bottom:9mm;right:18mm;font-size:10.5px;color:var(--muted);
+  font-family:'Consolas',monospace}
+.brand{position:absolute;bottom:9mm;left:18mm;font-size:9px;color:var(--muted);letter-spacing:.03em}
+.brand b{color:var(--muted2);font-weight:500}
+
+@media print{
+  .page{overflow:hidden}
+}
+.page{overflow:hidden}
+
+
+/* ── 작업 관리자 목업 ── */
+.tm{display:flex}
+.tm .nav{flex:0 0 116px;border-right:1px solid var(--line);padding:6px 0;background:var(--soft)}
+.tm .nav div{font-size:10.5px;padding:5px 11px;color:var(--muted2)}
+.tm .nav div.on{background:#fff;color:var(--ink);font-weight:700;border-left:2px solid var(--accent)}
+.tm .bd{flex:1;min-width:0}
+.tm table{margin:0}
+.tm .hdr{display:flex;justify-content:space-between;padding:7px 12px;border-bottom:1px solid var(--line);
+  font-size:11.5px;font-weight:700;color:var(--ink)}
+.tm .hdr span{font-size:10.5px;color:var(--muted);font-weight:400}
+
+/* ── 간지 배경 ── */
+.page.divider .fr{background:var(--soft2)}
+.page.divider .fr2{background:#fff}
+.page.divider .part{background:var(--accent);color:#fff;display:inline-block;
+  padding:4px 12px;border-radius:2px;letter-spacing:.08em}
+
+/* ── 코드 목업 ── */
+.code{border:1px solid var(--line2);margin:13px 0;background:#fff}
+.code .ch2{background:var(--soft);border-bottom:1px solid var(--line);padding:5px 12px;
+  font-family:'Consolas',monospace;font-size:10.5px;color:var(--muted2);font-weight:700;
+  display:flex;justify-content:space-between}
+.code .cb2{padding:11px 14px;font-family:'Consolas','JetBrains Mono',monospace;
+  font-size:11.5px;line-height:1.85;white-space:pre;color:var(--ink2);overflow:hidden}
+.tag{color:var(--pv);font-weight:700}
+.att{color:var(--pd)}
+.str{color:var(--pa)}
+.cmt{color:var(--muted)}
+.fn{color:var(--accent);font-weight:700}
+.hl2{background:#fff7ed;outline:1px solid var(--pnb)}
+
+/* ── GitHub 화면 목업 ── */
+.gh{border:1px solid var(--line2);margin:13px 0;background:#fff}
+.gh .ghh{background:var(--soft2);border-bottom:1px solid var(--line2);padding:6px 12px;
+  font-size:11px;color:var(--muted2);font-weight:700;display:flex;justify-content:space-between}
+.gh .repo{padding:8px 12px;border-bottom:1px solid var(--line);font-size:12.5px;font-weight:700;color:var(--ink)}
+.gh .repo span{color:var(--muted);font-weight:400;font-size:11px;margin-left:8px}
+.gh .row2{display:flex;gap:10px;padding:6px 12px;border-bottom:1px solid #f4f2ef;font-size:11.5px;align-items:baseline}
+.gh .row2 .ic2{flex:0 0 16px;color:var(--muted);font-family:'Consolas',monospace;font-size:10px}
+.gh .row2 .nm{flex:0 0 34%;font-family:'Consolas',monospace;color:var(--pv)}
+.gh .row2 .msg2{flex:1;color:var(--muted2)}
+.gh .row2 .tm2{flex:0 0 62px;text-align:right;color:var(--muted);font-size:10.5px}
+/* 잔디 */
+.grass{display:flex;gap:3px;flex-wrap:wrap;margin:10px 0;max-width:100%}
+.grass i{width:11px;height:11px;border:1px solid var(--line);background:var(--soft);display:block;border-radius:2px}
+.grass i.l1{background:#f7ddcb;border-color:var(--pnb)}
+.grass i.l2{background:#eeb489;border-color:var(--pnb)}
+.grass i.l3{background:var(--accent);border-color:var(--accent)}
+
+/* ── 작업 진행 표시 ── */
+.chat .wk{font-size:10px;color:var(--muted);font-family:'Consolas',monospace;margin:0 0 5px}
+.chat .bub .ok{color:var(--pa);font-weight:700}
+.chat .bub .no{color:var(--px);font-weight:700}
+.chat .bub code{font-size:11px}
+/* ── 속성창 목업 ── */
+.props{border:1px solid var(--line2);margin:13px 0;background:#fff;max-width:72%}
+.props .ph2{background:var(--soft2);border-bottom:1px solid var(--line2);padding:6px 12px;
+  font-size:11px;font-weight:700;color:var(--muted2)}
+.props .tabs{display:flex;gap:0;border-bottom:1px solid var(--line);font-size:10.5px}
+.props .tabs span{padding:5px 12px;color:var(--muted);border-right:1px solid var(--line)}
+.props .tabs span.on{background:#fff;color:var(--ink);font-weight:700;border-bottom:2px solid var(--accent)}
+.props .pr{display:flex;padding:6px 14px;border-bottom:1px solid #f2f0ec;font-size:11.5px}
+.props .pr b{flex:0 0 84px;color:var(--muted2);font-weight:700}
+.props .pr span{flex:1;color:var(--ink2);font-family:'Consolas',monospace;font-size:11px}
+/* ── 슬래시 명령 목록 ── */
+.slash{border:1px solid var(--line2);margin:13px 0;background:#fff}
+.slash .sh{background:var(--soft);border-bottom:1px solid var(--line);padding:5px 12px;
+  font-size:10.5px;font-weight:700;color:var(--muted2);font-family:'Consolas',monospace;
+  display:flex;justify-content:space-between}
+.slash .sr{display:flex;gap:12px;padding:6px 14px;border-bottom:1px solid #f4f2ef;font-size:11.5px;align-items:baseline}
+.slash .sr:last-child{border-bottom:none}
+.slash .sc2{flex:0 0 92px;font-family:'Consolas',monospace;font-weight:700;color:var(--accent)}
+.slash .sd2{flex:1;color:var(--ink2)}
+
+/* ── 결과 이미지 예시 ── */
+.shots{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:13px 0}
+.shots.one{grid-template-columns:1fr}
+.shots figure{margin:0}
+.shots img{width:100%;display:block;border:1px solid var(--line2);border-radius:3px}
+.shots figcaption{font-size:10.5px;color:var(--muted2);margin-top:5px;font-family:'Consolas',monospace}
+.shots figcaption b{color:var(--accent)}
+
+/* ── 토크나이저 비교 ── */
+.tok{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);
+  border:1px solid var(--line);margin:13px 0}
+.tok>div{background:#fff;padding:12px 14px}
+.tok .tkh{font-size:9.5px;font-weight:700;letter-spacing:.07em;color:var(--muted);margin-bottom:6px}
+.tok .in{border:1px solid var(--line2);border-radius:4px;padding:9px 11px;font-size:14px;
+  font-family:'Consolas',monospace;background:var(--soft);color:var(--ink)}
+.tok .in i{font-style:normal;color:var(--muted);font-size:11px}
+.tok .nums{display:flex;gap:26px;margin-top:11px}
+.tok .nl{font-size:9.5px;font-weight:700;letter-spacing:.06em;color:var(--muted)}
+.tok .n{font-size:21px;font-weight:800;font-family:'Consolas',monospace;line-height:1.2;color:var(--ink)}
+.tok .n.acc{color:var(--accent)}
+.tok .ids{margin-top:10px;font-family:'Consolas',monospace;font-size:11px;color:var(--muted2);
+  background:var(--soft);border:1px solid var(--line);padding:6px 9px;border-radius:3px}
+
+/* ── 목차 ── */
+.tocx{margin:2px 0 0}
+.tocx .g{font-size:11px;font-weight:700;letter-spacing:.08em;color:var(--accent);
+  margin:14px 0 4px;padding-bottom:5px;border-bottom:1.5px solid var(--ink);
+  display:flex;justify-content:space-between;align-items:baseline}
+.tocx .g em{font-style:normal;color:var(--muted);font-weight:400;letter-spacing:0;font-size:11px}
+.tocx .it{display:flex;gap:12px;align-items:baseline;padding:6px 0;border-bottom:1px solid var(--line)}
+.tocx .no{flex:0 0 30px;font-family:'Consolas',monospace;font-size:11.5px;font-weight:700;color:var(--accent)}
+.tocx .tt{flex:1}
+.tocx .tt b{font-size:13px;font-weight:700;color:var(--ink);display:block;line-height:1.4}
+.tocx .tt span{font-size:11.5px;color:var(--muted2);display:block;margin-top:1px;line-height:1.5}
+.tocx .pgn{flex:0 0 24px;text-align:right;font-family:'Consolas',monospace;font-size:11.5px;color:var(--muted2)}
+.tocinfo{margin-top:16px;border:1px solid var(--line2);background:var(--soft);padding:12px 15px}
+.tocinfo .til{font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--accent);margin-bottom:6px}
+.tocinfo .row{display:flex;gap:10px;font-size:11.5px;color:var(--ink2);padding:3px 0;align-items:baseline}
+.tocinfo .row b{flex:0 0 88px;color:var(--ink)}
+
+/* ── 난이도 배지 ── */
+.lv{display:inline-block;font-size:9.5px;font-weight:700;border:1px solid;border-radius:10px;
+  padding:1px 8px;letter-spacing:.03em;line-height:1.6;white-space:nowrap}
+.lv1{color:var(--pv);border-color:var(--pvb);background:var(--pvs)}
+.lv2{color:var(--muted2);border-color:var(--line2);background:var(--soft)}
+.lv3{color:var(--accent);border-color:var(--pnb);background:var(--pns)}
+.lvrow{display:flex;gap:8px;align-items:center;margin:10px 0 4px}
+
+/* ── 난이도 보조 상자 ── */
+.tier{border:1px solid var(--line2);border-radius:4px;padding:11px 14px;margin:12px 0}
+.tier .tl{font-size:10px;font-weight:700;letter-spacing:.06em;margin-bottom:5px;
+  display:flex;gap:8px;align-items:center}
+.tier p{margin:0;font-size:12.5px}
+.tier ul{margin:4px 0 0}
+.tier li{font-size:12.5px;margin:5px 0}
+.tier.b{background:var(--soft)}
+.tier.b .tl{color:var(--muted2)}
+.tier.a{background:#fff;border-style:dashed}
+.tier.a .tl{color:var(--accent)}
+.tier .say{margin:8px 0 0}
+
+/* ── 자동화 회로 ── */
+.auto{border:1px solid var(--line2);border-left:3px solid var(--accent);background:var(--soft);
+  padding:10px 14px;margin:14px 0}
+.auto .al{font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--accent);margin-bottom:6px}
+.auto .ar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.auto .ar span{font-size:12px;color:var(--ink2);background:#fff;border:1px solid var(--line2);
+  border-radius:3px;padding:5px 9px}
+.auto .ar span b{color:var(--accent);font-weight:700;margin-right:5px}
+.auto .ar i{font-style:normal;color:var(--accent);font-weight:900}
+
+/* ── AI 낚시 찾기 ── */
+.trap{border:1.5px dashed var(--line2);border-radius:4px;padding:12px 15px;margin:14px 0;background:#fff}
+.trap .trl{font-size:10.5px;font-weight:700;letter-spacing:.06em;color:var(--px);margin-bottom:7px}
+.trap .fake{border:1px solid var(--line);border-left:2.5px solid var(--line2);background:var(--soft);
+  padding:10px 12px;font-size:12.5px;line-height:1.7;color:var(--ink2)}
+.trap .ask{font-size:12px;color:var(--muted2);margin-top:8px}
+.trap .ask b{color:var(--ink)}
+
+/* ── 메모 영역 (여백 활용) ── */
+.memo{margin-top:26px;border-top:1px solid var(--line);padding-top:9px}
+.memo .ml{font-size:9.5px;font-weight:700;letter-spacing:.12em;color:var(--muted);margin-bottom:8px}
+.memo .line{height:25px;border-bottom:1px dotted var(--line2)}
+
+/* ── 채팅 목업 ── */
+.chat{border:1px solid var(--line2);margin:13px 0;background:#fff}
+.chat .ch{background:var(--soft);border-bottom:1px solid var(--line);padding:6px 12px;
+  font-size:10.5px;font-weight:700;color:var(--muted2);display:flex;justify-content:space-between;
+  font-family:'Consolas',monospace}
+.chat .cb{padding:12px 13px}
+.msg{margin:8px 0;display:flex;gap:10px;align-items:flex-start}
+.msg .av{flex:0 0 44px;font-size:9.5px;font-weight:700;letter-spacing:.05em;color:var(--muted);
+  text-align:right;padding-top:9px}
+.msg .bub{flex:1;border:1px solid var(--line);border-radius:5px;padding:9px 12px;
+  font-size:12px;line-height:1.7;color:var(--ink2);background:#fff}
+.msg.u .bub{background:var(--soft);border-color:var(--line2)}
+.msg.a .bub{border-left:2.5px solid var(--accent)}
+.msg .bub b{color:var(--ink)}
+.msg .bub .tbl{margin-top:6px;font-family:'Consolas',monospace;font-size:10.5px;
+  color:var(--muted2);line-height:1.7;white-space:pre}
+
+/* ── 스펙 카드 ── */
+.stat{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);
+  border:1px solid var(--line);margin:13px 0}
+.stat>div{background:#fff;padding:11px 12px}
+.stat .sl2{font-size:9.5px;font-weight:700;color:var(--accent);letter-spacing:.07em}
+.stat .sv{font-size:14px;font-weight:800;margin-top:3px;font-family:'Consolas',monospace;line-height:1.3}
+.stat .sd{font-size:10px;color:var(--muted);margin-top:3px;line-height:1.5}
+
+/* ── 좌우 2단 ── */
+.split{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:13px 0}
+.split h3{margin-top:0}
+
+</style></head><body>
+<section class="page cover"><div class="fr"><div class="fr2">
+<div class="ck">청년취업사관학교 동대문4기</div>
+<h1>정적과 동적,<br>운영자의 눈으로 본다</h1>
+<div class="cs">기업연계형 AI 서비스·클라우드 실무 과정<br>
+<b>정적 HTML · 내장 서버 · Streamlit · 데이터 형식별 자원 비교</b></div>
+
+<div class="hero">
+  <div class="hl">이 교재의 관점</div>
+  <div class="hs">웹을 <b>만드는 법</b>이 아니라 <b>운영하는 사람의 판단 기준</b>을 배웁니다. 서버 사양, 장애 진단, 비용이 모두 정적과 동적의 차이에서 갈립니다.</div>
+  <div class="hd"></div>
+  <div class="hrow"><div class="hk">STEP 1</div><div class="hv">정적과 동적 — 무엇이 어떻게 다른가</div></div>
+  <div class="hrow"><div class="hk">STEP 2</div><div class="hv">정적 HTML 만들기 — Codex로 지시하고 검수</div></div>
+  <div class="hrow"><div class="hk">STEP 3</div><div class="hv">서버로 띄우기 — 파일을 여는 것과의 차이</div></div>
+  <div class="hrow"><div class="hk">STEP 4</div><div class="hv">Streamlit — 같은 화면을 동적으로</div></div>
+  <div class="hrow"><div class="hk">STEP 5</div><div class="hv">CSV와 JSON — 형식과 방법에 따른 자원 차이</div></div>
+  <div class="hrow"><div class="hk">STEP 6</div><div class="hv">운영 판단 — 무엇을 정적으로 둘 것인가</div></div>
+</div>
+
+<div class="sig">
+  <div class="n">부성순 <span>/ bakpak@empas.com</span></div>
+  <div class="b">AI SERVICE · CLOUD PRACTICE</div>
+</div>
+</div></div></section>
+<section class="page"><div class="rh"><div class="l"><b>WEB</b> · 여는 질문</div><div class="r">HTML만 잘 만들면 될까<span class="pg">02</span></div></div>
+<div class="kicker">OPENING QUESTION</div>
+<h1>“매출을 화면에 보여 주세요”</h1>
+<p class="lede"><strong>웹페이지에서 10GB짜리 CSV의 매출을 보여 달라.</strong> HTML만 잘 만들면 끝날까요?</p>
+
+<h2>데이터가 커지면 무엇이 달라지는가</h2>
+<table class="zebra">
+<thead><tr><th style="width:18%">데이터 크기</th><th style="width:30%">할 수 있는 방식</th><th>무엇이 한계가 되는가</th></tr></thead>
+<tbody>
+<tr><td><b>1천 행</b></td><td>HTML에 그대로 적어 둔다</td><td>한계 없음. 정적으로 충분</td></tr>
+<tr><td><b>10만 행</b></td><td>CSV를 읽어 화면을 만든다</td><td>읽는 시간. 매 요청마다 반복되면 부담</td></tr>
+<tr><td><b>1천만 행 · 10GB</b></td><td><b>전부 읽을 수 없다</b></td><td>메모리가 먼저 부족해짐</td></tr>
+</tbody>
+</table>
+<div class="warn"><b>10GB를 읽으면</b>  메모리 16GB 장비에서는 <strong>읽는 도중에 멈춥니다.</strong></div>
+
+<h2>그래서 저장 방식까지 봐야 합니다</h2>
+<table class="zebra">
+<thead><tr><th style="width:18%">저장 방식</th><th style="width:30%">꺼내는 단위</th><th>언제 쓰는가</th></tr></thead>
+<tbody>
+<tr><td><b>CSV</b></td><td>파일 전체를 읽음</td><td>작고 단순한 표. 주고받기 편함</td></tr>
+<tr><td><b>JSON</b></td><td>파일 전체를 읽음</td><td>중첩 구조. 프로그램끼리 주고받기</td></tr>
+<tr><td><b>SQL DB</b></td><td><b>필요한 행만</b> 골라서</td><td>크고 자주 바뀌는 데이터. 10GB는 여기</td></tr>
+<tr><td><b>벡터 DB</b></td><td>의미가 비슷한 것을</td><td>문장·이미지 검색, AI 서비스</td></tr>
+</tbody>
+</table>
+
+<div class="note"><strong>이 교재의 자리</strong>  합계를 보려고 10GB를 다 읽을 필요는 없습니다. 이 교재는 출발점인 <b>정적과 동적, 읽는 방법과 시점</b>을 다룹니다.</div>
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div>
+<div class="pagenum">02</div></section><section class="page"><div class="rh"><div class="l"><b>WEB</b> · 들어가며</div><div class="r">무엇을 알아야 하는가<span class="pg">03</span></div></div>
+<div class="kicker">SCOPE</div>
+<h1>운영하는 사람이 알아야 할 프론트</h1>
+<p class="lede">화면을 <em>만드는 기술</em>은 개발자의 몫입니다. 다만 그 화면을 <strong>올리고, 사양을 정하고, 장애를 진단하고, 비용을 관리하는</strong> 일은 운영자의 몫입니다.</p>
+
+<h2>일곱 가지 질문</h2>
+<table class="zebra">
+<thead><tr><th style="width:6%">　</th><th style="width:34%">질문</th><th style="width:30%">운영에서 쓰이는 곳</th><th>다루는 시점</th></tr></thead>
+<tbody>
+<tr><td><b>①</b></td><td>화면은 무엇으로 만들어지는가</td><td>장애가 어느 쪽인지 구분</td><td class="dim">학습 완료</td></tr>
+<tr><td><b>②</b></td><td><b>화면이 어떻게 전달되는가</b></td><td>서버 사양과 확장 방식 결정</td><td><b>이 교재</b></td></tr>
+<tr><td><b>③</b></td><td>한 화면에 요청이 몇 번 오가는가</td><td>전송량과 응답 시간 파악</td><td><b>이 교재</b></td></tr>
+<tr><td><b>④</b></td><td>데이터는 어디서 오는가</td><td>병목 지점 판단</td><td><b>이 교재</b></td></tr>
+<tr><td><b>⑤</b></td><td><b>한 번 만든 것을 다시 쓰는가</b></td><td>성능 개선의 가장 큰 수단</td><td><b>이 교재</b></td></tr>
+<tr><td><b>⑥</b></td><td><b>서버가 계속 살아 있어야 하는가</b></td><td>프로세스 관리와 재시작</td><td><b>이 교재</b></td></tr>
+<tr><td><b>⑦</b></td><td>누구나 받을 수 있는가</td><td>접근 제어와 보안</td><td>개념만</td></tr>
+</tbody>
+</table>
+
+<h2>①번은 이미 해봤습니다</h2>
+<div class="grid g3">
+  <div class="cell"><div class="num">HTML</div><h4>뼈대와 내용</h4><p>없으면 아예 보이지 않습니다.</p></div>
+  <div class="cell"><div class="num">CSS</div><h4>모양과 배치</h4><p>없으면 못생겼을 뿐 내용은 있습니다.</p></div>
+  <div class="cell"><div class="num">JavaScript</div><h4>동작과 반응</h4><p>없으면 눌러도 반응이 없습니다. “안 눌려요”와 “안 보여요”는 다른 문제입니다.</p></div>
+</div>
+
+<div class="note"><strong>이 교재가 다루는 범위</strong>  ②③④⑤⑥번을 집중적으로 봅니다. 공통점은 <b>모두 “서버가 얼마나 일하는가”와 연결</b>된다는 점이며, 뒤 과정의 <b>Nginx·컨테이너·서버 증설</b>을 설계하는 근거가 됩니다.</div>
+
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div>
+<div class="pagenum">03</div></section><section class="page"><div class="rh"><div class="l"><b>WEB</b> · STEP 1</div><div class="r">정적과 동적<span class="pg">04</span></div></div>
+<div class="kicker">STATIC · DYNAMIC</div>
+<h1>서버가 일을 하느냐, 하지 않느냐</h1>
+<div class="mission"><b>MISSION</b><h3>정적과 동적의 차이를 <b>서버가 요청을 받았을 때 무엇을 하는가</b>로 설명할 수 있게 된다.</h3>
+<p class="wy"><b>WHY</b> 이 차이가 <b>서버 사양·장애 진단·비용</b>의 기준이 됩니다. 운영자에게는 화면을 만드는 방법보다 이 판단이 먼저입니다.</p></div>
+
+<h2>요청을 받았을 때</h2>
+<div class="ba">
+  <div class="bad"><div class="h" style="color:var(--muted2)">정적 · Static</div><div class="m" style="font-family:'Noto Sans KR',sans-serif;font-size:12px"><b>이미 만들어진 파일을 그대로 전달</b><br><br>서버는 파일을 찾아서 보내기만 함<br>누가 요청해도 같은 결과<br><b>CPU를 거의 쓰지 않음</b></div></div>
+  <div class="good"><div class="h" style="color:var(--accent)">동적 · Dynamic</div><div class="m" style="font-family:'Noto Sans KR',sans-serif;font-size:12px"><b>요청을 받고 그때 화면을 만듦</b><br><br>데이터를 읽고 계산해서 조립<br>사람마다·시간마다 결과가 다름<br><b>요청 수만큼 서버가 일함</b></div></div>
+</div>
+
+<h2>운영자 관점에서 무엇이 달라지는가</h2>
+<table class="zebra">
+<thead><tr><th style="width:20%">항목</th><th style="width:32%">정적</th><th>동적</th></tr></thead>
+<tbody>
+<tr><td><b>서버 부하</b></td><td>요청이 늘어도 거의 일정</td><td><b>요청 수에 비례해 증가</b></td></tr>
+<tr><td><b>필요 사양</b></td><td>낮음. 네트워크가 먼저 한계</td><td>CPU·메모리가 먼저 한계</td></tr>
+<tr><td><b>장애 지점</b></td><td>파일 없음, 경로 오류</td><td>데이터 조회 지연, 메모리 부족</td></tr>
+<tr><td><b>확장 방법</b></td><td>파일을 여러 곳에 복사 (CDN)</td><td>서버를 늘리고 앞에서 분배</td></tr>
+<tr><td><b>비용</b></td><td>전송량 위주</td><td><b>연산 시간 위주</b></td></tr>
+<tr><td><b>배포</b></td><td>파일만 교체</td><td>프로그램 재시작 필요</td></tr>
+</tbody>
+</table>
+
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">04</div></section><section class="page"><div class="rh"><div class="l"><b>WEB</b> · STEP 1</div><div class="r">정적과 동적 (계속) <span class="pg">05</span></div></div>
+<h2>대부분의 서비스는 섞여 있습니다</h2>
+<p>하나의 화면이 통째로 정적이거나 동적인 경우는 드뭅니다. <em>로고와 스타일 파일은 정적</em>, <em>로그인한 사용자의 이름과 목록은 동적</em>입니다. 운영자의 일은 <strong>어느 부분이 어느 쪽인지 구분하는 것</strong>입니다.</p>
+<div class="flow"><span>요청</span><i>→</i><span>정적 파일은 그대로</span><i>+</i><span>동적 부분만 생성</span><i>→</i><span>화면 완성</span></div>
+<div class="note"><strong>여기서 나오는 운영 원칙</strong>  <b>정적으로 둘 수 있는 것은 정적으로 둡니다.</b> 서버가 매번 같은 결과를 다시 만들 이유가 없습니다. 성능 개선의 상당 부분이 “동적이던 것을 정적으로 바꾸기”에서 나옵니다.</div>
+<h2>장애가 났을 때의 판단</h2>
+<table class="zebra">
+<thead><tr><th style="width:34%">증상</th><th>먼저 의심할 곳</th></tr></thead>
+<tbody>
+<tr><td>화면이 안 뜨는데 <b>서버 CPU는 0%</b></td><td>요청이 서버까지 도달하지 않음. 네트워크·방화벽·앞단</td></tr>
+<tr><td>정적 파일만 깨지고 화면은 뜸</td><td>경로·대소문자 문제. 파일이 배포되지 않았을 수도</td></tr>
+<tr><td>요청이 늘자 응답이 느려짐</td><td>동적 처리 구간. 데이터 조회나 연산</td></tr>
+<tr><td>특정 시간대에만 느림</td><td>배치 작업이나 접속 집중 시간</td></tr>
+<tr><td>메모리가 계속 증가</td><td>동적 서버의 누수 가능성</td></tr>
+</tbody>
+</table>
+<p class="mn">증상만으로 정확한 원인을 알 수는 없습니다. 다만 <strong>어느 쪽부터 볼지</strong>를 정하는 것만으로도 대응 속도가 크게 달라집니다.</p>
+
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">05</div></section><section class="page"><div class="rh"><div class="l"><b>WEB</b> · STEP 1</div><div class="r">정적과 동적 (계속) <span class="pg">06</span></div></div>
+<h2>이 교재에서 만들 것</h2>
+<div class="tree">web-lab/
+├─ <b>static/</b>              <i>정적 — 파일을 그대로 전달</i>
+│  ├─ index.html
+│  └─ data.csv · data.json
+├─ <b>app.py</b>               <i>동적 — Streamlit</i>
+└─ <b>logs/resource_log.csv</b> <i>측정 결과가 쌓이는 곳</i></div>
+<div class="capt"><b>그림 1-1</b> 같은 데이터를 <b>정적으로 한 번, 동적으로 한 번</b> 보여 주고 자원 사용량을 비교합니다.</div>
+
+<h2>도구는 이렇게 나눕니다</h2>
+<table class="zebra">
+<thead><tr><th style="width:22%">도구</th><th style="width:30%">역할</th><th>이 교재에서</th></tr></thead>
+<tbody>
+<tr><td><b>ChatGPT</b></td><td>개념 이해, 지시서 작성</td><td>모르는 것을 묻고 계획을 세움</td></tr>
+<tr><td><b>Codex</b></td><td>파일 생성과 수정</td><td>HTML과 앱을 실제로 만듦</td></tr>
+<tr><td><b>측정 도구</b></td><td>자원 기록</td><td>앞 교재에서 만든 <code>measure.py</code></td></tr>
+</tbody>
+</table>
+<p class="mn">코드를 직접 타이핑하지 않습니다. <strong>무엇을 만들지 지시하고, 만들어진 것을 읽고 검수</strong>하는 것이 이 교재의 방식입니다.</p>
+
+<h2>현장에서 쓰는 표현</h2>
+<table class="zebra">
+<thead><tr><th style="width:26%">표현</th><th>의미</th></tr></thead>
+<tbody>
+<tr><td><b>정적 호스팅</b></td><td>파일만 올려 두고 서비스하는 방식. 서버 관리 부담이 가장 적습니다</td></tr>
+<tr><td><b>서버 사이드 렌더링</b></td><td>서버가 화면을 완성해서 보내는 방식</td></tr>
+<tr><td><b>클라이언트 사이드 렌더링</b></td><td>뼈대만 보내고 <b>브라우저가 데이터를 받아 화면을 채우는</b> 방식</td></tr>
+<tr><td><b>프리렌더링</b></td><td>동적으로 만들 화면을 <b>미리 만들어 정적 파일로</b> 저장해 두는 방식</td></tr>
+<tr><td><b>캐시</b></td><td>한 번 만든 결과를 보관해 두고 재사용하는 것</td></tr>
+</tbody>
+</table>
+<p class="mn">뒤 세 가지는 모두 <strong>“서버 일을 줄이려는”</strong> 같은 목적에서 나온 방법들입니다. 접근 방식만 다릅니다.</p>
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">06</div></section><section class="page"><div class="rh"><div class="l"><b>WEB</b> · STEP 2</div><div class="r">정적 HTML 만들기<span class="pg">07</span></div></div>
+<div class="kicker">CODEX · 바이브 코딩</div>
+<h1>지시하고 받아서 읽는다</h1>
+<div class="mission"><b>MISSION</b><h3>Codex에 지시해 정적 HTML과 데이터 파일을 만들고, <b>만들어진 결과를 읽고 검수</b>한다.</h3>
+<p class="wy"><b>WHY</b> 운영자가 HTML을 직접 작성할 일은 많지 않습니다. 다만 <b>무엇이 정적 파일인지 알아보고 구조를 읽을 수</b> 있어야 배포와 장애 대응이 됩니다.</p></div>
+
+<h2>먼저 작업 폴더를 준비합니다</h2>
+<div class="term">
+  <div class="th"><span>명령 프롬프트 또는 PowerShell</span><span>폴더 준비</span></div>
+  <div class="tb2"><span class="p">C:\ai-starter&gt;</span> <span class="c">mkdir web-lab</span>
+
+<span class="p">C:\ai-starter&gt;</span> <span class="c">cd web-lab</span>
+
+<span class="p">C:\ai-starter\web-lab&gt;</span> <span class="c">mkdir static</span></div>
+</div>
+<p class="mn">Codex에서는 <code>C:\ai-starter\web-lab 이동</code>으로 작업 위치를 지정합니다. 앞에서 한 방식과 같습니다.</p>
+
+<div class="note"><strong>바이브 코딩에서도 검수는 사람이 합니다</strong>  지시만 하고 결과를 확인하지 않으면 <b>동작하지 않는 파일이 배포</b>됩니다. 만든 뒤에는 반드시 열어 보고, 파일 개수와 내용을 확인합니다.</div>
+
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">07</div></section><section class="page"><div class="rh"><div class="l"><b>WEB</b> · STEP 2</div><div class="r">정적 HTML 만들기 (계속) <span class="pg">08</span></div></div>
+<h2>지시문</h2>
+<p>바이브 코딩에서도 <em>지시가 구체적일수록</em> 결과가 안정됩니다. 아래 지시문은 <strong>만들 파일 목록·각 파일의 조건·제한</strong>을 나눠 적었습니다. 앞에서 배운 개조식 그대로입니다.</p>
+<div class="say"><div class="sl">Codex · 작업  |  정적 페이지와 데이터 만들기</div><div class="sc"># 목표
+서버 자원 사용량을 비교하기 위한 정적 페이지와 샘플 데이터를 만든다.
+
+# 만들 파일
+1. static/index.html
+   - 제목: 장비 점검 현황
+   - 표 하나 (장비명 / 상태 / 마지막 점검일)
+   - 행 5개는 HTML 안에 직접 작성
+   - CSS 는 같은 파일 안에 간단히
+   - 외부 라이브러리 사용 금지
+
+2. static/data.csv
+   - 열: name,status,checked_at,cpu,mem
+   - 행 1000개, 값은 임의로 생성
+
+3. static/data.json
+   - data.csv 와 완전히 동일한 내용
+   - 배열 안에 객체 형태
+
+# 제한
+- 파일 3개만 생성
+- 작업 후 각 파일의 크기를 알려줄 것</div></div>
+
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">08</div></section><section class="page"><div class="rh"><div class="l"><b>WEB</b> · STEP 2</div><div class="r">정적 HTML 만들기 (계속) <span class="pg">09</span></div></div>
+<h2>받은 뒤 확인할 것</h2>
+<ul class="chk">
+<li>파일이 <strong>세 개만</strong> 생겼는가</li>
+<li><code>index.html</code>을 브라우저로 열어 표가 보이는가</li>
+<li><code>data.csv</code>와 <code>data.json</code>의 <strong>내용이 같은가</strong></li>
+<li>두 파일의 <strong>크기 차이</strong>가 얼마나 나는가</li>
+</ul>
+<div class="note"><strong>크기 차이를 기억해 두세요</strong>  같은 데이터인데 JSON이 더 큽니다. 열 이름이 <b>행마다 반복</b>되기 때문입니다. 이 차이가 STEP 5에서 전송량과 읽는 시간으로 이어집니다.</div>
+<h2>만들어진 HTML 읽기</h2>
+<div class="code">
+  <div class="ch2"><span>static/index.html · 구조</span><span>HTML</span></div>
+  <div class="cb2"><span class="tag">&lt;!DOCTYPE html&gt;</span>
+<span class="tag">&lt;html</span> <span class="att">lang</span>=<span class="str">"ko"</span><span class="tag">&gt;</span>
+<span class="tag">&lt;head&gt;</span>
+  <span class="tag">&lt;meta</span> <span class="att">charset</span>=<span class="str">"UTF-8"</span><span class="tag">&gt;</span>       <span class="cmt">← 한글 인코딩</span>
+  <span class="tag">&lt;title&gt;</span>장비 점검 현황<span class="tag">&lt;/title&gt;</span>
+  <span class="tag">&lt;style&gt;</span> ... <span class="tag">&lt;/style&gt;</span>       <span class="cmt">← 꾸미기</span>
+<span class="tag">&lt;/head&gt;</span>
+<span class="tag">&lt;body&gt;</span>
+  <span class="tag">&lt;h1&gt;</span>장비 점검 현황<span class="tag">&lt;/h1&gt;</span>
+  <span class="tag">&lt;table&gt;</span>
+    <span class="tag">&lt;tr&gt;&lt;th&gt;</span>장비명<span class="tag">&lt;/th&gt;&lt;th&gt;</span>상태<span class="tag">&lt;/th&gt;&lt;/tr&gt;</span>
+    <span class="tag">&lt;tr&gt;&lt;td&gt;</span>web-01<span class="tag">&lt;/td&gt;&lt;td&gt;</span>정상<span class="tag">&lt;/td&gt;&lt;/tr&gt;</span>   <span class="cmt">← 내용이 파일 안에 고정</span>
+  <span class="tag">&lt;/table&gt;</span>
+<span class="tag">&lt;/body&gt;</span>
+<span class="tag">&lt;/html&gt;</span></div>
+</div>
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">09</div></section><section class="page"><div class="rh"><div class="l"><b>WEB</b> · STEP 2</div><div class="r">정적 HTML 만들기 (계속) <span class="pg">10</span></div></div>
+<div class="point"><div class="pl">여기가 정적의 정의입니다</div><p>표의 내용이 <strong>파일 안에 이미 적혀 있습니다.</strong> 서버는 이 파일을 그대로 보내기만 합니다. 내용을 바꾸려면 <strong>파일을 다시 만들어 배포</strong>해야 합니다.</p></div>
+
+<h2>브라우저로 열어 확인</h2>
+<div class="bw">
+  <div class="bt"><span class="dots"><i></i><i></i><i></i></span><span class="url">file:///C:/ai-starter/web-lab/static/index.html</span></div>
+  <div class="bc">
+    <div class="appttl">장비 점검 현황</div>
+    <div class="res">
+      <div class="rr hi"><span class="k">web-01</span><span class="v">정상 · 09-04</span></div>
+      <div class="rr"><span class="k">web-02</span><span class="v">정상 · 09-04</span></div>
+      <div class="rr"><span class="k">db-01</span><span class="v">점검 필요 · 09-01</span></div>
+    </div>
+  </div>
+</div>
+<div class="capt"><b>그림 2-1</b> 주소가 <code>file:///</code>로 시작합니다. <b>서버를 거치지 않고 내 PC의 파일을 직접 연 것</b>입니다. 다음 STEP에서 이 차이를 다룹니다.</div>
+
+<h2>데이터 파일 비교</h2>
+<table class="zebra">
+<thead><tr><th style="width:22%">파일</th><th style="width:24%">크기 예시</th><th>구조</th></tr></thead>
+<tbody>
+<tr><td><code>data.csv</code></td><td>약 45 KB</td><td>첫 줄에 열 이름, 이후 값만 나열</td></tr>
+<tr><td><code>data.json</code></td><td><b>약 130 KB</b></td><td>행마다 열 이름이 반복됨</td></tr>
+</tbody>
+</table>
+<p class="mn">실제 크기는 생성된 값에 따라 다릅니다. 중요한 것은 <strong>같은 내용인데 JSON이 두세 배</strong>라는 점입니다.</p>
+
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">10</div></section><section class="page"><div class="rh"><div class="l"><b>WEB</b> · STEP 2</div><div class="r">정적 HTML 만들기 (계속) <span class="pg">11</span></div></div>
+<h2>왜 형식이 두 가지나 있는가</h2>
+<table class="zebra">
+<thead><tr><th style="width:18%">형식</th><th style="width:30%">강점</th><th>약점</th></tr></thead>
+<tbody>
+<tr><td><b>CSV</b></td><td>가볍고 단순. 엑셀에서 바로 열림</td><td>구조가 평평함. 값 안에 쉼표가 있으면 까다로움</td></tr>
+<tr><td><b>JSON</b></td><td>중첩 구조 표현 가능. 프로그램끼리 주고받기 좋음</td><td>같은 내용이라도 용량이 큼</td></tr>
+</tbody>
+</table>
+<p class="mn">표 형태의 단순한 데이터는 <strong>CSV</strong>, 항목 안에 또 항목이 들어가는 구조는 <strong>JSON</strong>이 적합합니다. 앞에서 환율 API가 JSON을 쓴 것은 <code>rates</code> 안에 여러 통화가 들어가는 <b>중첩 구조</b>였기 때문입니다.</p>
+
+<h2>정적 파일로 배포할 때 확인할 것</h2>
+<table class="zebra">
+<thead><tr><th style="width:28%">항목</th><th>이유</th></tr></thead>
+<tbody>
+<tr><td><b>파일 이름</b></td><td>영문 소문자. 서버는 대소문자를 구분합니다</td></tr>
+<tr><td><b>인코딩</b></td><td>UTF-8. 한글이 든 CSV는 특히 주의</td></tr>
+<tr><td><b>용량</b></td><td>큰 파일은 전송 시간이 그대로 체감됩니다</td></tr>
+<tr><td><b>민감 정보</b></td><td>정적 파일은 <b>주소만 알면 누구나</b> 받을 수 있습니다</td></tr>
+</tbody>
+</table>
+<div class="warn"><b>정적 파일에는 접근 제어가 없습니다</b>  화면에 링크를 걸지 않았더라도 <strong>주소를 입력하면 그대로 내려받아집니다.</strong> 개인정보나 내부 자료를 정적 폴더에 두면 안 되는 이유입니다. 접근 제어가 필요하면 <b>동적 처리</b>로 가야 합니다.</div>
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">11</div></section><section class="page"><div class="rh"><div class="l"><b>WEB</b> · STEP 3</div><div class="r">서버로 띄우기<span class="pg">12</span></div></div>
+<div class="kicker">HTTP SERVER</div>
+<h1>파일을 여는 것과 받아 오는 것</h1>
+<div class="mission"><b>MISSION</b><h3>같은 HTML을 <b>파일로 직접 열 때</b>와 <b>서버를 통해 받을 때</b>의 차이를 개발자도구로 확인한다.</h3>
+<p class="wy"><b>WHY</b> 운영 환경에서 사용자는 항상 <b>서버를 거쳐</b> 받습니다. 내 PC에서 파일을 여는 것과는 동작이 다르고, 여기서 생기는 문제가 실제로 많습니다.</p></div>
+
+<h2>파이썬 내장 서버로 띄우기</h2>
+<div class="term">
+  <div class="th"><span>static 폴더에서 실행</span><span>내장 서버</span></div>
+  <div class="tb2"><span class="p">C:\ai-starter\web-lab\static&gt;</span> <span class="c">python -m http.server 8000</span>
+<span class="g">Serving HTTP on :: port 8000 (http://[::]:8000/) ...</span>
+
+<span class="cmt"># 브라우저에서 http://localhost:8000 접속</span>
+<span class="d">::1 - - [04/Sep/2026 10:22:31] "GET / HTTP/1.1" 200 -</span>
+<span class="d">::1 - - [04/Sep/2026 10:22:31] "GET /data.csv HTTP/1.1" 200 -</span></div>
+</div>
+<div class="capt"><b>그림 3-1</b> 접속할 때마다 <b>요청 기록이 한 줄씩</b> 찍힙니다. 앞에서 배운 요청과 응답, 그리고 상태 코드 <code>200</code>이 여기서 실물로 나타납니다.</div>
+<p class="mn">설치할 것이 없습니다. 파이썬만 있으면 <strong>그 폴더를 웹으로 공개</strong>합니다. 종료는 <span class="kbd">Ctrl</span>+<span class="kbd">C</span>입니다.</p>
+
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">12</div></section><section class="page"><div class="rh"><div class="l"><b>WEB</b> · STEP 3</div><div class="r">서버로 띄우기 (계속) <span class="pg">13</span></div></div>
+<h2>무엇이 달라지는가</h2>
+<table class="zebra">
+<thead><tr><th style="width:24%">항목</th><th style="width:28%">file:/// 로 열기</th><th>http:// 로 받기</th></tr></thead>
+<tbody>
+<tr><td><b>주소</b></td><td>내 PC의 파일 경로</td><td>서버 주소와 포트</td></tr>
+<tr><td><b>다른 사람</b></td><td>볼 수 없음</td><td>같은 망이면 접속 가능</td></tr>
+<tr><td><b>요청 기록</b></td><td>남지 않음</td><td><b>서버에 로그가 남음</b></td></tr>
+<tr><td><b>대소문자</b></td><td>관대함</td><td><b>구분함</b></td></tr>
+<tr><td><b>일부 기능</b></td><td>동작하지 않는 것이 있음</td><td>정상 동작</td></tr>
+</tbody>
+</table>
+<div class="note"><strong>포트가 무엇인가</strong>  한 대의 서버에서 <b>여러 서비스를 구분하는 번호</b>입니다. 주소가 건물이라면 포트는 호수입니다. <code>8000</code>은 연습용으로 흔히 쓰는 번호이고, 웹은 기본적으로 <code>80</code>(http)과 <code>443</code>(https)을 사용합니다.</div>
+
+<div class="warn"><b>운영에서는 이 서버를 쓰지 않습니다</b>  내장 서버는 <strong>확인과 연습용</strong>입니다. 동시 접속 처리와 보안 기능이 없습니다. 실제 운영에서는 <b>Nginx</b> 같은 웹 서버를 사용합니다. 역할은 같습니다 — <b>정적 파일을 요청한 사람에게 전달</b>하는 것입니다.</div>
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">13</div></section><section class="page"><div class="rh"><div class="l"><b>WEB</b> · STEP 3</div><div class="r">서버로 띄우기 (계속) <span class="pg">14</span></div></div>
+<h2>개발자도구 — 브라우저가 무엇을 받았는지 보기</h2>
+<p>서버 로그가 <em>보낸 쪽</em>의 기록이라면, 개발자도구는 <em>받은 쪽</em>의 기록입니다. 화면 하나에 실제로 몇 개가 오갔는지는 여기서만 보입니다.</p>
+<table class="zebra">
+<thead><tr><th style="width:22%">순서</th><th>할 일</th></tr></thead>
+<tbody>
+<tr><td><b>1</b></td><td><span class="kbd">F12</span>를 눌러 개발자도구를 연다</td></tr>
+<tr><td><b>2</b></td><td><b>Network</b> 탭을 고른다</td></tr>
+<tr><td><b>3</b></td><td><b>탭을 연 상태에서</b> <span class="kbd">F5</span>로 새로 고친다</td></tr>
+</tbody>
+</table>
+<div class="warn"><b>순서가 중요합니다</b>  Network 탭을 <strong>먼저 열어야</strong> 기록됩니다. 화면을 띄운 뒤에 열면 아무것도 보이지 않습니다. “아무것도 안 나와요”의 대부분이 이 경우입니다.</div>
+<p class="mn">열이 여러 개지만 지금은 네 개만 봅니다. <b>Name</b>(무엇을), <b>Status</b>(성공했는지), <b>Size</b>(얼마나 받았는지), <b>Time</b>(얼마나 걸렸는지)입니다.</p>
+
+<h2>확인 결과</h2>
+<div class="win">
+  <div class="tb"><span class="dots"><i></i><i></i><i></i></span><span>개발자도구 · Network</span><span class="rt">F12</span></div>
+  <table>
+    <thead><tr><th style="width:30%">Name</th><th>Status</th><th>Type</th><th>Size</th><th>Time</th></tr></thead>
+    <tbody>
+      <tr class="sel"><td>localhost</td><td>200</td><td>document</td><td>2.1 KB</td><td>4 ms</td></tr>
+      <tr><td>data.csv</td><td>200</td><td>text/csv</td><td>45 KB</td><td>11 ms</td></tr>
+      <tr><td>data.json</td><td>200</td><td>application/json</td><td>130 KB</td><td>24 ms</td></tr>
+    </tbody>
+  </table>
+  <div class="sb"><span>3 requests</span><span>177 KB transferred</span></div>
+</div>
+<div class="capt"><b>그림 3-2</b> <b>Size</b>가 전송량이고 <b>Time</b>이 걸린 시간입니다. 같은 데이터인데 JSON 쪽이 크고 느립니다. 이것이 <b>전송 비용의 차이</b>입니다.</div>
+
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">14</div></section><section class="page"><div class="rh"><div class="l"><b>WEB</b> · STEP 3</div><div class="r">서버로 띄우기 (계속) <span class="pg">15</span></div></div>
+<h2>서버 쪽에서 본 같은 상황</h2>
+<p>브라우저가 파일 세 개를 요청하면 서버에도 <em>세 줄이 찍힙니다.</em> 운영에서는 이 로그가 <strong>누가 언제 무엇을 요청했는지</strong>에 대한 유일한 기록입니다.</p>
+<table class="zebra">
+<thead><tr><th style="width:26%">로그 항목</th><th>의미</th></tr></thead>
+<tbody>
+<tr><td>접속 주소</td><td>누가 요청했는지</td></tr>
+<tr><td>시각</td><td>언제</td></tr>
+<tr><td><code>GET /data.csv</code></td><td>무엇을 요청했는지</td></tr>
+<tr><td><code>200</code></td><td>정상 처리 여부</td></tr>
+</tbody>
+</table>
+<p class="mn">앞에서 배운 <strong>정규표현식</strong>이 여기서 쓰입니다. 이런 로그에서 상태 코드별 건수를 세거나 특정 시간대만 뽑아내는 작업이 운영의 일상입니다.</p>
+
+<h2>정적 서버의 특징 확인</h2>
+<ul class="chk">
+<li>브라우저를 여러 개 열어 동시에 접속해도 <strong>서버 CPU가 거의 오르지 않는다</strong></li>
+<li>새로 고쳐도 <strong>항상 같은 화면</strong>이 나온다</li>
+<li>파일을 수정하고 새로 고치면 <strong>바뀐 내용이 바로 반영</strong>된다</li>
+<li>없는 주소를 입력하면 <code>404</code>가 기록된다</li>
+</ul>
+<div class="point"><div class="pl">정적 서버가 하는 일의 전부</div><p><strong>요청받은 경로에 해당하는 파일을 찾아서 보낸다.</strong> 그 외에는 아무것도 하지 않습니다. 그래서 요청이 늘어도 부하가 거의 변하지 않습니다.</p></div>
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">15</div></section><section class="page"><div class="rh"><div class="l"><b>WEB</b> · STEP 4</div><div class="r">Streamlit으로 동적<span class="pg">16</span></div></div>
+<div class="kicker">DYNAMIC</div>
+<h1>요청을 받고 그때 만든다</h1>
+<div class="mission"><b>MISSION</b><h3>같은 데이터를 <b>동적으로</b> 보여 주는 앱을 만들고, 정적 서버와 무엇이 다른지 확인한다.</h3>
+<p class="wy"><b>WHY</b> 동적 서버는 요청마다 <b>파이썬 프로그램이 실행</b>됩니다. 부하가 어디서 생기는지 눈으로 봐야 사양 산정이 가능합니다.</p></div>
+
+<h2>Streamlit을 쓰는 이유</h2>
+<div class="grid g2">
+  <div class="cell"><div class="num">준비가 간단</div><h4>파이썬만 알면 됨</h4><p>HTML·CSS 없이 몇 줄로 화면이 만들어집니다. <b>동적의 동작</b>을 보는 것이 목적이라 충분합니다.</p></div>
+  <div class="cell"><div class="num">동작이 보임</div><h4>새로 고칠 때마다 실행</h4><p>버튼을 누르거나 값을 바꾸면 <b>코드가 다시 실행</b>됩니다. 동적의 성격이 그대로 드러납니다.</p></div>
+</div>
+<p class="mn">이후 과정에서 배우는 <strong>FastAPI</strong>는 API 서버를 만드는 도구입니다. 여기서는 <b>화면을 빠르게 띄워 자원 사용을 관찰</b>하는 것이 목적이라 Streamlit을 사용합니다.</p>
+
+<div class="code">
+  <div class="ch2"><span>설치</span><span>PIP</span></div>
+  <div class="cb2">python -m pip install streamlit pandas</div>
+</div>
+<p class="mn">설치 용량이 작지 않습니다. <strong>pandas가 함께 딸려 오는 라이브러리</strong>가 많기 때문입니다. 운영 서버에 무엇을 설치하는지도 관리 대상이라는 점을 기억해 두세요.</p>
+
+<h2>동적 서버가 살아 있다는 것</h2>
+<table class="zebra">
+<thead><tr><th style="width:28%">정적 서버</th><th>동적 서버</th></tr></thead>
+<tbody>
+<tr><td>파일만 있으면 됨</td><td><b>프로세스가 계속 실행</b>되어야 함</td></tr>
+<tr><td>죽어도 파일은 남음</td><td>죽으면 서비스가 중단됨</td></tr>
+<tr><td>메모리를 거의 쓰지 않음</td><td>실행 중 계속 메모리를 점유</td></tr>
+<tr><td>재시작 개념이 없음</td><td><b>배포할 때마다 재시작</b> 필요</td></tr>
+</tbody>
+</table>
+
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">16</div></section><section class="page"><div class="rh"><div class="l"><b>WEB</b> · STEP 4</div><div class="r">Streamlit으로 동적 (계속) <span class="pg">17</span></div></div>
+<h2>지시문</h2>
+<div class="say"><div class="sl">Codex · 작업  |  동적 페이지 만들기</div><div class="sc"># 목표
+정적 페이지와 같은 내용을 Streamlit 으로 보여 준다.
+
+# 만들 파일
+app.py
+
+# 화면
+- 제목: 장비 점검 현황 (동적)
+- static/data.csv 를 읽어 표로 표시
+- 상태별로 걸러 볼 수 있는 선택 상자
+- 현재 시각과 조회 건수 표시
+
+# 조건
+- 파일 1개만 생성
+- 데이터 읽기는 함수로 분리할 것 (뒤에서 캐시를 붙일 예정)
+- 초보자가 읽을 수 있게 짧게, 한국어 주석
+
+# 작업 후
+각 줄이 무슨 역할인지 표로 설명해줘.</div></div>
+
+<div class="term">
+  <div class="th"><span>실행</span><span>Streamlit</span></div>
+  <div class="tb2"><span class="p">C:\ai-starter\web-lab&gt;</span> <span class="c">streamlit run app.py</span>
+<span class="g">Local URL: http://localhost:8501</span></div>
+</div>
+<div class="capt"><b>그림 4-1</b> 브라우저가 자동으로 열립니다. 종료는 <span class="kbd">Ctrl</span>+<span class="kbd">C</span>입니다.</div>
+<h2>동적의 성격을 직접 확인</h2>
+<ul class="chk">
+<li>선택 상자를 바꿀 때마다 <strong>화면이 다시 만들어진다</strong></li>
+<li>현재 시각이 <strong>새로 고칠 때마다 달라진다</strong> — 정적에서는 불가능</li>
+<li>같은 동작을 반복하면 <strong>서버 쪽 CPU가 오른다</strong></li>
+<li>터미널을 닫으면 <strong>화면이 더 이상 뜨지 않는다</strong></li>
+</ul>
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">17</div></section><section class="page"><div class="rh"><div class="l"><b>WEB</b> · STEP 4</div><div class="r">Streamlit으로 동적 (계속) <span class="pg">18</span></div></div>
+<div class="point"><div class="pl">마지막 항목이 핵심입니다</div><p>정적 파일은 서버가 파일만 전달하면 끝이지만, 동적은 <strong>프로그램이 계속 살아 있어야</strong> 합니다. 그래서 운영에서 <b>프로세스 관리·재시작·감시</b>가 필요해집니다.</p></div>
+
+<h2>정적과 동적, 같은 화면 다른 구조</h2>
+<table class="zebra">
+<thead><tr><th style="width:24%">항목</th><th style="width:28%">정적 (index.html)</th><th>동적 (app.py)</th></tr></thead>
+<tbody>
+<tr><td><b>표의 내용</b></td><td>파일에 이미 적혀 있음</td><td>요청 시점에 CSV를 읽어 만듦</td></tr>
+<tr><td><b>데이터 변경</b></td><td>HTML을 다시 만들어 배포</td><td><b>CSV만 바꾸면 즉시 반영</b></td></tr>
+<tr><td><b>필터 기능</b></td><td>불가능 (또는 JS 필요)</td><td>선택 상자로 바로 가능</td></tr>
+<tr><td><b>서버 부하</b></td><td>거의 없음</td><td>요청마다 읽고 계산</td></tr>
+<tr><td><b>중단되면</b></td><td>파일은 그대로 남음</td><td><b>서비스가 멈춤</b></td></tr>
+</tbody>
+</table>
+
+<h2>측정 준비</h2>
+<p>다음 STEP에서 자원을 비교합니다. 앞 교재에서 만든 <code>measure.py</code>를 <em>같은 폴더에 복사</em>해 두면 그대로 사용할 수 있습니다.</p>
+<div class="tree">web-lab/
+├─ static/       index.html · data.csv · data.json
+├─ app.py
+├─ <b>measure.py</b>     <i>← 앞 교재에서 만든 측정 도구</i>
+└─ logs/         resource_log.csv</div>
+<div class="note"><strong>여기서 배운 것</strong>  정적은 <b>결과를 미리 만들어 두는 것</b>, 동적은 <b>요청받고 그때 만드는 것</b>입니다. 편의성과 부하가 맞바꿔집니다. 운영자의 판단은 <b>어느 쪽 비용을 감당할지</b>를 고르는 일입니다.</div>
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">18</div></section><section class="page"><div class="rh"><div class="l"><b>WEB</b> · STEP 5</div><div class="r">CSV와 JSON<span class="pg">19</span></div></div>
+<div class="kicker">DATA FORMAT · 자원 비교</div>
+<h1>같은 데이터, 다른 비용</h1>
+<div class="mission"><b>MISSION</b><h3>같은 1000행 데이터를 <b>형식·읽는 방법·읽는 시점</b>을 바꿔 가며 측정하고 CSV에 쌓는다.</h3>
+<p class="wy"><b>WHY</b> 운영에서 성능 문제의 상당수는 <b>데이터를 어떻게 읽는가</b>에서 생깁니다. 형식보다 <b>방법과 시점</b>이 더 큰 차이를 만듭니다.</p></div>
+
+<h2>세 가지를 비교합니다</h2>
+<table class="zebra">
+<thead><tr><th style="width:22%">비교 축</th><th style="width:34%">경우</th><th>알고 싶은 것</th></tr></thead>
+<tbody>
+<tr><td><b>형식</b></td><td>CSV vs JSON</td><td>파일 크기와 읽는 시간 차이</td></tr>
+<tr><td><b>방법</b></td><td>표준 모듈 vs pandas</td><td>편의성과 자원의 맞바꿈</td></tr>
+<tr><td><b>시점</b></td><td>매번 읽기 vs 한 번 읽고 재사용</td><td><b>가장 큰 차이가 나는 지점</b></td></tr>
+</tbody>
+</table>
+
+<h2>측정 전에 알아 둘 것</h2>
+<p>측정 결과가 흔들리지 않게 <em>조건을 맞춰야</em> 합니다. 앞 부록에서 다룬 원칙을 그대로 적용합니다.</p>
+<ul class="chk">
+<li>같은 조건으로 <strong>최소 5회</strong> 반복한다</li>
+<li><strong>첫 회는 따로 표시</strong>한다 — 라이브러리 로딩이 포함됩니다</li>
+<li>다른 프로그램을 정리하고 측정한다</li>
+<li>읽은 데이터를 <strong>쌓아 두지 않는다</strong> — 측정 자체가 누수가 됩니다</li>
+</ul>
+
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">19</div></section><section class="page"><div class="rh"><div class="l"><b>WEB</b> · STEP 5</div><div class="r">CSV와 JSON (계속) <span class="pg">20</span></div></div>
+<h2>지시문</h2>
+<div class="say"><div class="sl">Codex · 작업  |  데이터 읽기 비교</div><div class="sc"># 목표
+같은 데이터를 여러 방법으로 읽어 자원 사용량을 비교한다.
+
+# 대상
+static/data.csv · static/data.json (1000행, 내용 동일)
+
+# 측정할 경우
+1. csv 모듈로 data.csv 읽기
+2. json 모듈로 data.json 읽기
+3. pandas 로 data.csv 읽기
+4. pandas 로 data.json 읽기
+
+# 방법
+- measure.py 의 ResourceLogger 를 사용할 것
+- 각 경우를 5회 반복
+- 결과는 logs/resource_log.csv 에 누적
+
+# 기록할 항목
+target=파일명, action="read", lib=사용한 방법,
+읽은 행 수, 파일 크기
+
+# 제한
+- 새 측정 함수를 만들지 말고 기존 것을 사용
+- 결과 데이터는 변수에 담기만 하고 쌓아 두지 말 것</div></div>
+<p class="mn">마지막 제한이 중요합니다. 읽은 데이터를 리스트에 계속 쌓으면 <strong>측정 자체가 메모리 누수</strong>가 됩니다. 앞 부록에서 다룬 내용입니다.</p>
+
+<div class="note"><strong>비교 전에 예상해 보세요</strong>  어느 것이 가장 빠르고 어느 것이 메모리를 가장 많이 쓸지 <b>먼저 적어 두고</b> 측정합니다. 예상과 다르면 그 이유를 찾는 과정이 학습이 됩니다.</div>
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">20</div></section><section class="page"><div class="rh"><div class="l"><b>WEB</b> · STEP 5</div><div class="r">CSV와 JSON (계속) <span class="pg">21</span></div></div>
+<h2>결과 읽기</h2>
+<div class="code">
+  <div class="ch2"><span>logs/resource_log.csv · 정리한 예</span><span>CSV</span></div>
+  <div class="cb2">lib          파일     크기     mem_delta_mb   elapsed_s
+csv 모듈     CSV      45 KB    0.9            0.004
+json 모듈    JSON    130 KB    2.4            0.012
+pandas       CSV      45 KB    <span class="fn">18.6</span>           <span class="fn">0.310</span>
+pandas       JSON    130 KB    <span class="fn">19.2</span>           <span class="fn">0.340</span></div>
+</div>
+<div class="capt"><b>그림 5-1</b> 실제 값은 환경에 따라 다릅니다. 보아야 할 것은 <b>자릿수의 차이</b>입니다.</div>
+
+<h2>무엇을 읽어야 하나</h2>
+<table class="zebra">
+<thead><tr><th style="width:26%">관찰</th><th>해석</th></tr></thead>
+<tbody>
+<tr><td><b>JSON이 크고 느리다</b></td><td>열 이름이 행마다 반복되어 파일이 크고, 구조를 해석하는 비용이 더 듭니다</td></tr>
+<tr><td><b>pandas가 압도적으로 무겁다</b></td><td>첫 사용 시 <b>라이브러리 로딩</b>이 포함됩니다. 그리고 표 형태 구조를 만드는 비용이 있습니다</td></tr>
+<tr><td><b>그럼에도 pandas를 쓰는 이유</b></td><td>집계·정렬·결합이 한 줄로 됩니다. <b>데이터가 클수록</b> 이 이점이 커집니다</td></tr>
+</tbody>
+</table>
+<div class="point"><div class="pl">판단 기준</div><p><strong>1000행을 한 번 읽어 표로 보여 주는 정도</strong>라면 표준 모듈로 충분합니다. <strong>수십만 행을 집계</strong>해야 한다면 pandas가 맞습니다. 도구가 좋은 것이 아니라 <strong>일에 맞는 것</strong>이 좋은 것입니다.</p></div>
+
+<h2>가장 큰 차이 — 읽는 시점</h2>
+<p>지금까지는 <em>읽는 방법</em>을 비교했습니다. 그런데 운영에서 훨씬 큰 차이를 만드는 것은 <strong>매번 읽느냐, 한 번 읽어 두고 쓰느냐</strong>입니다.</p>
+<div class="ba">
+  <div class="bad"><div class="h" style="color:var(--px)">요청마다 읽기</div><div class="m" style="font-family:'Noto Sans KR',sans-serif;font-size:12px">사용자 100명이 접속<br>→ 파일을 <u>100번</u> 읽음<br>→ 같은 작업을 100번 반복<br><br>데이터가 클수록 치명적</div></div>
+  <div class="good"><div class="h" style="color:var(--accent)">한 번 읽고 재사용</div><div class="m" style="font-family:'Noto Sans KR',sans-serif;font-size:12px">첫 요청에서 한 번 읽음<br>→ 이후에는 <b>메모리에서 꺼내 씀</b><br>→ 두 번째부터 거의 즉시<br><br>대신 메모리를 계속 점유</div></div>
+</div>
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">21</div></section><section class="page"><div class="rh"><div class="l"><b>WEB</b> · STEP 5</div><div class="r">CSV와 JSON (계속) <span class="pg">22</span></div></div>
+<div class="note"><strong>이것이 캐시입니다</strong>  앞에서 “옛 화면이 보이는 이유”로 만난 그 개념입니다. <b>한 번 만든 결과를 보관해 두고 재사용</b>하는 것입니다. 속도를 얻고 메모리를 내어 주는 맞바꿈이며, <b>원본이 바뀌어도 옛 값이 보이는 문제</b>가 함께 따라옵니다.</div>
+<h2>캐시를 켜고 비교하기</h2>
+<div class="say"><div class="sl">Codex · 작업  |  캐시 적용 비교</div><div class="sc"># 목표
+app.py 의 데이터 읽기에 캐시를 적용하고 전후를 비교한다.
+
+# 작업
+- 데이터를 읽는 함수에 Streamlit 캐시를 적용
+- 캐시를 적용하지 않은 버전도 함께 남겨 비교할 수 있게
+- 화면에 "읽는 데 걸린 시간"을 표시
+
+# 확인 방법
+- 캐시 없이 새로 고침 5회 → 시간 기록
+- 캐시 적용 후 새로 고침 5회 → 시간 기록
+- 두 결과를 logs/resource_log.csv 에 누적
+
+# 제한
+- app.py 만 수정
+- 화면 구성과 문구는 유지</div></div>
+
+<table class="zebra">
+<thead><tr><th style="width:26%">상황</th><th style="width:24%">첫 요청</th><th>두 번째부터</th></tr></thead>
+<tbody>
+<tr><td><b>캐시 없음</b></td><td>0.31초</td><td>0.31초 — 매번 같음</td></tr>
+<tr><td><b>캐시 적용</b></td><td>0.31초</td><td><b>0.001초 내외</b></td></tr>
+</tbody>
+</table>
+<p class="mn">첫 요청은 같습니다. 차이는 <strong>두 번째부터</strong> 나타납니다. 그래서 캐시 효과는 <b>접속이 많을수록</b> 커집니다.</p>
+
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">22</div></section><section class="page"><div class="rh"><div class="l"><b>WEB</b> · STEP 5</div><div class="r">CSV와 JSON (계속) <span class="pg">23</span></div></div>
+<h2>캐시를 쓸 때 판단할 것</h2>
+<table class="zebra">
+<thead><tr><th style="width:30%">질문</th><th>판단</th></tr></thead>
+<tbody>
+<tr><td>데이터가 자주 바뀌는가</td><td>자주 바뀌면 캐시가 <b>옛 값을 보여 줍니다.</b> 유효 시간을 짧게</td></tr>
+<tr><td>사용자마다 다른 데이터인가</td><td>개인별 데이터를 공용 캐시에 두면 <b>다른 사람 것이 보일 수</b> 있습니다</td></tr>
+<tr><td>메모리 여유가 있는가</td><td>캐시는 메모리를 계속 점유합니다. 큰 데이터는 신중히</td></tr>
+<tr><td>얼마나 오래 보관할 것인가</td><td>유효 시간을 정해 두지 않으면 서버가 살아 있는 동안 유지됩니다</td></tr>
+</tbody>
+</table>
+<h2>운영에서의 캐시 위치</h2>
+<table class="zebra">
+<thead><tr><th style="width:26%">어디에 두는가</th><th style="width:28%">보관되는 것</th><th>특징</th></tr></thead>
+<tbody>
+<tr><td><b>브라우저</b></td><td>이미지·CSS 같은 정적 파일</td><td>사용자 쪽에 남음. 비우려면 새로 고침</td></tr>
+<tr><td><b>앞단 서버</b></td><td>완성된 화면</td><td>서버 부하를 가장 크게 줄임</td></tr>
+<tr><td><b>애플리케이션</b></td><td>조회 결과, 계산 결과</td><td>오늘 실습한 위치</td></tr>
+<tr><td><b>데이터베이스</b></td><td>자주 조회되는 데이터</td><td>DB가 스스로 관리</td></tr>
+</tbody>
+</table>
+<p class="mn">“옛 화면이 보인다”는 문제가 생기면 <strong>이 네 곳 중 어디에 남아 있는지</strong>부터 찾아야 합니다.</p>
+
+<div class="warn"><b>캐시는 문제를 감추기도 합니다</b>  느린 조회를 캐시로 덮으면 당장은 빨라지지만 <strong>근본 원인은 남아 있습니다.</strong> 캐시가 비워지는 순간(재시작·만료) 원래 속도가 그대로 드러납니다. 캐시는 <b>대책이지 해결이 아닙니다.</b></div>
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">23</div></section><section class="page"><div class="rh"><div class="l"><b>WEB</b> · STEP 6</div><div class="r">운영 판단<span class="pg">24</span></div></div>
+<div class="kicker">DECISION</div>
+<h1>무엇을 정적으로 둘 것인가</h1>
+<div class="mission"><b>MISSION</b><h3>측정 결과를 근거로 <b>어느 부분을 정적으로 두고 어느 부분을 동적으로 유지할지</b> 판단하는 기준을 세운다.</h3>
+<p class="wy"><b>WHY</b> 성능 개선의 상당 부분이 “동적이던 것을 정적으로 바꾸기”에서 나옵니다. 다만 <b>전부 정적으로 만들 수는 없습니다.</b> 경계를 정하는 것이 운영자의 판단입니다.</p></div>
+
+<h2>판단 기준</h2>
+<table class="zebra">
+<thead><tr><th style="width:30%">질문</th><th style="width:22%">그렇다면</th><th>이유</th></tr></thead>
+<tbody>
+<tr><td>누가 봐도 같은 내용인가</td><td><b>정적</b></td><td>매번 다시 만들 이유가 없습니다</td></tr>
+<tr><td>얼마나 자주 바뀌는가</td><td>하루 1회 이하면 <b>정적</b></td><td>바뀔 때만 다시 만들어 배포</td></tr>
+<tr><td>사람마다 다른가</td><td><b>동적</b></td><td>로그인 정보, 개인 목록</td></tr>
+<tr><td>실시간 값인가</td><td><b>동적</b></td><td>현재 시각, 재고, 모니터링 수치</td></tr>
+<tr><td>입력을 받아 처리하는가</td><td><b>동적</b></td><td>검색, 신청, 주문</td></tr>
+</tbody>
+</table>
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">24</div></section><section class="page"><div class="rh"><div class="l"><b>WEB</b> · STEP 6</div><div class="r">운영 판단 (계속) <span class="pg">25</span></div></div>
+<div class="point"><div class="pl">현실적인 중간 지점</div><p>동적으로 만든 결과를 <strong>일정 시간 보관해 두는 것</strong>이 캐시입니다. “완전 정적”과 “매번 동적” 사이에서 대부분의 서비스가 여기에 자리합니다. <strong>얼마나 오래 보관할지</strong>가 실제 설계의 핵심입니다.</p></div>
+
+<h2>사양을 정할 때</h2>
+<table class="zebra">
+<thead><tr><th style="width:24%">구성</th><th style="width:30%">먼저 한계에 닿는 것</th><th>대응</th></tr></thead>
+<tbody>
+<tr><td><b>정적 위주</b></td><td>네트워크 전송량</td><td>파일 압축, 파일을 여러 지점에 복사</td></tr>
+<tr><td><b>동적 위주</b></td><td>CPU 또는 메모리</td><td>캐시 적용, 서버 증설</td></tr>
+<tr><td><b>데이터 조회 많음</b></td><td>디스크 또는 DB</td><td>조회 줄이기, 결과 재사용</td></tr>
+</tbody>
+</table>
+<p class="mn">어느 것이 먼저 한계에 닿는지는 <strong>측정해 봐야 압니다.</strong> 앞에서 만든 CSV가 그 근거가 됩니다.</p>
+
+<h2>서비스를 점검할 때의 질문</h2>
+<ul class="chk">
+<li>이 화면은 <strong>누가 봐도 같은 내용</strong>인가</li>
+<li>데이터가 실제로 <strong>얼마나 자주 바뀌는가</strong> — 체감이 아니라 기록으로</li>
+<li>같은 결과를 <strong>몇 번이나 다시 만들고</strong> 있는가</li>
+<li>가장 오래 걸리는 구간은 <strong>읽는 쪽인가 계산하는 쪽인가</strong></li>
+<li>요청이 두 배가 되면 <strong>무엇이 먼저 한계에 닿는가</strong></li>
+</ul>
+<p class="mn">이 다섯 가지에 답할 수 있으면 <strong>사양 산정과 개선 우선순위</strong>가 정해집니다. 답하지 못하는 항목이 있다면 그것이 먼저 측정해야 할 대상입니다.</p>
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">25</div></section><section class="page"><div class="rh"><div class="l"><b>WEB</b> · STEP 6</div><div class="r">운영 판단 (계속) <span class="pg">26</span></div></div>
+<h2>측정 결과를 해석시키기</h2>
+<div class="say"><div class="sl">ChatGPT · 대화  |  결과 해석</div><div class="sc"># 역할
+너는 성능 측정 결과를 해석하는 시스템 엔지니어다.
+
+# 데이터
+[logs/resource_log.csv 내용 붙여넣기]
+
+# 요청
+1. 형식(CSV/JSON)·방법(표준/pandas)·시점(캐시 유무)이
+   각각 자원 사용에 얼마나 영향을 주는지 정리해줘.
+2. 이 중 운영에서 가장 먼저 개선할 항목과 그 이유를 알려줘.
+3. 측정 방법에서 신뢰하기 어려운 부분이 있으면 지적해줘.
+4. 추가로 측정하면 좋을 조건을 3가지 제안해줘.
+
+# 제한
+데이터에 없는 내용을 추측해서 쓰지 말 것.</div></div>
+
+<h2>더 알아보기</h2>
+<div class="say"><div class="sl">ChatGPT · 대화  |  운영 관점 질문</div><div class="sc"># 질문 목록 (하나씩)
+- 정적 파일을 여러 지점에 복사해 두는 방식(CDN)은 어떤 문제를 해결하나요?
+- 동적 서버를 여러 대로 늘릴 때 앞에서 분배하는 장치는 무엇을 하나요?
+- 캐시를 비워야 하는 상황은 언제인가요? 어떻게 비우나요?
+- 정적 파일도 압축해서 보내면 무엇이 좋아지나요? 대신 무엇을 쓰나요?
+- 동적 서버가 죽었을 때 자동으로 다시 띄우는 방법에는 무엇이 있나요?
+- 같은 화면을 매번 만드는 대신 미리 만들어 두는 방식은 어떤 경우에 쓰나요?</div></div>
+<p class="mn">여기서 나오는 개념들이 <strong>이후 과정의 Nginx·로드밸런서·컨테이너</strong>로 이어집니다. 지금은 <b>왜 그런 장치가 필요한지</b>를 이해해 두면 됩니다.</p>
+
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">26</div></section><section class="page"><div class="rh"><div class="l"><b>WEB</b> · STEP 6</div><div class="r">운영 판단 (계속) <span class="pg">27</span></div></div>
+<h2>비용 관점에서 한 번 더</h2>
+<table class="zebra">
+<thead><tr><th style="width:24%">구성</th><th style="width:30%">비용이 늘어나는 요인</th><th>줄이는 방법</th></tr></thead>
+<tbody>
+<tr><td><b>정적</b></td><td>전송량 — 사용자가 많을수록</td><td>압축, 파일 크기 줄이기, 캐시 헤더</td></tr>
+<tr><td><b>동적</b></td><td>연산 시간 — 요청이 많을수록</td><td>캐시, 조회 줄이기, 결과 재사용</td></tr>
+<tr><td><b>데이터 보관</b></td><td>용량과 보관 기간</td><td>오래된 로그 정리, 압축 보관</td></tr>
+</tbody>
+</table>
+<p class="mn">클라우드에서는 이 세 가지가 <strong>각각 다른 항목으로 청구</strong>됩니다. 어디에서 비용이 발생하는지 알아야 줄일 곳을 찾을 수 있습니다.</p>
+
+<h2>여기까지 한 일</h2>
+<ul class="chk">
+<li>정적과 동적을 <strong>서버가 무엇을 하는가</strong>로 구분했다</li>
+<li>같은 내용을 정적 HTML과 Streamlit으로 각각 만들었다</li>
+<li>파일로 열 때와 서버로 받을 때의 차이를 확인했다</li>
+<li>CSV·JSON·pandas·캐시를 측정해 <strong>자원 차이를 숫자로</strong> 확인했다</li>
+<li>무엇을 정적으로 둘지 판단하는 기준을 세웠다</li>
+</ul>
+<div class="point"><div class="pl">다음으로</div><p>이후 과정에서 <strong>Nginx로 정적 파일을 서비스하고, 컨테이너로 동적 서버를 띄우고, 여러 대로 늘리는 것</strong>을 다룹니다. 오늘 만든 판단 기준이 그때의 설계 근거가 됩니다.</p></div>
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">27</div></section><script>
+document.querySelectorAll(".say").forEach(function(box){
+  var sc=box.querySelector(".sc"), sl=box.querySelector(".sl"); if(!sc||!sl)return;
+  var b=document.createElement("button"); b.className="copybtn"; b.textContent="복사"; b.type="button";
+  b.onclick=function(){navigator.clipboard.writeText(sc.innerText).then(function(){b.textContent="복사됨";setTimeout(function(){b.textContent="복사"},1200)})};
+  sl.appendChild(b);
+});
+</script></body></html>
