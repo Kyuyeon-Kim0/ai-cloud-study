@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PIL 이미지 처리 프롬프트 모음</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: Arial, "Malgun Gothic", sans-serif;
+    background: #f4f6f8;
+    color: #1f2937;
+  }
+  .wrap {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 36px 20px 60px;
+  }
+  h1 {
+    margin: 0 0 8px;
+    font-size: 30px;
+  }
+  .sub {
+    margin: 0 0 28px;
+    color: #667085;
+  }
+  .card {
+    background: white;
+    border: 1px solid #e4e7ec;
+    border-radius: 14px;
+    margin-bottom: 18px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,.04);
+  }
+  .card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 18px 20px;
+    border-bottom: 1px solid #eaecf0;
+  }
+  h2 {
+    margin: 0;
+    font-size: 19px;
+  }
+  .copy-btn {
+    border: 0;
+    border-radius: 8px;
+    padding: 9px 14px;
+    cursor: pointer;
+    background: #111827;
+    color: white;
+    font-weight: 700;
+  }
+  .copy-btn:hover {
+    opacity: .88;
+  }
+  pre {
+    margin: 0;
+    padding: 20px;
+    white-space: pre-wrap;
+    word-break: keep-all;
+    font-family: Consolas, "Malgun Gothic", monospace;
+    font-size: 15px;
+    line-height: 1.7;
+    background: #fbfcfd;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>PIL 이미지 처리 프롬프트 모음</h1>
+  <p class="sub">각 항목의 복사 버튼을 누르면 해당 프롬프트가 클립보드에 복사됩니다.</p>
+  
+    <section class="card">
+      <div class="card-head">
+        <h2>1. PIL 기능 조사</h2>
+        <button class="copy-btn" onclick="copyPrompt('p1', this)">복사</button>
+      </div>
+      <pre id="p1">파이썬 PIL(Pillow)로 할 수 있는 기능을 표로 정리해줘.
+
+- AI 및 컴퓨터비전에서 사용하는 기능 중심
+- 자율주행 관련 활용 사례 포함
+- 각 기능이 실제 어디에 필요한지 설명
+- 초보자 기준으로 설명</pre>
+    </section>
+    
+    <section class="card">
+      <div class="card-head">
+        <h2>2. 이미지 불러오기</h2>
+        <button class="copy-btn" onclick="copyPrompt('p2', this)">복사</button>
+      </div>
+      <pre id="p2">PIL을 이용해서 이미지 파일을 불러오는 가장 간단한 코드를 작성해줘.
+
+- 이미지 크기 확인
+- 이미지 모드 확인
+- 이미지 형식 확인
+- 함수는 사용하지 않음</pre>
+    </section>
+    
+    <section class="card">
+      <div class="card-head">
+        <h2>3. 이미지 흑백 변환</h2>
+        <button class="copy-btn" onclick="copyPrompt('p3', this)">복사</button>
+      </div>
+      <pre id="p3">PIL로 이미지를 불러온 후 흑백 이미지로 변환하는 코드를 작성해줘.
+
+- L 모드 사용
+- 원본 이미지 모드 확인
+- 변환 후 이미지 모드 확인
+- AI 및 컴퓨터비전에서 필요한 이유 설명</pre>
+    </section>
+    
+    <section class="card">
+      <div class="card-head">
+        <h2>4. Image.open 옵션 확인</h2>
+        <button class="copy-btn" onclick="copyPrompt('p4', this)">복사</button>
+      </div>
+      <pre id="p4">PIL의 Image.open()에서 사용할 수 있는 옵션을 정리해줘.
+
+- 옵션명
+- 의미
+- 사용방법
+- 간단한 코드
+- AI 이미지 처리에서 필요한 경우 설명</pre>
+    </section>
+    
+    <section class="card">
+      <div class="card-head">
+        <h2>5. convert 옵션 확인</h2>
+        <button class="copy-btn" onclick="copyPrompt('p5', this)">복사</button>
+      </div>
+      <pre id="p5">PIL의 convert()에서 사용할 수 있는 이미지 모드를 정리해줘.
+
+- 1
+- L
+- RGB
+- RGBA
+- CMYK
+- HSV
+- LAB
+- P
+- I
+- F
+- 각 모드의 특징과 AI 활용 분야를 표로 정리</pre>
+    </section>
+    
+    <section class="card">
+      <div class="card-head">
+        <h2>6. 1 모드와 L 모드 자원 비교</h2>
+        <button class="copy-btn" onclick="copyPrompt('p6', this)">복사</button>
+      </div>
+      <pre id="p6">같은 이미지를 PIL의 1 모드와 L 모드로 변환했을 때 자원 사용량을 비교해줘.
+
+확인 항목:
+- 해상도
+- 전체 픽셀 수
+- 픽셀당 bit
+- 예상 메모리 사용량
+- 실제 RAM 사용량
+- 처리시간
+
+시스템 엔지니어 관점에서 설명해줘.</pre>
+    </section>
+    
+    <section class="card">
+      <div class="card-head">
+        <h2>7. 이미지 처리 시스템 자원 확인</h2>
+        <button class="copy-btn" onclick="copyPrompt('p7', this)">복사</button>
+      </div>
+      <pre id="p7">시스템 엔지니어 관점에서 PIL 이미지 처리 시 확인해야 하는 시스템 자원을 정리해줘.
+
+확인 항목:
+- CPU
+- RAM
+- 처리시간
+- Disk
+- Disk I/O
+- GPU
+- VRAM
+
+각 자원이 이미지 처리 성능과 어떤 관계가 있는지 설명해줘.</pre>
+    </section>
+    
+    <section class="card">
+      <div class="card-head">
+        <h2>8. 이미지 자원 초간단 함수</h2>
+        <button class="copy-btn" onclick="copyPrompt('p8', this)">복사</button>
+      </div>
+      <pre id="p8">PIL 이미지 처리에 사용하는 자원을 확인하는 초간단 Python 함수를 작성해줘.
+
+함수명:
+check_image()
+
+입력:
+이미지 모드
+
+확인:
+- 이미지 크기
+- RAM 사용량
+- 처리시간
+
+psutil을 사용하고 초보자가 이해할 수 있도록 작성해줘.</pre>
+    </section>
+    
+    <section class="card">
+      <div class="card-head">
+        <h2>9. 이미지 크기와 모드 시뮬레이션</h2>
+        <button class="copy-btn" onclick="copyPrompt('p9', this)">복사</button>
+      </div>
+      <pre id="p9">하나의 이미지에서 이미지 크기와 이미지 모드를 변경하면서 시스템 자원 차이를 비교하는 Python 프로그램을 작성해줘.
+
+이미지 크기:
+- 원본
+- 800x600
+- 640x480
+- 320x240
+
+이미지 모드:
+- RGB
+- L
+- 1
+
+확인 항목:
+- 해상도
+- 픽셀 수
+- Byte/Pixel
+- 예상 메모리
+- 처리시간
+
+결과는 pandas DataFrame 표로 출력해줘.</pre>
+    </section>
+    
+    <section class="card">
+      <div class="card-head">
+        <h2>10. 이미지 개발자 요구사항 확인</h2>
+        <button class="copy-btn" onclick="copyPrompt('p10', this)">복사</button>
+      </div>
+      <pre id="p10">시스템 엔지니어가 AI·컴퓨터비전 이미지 처리 개발자에게 시스템 구축 전에 확인해야 하는 사항을 정리해줘.
+
+반드시 확인:
+- 이미지 해상도
+- 이미지 모드
+- 파일 형식
+- 이미지 한 장 크기
+- FPS
+- 카메라 수
+- 실시간/배치 처리
+- 목표 처리시간
+- AI 모델
+- GPU 사용 여부
+- 저장 여부
+- 보관 기간
+- 네트워크 전송 방식
+- 동시 처리량
+
+개발자의 요구사항이 CPU, RAM, GPU, Network, Disk 용량 산정과 어떻게 연결되는지 설명해줘.</pre>
+    </section>
+    
+    <section class="card">
+      <div class="card-head">
+        <h2>11. 종합 실습</h2>
+        <button class="copy-btn" onclick="copyPrompt('p11', this)">복사</button>
+      </div>
+      <pre id="p11">AI·컴퓨터비전 이미지 처리 서비스를 구축한다고 가정하고 시스템 용량 산정 실습을 만들어줘.
+
+다음 순서로 진행:
+이미지 속성 확인
+→ 이미지 Resize
+→ 이미지 Mode 변경
+→ 이미지 한 장의 자원 계산
+→ FPS 적용
+→ 카메라 수 적용
+→ 초당 데이터 처리량 계산
+→ 하루 데이터량 계산
+→ 저장 기간 적용
+→ CPU/RAM/GPU/Network/Disk 요구사항 검토
+
+각 단계는 한 단계씩 진행하고, 내가 실행 또는 이해했다고 확인하면 다음 단계로 넘어가줘.</pre>
+    </section>
+    
+</div>
+
+<script>
+async function copyPrompt(id, button) {
+  const text = document.getElementById(id).innerText;
+  try {
+    await navigator.clipboard.writeText(text);
+    const old = button.innerText;
+    button.innerText = "복사완료";
+    setTimeout(() => button.innerText = old, 1200);
+  } catch (e) {
+    const textarea = document.createElement("textarea");
+    textarea.value = text;
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand("copy");
+    document.body.removeChild(textarea);
+    const old = button.innerText;
+    button.innerText = "복사완료";
+    setTimeout(() => button.innerText = old, 1200);
+  }
+}
+</script>
+</body>
+</html>

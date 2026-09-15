@@ -1,0 +1,1600 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>파이썬으로 시스템 자원 측정하기</title><style>
+:root{
+  --ink:#1c1b19; --paper:#ffffff; --soft:#f7f6f3; --soft2:#efedea;
+  --line:#e3e0db; --line2:#cfcbc4; --muted:#86827b; --muted2:#5b574f;
+  --accent:#b23c0a; --accent-soft:#fdf3ec; --ink2:#2f2d2a;
+  --pn:#b23c0a; --pnb:#e8c3ad; --pns:#fdf5f0;
+  --pv:#1d4ed8; --pvb:#c3d0f2; --pvs:#f2f5fd;
+  --pa:#15803d; --pab:#bcdcc8; --pas:#f1f7f3;
+  --pd:#6d28d9; --pdb:#d4c6f5; --pds:#f7f3fe;
+  --px:#b91c1c; --pxb:#f0c3c3; --pxs:#fdf2f2;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+body{font-family:'Noto Sans KR','Malgun Gothic',sans-serif;color:var(--ink);
+  background:#eceae5;line-height:1.65;font-weight:400;letter-spacing:-.003em}
+
+.page{width:210mm;min-height:297mm;background:var(--paper);margin:8mm auto;
+  padding:17mm 18mm 14mm;position:relative;box-shadow:0 1px 14px rgba(0,0,0,.07)}
+@page{size:A4 portrait;margin:0}
+@media print{
+  body{background:#fff}
+  .page{margin:0;box-shadow:none;page-break-after:always;break-after:page}
+  .page:last-child{page-break-after:auto}
+}
+
+/* ── 러닝헤드 ── */
+.rh{display:flex;justify-content:space-between;align-items:baseline;
+  margin-bottom:22px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+.rh .l{font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--muted2)}
+.rh .l b{color:var(--accent)}
+.rh .r{font-size:10.5px;color:var(--muted);letter-spacing:.04em;display:flex;align-items:baseline;gap:12px}
+.rh .r .pg{font-family:'Consolas','JetBrains Mono',monospace;font-size:12px;font-weight:700;
+  color:var(--ink);letter-spacing:.06em;border:1px solid var(--line2);padding:1px 7px;border-radius:3px}
+
+/* ── 제목 ── */
+.kicker{font-size:11px;font-weight:700;letter-spacing:.12em;color:var(--accent);margin-bottom:7px}
+h1{font-size:26px;font-weight:900;line-height:1.25;letter-spacing:-.02em;margin-bottom:9px}
+.lede{font-size:13px;color:var(--muted2);line-height:1.7;margin-bottom:14px;max-width:96%}
+.lede em,em{font-style:normal;color:var(--accent);font-weight:700}
+h2{font-size:12.5px;font-weight:700;letter-spacing:.09em;color:var(--accent);
+  margin:17px 0 9px;display:flex;align-items:center;gap:10px}
+h2::after{content:"";flex:1;height:1px;background:var(--line)}
+h3{font-size:15px;font-weight:700;margin:14px 0 5px}
+p{font-size:13px;line-height:1.75;margin:8px 0;color:var(--ink2)}
+strong{font-weight:700;color:var(--ink)}
+.mn{font-size:11.5px;color:var(--muted);margin-top:5px}
+code{font-family:'Consolas','JetBrains Mono',monospace;background:var(--soft2);
+  padding:1px 5px;border-radius:3px;font-size:12px;color:var(--accent)}
+
+ul,ol{margin:9px 0;padding-left:0;list-style:none}
+li{font-size:13px;line-height:1.7;margin:8px 0;padding-left:010px;padding-left:22px;position:relative;color:var(--ink2)}
+ul li::before{content:"";position:absolute;left:3px;top:10px;width:5px;height:5px;
+  background:var(--accent);border-radius:50%}
+li strong{color:var(--ink)}
+
+/* ── 표 ── */
+table{width:100%;border-collapse:collapse;margin:13px 0;font-size:12.5px}
+th,td{padding:9px 12px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line)}
+thead th{border-bottom:1.5px solid var(--ink);font-weight:700;font-size:11.5px;color:var(--ink);background:var(--soft)}
+tbody td{color:var(--muted2)}
+tbody td b{color:var(--ink);font-weight:700}
+table.zebra tbody tr:nth-child(even) td{background:#faf9f7}
+
+/* ── 그리드 카드 ── */
+.grid{display:grid;gap:1px;background:var(--line);border:1px solid var(--line);margin:14px 0}
+.grid.g3{grid-template-columns:repeat(3,1fr)}
+.grid.g2{grid-template-columns:repeat(2,1fr)}
+.grid.g4{grid-template-columns:repeat(4,1fr)}
+.cell{background:var(--paper);padding:15px 14px}
+.cell .num{font-size:10.5px;font-weight:700;letter-spacing:.08em;color:var(--accent)}
+.cell h4{font-size:13.5px;font-weight:700;margin:6px 0 4px;line-height:1.35}
+.cell p{font-size:11.5px;color:var(--muted2);margin:0;line-height:1.6}
+
+/* ── 강조 박스 ── */
+.point{border-left:2.5px solid var(--accent);padding:3px 0 3px 16px;margin:16px 0}
+.point .pl{font-size:10.5px;font-weight:700;letter-spacing:.09em;color:var(--accent);margin-bottom:4px}
+.point p{margin:0;font-size:13px;color:var(--ink2)}
+.note{background:var(--soft);border:1px solid var(--line);border-radius:4px;
+  padding:12px 15px;margin:14px 0;font-size:12.5px;color:var(--muted2);line-height:1.7}
+.note strong{color:var(--accent)}
+.warn{background:var(--pxs);border:1px solid var(--pxb);border-radius:4px;
+  padding:12px 15px;margin:14px 0;font-size:12.5px;color:var(--ink2);line-height:1.7}
+.warn b{color:var(--px)}
+
+.mission{border:1px solid var(--line2);border-left:3px solid var(--accent);
+  background:var(--accent-soft);padding:13px 16px;margin:13px 0;border-radius:4px}
+.mission b{font-size:10.5px;font-weight:700;letter-spacing:.1em;color:var(--accent)}
+.mission h3{font-size:14px;margin:4px 0 0;line-height:1.5}
+.mission .wy{margin:9px 0 0;padding-top:8px;border-top:1px solid var(--line2);font-size:12px;color:var(--muted2);line-height:1.65}
+.mission .wy b{color:var(--ink);font-size:10.5px;letter-spacing:.06em}
+.why{background:var(--soft);border:1px solid var(--line2);border-left:3px solid var(--ink);
+  padding:12px 16px;margin:13px 0;border-radius:4px}
+.why p{color:var(--ink2);margin:0;font-size:12.5px}
+.why b{color:var(--ink);font-size:10.5px;letter-spacing:.08em}
+
+.kw{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
+.kw span{background:#fff;border:1px solid var(--line2);padding:4px 10px;border-radius:20px;
+  font-size:11px;font-weight:700;color:var(--ink2)}
+.kw span::before{content:"# ";color:var(--accent)}
+
+/* ── 정의 목록 / 비유 ── */
+.deflist{margin:12px 0}
+.deflist .d{display:flex;gap:16px;padding:11px 0;border-bottom:1px solid var(--line)}
+.deflist .d:last-child{border-bottom:none}
+.deflist .dt{flex:0 0 27%;font-weight:700;font-size:13px}
+.deflist .dt small{display:block;font-weight:400;color:var(--muted);font-size:11px;margin-top:1px}
+.deflist .dd{flex:1;font-size:12.5px;color:var(--muted2);line-height:1.65}
+
+/* ── 실습 박스 (검정 헤더 제거) ── */
+.lab{margin:16px 0;border:1.5px solid var(--ink);background:#fff}
+.lab-head{padding:10px 18px;display:flex;align-items:center;gap:12px;
+  border-bottom:1.5px solid var(--ink);background:var(--soft)}
+.lab-head .badge{font-size:10px;font-weight:700;letter-spacing:.1em;
+  border:1px solid var(--ink);padding:2px 9px;border-radius:2px;color:var(--ink);background:#fff}
+.lab-head h3{font-size:16px;margin:0;font-weight:700;color:var(--ink)}
+.lab-head .t{margin-left:auto;font-size:10.5px;color:var(--muted);font-family:'Consolas',monospace}
+.lab-body{padding:15px 18px 16px}
+.steps{counter-reset:st;list-style:none;padding:0;margin:0}
+.steps>li{counter-increment:st;position:relative;padding:0 0 13px 40px;margin:0;font-size:13.5px;
+  line-height:1.55;border-left:1px solid var(--line2);margin-left:13px}
+.steps>li:last-child{border-left:1px solid transparent;padding-bottom:0}
+.steps>li::before{content:counter(st);position:absolute;left:-13px;top:-2px;width:26px;height:26px;
+  background:#fff;border:1.5px solid var(--ink);color:var(--ink);border-radius:50%;
+  display:grid;place-items:center;font-weight:700;font-size:12.5px}
+.steps>li .lt{font-weight:700;color:var(--ink)}
+.steps>li .ls{display:block;font-size:12px;color:var(--muted);font-weight:400;margin-top:2px;line-height:1.6}
+
+/* ── 프롬프트 박스 ── */
+.say{margin:10px 0;background:#fff;border:1px solid var(--line2);border-left:3px solid var(--accent);
+  border-radius:4px;padding:10px 13px}
+.say .sl{font-size:10.5px;font-weight:700;letter-spacing:.05em;color:var(--accent);
+  margin-bottom:4px;display:flex;align-items:center;gap:6px}
+.say .sc{font-family:'Consolas','JetBrains Mono',monospace;font-size:12px;line-height:1.65;
+  color:var(--ink);font-weight:500;white-space:pre-wrap}
+.copybtn{margin-left:auto;font-family:'Noto Sans KR',sans-serif;font-size:10px;font-weight:700;
+  letter-spacing:0;color:var(--muted2);background:#fff;border:1px solid var(--line2);
+  border-radius:3px;padding:2px 9px;cursor:pointer;line-height:1.4}
+.copybtn:hover{border-color:var(--accent);color:var(--accent)}
+@media print{.copybtn{display:none}}
+
+/* ── 품사/토큰 칩 ── */
+.chip{display:inline-flex;align-items:baseline;gap:5px;font-size:12px;font-weight:700;
+  padding:3px 8px;border-radius:3px;border:1px solid;margin:3px 4px 3px 0;line-height:1.3}
+.c-n{color:var(--pn);border-color:var(--pnb);background:var(--pns)}
+.c-v{color:var(--pv);border-color:var(--pvb);background:var(--pvs)}
+.c-a{color:var(--pa);border-color:var(--pab);background:var(--pas)}
+.c-d{color:var(--pd);border-color:var(--pdb);background:var(--pds)}
+.c-x{color:var(--px);border-color:var(--pxb);background:var(--pxs)}
+.c-o{color:var(--muted);border-color:var(--line2);background:var(--soft);font-weight:400}
+
+.parse{border:1px solid var(--line2);background:#fff;margin:13px 0}
+.parse .ph{background:var(--soft);border-bottom:1px solid var(--line);padding:6px 14px;
+  font-size:10.5px;font-weight:700;letter-spacing:.06em;color:var(--muted2);display:flex;justify-content:space-between}
+.parse .pb{padding:13px 14px 14px}
+.parse .src{font-size:14.5px;font-weight:500;color:var(--ink);line-height:1.7}
+.parse .arw{font-size:10.5px;color:var(--muted);letter-spacing:.06em;margin:11px 0 7px;
+  display:flex;align-items:center;gap:10px}
+.parse .arw::after{content:"";flex:1;height:1px;background:var(--line)}
+
+/* ── before / after ── */
+.ba{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);
+  border:1px solid var(--line);margin:13px 0}
+.ba>div{background:#fff;padding:12px 14px}
+.ba .h{font-size:10.5px;font-weight:700;letter-spacing:.06em;margin-bottom:8px}
+.ba .bad .h{color:var(--muted)}
+.ba .bad .h::before{content:"✕ ";color:var(--px)}
+.ba .good .h{color:var(--accent)}
+.ba .good .h::before{content:"✓ ";color:var(--pa)}
+.ba .m{font-family:'Consolas','JetBrains Mono',monospace;font-size:11px;line-height:1.7;color:var(--ink2)}
+.ba .m u{text-decoration:none;background:var(--pxs);color:var(--px);padding:0 3px;border-radius:2px}
+.ba .m b{background:var(--pas);color:var(--pa);padding:0 3px;border-radius:2px;font-weight:500}
+.ba .why2{font-size:11px;color:var(--muted);margin-top:8px;line-height:1.6}
+
+/* ── 막대 ── */
+.bars{margin:12px 0}
+.bars .b{display:flex;align-items:center;gap:10px;margin:7px 0}
+.bars .bl{flex:0 0 26%;font-size:12px;font-weight:700;color:var(--ink)}
+.bars .bt{flex:1;height:13px;background:var(--soft2);border:1px solid var(--line)}
+.bars .bf{height:100%;background:var(--accent)}
+.bars .bf.q{background:var(--line2)}
+.bars .bv{flex:0 0 60px;text-align:right;font-family:'Consolas',monospace;font-size:11px;color:var(--muted2)}
+
+/* ── 흐름 ── */
+.flow{display:flex;gap:5px;align-items:center;flex-wrap:wrap;margin:11px 0}
+.flow span{border:1px solid var(--line2);padding:6px 10px;background:#fff;border-radius:4px;
+  font-size:11.5px;font-weight:700}
+.flow i{font-style:normal;color:var(--accent);font-weight:900}
+
+/* ══════ 목업 컴포넌트 ══════ */
+/* 탐색기 / 창 */
+.win{border:1px solid var(--line2);margin:13px 0;background:#fff}
+.win .tb{display:flex;align-items:center;gap:9px;padding:6px 11px;background:var(--soft2);
+  border-bottom:1px solid var(--line2);font-size:11px;color:var(--muted2);font-weight:700}
+.win .tb .dots{display:flex;gap:4px}
+.win .tb .dots i{width:8px;height:8px;border-radius:50%;border:1px solid var(--line2);background:#fff;display:block}
+.win .tb .rt{margin-left:auto;font-weight:400;color:var(--muted);font-size:10px;letter-spacing:.04em}
+.win .addr{display:flex;align-items:center;gap:7px;padding:6px 11px;border-bottom:1px solid var(--line);
+  font-family:'Consolas',monospace;font-size:11px;color:var(--ink2);background:#fff}
+.win .addr .ic{font-size:10px;color:var(--muted)}
+.win .addr .path{border:1px solid var(--line);border-radius:3px;padding:3px 8px;flex:1;background:var(--soft)}
+.win .addr .path b{color:var(--accent);font-weight:700}
+.win table{margin:0;font-size:11px}
+.win th,.win td{padding:5px 11px;border-bottom:1px solid var(--line)}
+.win thead th{background:var(--soft);font-size:10px;border-bottom:1px solid var(--line2);color:var(--muted2)}
+.win tbody td{color:var(--ink2)}
+.win tbody tr.sel td{background:var(--accent-soft)}
+.win td.ic{width:22px;text-align:center;color:var(--muted);font-family:'Consolas',monospace;font-size:9.5px}
+.win .sb{padding:5px 11px;border-top:1px solid var(--line);background:var(--soft);
+  font-size:10px;color:var(--muted);display:flex;justify-content:space-between}
+.capt{font-size:10.5px;color:var(--muted);margin:-6px 0 13px;padding-left:2px}
+.capt b{color:var(--muted2);font-weight:700}
+
+/* 터미널 */
+.term{border:1px solid var(--line2);background:#fbfaf8;margin:13px 0}
+.term .th{background:var(--soft2);padding:5px 12px;font-size:10.5px;color:var(--muted2);
+  border-bottom:1px solid var(--line2);letter-spacing:.04em;font-weight:700;
+  font-family:'Consolas',monospace;display:flex;justify-content:space-between}
+.term .tb2{padding:11px 13px;font-family:'Consolas','JetBrains Mono',monospace;
+  font-size:11px;line-height:1.8;color:var(--ink2);white-space:pre-wrap}
+.term .p{color:var(--accent);font-weight:700}
+.term .c{color:var(--ink);font-weight:700}
+.term .g{color:var(--pa)}
+.term .d{color:var(--muted)}
+
+/* 폴더 트리 */
+.tree{font-family:'Consolas','JetBrains Mono',monospace;font-size:11px;line-height:1.85;
+  color:var(--ink2);background:var(--soft);border:1px solid var(--line);
+  padding:11px 14px;margin:13px 0;white-space:pre;overflow:hidden}
+.tree b{color:var(--accent);font-weight:700}
+.tree u{text-decoration:none;color:var(--px)}
+.tree i{font-style:normal;color:var(--muted)}
+.ba .tree{margin:0;border:none;background:none;padding:0;font-size:10.5px;line-height:1.8}
+
+/* HEX 뷰어 */
+.hex{border:1px solid var(--line2);margin:13px 0;background:#fff;font-family:'Consolas',monospace}
+.hex .hh{background:var(--soft);border-bottom:1px solid var(--line);padding:5px 12px;
+  font-size:10px;color:var(--muted2);letter-spacing:.06em;font-weight:700;display:flex;justify-content:space-between}
+.hex .hr{display:flex;gap:14px;padding:4px 12px;font-size:11px;border-bottom:1px solid #f2f0ec}
+.hex .hr:last-child{border-bottom:none}
+.hex .of{color:var(--muted);flex:0 0 52px}
+.hex .by{flex:1;color:var(--ink2);letter-spacing:.06em}
+.hex .by b{color:var(--accent);background:var(--accent-soft);padding:1px 2px;font-weight:700}
+.hex .as{flex:0 0 90px;color:var(--muted2);border-left:1px solid var(--line);padding-left:12px}
+.hex .as b{color:var(--accent);font-weight:700}
+
+/* JSON 뷰어 */
+.jsonv{border:1px solid var(--line2);margin:13px 0;background:#fff}
+.jsonv .jh{background:var(--soft);border-bottom:1px solid var(--line);padding:5px 12px;
+  font-size:10.5px;color:var(--muted2);font-weight:700;font-family:'Consolas',monospace;
+  display:flex;justify-content:space-between}
+.jsonv .jb{padding:11px 14px;font-family:'Consolas','JetBrains Mono',monospace;
+  font-size:11.5px;line-height:1.9;white-space:pre;color:var(--muted2)}
+.jk{color:var(--pv);font-weight:700}
+.jv{color:var(--pa);font-weight:700}
+.jnum{color:var(--accent);font-weight:700}
+.jp{color:var(--muted)}
+.jmark{background:#fff7ed;outline:1px solid var(--pnb)}
+
+/* 브라우저 목업 */
+.bw{border:1px solid var(--line2);margin:13px 0;background:#fff}
+.bw .bt{background:var(--soft2);padding:6px 11px;display:flex;gap:8px;align-items:center;
+  font-size:10.5px;font-family:'Consolas',monospace;color:var(--muted2);border-bottom:1px solid var(--line2)}
+.bw .bt .dots{display:flex;gap:4px}
+.bw .bt .dots i{width:8px;height:8px;border-radius:50%;border:1px solid var(--line2);background:#fff;display:block}
+.bw .bt .url{flex:1;background:#fff;border:1px solid var(--line);border-radius:11px;padding:3px 10px;color:var(--ink2)}
+.bw .bc{padding:16px 18px}
+.appttl{font-size:15px;font-weight:800;margin-bottom:2px}
+.appsub{font-size:11px;color:var(--muted);margin-bottom:12px}
+.fld{border:1px solid var(--line2);border-radius:4px;padding:8px 11px;background:#fff;
+  display:flex;justify-content:space-between;align-items:center;
+  font-family:'Consolas',monospace;font-size:12.5px;color:var(--ink);margin:6px 0}
+.fld .u{color:var(--muted);font-size:11px}
+.flbl{font-size:10.5px;font-weight:700;color:var(--muted2);letter-spacing:.04em;margin-top:9px}
+.btn{display:inline-block;border:1.5px solid var(--accent);color:var(--accent);background:var(--accent-soft);
+  border-radius:4px;padding:7px 18px;font-size:12px;font-weight:700;margin-top:11px}
+.res{border:1px solid var(--line);border-radius:4px;margin-top:12px}
+.res .rr{display:flex;justify-content:space-between;padding:8px 12px;border-bottom:1px solid var(--line);font-size:12.5px}
+.res .rr:last-child{border-bottom:none}
+.res .rr .k{color:var(--muted2);font-weight:700}
+.res .rr .v{font-family:'Consolas',monospace;font-weight:700;color:var(--ink)}
+.res .rr.hi{background:var(--accent-soft)}
+.res .rr.hi .v{color:var(--accent)}
+.stamp{font-size:10.5px;color:var(--muted);margin-top:9px;font-family:'Consolas',monospace}
+
+/* URL 분해 */
+.urlx{border:1px solid var(--line2);background:var(--soft);padding:13px 15px;margin:13px 0}
+.urlx .u1{font-family:'Consolas',monospace;font-size:13px;line-height:2.2;word-break:break-all}
+.urlx .u1 span{padding:2px 3px;border-bottom:2.5px solid}
+.urlx .s1{border-color:var(--pv);color:var(--pv)}
+.urlx .s2{border-color:var(--accent);color:var(--accent)}
+.urlx .s3{border-color:var(--pa);color:var(--pa)}
+.urlx .s4{border-color:var(--pd);color:var(--pd)}
+.urlx .lg{margin-top:11px;display:grid;grid-template-columns:repeat(2,1fr);gap:6px 16px}
+.urlx .lg div{font-size:11.5px;color:var(--muted2);display:flex;gap:8px;align-items:baseline}
+.urlx .lg b{flex:0 0 78px;font-family:'Consolas',monospace;font-size:11px}
+
+/* 다이어그램 */
+.dia{border:1px solid var(--line);background:#fff;padding:12px;margin:13px 0}
+.dia svg{display:block;width:100%;height:auto}
+
+/* 체크리스트 */
+.chk{margin:11px 0}
+.chk li{padding-left:26px;font-size:12.5px;margin:7px 0}
+.chk li::before{content:"";position:absolute;left:2px;top:4px;width:13px;height:13px;
+  border:1.5px solid var(--muted2);border-radius:2px;background:#fff}
+.kbd{display:inline-block;border:1px solid var(--line2);border-bottom:2px solid var(--line2);
+  border-radius:4px;padding:1px 8px;font-family:'Consolas',monospace;font-size:11.5px;
+  background:var(--soft);font-weight:700;color:var(--ink);margin:0 1px}
+
+/* 확인 문제 */
+.qa{border:1px solid var(--line2);border-top:2.5px solid var(--ink);padding:12px 15px;margin-top:18px;background:#fff}
+.qa .ql{font-size:10.5px;font-weight:700;letter-spacing:.09em;color:var(--accent);margin-bottom:6px}
+.qa ol{counter-reset:q;margin:0}
+.qa ol li{counter-increment:q;padding-left:22px;font-size:12.5px;margin:7px 0;color:var(--ink2)}
+.qa ol li::before{content:counter(q) ".";position:absolute;left:2px;top:0;font-weight:700;color:var(--muted2);font-size:12px}
+.qa .blank{display:inline-block;border-bottom:1px solid var(--line2);min-width:90px;height:14px;margin:0 3px}
+
+/* 표지 · 간지 (검정 배경 제거 → 테두리 프레임) */
+.cover{padding:12mm;display:flex}
+.cover .fr{flex:1;border:2px solid var(--ink);padding:5px;display:flex}
+.cover .fr2{flex:1;border:1px solid var(--line2);padding:14mm 13mm 10mm;display:flex;flex-direction:column}
+.cover .ck{font-size:11px;font-weight:700;letter-spacing:.16em;color:var(--accent);
+  display:flex;align-items:center;gap:11px}
+.cover .ck::after{content:"";flex:1;height:1px;background:var(--line2)}
+.cover h1{font-size:40px;line-height:1.18;margin:18px 0 12px;letter-spacing:-.03em}
+.cover .cs{font-size:14.5px;color:var(--muted2);line-height:1.7;max-width:88%}
+.cover .cs b{color:var(--ink);font-weight:700}
+.hero{margin:24px 0 0;border:1px solid var(--line2);background:var(--soft);padding:17px 19px}
+.hero .hl{font-size:10.5px;letter-spacing:.1em;color:var(--accent);font-weight:700;margin-bottom:9px}
+.hero .hs{font-size:15.5px;color:var(--ink);font-weight:500;line-height:1.6}
+.hero .hs b{font-weight:800}
+.hero .hd{margin:14px 0 11px;height:1px;background:var(--line2)}
+.hero .hrow{display:flex;align-items:baseline;gap:12px;padding:4px 0}
+.hero .hk{flex:0 0 54px;font-size:10.5px;font-weight:700;color:var(--accent);text-align:right}
+.hero .hv{flex:1;font-size:12.5px;color:var(--ink2)}
+.cover .crow{margin-top:20px;display:flex;border-top:1px solid var(--line2);border-bottom:1px solid var(--line2)}
+.cover .ci{flex:1;padding:13px 0;border-right:1px solid var(--line2)}
+.cover .ci:last-child{border-right:none;padding-left:20px}
+.cover .ci:first-child{padding-right:20px}
+.cover .ci .cl{font-size:10px;letter-spacing:.09em;color:var(--muted);font-weight:700}
+.cover .ci .cv{font-size:12.5px;margin-top:5px;color:var(--ink2);line-height:1.5}
+.cover .ci .cv b{color:var(--accent);font-weight:700}
+.cover .toc{margin-top:auto}
+.cover .toc .th{font-size:10.5px;font-weight:700;letter-spacing:.11em;color:var(--accent);margin-bottom:2px}
+.toc-list{list-style:none;padding:0;margin:0}
+.toc-list li{display:flex;align-items:baseline;gap:14px;padding:8px 0;
+  border-bottom:1px solid var(--line);font-size:13px;color:var(--ink2);margin:0;padding-left:0}
+.toc-list li::before{display:none}
+.toc-list li .ti{font-family:'Consolas',monospace;font-size:11px;color:var(--accent);flex:0 0 34px;font-weight:700}
+.toc-list li .tt{flex:1}
+.toc-list li .tg{font-size:10.5px;color:var(--muted);font-family:'Consolas',monospace}
+.cover .sig{margin-top:16px;display:flex;justify-content:space-between;align-items:baseline;
+  border-top:2px solid var(--ink);padding-top:9px}
+.cover .sig .n{font-size:12px;color:var(--ink);font-weight:700}
+.cover .sig .n span{color:var(--muted);font-family:'Consolas',monospace;font-size:10.5px;margin-left:7px;font-weight:400}
+.cover .sig .b{font-size:10.5px;color:var(--muted);letter-spacing:.07em}
+
+.divider{padding:12mm;display:flex}
+.divider .fr{flex:1;border:2px solid var(--ink);padding:5px;display:flex}
+.divider .fr2{flex:1;border:1px solid var(--line2);padding:26mm 18mm;display:flex;flex-direction:column;justify-content:center}
+.divider .part{color:var(--accent);font-size:12px;font-weight:800;letter-spacing:.16em;
+  display:flex;align-items:center;gap:12px}
+.divider .part::after{content:"";flex:1;height:1px;background:var(--line2)}
+.divider h1{font-size:42px;margin:16px 0 12px;line-height:1.18}
+.divider p{font-size:14.5px;color:var(--muted2);max-width:84%;line-height:1.75}
+.divider .route{margin-top:24px;border-top:1px solid var(--line2);padding-top:14px;
+  line-height:2.1;color:var(--muted2);font-size:12.5px}
+.divider .route b{color:var(--accent);font-family:'Consolas',monospace;font-size:11.5px}
+.divider .goal{margin-top:20px;border:1px solid var(--line2);background:var(--soft);padding:14px 16px}
+.divider .goal .gl{font-size:10.5px;font-weight:700;letter-spacing:.09em;color:var(--accent);margin-bottom:6px}
+.divider .goal ul{margin:0}
+.divider .goal li{font-size:12.5px;margin:5px 0}
+
+.pagenum{position:absolute;bottom:9mm;right:18mm;font-size:10.5px;color:var(--muted);
+  font-family:'Consolas',monospace}
+.brand{position:absolute;bottom:9mm;left:18mm;font-size:9px;color:var(--muted);letter-spacing:.03em}
+.brand b{color:var(--muted2);font-weight:500}
+
+@media print{
+  .page{overflow:hidden}
+}
+.page{overflow:hidden}
+
+
+/* ── 작업 관리자 목업 ── */
+.tm{display:flex}
+.tm .nav{flex:0 0 116px;border-right:1px solid var(--line);padding:6px 0;background:var(--soft)}
+.tm .nav div{font-size:10.5px;padding:5px 11px;color:var(--muted2)}
+.tm .nav div.on{background:#fff;color:var(--ink);font-weight:700;border-left:2px solid var(--accent)}
+.tm .bd{flex:1;min-width:0}
+.tm table{margin:0}
+.tm .hdr{display:flex;justify-content:space-between;padding:7px 12px;border-bottom:1px solid var(--line);
+  font-size:11.5px;font-weight:700;color:var(--ink)}
+.tm .hdr span{font-size:10.5px;color:var(--muted);font-weight:400}
+
+/* ── 코드 목업 ── */
+.code{border:1px solid var(--line2);margin:13px 0;background:#fff}
+.code .ch2{background:var(--soft);border-bottom:1px solid var(--line);padding:5px 12px;
+  font-family:'Consolas',monospace;font-size:10.5px;color:var(--muted2);font-weight:700;
+  display:flex;justify-content:space-between}
+.code .cb2{padding:11px 14px;font-family:'Consolas','JetBrains Mono',monospace;
+  font-size:11.5px;line-height:1.85;white-space:pre;color:var(--ink2);overflow:hidden}
+.tag{color:var(--pv);font-weight:700}
+.att{color:var(--pd)}
+.str{color:var(--pa)}
+.cmt{color:var(--muted)}
+.fn{color:var(--accent);font-weight:700}
+.hl2{background:#fff7ed;outline:1px solid var(--pnb)}
+
+/* ── GitHub 화면 목업 ── */
+.gh{border:1px solid var(--line2);margin:13px 0;background:#fff}
+.gh .ghh{background:var(--soft2);border-bottom:1px solid var(--line2);padding:6px 12px;
+  font-size:11px;color:var(--muted2);font-weight:700;display:flex;justify-content:space-between}
+.gh .repo{padding:8px 12px;border-bottom:1px solid var(--line);font-size:12.5px;font-weight:700;color:var(--ink)}
+.gh .repo span{color:var(--muted);font-weight:400;font-size:11px;margin-left:8px}
+.gh .row2{display:flex;gap:10px;padding:6px 12px;border-bottom:1px solid #f4f2ef;font-size:11.5px;align-items:baseline}
+.gh .row2 .ic2{flex:0 0 16px;color:var(--muted);font-family:'Consolas',monospace;font-size:10px}
+.gh .row2 .nm{flex:0 0 34%;font-family:'Consolas',monospace;color:var(--pv)}
+.gh .row2 .msg2{flex:1;color:var(--muted2)}
+.gh .row2 .tm2{flex:0 0 62px;text-align:right;color:var(--muted);font-size:10.5px}
+/* 잔디 */
+.grass{display:flex;gap:3px;flex-wrap:wrap;margin:10px 0;max-width:100%}
+.grass i{width:11px;height:11px;border:1px solid var(--line);background:var(--soft);display:block;border-radius:2px}
+.grass i.l1{background:#f7ddcb;border-color:var(--pnb)}
+.grass i.l2{background:#eeb489;border-color:var(--pnb)}
+.grass i.l3{background:var(--accent);border-color:var(--accent)}
+
+/* ── 작업 진행 표시 ── */
+.chat .wk{font-size:10px;color:var(--muted);font-family:'Consolas',monospace;margin:0 0 5px}
+.chat .bub .ok{color:var(--pa);font-weight:700}
+.chat .bub .no{color:var(--px);font-weight:700}
+.chat .bub code{font-size:11px}
+/* ── 속성창 목업 ── */
+.props{border:1px solid var(--line2);margin:13px 0;background:#fff;max-width:72%}
+.props .ph2{background:var(--soft2);border-bottom:1px solid var(--line2);padding:6px 12px;
+  font-size:11px;font-weight:700;color:var(--muted2)}
+.props .tabs{display:flex;gap:0;border-bottom:1px solid var(--line);font-size:10.5px}
+.props .tabs span{padding:5px 12px;color:var(--muted);border-right:1px solid var(--line)}
+.props .tabs span.on{background:#fff;color:var(--ink);font-weight:700;border-bottom:2px solid var(--accent)}
+.props .pr{display:flex;padding:6px 14px;border-bottom:1px solid #f2f0ec;font-size:11.5px}
+.props .pr b{flex:0 0 84px;color:var(--muted2);font-weight:700}
+.props .pr span{flex:1;color:var(--ink2);font-family:'Consolas',monospace;font-size:11px}
+/* ── 슬래시 명령 목록 ── */
+.slash{border:1px solid var(--line2);margin:13px 0;background:#fff}
+.slash .sh{background:var(--soft);border-bottom:1px solid var(--line);padding:5px 12px;
+  font-size:10.5px;font-weight:700;color:var(--muted2);font-family:'Consolas',monospace;
+  display:flex;justify-content:space-between}
+.slash .sr{display:flex;gap:12px;padding:6px 14px;border-bottom:1px solid #f4f2ef;font-size:11.5px;align-items:baseline}
+.slash .sr:last-child{border-bottom:none}
+.slash .sc2{flex:0 0 92px;font-family:'Consolas',monospace;font-weight:700;color:var(--accent)}
+.slash .sd2{flex:1;color:var(--ink2)}
+
+/* ── 결과 이미지 예시 ── */
+.shots{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:13px 0}
+.shots.one{grid-template-columns:1fr}
+.shots figure{margin:0}
+.shots img{width:100%;display:block;border:1px solid var(--line2);border-radius:3px}
+.shots figcaption{font-size:10.5px;color:var(--muted2);margin-top:5px;font-family:'Consolas',monospace}
+.shots figcaption b{color:var(--accent)}
+
+/* ── 토크나이저 비교 ── */
+.tok{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);
+  border:1px solid var(--line);margin:13px 0}
+.tok>div{background:#fff;padding:12px 14px}
+.tok .tkh{font-size:9.5px;font-weight:700;letter-spacing:.07em;color:var(--muted);margin-bottom:6px}
+.tok .in{border:1px solid var(--line2);border-radius:4px;padding:9px 11px;font-size:14px;
+  font-family:'Consolas',monospace;background:var(--soft);color:var(--ink)}
+.tok .in i{font-style:normal;color:var(--muted);font-size:11px}
+.tok .nums{display:flex;gap:26px;margin-top:11px}
+.tok .nl{font-size:9.5px;font-weight:700;letter-spacing:.06em;color:var(--muted)}
+.tok .n{font-size:21px;font-weight:800;font-family:'Consolas',monospace;line-height:1.2;color:var(--ink)}
+.tok .n.acc{color:var(--accent)}
+.tok .ids{margin-top:10px;font-family:'Consolas',monospace;font-size:11px;color:var(--muted2);
+  background:var(--soft);border:1px solid var(--line);padding:6px 9px;border-radius:3px}
+
+/* ── 목차 ── */
+.tocx{margin:2px 0 0}
+.tocx .g{font-size:11px;font-weight:700;letter-spacing:.08em;color:var(--accent);
+  margin:14px 0 4px;padding-bottom:5px;border-bottom:1.5px solid var(--ink);
+  display:flex;justify-content:space-between;align-items:baseline}
+.tocx .g em{font-style:normal;color:var(--muted);font-weight:400;letter-spacing:0;font-size:11px}
+.tocx .it{display:flex;gap:12px;align-items:baseline;padding:6px 0;border-bottom:1px solid var(--line)}
+.tocx .no{flex:0 0 30px;font-family:'Consolas',monospace;font-size:11.5px;font-weight:700;color:var(--accent)}
+.tocx .tt{flex:1}
+.tocx .tt b{font-size:13px;font-weight:700;color:var(--ink);display:block;line-height:1.4}
+.tocx .tt span{font-size:11.5px;color:var(--muted2);display:block;margin-top:1px;line-height:1.5}
+.tocx .pgn{flex:0 0 24px;text-align:right;font-family:'Consolas',monospace;font-size:11.5px;color:var(--muted2)}
+.tocinfo{margin-top:16px;border:1px solid var(--line2);background:var(--soft);padding:12px 15px}
+.tocinfo .til{font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--accent);margin-bottom:6px}
+.tocinfo .row{display:flex;gap:10px;font-size:11.5px;color:var(--ink2);padding:3px 0;align-items:baseline}
+.tocinfo .row b{flex:0 0 88px;color:var(--ink)}
+
+/* ── 난이도 배지 ── */
+.lv{display:inline-block;font-size:9.5px;font-weight:700;border:1px solid;border-radius:10px;
+  padding:1px 8px;letter-spacing:.03em;line-height:1.6;white-space:nowrap}
+.lv1{color:var(--pv);border-color:var(--pvb);background:var(--pvs)}
+.lv2{color:var(--muted2);border-color:var(--line2);background:var(--soft)}
+.lv3{color:var(--accent);border-color:var(--pnb);background:var(--pns)}
+.lvrow{display:flex;gap:8px;align-items:center;margin:10px 0 4px}
+
+/* ── 난이도 보조 상자 ── */
+.tier{border:1px solid var(--line2);border-radius:4px;padding:11px 14px;margin:12px 0}
+.tier .tl{font-size:10px;font-weight:700;letter-spacing:.06em;margin-bottom:5px;
+  display:flex;gap:8px;align-items:center}
+.tier p{margin:0;font-size:12.5px}
+.tier ul{margin:4px 0 0}
+.tier li{font-size:12.5px;margin:5px 0}
+.tier.b{background:var(--soft)}
+.tier.b .tl{color:var(--muted2)}
+.tier.a{background:#fff;border-style:dashed}
+.tier.a .tl{color:var(--accent)}
+.tier .say{margin:8px 0 0}
+
+/* ── 자동화 회로 ── */
+.auto{border:1px solid var(--line2);border-left:3px solid var(--accent);background:var(--soft);
+  padding:10px 14px;margin:14px 0}
+.auto .al{font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--accent);margin-bottom:6px}
+.auto .ar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.auto .ar span{font-size:12px;color:var(--ink2);background:#fff;border:1px solid var(--line2);
+  border-radius:3px;padding:5px 9px}
+.auto .ar span b{color:var(--accent);font-weight:700;margin-right:5px}
+.auto .ar i{font-style:normal;color:var(--accent);font-weight:900}
+
+/* ── AI 낚시 찾기 ── */
+.trap{border:1.5px dashed var(--line2);border-radius:4px;padding:12px 15px;margin:14px 0;background:#fff}
+.trap .trl{font-size:10.5px;font-weight:700;letter-spacing:.06em;color:var(--px);margin-bottom:7px}
+.trap .fake{border:1px solid var(--line);border-left:2.5px solid var(--line2);background:var(--soft);
+  padding:10px 12px;font-size:12.5px;line-height:1.7;color:var(--ink2)}
+.trap .ask{font-size:12px;color:var(--muted2);margin-top:8px}
+.trap .ask b{color:var(--ink)}
+
+/* ── 메모 영역 (여백 활용) ── */
+.memo{margin-top:26px;border-top:1px solid var(--line);padding-top:9px}
+.memo .ml{font-size:9.5px;font-weight:700;letter-spacing:.12em;color:var(--muted);margin-bottom:8px}
+.memo .line{height:25px;border-bottom:1px dotted var(--line2)}
+
+/* ── 채팅 목업 ── */
+.chat{border:1px solid var(--line2);margin:13px 0;background:#fff}
+.chat .ch{background:var(--soft);border-bottom:1px solid var(--line);padding:6px 12px;
+  font-size:10.5px;font-weight:700;color:var(--muted2);display:flex;justify-content:space-between;
+  font-family:'Consolas',monospace}
+.chat .cb{padding:12px 13px}
+.msg{margin:8px 0;display:flex;gap:10px;align-items:flex-start}
+.msg .av{flex:0 0 44px;font-size:9.5px;font-weight:700;letter-spacing:.05em;color:var(--muted);
+  text-align:right;padding-top:9px}
+.msg .bub{flex:1;border:1px solid var(--line);border-radius:5px;padding:9px 12px;
+  font-size:12px;line-height:1.7;color:var(--ink2);background:#fff}
+.msg.u .bub{background:var(--soft);border-color:var(--line2)}
+.msg.a .bub{border-left:2.5px solid var(--accent)}
+.msg .bub b{color:var(--ink)}
+.msg .bub .tbl{margin-top:6px;font-family:'Consolas',monospace;font-size:10.5px;
+  color:var(--muted2);line-height:1.7;white-space:pre}
+
+/* ── 스펙 카드 ── */
+.stat{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);
+  border:1px solid var(--line);margin:13px 0}
+.stat>div{background:#fff;padding:11px 12px}
+.stat .sl2{font-size:9.5px;font-weight:700;color:var(--accent);letter-spacing:.07em}
+.stat .sv{font-size:14px;font-weight:800;margin-top:3px;font-family:'Consolas',monospace;line-height:1.3}
+.stat .sd{font-size:10px;color:var(--muted);margin-top:3px;line-height:1.5}
+
+/* ── 좌우 2단 ── */
+.split{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:13px 0}
+.split h3{margin-top:0}
+
+</style></head><body>
+<section class="page cover"><div class="fr"><div class="fr2">
+<div class="ck">청년취업사관학교 동대문4기</div>
+<h1>파이썬으로<br>시스템 자원을 측정한다</h1>
+<div class="cs">기업연계형 AI 서비스·클라우드 실무 과정<br>
+<b>os · psutil · 정규표현식 · 함수 · 클래스 · 이미지 처리 자원 측정</b></div>
+
+<div class="hero">
+  <div class="hl">이 교재의 목적지</div>
+  <div class="hs">이미지를 읽고 웹캠을 돌릴 때 <b>메모리와 CPU가 얼마나 쓰이는지 측정해 CSV로 남깁니다.</b> 앞의 STEP들은 전부 그 도구를 갖추는 과정입니다.</div>
+  <div class="hd"></div>
+  <div class="hrow"><div class="hk">STEP 0</div><div class="hv">파이썬 기초 — 뒤에서 쓸 것만 훑기</div></div>
+  <div class="hrow"><div class="hk">STEP 1</div><div class="hv">os와 psutil — 시스템을 읽는 도구</div></div>
+  <div class="hrow"><div class="hk">STEP 2</div><div class="hv">정규표현식 — 파일명과 로그에서 값 뽑기</div></div>
+  <div class="hrow"><div class="hk">STEP 3</div><div class="hv">함수와 CSV 로그 — 측정을 반복 가능하게</div></div>
+  <div class="hrow"><div class="hk">STEP 4</div><div class="hv">클래스 — 열고 닫는 것이 있는 대상 다루기</div></div>
+  <div class="hrow"><div class="hk">STEP 5</div><div class="hv">Pillow와 OpenCV — 이미지 로딩 자원 비교</div></div>
+  <div class="hrow"><div class="hk">STEP 6</div><div class="hv">웹캠 — 실시간 프레임별 자원 측정</div></div>
+</div>
+
+<div class="toc">
+  <div class="th">주관 · 강의</div>
+  <ul class="toc-list">
+    <li><span class="ti">기관</span><span class="tt">한국클라우드컴퓨팅연구조합 · 한국컴퓨팅산업협회</span></li>
+    <li><span class="ti">강사</span><span class="tt">부성순</span><span class="tg">bakpak@empas.com</span></li>
+  </ul>
+</div>
+<div class="sig">
+  <div class="n">부성순 <span>/ bakpak@empas.com</span></div>
+  <div class="b">AI SERVICE · CLOUD PRACTICE</div>
+</div>
+</div></div></section>
+
+<section class="page"><div class="rh"><div class="l"><b>PYTHON</b> · 들어가며</div><div class="r">무엇을 만드는가<span class="pg">02</span></div></div>
+<div class="kicker">GOAL</div>
+<h1>측정하고 기록하는 도구를 만든다</h1>
+<p class="lede">시스템 엔지니어에게 “느리다”는 보고는 출발점일 뿐입니다. <em>무엇이 얼마나 쓰는지 숫자로 보여줘야</em> 판단이 됩니다. 이 교재는 그 숫자를 파이썬으로 뽑아 CSV로 남기는 것까지 갑니다.</p>
+
+<h2>마지막에 나올 결과물</h2>
+<div class="code">
+  <div class="ch2"><span>logs/resource_log.csv</span><span>CSV</span></div>
+  <div class="cb2">time,target,action,lib,width,height,mem_before_mb,mem_after_mb,mem_delta_mb,cpu_pct,elapsed_s
+2026-09-04 10:22:31,sample_1920x1080.jpg,load,pillow,1920,1080,48.2,57.9,9.7,12.4,0.084
+2026-09-04 10:22:32,sample_1920x1080.jpg,load,opencv,1920,1080,48.3,74.1,25.8,18.1,0.061
+2026-09-04 10:24:07,webcam,frame,opencv,1280,720,91.4,92.0,0.6,23.7,0.033</div>
+</div>
+<div class="capt"><b>그림 0-1</b> 한 줄이 <b>한 번의 측정</b>입니다. 대상·작업·라이브러리·해상도가 열로 있어 <b>나중에 어떤 기준으로든 비교</b>할 수 있습니다.</div>
+
+<h2>STEP마다 무엇을 얻는가</h2>
+<table class="zebra">
+<thead><tr><th style="width:14%">STEP</th><th style="width:30%">배우는 것</th><th>최종 결과물에서 쓰이는 곳</th></tr></thead>
+<tbody>
+<tr><td><b>0</b></td><td>기초 문법</td><td>측정값을 딕셔너리에 담고 리스트에 쌓는 형태</td></tr>
+<tr><td><b>1</b></td><td>os · psutil</td><td>메모리·CPU를 실제로 읽어 오는 부분</td></tr>
+<tr><td><b>2</b></td><td>정규표현식</td><td>파일명에서 해상도를 뽑아 열에 채우는 부분</td></tr>
+<tr><td><b>3</b></td><td>함수 · CSV</td><td>측정을 묶고 한 줄씩 파일에 추가하는 부분</td></tr>
+<tr><td><b>4</b></td><td>클래스</td><td>웹캠처럼 <b>열고 닫아야 하는 대상</b>을 안전하게 다루는 부분</td></tr>
+<tr><td><b>5·6</b></td><td>Pillow · OpenCV</td><td>실제 측정 대상</td></tr>
+</tbody>
+</table>
+
+<div class="note"><strong>문법 강의가 아닙니다</strong>  파이썬 문법을 전부 다루지 않습니다. <b>측정 도구를 만드는 데 필요한 것만</b> 순서대로 봅니다. 모르는 문법이 나오면 그때 AI에게 물어 채우는 방식으로 갑니다.</div>
+
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div>
+<div class="pagenum">02</div></section><section class="page"><div class="rh"><div class="l"><b>PYTHON</b> · 들어가며</div><div class="r">무엇을 만드는가 (계속) <span class="pg">03</span></div></div>
+<h2>준비물</h2>
+<div class="code">
+  <div class="ch2"><span>설치 · 명령 프롬프트 또는 터미널</span><span>PIP</span></div>
+  <div class="cb2">python --version          <span class="cmt"># 3.9 이상이면 충분</span>
+pip install psutil pillow opencv-python</div>
+</div>
+<p class="mn">가상환경을 쓰는 것이 원칙이지만, 이 교재에서는 <strong>측정 자체에 집중</strong>하기 위해 생략합니다. 실무에서는 프로젝트마다 환경을 나누는 것이 맞습니다.</p>
+<div class="memo"><div class="ml">기록해 두기</div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div></div><div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div>
+<div class="pagenum">03</div></section><section class="page"><div class="rh"><div class="l"><b>PYTHON</b> · STEP 0</div><div class="r">기초 문법 훑기<span class="pg">04</span></div></div>
+<div class="kicker">BASICS</div>
+<h1>뒤에서 쓸 것만 먼저 봅니다</h1>
+<div class="mission"><b>MISSION</b><h3>측정값 하나를 <b>딕셔너리</b>로 만들고, 여러 개를 <b>리스트</b>에 쌓고, 파일로 저장하는 형태까지 손에 익힌다.</h3>
+<p class="wy"><b>WHY</b> 이 세 가지가 마지막 결과물의 뼈대입니다. 문법을 다 알 필요는 없고, <b>측정 한 줄 = 딕셔너리 하나</b>라는 구조만 잡으면 됩니다.</p></div>
+
+<h2>값을 담는 세 가지 그릇</h2>
+<div class="code">
+  <div class="ch2"><span>기본 자료형</span><span>PYTHON</span></div>
+  <div class="cb2"><span class="cmt"># 변수 — 값 하나</span>
+target = <span class="str">"sample.jpg"</span>
+mem_mb = <span class="str">48.2</span>
+
+<span class="cmt"># 리스트 — 순서가 있는 여러 개</span>
+files = [<span class="str">"a.jpg"</span>, <span class="str">"b.jpg"</span>, <span class="str">"c.jpg"</span>]
+<span class="fn">print</span>(files[<span class="str">0</span>])          <span class="cmt"># a.jpg — 0부터 셉니다</span>
+<span class="fn">print</span>(<span class="fn">len</span>(files))         <span class="cmt"># 3</span>
+
+<span class="cmt"># 딕셔너리 — 이름표가 붙은 여러 개</span>
+row = {
+    <span class="str">"target"</span>: <span class="str">"sample.jpg"</span>,
+    <span class="str">"mem_delta_mb"</span>: <span class="str">9.7</span>,
+    <span class="str">"elapsed_s"</span>: <span class="str">0.084</span>,
+}
+<span class="fn">print</span>(row[<span class="str">"mem_delta_mb"</span>])  <span class="cmt"># 9.7</span></div>
+</div>
+<p class="mn">딕셔너리의 <strong>이름표(key)가 곧 CSV의 열 이름</strong>이 됩니다. 앞에서 JSON을 배웠다면 같은 구조입니다. <code>{ }</code> 안에 <code>"이름": 값</code>이 쉼표로 이어집니다.</p>
+
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">04</div></section><section class="page"><div class="rh"><div class="l"><b>PYTHON</b> · STEP 0</div><div class="r">기초 문법 훑기 (계속) <span class="pg">05</span></div></div>
+<h2>측정 한 줄 = 딕셔너리 하나</h2>
+<div class="code">
+  <div class="ch2"><span>측정 결과를 쌓는 형태</span><span>PYTHON</span></div>
+  <div class="cb2">rows = []                       <span class="cmt"># 빈 리스트로 시작</span>
+
+rows.<span class="fn">append</span>({<span class="str">"target"</span>: <span class="str">"a.jpg"</span>, <span class="str">"mem_delta_mb"</span>: <span class="str">9.7</span>})
+rows.<span class="fn">append</span>({<span class="str">"target"</span>: <span class="str">"b.jpg"</span>, <span class="str">"mem_delta_mb"</span>: <span class="str">25.8</span>})
+
+<span class="fn">print</span>(<span class="fn">len</span>(rows))              <span class="cmt"># 2 — 측정 두 번</span></div>
+</div>
+<div class="capt"><b>그림 0-2</b> 마지막 결과물의 CSV는 <b>이 리스트를 파일로 옮긴 것</b>입니다. 구조가 먼저 정해지면 뒤는 채우는 일만 남습니다.</div>
+<h2>조건과 반복</h2>
+<div class="code">
+  <div class="ch2"><span>if · for</span><span>PYTHON</span></div>
+  <div class="cb2"><span class="cmt"># 조건 — 들여쓰기가 블록을 만듭니다</span>
+<span class="fn">if</span> mem_mb &gt; <span class="str">100</span>:
+    <span class="fn">print</span>(<span class="str">"메모리 많이 씀"</span>)
+<span class="fn">elif</span> mem_mb &gt; <span class="str">50</span>:
+    <span class="fn">print</span>(<span class="str">"보통"</span>)
+<span class="fn">else</span>:
+    <span class="fn">print</span>(<span class="str">"적음"</span>)
+
+<span class="cmt"># 반복 — 리스트의 항목을 하나씩</span>
+<span class="fn">for</span> name <span class="fn">in</span> files:
+    <span class="fn">print</span>(name)
+
+<span class="cmt"># 측정을 여러 번 반복하는 형태</span>
+<span class="fn">for</span> path <span class="fn">in</span> files:
+    row = measure(path)         <span class="cmt"># 뒤에서 만들 함수</span>
+    rows.<span class="fn">append</span>(row)</div>
+</div>
+<div class="warn"><b>들여쓰기가 문법입니다</b>  파이썬은 중괄호 대신 <strong>들여쓰기로 블록을 구분</strong>합니다. 공백 4칸이 관행이고, 섞어 쓰면 오류가 납니다. 편집기에서 <b>Tab을 공백으로 변환</b> 설정을 켜 두세요.</div>
+
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">05</div></section><section class="page"><div class="rh"><div class="l"><b>PYTHON</b> · STEP 0</div><div class="r">기초 문법 훑기 (계속) <span class="pg">06</span></div></div>
+<h2>파일에 쓰기</h2>
+<div class="code">
+  <div class="ch2"><span>with 문으로 파일 다루기</span><span>PYTHON</span></div>
+  <div class="cb2"><span class="fn">with</span> <span class="fn">open</span>(<span class="str">"log.txt"</span>, <span class="str">"w"</span>, encoding=<span class="str">"utf-8"</span>) <span class="fn">as</span> f:
+    f.<span class="fn">write</span>(<span class="str">"측정 시작\n"</span>)
+<span class="cmt"># 블록을 벗어나면 파일이 자동으로 닫힙니다</span>
+
+<span class="cmt"># 모드: "w" 새로 쓰기(기존 내용 삭제) / "a" 뒤에 이어 붙이기</span>
+<span class="fn">with</span> <span class="fn">open</span>(<span class="str">"log.txt"</span>, <span class="str">"a"</span>, encoding=<span class="str">"utf-8"</span>) <span class="fn">as</span> f:
+    f.<span class="fn">write</span>(<span class="str">"한 줄 추가\n"</span>)</div>
+</div>
+<div class="point"><div class="pl">여기가 중요합니다</div><p><code>with</code>는 <strong>열었으면 반드시 닫는다</strong>는 것을 자동으로 해 줍니다. 파일은 안 닫아도 큰 문제가 없지만, <strong>웹캠은 안 닫으면 다음 실행에서 카메라가 잡히지 않습니다.</strong> 뒤에서 이 구조를 그대로 씁니다.</p></div>
+
+<div class="note"><strong>인코딩은 항상 utf-8</strong>  한글이 들어가면 Windows 기본 인코딩에서 깨집니다. 파일을 열 때마다 <code>encoding="utf-8"</code>을 붙이는 습관을 들이세요.</div>
+
+<h2>모르는 문법은 물어봅니다</h2>
+<div class="say"><div class="sl">GPT · 대화  |  문법 채우기</div><div class="sc"># 역할
+너는 시스템 엔지니어에게 파이썬을 가르치는 튜터다.
+이미 리눅스와 셸 스크립트는 익숙한 사람이라고 가정한다.
+
+# 질문
+- 파이썬 딕셔너리는 셸의 연관배열과 어떻게 다른가요?
+- 리스트에 값을 추가하는 방법이 append 말고 또 있나요?
+- with 문은 정확히 무엇을 자동으로 해 주나요?
+- try / except 는 언제 쓰나요? 측정 코드에도 필요한가요?
+
+각 답은 표로 정리하고, 실무에서 자주 만나는 실수도 알려줘.</div></div>
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">06</div></section><section class="page"><div class="rh"><div class="l"><b>PYTHON</b> · STEP 1</div><div class="r">os와 psutil<span class="pg">07</span></div></div>
+<div class="kicker">OS · PSUTIL</div>
+<h1>시스템을 파이썬으로 읽는다</h1>
+<div class="mission"><b>MISSION</b><h3><code>os</code>로 경로와 파일을 다루고, <code>psutil</code>로 <b>내 프로세스의 메모리와 CPU</b>를 읽는다. 이것이 모든 측정의 출발점이다.</h3>
+<p class="wy"><b>WHY</b> 앞에서 PowerShell과 작업 관리자로 보던 값을 이제 <b>코드로 읽습니다.</b> 코드로 읽어야 반복할 수 있고, 비교할 수 있고, 파일로 남길 수 있습니다.</p></div>
+
+<h2>os — 경로와 파일</h2>
+<div class="code">
+  <div class="ch2"><span>os · os.path</span><span>PYTHON</span></div>
+  <div class="cb2"><span class="fn">import</span> os
+
+<span class="cmt"># 현재 작업 폴더</span>
+<span class="fn">print</span>(os.<span class="fn">getcwd</span>())
+
+<span class="cmt"># 폴더 안의 파일 목록 — dir / ls 에 해당</span>
+<span class="fn">print</span>(os.<span class="fn">listdir</span>(<span class="str">"images"</span>))
+
+<span class="cmt"># 경로 합치기 — OS마다 다른 구분자를 알아서 처리</span>
+path = os.path.<span class="fn">join</span>(<span class="str">"images"</span>, <span class="str">"sample.jpg"</span>)
+
+<span class="cmt"># 파일 정보</span>
+<span class="fn">print</span>(os.path.<span class="fn">exists</span>(path))      <span class="cmt"># 있는지</span>
+<span class="fn">print</span>(os.path.<span class="fn">getsize</span>(path))     <span class="cmt"># 바이트 크기</span>
+<span class="fn">print</span>(os.path.<span class="fn">basename</span>(path))    <span class="cmt"># sample.jpg</span>
+
+<span class="cmt"># 폴더 만들기 — 이미 있어도 오류 나지 않게</span>
+os.<span class="fn">makedirs</span>(<span class="str">"logs"</span>, exist_ok=<span class="str">True</span>)</div>
+</div>
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">07</div></section><section class="page"><div class="rh"><div class="l"><b>PYTHON</b> · STEP 1</div><div class="r">os와 psutil (계속) <span class="pg">08</span></div></div>
+<div class="note"><strong>경로는 직접 이어 붙이지 않습니다</strong>  <code>"images" + "\\" + "a.jpg"</code>처럼 쓰면 Linux에서 깨집니다. <code>os.path.join</code>을 쓰면 <b>Windows는 역슬래시, Linux는 슬래시</b>로 알아서 만듭니다. 서버로 옮길 코드라면 반드시 지켜야 합니다.</div>
+
+<h2>psutil — 시스템 자원</h2>
+<div class="code">
+  <div class="ch2"><span>전체 자원 상태</span><span>PYTHON</span></div>
+  <div class="cb2"><span class="fn">import</span> psutil
+
+<span class="cmt"># CPU — interval 을 주면 그 시간만큼 재고 평균을 냅니다</span>
+<span class="fn">print</span>(psutil.<span class="fn">cpu_percent</span>(interval=<span class="str">1</span>))    <span class="cmt"># 23.4 (%)</span>
+<span class="fn">print</span>(psutil.<span class="fn">cpu_count</span>(logical=<span class="str">False</span>))   <span class="cmt"># 물리 코어</span>
+<span class="fn">print</span>(psutil.<span class="fn">cpu_count</span>(logical=<span class="str">True</span>))    <span class="cmt"># 논리 프로세서</span>
+
+<span class="cmt"># 메모리 — 바이트로 나오므로 GB 로 환산</span>
+mem = psutil.<span class="fn">virtual_memory</span>()
+<span class="fn">print</span>(<span class="fn">round</span>(mem.total / <span class="str">1024</span>**<span class="str">3</span>, <span class="str">1</span>), <span class="str">"GB"</span>)
+<span class="fn">print</span>(mem.percent, <span class="str">"%"</span>)                 <span class="cmt"># 사용률</span>
+
+<span class="cmt"># 디스크</span>
+disk = psutil.<span class="fn">disk_usage</span>(<span class="str">"C:\\"</span>)        <span class="cmt"># Linux 는 "/"</span>
+<span class="fn">print</span>(<span class="fn">round</span>(disk.free / <span class="str">1024</span>**<span class="str">3</span>, <span class="str">1</span>), <span class="str">"GB 남음"</span>)</div>
+</div>
+<p class="mn">앞에서 작업 관리자와 <code>systeminfo</code>로 보던 값과 <strong>같은 정보</strong>입니다. 다른 점은 이제 <b>변수에 담아 계산하고 저장할 수 있다</b>는 것입니다.</p>
+<div class="memo"><div class="ml">기록해 두기</div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div></div><div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">08</div></section><section class="page"><div class="rh"><div class="l"><b>PYTHON</b> · STEP 1</div><div class="r">os와 psutil (계속) <span class="pg">09</span></div></div>
+<h2>내 프로세스만 보기</h2>
+<p>전체 사용률은 다른 프로그램의 영향을 받습니다. <em>내가 돌린 코드가 얼마나 쓰는지</em> 보려면 내 프로세스를 지정해야 합니다.</p>
+<div class="code">
+  <div class="ch2"><span>현재 프로세스 측정</span><span>PYTHON</span></div>
+  <div class="cb2"><span class="fn">import</span> os, psutil
+
+proc = psutil.<span class="fn">Process</span>(os.<span class="fn">getpid</span>())   <span class="cmt"># 지금 이 파이썬 프로세스</span>
+
+<span class="cmt"># RSS — 실제로 물리 메모리에 올라와 있는 양</span>
+mem_mb = proc.<span class="fn">memory_info</span>().rss / <span class="str">1024</span>**<span class="str">2</span>
+<span class="fn">print</span>(<span class="fn">round</span>(mem_mb, <span class="str">1</span>), <span class="str">"MB"</span>)
+
+<span class="cmt"># 이 프로세스의 CPU 사용률</span>
+proc.<span class="fn">cpu_percent</span>(interval=<span class="str">None</span>)        <span class="cmt"># 첫 호출은 기준점 (0.0 반환)</span>
+<span class="cmt"># ... 작업 수행 ...</span>
+<span class="fn">print</span>(proc.<span class="fn">cpu_percent</span>(interval=<span class="str">None</span>))  <span class="cmt"># 두 번째부터 의미 있는 값</span></div>
+</div>
+<div class="warn"><b>cpu_percent 는 두 번 불러야 합니다</b>  첫 호출은 <strong>기준점을 잡는 것</strong>이라 항상 0.0이 나옵니다. 두 번째 호출에서 <b>그 사이의 사용률</b>을 돌려줍니다. 이걸 모르면 “CPU가 0%로만 나온다”에서 막힙니다.</div>
+
+<h2>메모리 용어 구분</h2>
+<table class="zebra">
+<thead><tr><th style="width:18%">이름</th><th style="width:34%">뜻</th><th>언제 보나</th></tr></thead>
+<tbody>
+<tr><td><b>RSS</b></td><td>실제 물리 메모리에 올라온 양</td><td><b>이 교재에서 쓰는 값.</b> 체감과 가장 가깝다</td></tr>
+<tr><td><b>VMS</b></td><td>예약까지 포함한 가상 메모리</td><td>실제보다 훨씬 크게 나온다</td></tr>
+<tr><td><b>percent</b></td><td>전체 대비 비율</td><td>장비가 다른 사람과 비교할 때</td></tr>
+</tbody>
+</table>
+
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">09</div></section><section class="page"><div class="rh"><div class="l"><b>PYTHON</b> · STEP 1</div><div class="r">os와 psutil (계속) <span class="pg">10</span></div></div>
+<h2>작업 전후를 비교하는 형태</h2>
+<div class="code">
+  <div class="ch2"><span>측정의 기본 패턴</span><span>PYTHON</span></div>
+  <div class="cb2"><span class="fn">import</span> os, psutil, time
+
+proc = psutil.<span class="fn">Process</span>(os.<span class="fn">getpid</span>())
+
+before = proc.<span class="fn">memory_info</span>().rss / <span class="str">1024</span>**<span class="str">2</span>
+t0 = time.<span class="fn">perf_counter</span>()
+
+<span class="cmt"># ── 여기서 실제 작업 ──</span>
+data = [<span class="str">0</span>] * <span class="str">10_000_000</span>            <span class="cmt"># 일부러 메모리를 쓰는 예</span>
+
+elapsed = time.<span class="fn">perf_counter</span>() - t0
+after = proc.<span class="fn">memory_info</span>().rss / <span class="str">1024</span>**<span class="str">2</span>
+
+<span class="fn">print</span>(<span class="str">f"전 {before:.1f}MB → 후 {after:.1f}MB (증가 {after-before:.1f}MB)"</span>)
+<span class="fn">print</span>(<span class="str">f"소요 {elapsed:.3f}초"</span>)</div>
+</div>
+<div class="point"><div class="pl">이 패턴이 전부입니다</div><p><strong>전 측정 → 작업 → 후 측정 → 차이 계산.</strong> STEP 5와 6에서 “작업” 자리에 이미지 읽기와 웹캠 프레임을 넣을 뿐, 나머지는 똑같습니다.</p></div>
+<div class="memo"><div class="ml">기록해 두기</div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div></div><div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">10</div></section><section class="page"><div class="rh"><div class="l"><b>PYTHON</b> · STEP 1</div><div class="r">os와 psutil (계속) <span class="pg">11</span></div></div>
+<h2>다른 프로세스도 볼 수 있습니다</h2>
+<div class="code">
+  <div class="ch2"><span>프로세스 목록 — 작업 관리자에 해당</span><span>PYTHON</span></div>
+  <div class="cb2"><span class="fn">import</span> psutil
+
+rows = []
+<span class="fn">for</span> p <span class="fn">in</span> psutil.<span class="fn">process_iter</span>([<span class="str">"pid"</span>, <span class="str">"name"</span>, <span class="str">"memory_info"</span>]):
+    <span class="fn">try</span>:
+        rows.<span class="fn">append</span>({
+            <span class="str">"pid"</span>: p.info[<span class="str">"pid"</span>],
+            <span class="str">"name"</span>: p.info[<span class="str">"name"</span>],
+            <span class="str">"mem_mb"</span>: <span class="fn">round</span>(p.info[<span class="str">"memory_info"</span>].rss / <span class="str">1024</span>**<span class="str">2</span>, <span class="str">1</span>),
+        })
+    <span class="fn">except</span> (psutil.NoSuchProcess, psutil.AccessDenied):
+        <span class="fn">continue</span>                 <span class="cmt"># 사라졌거나 권한 없는 프로세스는 건너뜀</span>
+
+top = <span class="fn">sorted</span>(rows, key=<span class="fn">lambda</span> r: r[<span class="str">"mem_mb"</span>], reverse=<span class="str">True</span>)[:<span class="str">5</span>]
+<span class="fn">for</span> r <span class="fn">in</span> top:
+    <span class="fn">print</span>(r[<span class="str">"name"</span>], r[<span class="str">"mem_mb"</span>], <span class="str">"MB"</span>)</div>
+</div>
+<div class="capt"><b>그림 1-1</b> 작업 관리자에서 <b>메모리 열을 눌러 정렬</b>한 것과 같은 결과입니다. 다른 점은 이 결과를 <b>파일로 남기고 매일 비교할 수 있다</b>는 것입니다.</div>
+
+<div class="warn"><b>try / except 가 필요한 이유</b>  프로세스 목록을 도는 중에 <strong>프로세스가 종료되거나 권한이 없을 수 있습니다.</strong> 그러면 예외가 나고 프로그램이 멈춥니다. 시스템을 다루는 코드에서는 <b>“있을 수 있는 실패”를 미리 처리</b>하는 것이 기본입니다.</div>
+
+<h2>실습</h2>
+<ul class="chk">
+<li><code>psutil</code>로 내 PC의 CPU 코어 수, 메모리 총량, C드라이브 여유 공간을 출력한다</li>
+<li>메모리를 가장 많이 쓰는 프로세스 5개를 뽑아 작업 관리자와 비교한다</li>
+<li>큰 리스트를 만들기 전후로 <strong>내 프로세스의 RSS</strong>를 측정해 증가량을 확인한다</li>
+<li><code>cpu_percent</code>를 한 번만 불렀을 때와 두 번 불렀을 때의 차이를 확인한다</li>
+</ul>
+
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">11</div></section><section class="page"><div class="rh"><div class="l"><b>PYTHON</b> · STEP 1</div><div class="r">os와 psutil (계속) <span class="pg">12</span></div></div>
+<div class="say"><div class="sl">GPT · 대화  |  더 알아보기</div><div class="sc"># 질문
+- psutil 의 RSS 와 VMS 차이를 메모리 관리 관점에서 설명해줘
+- 리눅스에서 같은 값을 보려면 어떤 명령을 쓰나요? (top, ps, free 와 대응)
+- 파이썬에서 리스트를 삭제해도 RSS 가 바로 줄지 않는 이유는 무엇인가요?
+- 컨테이너 안에서 psutil 을 쓰면 호스트 값이 보이나요, 컨테이너 값이 보이나요?</div></div>
+<p class="mn">마지막 질문이 중요합니다. 뒤 과정에서 도커를 다룰 때 <strong>같은 코드가 다른 값을 보여주는 상황</strong>을 만나게 됩니다.</p>
+<div class="memo"><div class="ml">기록해 두기</div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div></div><div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">12</div></section><section class="page"><div class="rh"><div class="l"><b>PYTHON</b> · STEP 2</div><div class="r">정규표현식<span class="pg">13</span></div></div>
+<div class="kicker">REGEX</div>
+<h1>파일명과 로그에서 값을 뽑는다</h1>
+<div class="mission"><b>MISSION</b><h3>이미지 파일명에서 <b>해상도와 날짜</b>를 뽑아내고, 로그 한 줄에서 필요한 숫자만 꺼낸다.</h3>
+<p class="wy"><b>WHY</b> 측정 결과를 비교하려면 <b>조건이 열로 정리</b>돼야 합니다. <code>sample_1920x1080.jpg</code>에서 가로·세로를 꺼내야 해상도별 비교가 됩니다. 로그 분석은 시스템 엔지니어의 일상이기도 합니다.</p></div>
+
+<h2>기호 여덟 개면 시작할 수 있습니다</h2>
+<table class="zebra">
+<thead><tr><th style="width:16%">기호</th><th style="width:30%">뜻</th><th>예</th></tr></thead>
+<tbody>
+<tr><td><code>\d</code></td><td>숫자 하나</td><td><code>\d\d</code> → 12, 07</td></tr>
+<tr><td><code>\w</code></td><td>글자·숫자·밑줄 하나</td><td>영문, 숫자, <code>_</code></td></tr>
+<tr><td><code>.</code></td><td>아무 글자 하나</td><td>줄바꿈 제외</td></tr>
+<tr><td><code>+</code></td><td>앞의 것이 <b>1번 이상</b></td><td><code>\d+</code> → 1920</td></tr>
+<tr><td><code>*</code></td><td>앞의 것이 <b>0번 이상</b></td><td>없어도 통과</td></tr>
+<tr><td><code>( )</code></td><td><b>뽑아낼 부분</b>을 묶음</td><td>그룹으로 꺼냄</td></tr>
+<tr><td><code>[ ]</code></td><td>이 중 하나</td><td><code>[jp]</code> → j 또는 p</td></tr>
+<tr><td><code>^ $</code></td><td>줄의 시작 · 끝</td><td>위치 지정</td></tr>
+</tbody>
+</table>
+<p class="mn">전부 외울 필요 없습니다. <strong>“숫자 여러 개”는 <code>\d+</code>, “뽑을 곳은 괄호”</strong> 이 둘만 알아도 절반은 됩니다.</p>
+
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">13</div></section><section class="page"><div class="rh"><div class="l"><b>PYTHON</b> · STEP 2</div><div class="r">정규표현식 (계속) <span class="pg">14</span></div></div>
+<h2>파일명에서 해상도 뽑기</h2>
+<div class="code">
+  <div class="ch2"><span>re.search — 첫 번째 일치를 찾음</span><span>PYTHON</span></div>
+  <div class="cb2"><span class="fn">import</span> re
+
+name = <span class="str">"sample_1920x1080.jpg"</span>
+
+m = re.<span class="fn">search</span>(<span class="str">r"(\d+)x(\d+)"</span>, name)
+<span class="fn">if</span> m:
+    width = <span class="fn">int</span>(m.<span class="fn">group</span>(<span class="str">1</span>))     <span class="cmt"># 1920 — 첫 번째 괄호</span>
+    height = <span class="fn">int</span>(m.<span class="fn">group</span>(<span class="str">2</span>))    <span class="cmt"># 1080 — 두 번째 괄호</span>
+    <span class="fn">print</span>(width, height)
+<span class="fn">else</span>:
+    <span class="fn">print</span>(<span class="str">"해상도 정보 없음"</span>)</div>
+</div>
+<div class="note"><strong>문자열 앞의 <code>r</code></strong>  <code>r"..."</code>은 <b>역슬래시를 그대로 쓰겠다</b>는 표시입니다. 정규표현식에는 <code>\d</code> 같은 역슬래시가 많아서 <b>항상 붙이는 습관</b>을 들이는 편이 낫습니다.</div>
+<h2>자주 쓰는 세 가지 함수</h2>
+<table class="zebra">
+<thead><tr><th style="width:22%">함수</th><th style="width:30%">하는 일</th><th>돌려주는 것</th></tr></thead>
+<tbody>
+<tr><td><code>re.search</code></td><td>처음 일치하는 곳 하나</td><td>match 객체 또는 None</td></tr>
+<tr><td><code>re.findall</code></td><td><b>일치하는 것 전부</b></td><td>리스트</td></tr>
+<tr><td><code>re.sub</code></td><td>찾아서 바꾸기</td><td>바뀐 문자열</td></tr>
+</tbody>
+</table>
+
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">14</div></section><section class="page"><div class="rh"><div class="l"><b>PYTHON</b> · STEP 2</div><div class="r">정규표현식 (계속) <span class="pg">15</span></div></div>
+<div class="code">
+  <div class="ch2"><span>실제 쓰임 세 가지</span><span>PYTHON</span></div>
+  <div class="cb2"><span class="fn">import</span> re
+
+<span class="cmt"># ① 로그 한 줄에서 숫자 전부 꺼내기</span>
+line = <span class="str">"2026-09-04 10:22:31 mem=57.9MB cpu=12.4% elapsed=0.084s"</span>
+nums = re.<span class="fn">findall</span>(<span class="str">r"\d+\.?\d*"</span>, line)
+<span class="fn">print</span>(nums)      <span class="cmt"># ['2026', '09', '04', '10', '22', '31', '57.9', ...]</span>
+
+<span class="cmt"># ② 이름표를 붙여 꺼내면 훨씬 안전합니다</span>
+m = re.<span class="fn">search</span>(<span class="str">r"mem=(?P&lt;mem&gt;[\d.]+)MB cpu=(?P&lt;cpu&gt;[\d.]+)%"</span>, line)
+<span class="fn">print</span>(m.<span class="fn">group</span>(<span class="str">"mem"</span>), m.<span class="fn">group</span>(<span class="str">"cpu"</span>))   <span class="cmt"># 57.9 12.4</span>
+
+<span class="cmt"># ③ 파일명에서 확장자 바꾸기</span>
+new = re.<span class="fn">sub</span>(<span class="str">r"\.jpg$"</span>, <span class="str">".png"</span>, <span class="str">"a.jpg"</span>)
+<span class="fn">print</span>(new)       <span class="cmt"># a.png</span></div>
+</div>
+<p class="mn">②번처럼 <code>(?P&lt;이름&gt;...)</code>으로 이름을 붙이면 <strong>순서가 바뀌어도 안전</strong>합니다. 로그 형식이 조금 달라져도 코드가 덜 깨집니다.</p>
+
+<h2>측정 준비 — 파일 목록에서 조건 뽑기</h2>
+<div class="code">
+  <div class="ch2"><span>STEP 5에서 그대로 쓸 코드</span><span>PYTHON</span></div>
+  <div class="cb2"><span class="fn">import</span> os, re
+
+<span class="fn">def</span> <span class="fn">parse_name</span>(filename):
+    <span class="str">"""파일명에서 해상도를 뽑는다. 없으면 None."""</span>
+    m = re.<span class="fn">search</span>(<span class="str">r"(\d+)x(\d+)"</span>, filename)
+    <span class="fn">if</span> m:
+        <span class="fn">return</span> <span class="fn">int</span>(m.<span class="fn">group</span>(<span class="str">1</span>)), <span class="fn">int</span>(m.<span class="fn">group</span>(<span class="str">2</span>))
+    <span class="fn">return</span> <span class="str">None</span>, <span class="str">None</span>
+
+<span class="fn">for</span> f <span class="fn">in</span> os.<span class="fn">listdir</span>(<span class="str">"images"</span>):
+    <span class="fn">if</span> <span class="fn">not</span> f.<span class="fn">lower</span>().<span class="fn">endswith</span>((<span class="str">".jpg"</span>, <span class="str">".png"</span>)):
+        <span class="fn">continue</span>
+    w, h = <span class="fn">parse_name</span>(f)
+    <span class="fn">print</span>(<span class="str">f"{f:30} {w} x {h}"</span>)</div>
+</div>
+<div class="capt"><b>그림 2-1</b> 여기서 뽑은 <code>w</code>, <code>h</code>가 <b>CSV의 width·height 열</b>이 됩니다. 그래야 “해상도가 커지면 메모리가 얼마나 느는가”를 볼 수 있습니다.</div>
+
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">15</div></section><section class="page"><div class="rh"><div class="l"><b>PYTHON</b> · STEP 2</div><div class="r">정규표현식 (계속) <span class="pg">16</span></div></div>
+<div class="say"><div class="sl">GPT · 대화  |  정규표현식 연습</div><div class="sc"># 역할
+너는 로그 분석을 가르치는 튜터다.
+
+# 요청
+아래 형태의 로그에서 시각·레벨·메시지를 뽑는 정규표현식을 만들어줘.
+그리고 각 기호가 무슨 뜻인지 한 줄씩 설명해줘.
+
+[2026-09-04 10:22:31] ERROR connection timeout after 30s
+
+# 추가 질문
+- 정규표현식이 너무 느려지는 경우가 있나요? (백트래킹)
+- 로그 분석에서 정규표현식 대신 쓸 만한 방법도 알려줘
+- grep / awk 와 파이썬 re 는 어떻게 다른가요?</div></div>
+<div class="memo"><div class="ml">기록해 두기</div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div></div><div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">16</div></section><section class="page"><div class="rh"><div class="l"><b>PYTHON</b> · STEP 3</div><div class="r">함수와 CSV 로그<span class="pg">17</span></div></div>
+<div class="kicker">FUNCTION · CSV</div>
+<h1>측정을 묶고 파일로 남긴다</h1>
+<div class="mission"><b>MISSION</b><h3>측정 코드를 <b>함수</b>로 묶고, 결과를 <b>CSV 한 줄</b>로 쌓는다. 여기서 정한 열 구조를 STEP 5·6에서 그대로 쓴다.</h3>
+<p class="wy"><b>WHY</b> 측정은 한 번으로 끝나지 않습니다. 대상·라이브러리·해상도를 바꿔 가며 수십 번 합니다. <b>같은 형식으로 쌓여야</b> 비교가 됩니다.</p></div>
+
+<h2>함수로 묶는 이유</h2>
+<div class="ba">
+  <div class="bad"><div class="h">복사해서 쓰면</div><div class="m" style="font-family:'Noto Sans KR',sans-serif;font-size:12px">측정할 때마다 같은 코드 열 줄<br>단위를 MB에서 GB로 바꾸려면<br><u>모든 곳을 찾아 고쳐야 함</u><br>한 군데 빠뜨리면 값이 어긋남</div></div>
+  <div class="good"><div class="h">함수로 묶으면</div><div class="m" style="font-family:'Noto Sans KR',sans-serif;font-size:12px">measure(...) 한 줄로 호출<br>고칠 곳은 함수 안 <b>한 군데</b><br>이름만 봐도 무슨 일인지 보임<br>테스트하기 쉬움</div></div>
+</div>
+
+<div class="code">
+  <div class="ch2"><span>함수의 기본 형태</span><span>PYTHON</span></div>
+  <div class="cb2"><span class="fn">def</span> <span class="fn">to_mb</span>(bytes_value):
+    <span class="str">"""바이트를 MB로 바꿔 소수 첫째 자리까지."""</span>
+    <span class="fn">return</span> <span class="fn">round</span>(bytes_value / <span class="str">1024</span>**<span class="str">2</span>, <span class="str">1</span>)
+
+<span class="cmt"># 기본값이 있는 매개변수 — 안 주면 기본값 사용</span>
+<span class="fn">def</span> <span class="fn">current_mem</span>(proc=<span class="str">None</span>):
+    <span class="fn">if</span> proc <span class="fn">is</span> <span class="str">None</span>:
+        proc = psutil.<span class="fn">Process</span>(os.<span class="fn">getpid</span>())
+    <span class="fn">return</span> <span class="fn">to_mb</span>(proc.<span class="fn">memory_info</span>().rss)
+
+<span class="fn">print</span>(<span class="fn">current_mem</span>())      <span class="cmt"># 48.2</span></div>
+</div>
+<p class="mn">함수 첫 줄의 <code>"""설명"""</code>은 <strong>독스트링</strong>입니다. 나중에 이 함수가 뭘 하는지 알려 주고, AI에게 코드를 보여줄 때도 도움이 됩니다.</p>
+
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">17</div></section><section class="page"><div class="rh"><div class="l"><b>PYTHON</b> · STEP 3</div><div class="r">함수와 CSV 로그 (계속) <span class="pg">18</span></div></div>
+<h2>CSV 열 구조를 먼저 정합니다</h2>
+<table class="zebra">
+<thead><tr><th style="width:24%">열 이름</th><th style="width:24%">예</th><th>왜 필요한가</th></tr></thead>
+<tbody>
+<tr><td><code>time</code></td><td>2026-09-04 10:22:31</td><td>언제 측정했는지</td></tr>
+<tr><td><code>target</code></td><td>sample_1920x1080.jpg</td><td>무엇을 측정했는지</td></tr>
+<tr><td><code>action</code></td><td>load · frame</td><td>어떤 작업이었는지</td></tr>
+<tr><td><code>lib</code></td><td>pillow · opencv</td><td><b>비교의 기준</b></td></tr>
+<tr><td><code>width · height</code></td><td>1920 · 1080</td><td>해상도별 비교</td></tr>
+<tr><td><code>mem_before_mb</code></td><td>48.2</td><td>작업 전</td></tr>
+<tr><td><code>mem_after_mb</code></td><td>57.9</td><td>작업 후</td></tr>
+<tr><td><code>mem_delta_mb</code></td><td>9.7</td><td><b>실제로 늘어난 양</b></td></tr>
+<tr><td><code>cpu_pct</code></td><td>12.4</td><td>CPU 사용률</td></tr>
+<tr><td><code>elapsed_s</code></td><td>0.084</td><td>걸린 시간</td></tr>
+</tbody>
+</table>
+<div class="point"><div class="pl">열은 처음에 넉넉히</div><p>나중에 열을 추가하면 <strong>이전 데이터와 형식이 달라집니다.</strong> 지금 안 쓰더라도 넣어 둘 값은 미리 넣는 편이 낫습니다. 비어 있는 칸은 나중에 채우면 됩니다.</p></div>
+<div class="memo"><div class="ml">기록해 두기</div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div></div><div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">18</div></section><section class="page"><div class="rh"><div class="l"><b>PYTHON</b> · STEP 3</div><div class="r">함수와 CSV 로그 (계속) <span class="pg">19</span></div></div>
+<h2>CSV로 쓰는 두 가지 방법</h2>
+<div class="code">
+  <div class="ch2"><span>csv 모듈 — DictWriter</span><span>PYTHON</span></div>
+  <div class="cb2"><span class="fn">import</span> csv, os
+
+FIELDS = [<span class="str">"time"</span>, <span class="str">"target"</span>, <span class="str">"action"</span>, <span class="str">"lib"</span>, <span class="str">"width"</span>, <span class="str">"height"</span>,
+          <span class="str">"mem_before_mb"</span>, <span class="str">"mem_after_mb"</span>, <span class="str">"mem_delta_mb"</span>,
+          <span class="str">"cpu_pct"</span>, <span class="str">"elapsed_s"</span>]
+
+<span class="fn">def</span> <span class="fn">append_row</span>(row, path=<span class="str">"logs/resource_log.csv"</span>):
+    <span class="str">"""측정 한 줄을 CSV에 추가한다. 파일이 없으면 헤더부터 쓴다."""</span>
+    os.<span class="fn">makedirs</span>(os.path.<span class="fn">dirname</span>(path), exist_ok=<span class="str">True</span>)
+    is_new = <span class="fn">not</span> os.path.<span class="fn">exists</span>(path)
+
+    <span class="fn">with</span> <span class="fn">open</span>(path, <span class="str">"a"</span>, newline=<span class="str">""</span>, encoding=<span class="str">"utf-8"</span>) <span class="fn">as</span> f:
+        writer = csv.<span class="fn">DictWriter</span>(f, fieldnames=FIELDS)
+        <span class="fn">if</span> is_new:
+            writer.<span class="fn">writeheader</span>()
+        writer.<span class="fn">writerow</span>(row)</div>
+</div>
+<div class="warn"><b><code>newline=""</code>를 빼면 줄이 비어 생깁니다</b>  Windows에서 CSV를 열 때 <strong>한 줄 걸러 빈 줄</strong>이 생기는 원인입니다. <code>csv</code> 모듈을 쓸 때는 항상 붙입니다. 그리고 <code>"a"</code> 모드라서 <b>실행할 때마다 뒤에 쌓입니다.</b></div>
+
+<div class="memo"><div class="ml">기록해 두기</div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div></div><div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">19</div></section><section class="page"><div class="rh"><div class="l"><b>PYTHON</b> · STEP 3</div><div class="r">함수와 CSV 로그 (계속) <span class="pg">20</span></div></div>
+<h2>측정 함수 완성</h2>
+<div class="code">
+  <div class="ch2"><span>measure.py — 이후 STEP에서 계속 import</span><span>PYTHON</span></div>
+  <div class="cb2"><span class="fn">import</span> os, csv, time, psutil
+<span class="fn">from</span> datetime <span class="fn">import</span> datetime
+
+PROC = psutil.<span class="fn">Process</span>(os.<span class="fn">getpid</span>())
+
+<span class="fn">def</span> <span class="fn">to_mb</span>(v):
+    <span class="fn">return</span> <span class="fn">round</span>(v / <span class="str">1024</span>**<span class="str">2</span>, <span class="str">1</span>)
+
+<span class="fn">def</span> <span class="fn">measure</span>(func, target=<span class="str">""</span>, action=<span class="str">""</span>, lib=<span class="str">""</span>, width=<span class="str">""</span>, height=<span class="str">""</span>):
+    <span class="str">"""func 을 실행하면서 메모리·CPU·시간을 측정해 딕셔너리로 돌려준다."""</span>
+    PROC.<span class="fn">cpu_percent</span>(interval=<span class="str">None</span>)        <span class="cmt"># 기준점</span>
+    before = <span class="fn">to_mb</span>(PROC.<span class="fn">memory_info</span>().rss)
+    t0 = time.<span class="fn">perf_counter</span>()
+
+    result = <span class="fn">func</span>()                        <span class="cmt"># ← 실제 작업</span>
+
+    elapsed = time.<span class="fn">perf_counter</span>() - t0
+    after = <span class="fn">to_mb</span>(PROC.<span class="fn">memory_info</span>().rss)
+    cpu = PROC.<span class="fn">cpu_percent</span>(interval=<span class="str">None</span>)
+
+    row = {
+        <span class="str">"time"</span>: datetime.<span class="fn">now</span>().<span class="fn">strftime</span>(<span class="str">"%Y-%m-%d %H:%M:%S"</span>),
+        <span class="str">"target"</span>: target, <span class="str">"action"</span>: action, <span class="str">"lib"</span>: lib,
+        <span class="str">"width"</span>: width, <span class="str">"height"</span>: height,
+        <span class="str">"mem_before_mb"</span>: before, <span class="str">"mem_after_mb"</span>: after,
+        <span class="str">"mem_delta_mb"</span>: <span class="fn">round</span>(after - before, <span class="str">1</span>),
+        <span class="str">"cpu_pct"</span>: cpu, <span class="str">"elapsed_s"</span>: <span class="fn">round</span>(elapsed, <span class="str">3</span>),
+    }
+    <span class="fn">return</span> row, result</div>
+</div>
+<div class="point"><div class="pl">함수를 값으로 넘깁니다</div><p><code>measure(func)</code>에서 <code>func</code>은 <strong>실행 결과가 아니라 함수 자체</strong>입니다. 괄호 없이 이름만 넘기고, 측정 안에서 <code>func()</code>으로 실행합니다. 이렇게 하면 <strong>무엇을 측정하든 같은 함수</strong>를 씁니다.</p></div>
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">20</div></section><section class="page"><div class="rh"><div class="l"><b>PYTHON</b> · STEP 3</div><div class="r">함수와 CSV 로그 (계속) <span class="pg">21</span></div></div>
+<h2>써 보기</h2>
+<div class="code">
+  <div class="ch2"><span>측정 → 기록</span><span>PYTHON</span></div>
+  <div class="cb2"><span class="fn">def</span> <span class="fn">heavy_work</span>():
+    <span class="fn">return</span> [<span class="str">0</span>] * <span class="str">10_000_000</span>
+
+row, data = <span class="fn">measure</span>(heavy_work, target=<span class="str">"list_10m"</span>, action=<span class="str">"alloc"</span>)
+<span class="fn">append_row</span>(row)
+
+<span class="fn">print</span>(row[<span class="str">"mem_delta_mb"</span>], <span class="str">"MB 증가"</span>)
+<span class="fn">print</span>(row[<span class="str">"elapsed_s"</span>], <span class="str">"초"</span>)</div>
+</div>
+
+<div class="code">
+  <div class="ch2"><span>logs/resource_log.csv</span><span>결과</span></div>
+  <div class="cb2">time,target,action,lib,width,height,mem_before_mb,mem_after_mb,mem_delta_mb,cpu_pct,elapsed_s
+2026-09-04 10:20:11,list_10m,alloc,,,,48.2,124.6,76.4,31.2,0.092</div>
+</div>
+<div class="capt"><b>그림 3-1</b> 아직 <code>lib</code>·<code>width</code>·<code>height</code>는 비어 있습니다. STEP 5에서 이미지를 다루기 시작하면 채워집니다.</div>
+
+<h2>같은 측정을 여러 번</h2>
+<div class="code">
+  <div class="ch2"><span>반복 측정 — 한 번은 믿지 않습니다</span><span>PYTHON</span></div>
+  <div class="cb2"><span class="fn">for</span> i <span class="fn">in</span> <span class="fn">range</span>(<span class="str">5</span>):
+    row, _ = <span class="fn">measure</span>(heavy_work, target=<span class="str">"list_10m"</span>, action=<span class="str">"alloc"</span>)
+    <span class="fn">append_row</span>(row)
+    <span class="fn">print</span>(i, row[<span class="str">"elapsed_s"</span>])</div>
+</div>
+<div class="warn"><b>첫 번째 측정은 대체로 느립니다</b>  처음 실행할 때는 <strong>라이브러리 로딩, 캐시 준비</strong> 같은 준비 작업이 함께 잡힙니다. 그래서 <b>여러 번 측정해 평균이나 중앙값</b>으로 보는 것이 맞습니다. 측정값 하나로 “A가 B보다 빠르다”고 말하지 않습니다.</div>
+
+<h2>실습</h2>
+<ul class="chk">
+<li><code>measure.py</code>를 만들고 <code>to_mb</code>, <code>measure</code>, <code>append_row</code> 세 함수를 넣는다</li>
+<li>큰 리스트 만들기를 <strong>5회 반복 측정</strong>해 CSV에 쌓는다</li>
+<li>CSV를 엑셀로 열어 <code>mem_delta_mb</code>와 <code>elapsed_s</code>가 회차마다 어떻게 다른지 본다</li>
+<li>같은 코드를 두 번 실행해 <strong>파일에 계속 쌓이는지</strong> 확인한다</li>
+</ul>
+
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">21</div></section><section class="page"><div class="rh"><div class="l"><b>PYTHON</b> · STEP 3</div><div class="r">함수와 CSV 로그 (계속) <span class="pg">22</span></div></div>
+<div class="say"><div class="sl">GPT · 대화  |  더 알아보기</div><div class="sc"># 질문
+- 파이썬에서 함수에 함수를 넘기는 것(고차 함수)이 왜 유용한가요?
+- 측정 결과를 CSV 말고 JSON 으로 남기면 무엇이 달라지나요?
+- 시간 측정에 time.time() 대신 time.perf_counter() 를 쓰는 이유는?
+- 반복 측정 결과를 요약할 때 평균과 중앙값 중 무엇이 나은가요?</div></div>
+<div class="memo"><div class="ml">기록해 두기</div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div></div><div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">22</div></section><section class="page"><div class="rh"><div class="l"><b>PYTHON</b> · STEP 4</div><div class="r">클래스<span class="pg">23</span></div></div>
+<div class="kicker">CLASS · CONTEXT MANAGER</div>
+<h1>열고 닫아야 하는 것을 다룬다</h1>
+<div class="mission"><b>MISSION</b><h3>측정기를 <b>클래스</b>로 만들고 <code>with</code> 문으로 쓴다. 웹캠처럼 <b>반드시 닫아야 하는 대상</b>을 안전하게 다루기 위한 준비다.</h3>
+<p class="wy"><b>WHY</b> 함수만으로도 측정은 됩니다. 그런데 웹캠은 <b>열고 → 여러 번 쓰고 → 닫는</b> 흐름이고, 중간에 오류가 나도 닫혀야 합니다. 상태를 들고 있어야 하는 대상은 클래스가 맞습니다.</p></div>
+
+<h2>함수로는 불편한 상황</h2>
+<div class="ba">
+  <div class="bad"><div class="h">함수만 쓰면</div><div class="m" style="font-family:'Noto Sans KR',sans-serif;font-size:12px">카메라 객체를 매번 인자로 넘김<br>측정값 리스트도 따로 들고 다님<br><u>오류가 나면 카메라가 안 닫힘</u><br>→ 다음 실행에서 카메라 잡히지 않음</div></div>
+  <div class="good"><div class="h">클래스로 묶으면</div><div class="m" style="font-family:'Noto Sans KR',sans-serif;font-size:12px">카메라와 측정값을 <b>한 객체가 보관</b><br>with 문을 벗어나면 자동으로 닫힘<br>오류가 나도 닫힘이 보장됨</div></div>
+</div>
+
+<div class="memo"><div class="ml">기록해 두기</div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div></div><div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">23</div></section><section class="page"><div class="rh"><div class="l"><b>PYTHON</b> · STEP 4</div><div class="r">클래스 (계속) <span class="pg">24</span></div></div>
+<h2>클래스의 기본</h2>
+<div class="code">
+  <div class="ch2"><span>가장 단순한 형태</span><span>PYTHON</span></div>
+  <div class="cb2"><span class="fn">class</span> ResourceLogger:
+    <span class="fn">def</span> <span class="fn">__init__</span>(self, path=<span class="str">"logs/resource_log.csv"</span>):
+        <span class="str">"""객체를 만들 때 한 번 실행됩니다."""</span>
+        self.path = path            <span class="cmt"># self = 이 객체 자신</span>
+        self.rows = []
+        self.proc = psutil.<span class="fn">Process</span>(os.<span class="fn">getpid</span>())
+
+    <span class="fn">def</span> <span class="fn">log</span>(self, row):
+        <span class="str">"""측정 한 줄을 안에 쌓아 둔다."""</span>
+        self.rows.<span class="fn">append</span>(row)
+
+    <span class="fn">def</span> <span class="fn">save</span>(self):
+        <span class="str">"""쌓인 것을 한 번에 파일로 쓴다."""</span>
+        <span class="fn">for</span> r <span class="fn">in</span> self.rows:
+            <span class="fn">append_row</span>(r, self.path)
+        <span class="fn">print</span>(<span class="str">f"{len(self.rows)}건 저장"</span>)
+
+<span class="cmt"># 사용</span>
+logger = <span class="fn">ResourceLogger</span>()
+logger.<span class="fn">log</span>({<span class="str">"target"</span>: <span class="str">"a.jpg"</span>})
+logger.<span class="fn">save</span>()</div>
+</div>
+<table class="zebra">
+<thead><tr><th style="width:24%">용어</th><th>뜻</th></tr></thead>
+<tbody>
+<tr><td><b>클래스</b></td><td>설계도. <code>ResourceLogger</code> 자체</td></tr>
+<tr><td><b>객체(인스턴스)</b></td><td>설계도로 만든 실물. <code>logger</code></td></tr>
+<tr><td><code>__init__</code></td><td>만들 때 한 번 실행되는 준비 작업</td></tr>
+<tr><td><code>self</code></td><td>이 객체 자신. 첫 번째 매개변수로 항상 붙는다</td></tr>
+<tr><td><b>메서드</b></td><td>클래스 안의 함수. <code>logger.log(...)</code></td></tr>
+</tbody>
+</table>
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">24</div></section><section class="page"><div class="rh"><div class="l"><b>PYTHON</b> · STEP 4</div><div class="r">클래스 (계속) <span class="pg">25</span></div></div>
+<h2>with 문으로 쓰게 만들기</h2>
+<p>메서드 두 개만 추가하면 <code>with</code> 문에서 쓸 수 있습니다. <code>__enter__</code>는 들어갈 때, <code>__exit__</code>은 <em>나갈 때 반드시</em> 실행됩니다.</p>
+<div class="code">
+  <div class="ch2"><span>ResourceLogger — 최종 형태</span><span>PYTHON</span></div>
+  <div class="cb2"><span class="fn">class</span> ResourceLogger:
+    <span class="fn">def</span> <span class="fn">__init__</span>(self, path=<span class="str">"logs/resource_log.csv"</span>):
+        self.path = path
+        self.rows = []
+        self.proc = psutil.<span class="fn">Process</span>(os.<span class="fn">getpid</span>())
+
+    <span class="fn">def</span> <span class="fn">__enter__</span>(self):
+        <span class="fn">return</span> self                <span class="cmt"># with ... as logger 의 logger</span>
+
+    <span class="fn">def</span> <span class="fn">__exit__</span>(self, exc_type, exc_value, tb):
+        self.<span class="fn">save</span>()                  <span class="cmt"># 오류가 나도 실행됩니다</span>
+        <span class="fn">return</span> <span class="str">False</span>               <span class="cmt"># 오류는 숨기지 않고 그대로 전달</span>
+
+    <span class="fn">def</span> <span class="fn">measure</span>(self, func, **info):
+        self.proc.<span class="fn">cpu_percent</span>(interval=<span class="str">None</span>)
+        before = <span class="fn">to_mb</span>(self.proc.<span class="fn">memory_info</span>().rss)
+        t0 = time.<span class="fn">perf_counter</span>()
+        result = <span class="fn">func</span>()
+        elapsed = time.<span class="fn">perf_counter</span>() - t0
+        after = <span class="fn">to_mb</span>(self.proc.<span class="fn">memory_info</span>().rss)
+
+        row = {<span class="str">"time"</span>: datetime.<span class="fn">now</span>().<span class="fn">strftime</span>(<span class="str">"%Y-%m-%d %H:%M:%S"</span>),
+               <span class="str">"mem_before_mb"</span>: before, <span class="str">"mem_after_mb"</span>: after,
+               <span class="str">"mem_delta_mb"</span>: <span class="fn">round</span>(after - before, <span class="str">1</span>),
+               <span class="str">"cpu_pct"</span>: self.proc.<span class="fn">cpu_percent</span>(interval=<span class="str">None</span>),
+               <span class="str">"elapsed_s"</span>: <span class="fn">round</span>(elapsed, <span class="str">3</span>)}
+        row.<span class="fn">update</span>(info)             <span class="cmt"># target, lib, width, height ...</span>
+        self.rows.<span class="fn">append</span>(row)
+        <span class="fn">return</span> result
+
+    <span class="fn">def</span> <span class="fn">save</span>(self):
+        <span class="fn">for</span> r <span class="fn">in</span> self.rows:
+            <span class="fn">append_row</span>(r, self.path)</div>
+</div>
+<p class="mn"><code>**info</code>는 <strong>이름이 붙은 나머지 인자를 전부 받는</strong> 표기입니다. <code>target=</code>, <code>lib=</code>처럼 넘긴 것이 딕셔너리로 들어와 그대로 열에 채워집니다.</p>
+
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">25</div></section><section class="page"><div class="rh"><div class="l"><b>PYTHON</b> · STEP 4</div><div class="r">클래스 (계속) <span class="pg">26</span></div></div>
+<h2>쓰는 쪽은 이렇게 짧아집니다</h2>
+<div class="code">
+  <div class="ch2"><span>사용 예</span><span>PYTHON</span></div>
+  <div class="cb2"><span class="fn">with</span> <span class="fn">ResourceLogger</span>() <span class="fn">as</span> logger:
+    logger.<span class="fn">measure</span>(<span class="fn">lambda</span>: [<span class="str">0</span>]*<span class="str">10_000_000</span>,
+                   target=<span class="str">"list_10m"</span>, action=<span class="str">"alloc"</span>)
+    logger.<span class="fn">measure</span>(<span class="fn">lambda</span>: <span class="fn">sum</span>(<span class="fn">range</span>(<span class="str">10_000_000</span>)),
+                   target=<span class="str">"sum_10m"</span>, action=<span class="str">"calc"</span>)
+<span class="cmt"># 블록을 벗어나는 순간 save() 가 자동 실행 → CSV 기록 완료</span></div>
+</div>
+<div class="point"><div class="pl">여기서 핵심</div><p><code>with</code> 블록 안에서 <strong>오류가 나도 <code>__exit__</code>은 실행됩니다.</strong> 그래서 측정 중 예외가 터져도 그때까지의 기록은 남고, 다음 STEP에서는 <strong>카메라가 반드시 닫힙니다.</strong></p></div>
+<h2>lambda — 이름 없는 짧은 함수</h2>
+<div class="code">
+  <div class="ch2"><span>두 표기는 같은 뜻</span><span>PYTHON</span></div>
+  <div class="cb2"><span class="cmt"># ① 함수를 만들어 넘기기</span>
+<span class="fn">def</span> <span class="fn">work</span>():
+    <span class="fn">return</span> [<span class="str">0</span>] * <span class="str">10_000_000</span>
+logger.<span class="fn">measure</span>(work, target=<span class="str">"list_10m"</span>)
+
+<span class="cmt"># ② 그 자리에서 한 줄로</span>
+logger.<span class="fn">measure</span>(<span class="fn">lambda</span>: [<span class="str">0</span>]*<span class="str">10_000_000</span>, target=<span class="str">"list_10m"</span>)</div>
+</div>
+<p class="mn">한 줄짜리 작업은 <code>lambda</code>가 편합니다. 길거나 여러 줄이면 <strong>이름 있는 함수</strong>로 만드는 편이 읽기 좋습니다.</p>
+
+<h2>실습</h2>
+<ul class="chk">
+<li><code>ResourceLogger</code> 클래스를 <code>measure.py</code>에 추가한다</li>
+<li><code>with</code> 문으로 세 가지 작업을 측정해 CSV에 한 번에 저장한다</li>
+<li><code>with</code> 블록 안에서 <strong>일부러 오류를 내고</strong>(<code>1/0</code>) 그때까지의 기록이 저장되는지 확인한다</li>
+<li>같은 작업을 <code>lambda</code>와 이름 있는 함수 두 방식으로 넘겨 본다</li>
+</ul>
+
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">26</div></section><section class="page"><div class="rh"><div class="l"><b>PYTHON</b> · STEP 4</div><div class="r">클래스 (계속) <span class="pg">27</span></div></div>
+<div class="warn"><b>오류를 숨기지 않습니다</b>  <code>__exit__</code>에서 <code>return True</code>로 바꾸면 <strong>오류가 조용히 사라집니다.</strong> 측정은 되는데 실제로는 실패한 상태가 되므로, <b><code>False</code>를 돌려주어 오류는 그대로 드러나게</b> 두는 것이 맞습니다.</div>
+
+<h2>여기까지 만든 도구</h2>
+<div class="tree">measure.py
+├─ <b>to_mb()</b>              <i>바이트 → MB</i>
+├─ <b>append_row()</b>         <i>CSV 한 줄 추가</i>
+├─ <b>measure()</b>            <i>함수 하나를 측정</i>
+└─ <b>ResourceLogger</b>       <i>with 문으로 쓰는 측정기</i>
+
+images/                    <i>측정할 이미지 (다음 STEP)</i>
+logs/resource_log.csv      <i>결과가 쌓이는 곳</i></div>
+<div class="capt"><b>그림 4-1</b> 여기까지가 <b>도구</b>입니다. 다음 STEP부터는 이 도구로 <b>실제 대상</b>을 측정합니다.</div>
+
+<div class="say"><div class="sl">GPT · 대화  |  더 알아보기</div><div class="sc"># 질문
+- 클래스와 함수는 각각 언제 쓰는 것이 맞나요? 판단 기준을 알려줘
+- __enter__ / __exit__ 를 쓰는 다른 실무 예를 3가지 알려줘 (DB 연결, 파일, 락)
+- contextlib.contextmanager 로 같은 것을 더 짧게 쓰는 방법도 보여줘
+- __exit__ 의 exc_type, exc_value, tb 는 각각 무엇인가요?</div></div>
+<div class="memo"><div class="ml">기록해 두기</div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div></div><div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">27</div></section><section class="page"><div class="rh"><div class="l"><b>PYTHON</b> · STEP 5</div><div class="r">Pillow와 OpenCV<span class="pg">28</span></div></div>
+<div class="kicker">IMAGE LOADING · 자원 비교</div>
+<h1>같은 이미지를 두 방식으로 읽는다</h1>
+<div class="mission"><b>MISSION</b><h3>같은 파일을 Pillow와 OpenCV로 읽고 <b>메모리 증가량과 소요시간</b>을 측정해 CSV에 쌓는다. 해상도를 바꿔 가며 반복한다.</h3>
+<p class="wy"><b>WHY</b> 라이브러리를 고르는 기준이 “유명해서”가 되면 안 됩니다. <b>내 환경에서 얼마나 쓰는지 숫자로</b> 확인하고 고르는 것이 엔지니어의 판단입니다.</p></div>
+
+<h2>두 라이브러리는 읽는 방식이 다릅니다</h2>
+<table class="zebra">
+<thead><tr><th style="width:20%">항목</th><th style="width:34%">Pillow (PIL)</th><th>OpenCV (cv2)</th></tr></thead>
+<tbody>
+<tr><td><b>여는 방법</b></td><td><code>Image.open(path)</code></td><td><code>cv2.imread(path)</code></td></tr>
+<tr><td><b>로딩 시점</b></td><td><b>지연</b> — 열 때는 헤더만, 실제 픽셀은 쓸 때</td><td><b>즉시</b> — 부를 때 전부 메모리로</td></tr>
+<tr><td><b>결과 형태</b></td><td>Image 객체</td><td>NumPy 배열</td></tr>
+<tr><td><b>색 순서</b></td><td>RGB</td><td><b>BGR</b> — 순서가 다릅니다</td></tr>
+<tr><td><b>강점</b></td><td>변환·저장·썸네일</td><td>영상 처리·실시간</td></tr>
+</tbody>
+</table>
+<div class="note"><strong>측정에서 반드시 걸리는 함정</strong>  Pillow의 <code>Image.open()</code>은 <b>실제로 픽셀을 읽지 않습니다.</b> 그래서 메모리가 거의 안 늘어난 것처럼 보입니다. 공정하게 비교하려면 <code>img.load()</code>를 호출해 <b>실제로 읽게</b> 만들어야 합니다. 이걸 모르면 “Pillow가 압도적으로 가볍다”는 <b>틀린 결론</b>을 내립니다.</div>
+
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">28</div></section><section class="page"><div class="rh"><div class="l"><b>PYTHON</b> · STEP 5</div><div class="r">Pillow와 OpenCV (계속) <span class="pg">29</span></div></div>
+<h2>측정 코드</h2>
+<div class="code">
+  <div class="ch2"><span>compare_load.py</span><span>PYTHON</span></div>
+  <div class="cb2"><span class="fn">import</span> os, re, gc
+<span class="fn">from</span> PIL <span class="fn">import</span> Image
+<span class="fn">import</span> cv2
+<span class="fn">from</span> measure <span class="fn">import</span> ResourceLogger, parse_name
+
+IMG_DIR = <span class="str">"images"</span>
+
+<span class="fn">def</span> <span class="fn">load_pillow</span>(path):
+    img = Image.<span class="fn">open</span>(path)
+    img.<span class="fn">load</span>()                    <span class="cmt"># ← 실제로 픽셀을 읽게 만든다</span>
+    <span class="fn">return</span> img
+
+<span class="fn">def</span> <span class="fn">load_opencv</span>(path):
+    <span class="fn">return</span> cv2.<span class="fn">imread</span>(path)       <span class="cmt"># 부르는 즉시 전부 읽음</span>
+
+<span class="fn">with</span> <span class="fn">ResourceLogger</span>() <span class="fn">as</span> logger:
+    <span class="fn">for</span> f <span class="fn">in</span> <span class="fn">sorted</span>(os.<span class="fn">listdir</span>(IMG_DIR)):
+        <span class="fn">if</span> <span class="fn">not</span> f.<span class="fn">lower</span>().<span class="fn">endswith</span>((<span class="str">".jpg"</span>, <span class="str">".png"</span>)):
+            <span class="fn">continue</span>
+        path = os.path.<span class="fn">join</span>(IMG_DIR, f)
+        w, h = <span class="fn">parse_name</span>(f)          <span class="cmt"># STEP 2 의 정규표현식</span>
+
+        <span class="fn">for</span> lib, fn <span class="fn">in</span> ((<span class="str">"pillow"</span>, load_pillow), (<span class="str">"opencv"</span>, load_opencv)):
+            gc.<span class="fn">collect</span>()                <span class="cmt"># 이전 측정의 잔여물 정리</span>
+            img = logger.<span class="fn">measure</span>(
+                <span class="fn">lambda</span>: <span class="fn">fn</span>(path),
+                target=f, action=<span class="str">"load"</span>, lib=lib, width=w, height=h,
+            )
+            <span class="fn">del</span> img                  <span class="cmt"># 참조를 끊어 다음 측정에 영향 줄이기</span></div>
+</div>
+<p class="mn"><code>gc.collect()</code>는 <strong>쓰레기 수집</strong>을 지금 실행하라는 뜻입니다. 앞 측정이 남긴 메모리가 다음 측정에 섞이는 것을 줄입니다.</p>
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">29</div></section><section class="page"><div class="rh"><div class="l"><b>PYTHON</b> · STEP 5</div><div class="r">Pillow와 OpenCV (계속) <span class="pg">30</span></div></div>
+<h2>결과는 이렇게 쌓입니다</h2>
+<div class="code">
+  <div class="ch2"><span>logs/resource_log.csv · 일부</span><span>CSV</span></div>
+  <div class="cb2">time,target,action,lib,width,height,mem_before_mb,mem_after_mb,mem_delta_mb,cpu_pct,elapsed_s
+...,sample_640x480.jpg,load,pillow,640,480,52.1,53.3,1.2,8.2,0.011
+...,sample_640x480.jpg,load,opencv,640,480,53.3,54.5,1.2,9.1,0.008
+...,sample_1920x1080.jpg,load,pillow,1920,1080,54.5,62.4,7.9,14.6,0.052
+...,sample_1920x1080.jpg,load,opencv,1920,1080,62.4,68.5,6.1,17.2,0.039
+...,sample_3840x2160.jpg,load,pillow,3840,2160,68.5,99.2,30.7,21.4,0.193
+...,sample_3840x2160.jpg,load,opencv,3840,2160,99.2,123.1,23.9,25.8,0.148</div>
+</div>
+<div class="capt"><b>그림 5-1</b> 값은 환경에 따라 다릅니다. <b>숫자 자체가 아니라 경향</b>을 봅니다. 해상도가 4배가 되면 메모리도 대략 그만큼 늘어납니다.</div>
+
+<h2>무엇을 읽어야 하나</h2>
+<table class="zebra">
+<thead><tr><th style="width:28%">확인할 것</th><th>어떻게 보나</th></tr></thead>
+<tbody>
+<tr><td><b>해상도와 메모리 관계</b></td><td>픽셀 수에 거의 비례하는지 — 가로×세로×채널로 계산한 값과 비교</td></tr>
+<tr><td><b>라이브러리 차이</b></td><td>같은 파일 두 줄의 <code>mem_delta_mb</code>·<code>elapsed_s</code> 비교</td></tr>
+<tr><td><b>압축 형식 영향</b></td><td>같은 해상도 JPG와 PNG의 <b>디코딩 시간</b> 차이</td></tr>
+<tr><td><b>첫 실행 효과</b></td><td>같은 조건 반복 시 첫 회만 유독 느린지</td></tr>
+</tbody>
+</table>
+
+<div class="point"><div class="pl">계산으로 검증하기</div><p>1920×1080 컬러 이미지를 <strong>압축 없이</strong> 메모리에 올리면 1920 × 1080 × 3바이트 ≈ <strong>5.9MB</strong>입니다. 측정값이 이 근처라면 정상이고, 크게 다르면 <strong>무엇이 더 붙었는지</strong> 따져 볼 지점입니다.</p></div>
+
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">30</div></section><section class="page"><div class="rh"><div class="l"><b>PYTHON</b> · STEP 5</div><div class="r">Pillow와 OpenCV (계속) <span class="pg">31</span></div></div>
+<h2>실습</h2>
+<ul class="chk">
+<li>같은 사진을 <strong>640×480 / 1920×1080 / 3840×2160</strong> 세 크기로 준비한다</li>
+<li>파일명에 해상도를 넣는다 — <code>sample_1920x1080.jpg</code></li>
+<li>두 라이브러리로 각각 <strong>3회씩</strong> 측정해 CSV에 쌓는다</li>
+<li>Pillow에서 <code>img.load()</code>를 <strong>빼고 한 번 더</strong> 측정해 차이를 확인한다</li>
+<li>CSV를 엑셀로 열어 해상도별·라이브러리별로 정렬해 본다</li>
+</ul>
+<p class="mn">네 번째 항목이 이 STEP의 핵심 실험입니다. <strong>측정 방법이 틀리면 결론도 틀린다</strong>는 것을 직접 보게 됩니다.</p>
+<h2>자주 만나는 문제</h2>
+<table class="zebra">
+<thead><tr><th style="width:30%">증상</th><th>원인과 확인</th></tr></thead>
+<tbody>
+<tr><td><code>cv2.imread</code>가 <code>None</code></td><td>경로 오타이거나 <b>한글·공백이 든 경로</b>. 오류를 내지 않고 조용히 None을 돌려주므로 반드시 확인해야 합니다</td></tr>
+<tr><td>메모리가 안 줄어든다</td><td>파이썬이 <b>해제한 메모리를 OS에 바로 돌려주지 않습니다.</b> 정상입니다</td></tr>
+<tr><td>Pillow가 너무 가볍다</td><td><code>img.load()</code>를 빠뜨린 경우</td></tr>
+<tr><td>측정값이 들쭉날쭉</td><td>다른 프로그램의 영향. 반복 측정해 중앙값으로 봅니다</td></tr>
+</tbody>
+</table>
+
+<div class="code">
+  <div class="ch2"><span>imread 실패를 잡아내기</span><span>PYTHON</span></div>
+  <div class="cb2"><span class="fn">def</span> <span class="fn">load_opencv</span>(path):
+    img = cv2.<span class="fn">imread</span>(path)
+    <span class="fn">if</span> img <span class="fn">is</span> <span class="str">None</span>:
+        <span class="fn">raise</span> <span class="fn">FileNotFoundError</span>(<span class="str">f"읽지 못했습니다: {path}"</span>)
+    <span class="fn">return</span> img</div>
+</div>
+<div class="warn"><b>조용한 실패가 가장 위험합니다</b>  <code>imread</code>는 파일이 없어도 예외를 내지 않습니다. 그대로 두면 <strong>측정은 성공했는데 실제로는 아무것도 안 읽은</strong> 데이터가 CSV에 쌓입니다. 앞에서 배운 대로 <b>실패를 드러나게</b> 만들어야 합니다.</div>
+
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">31</div></section><section class="page"><div class="rh"><div class="l"><b>PYTHON</b> · STEP 5</div><div class="r">Pillow와 OpenCV (계속) <span class="pg">32</span></div></div>
+<h2>측정 결과를 해석시키기</h2>
+<div class="say"><div class="sl">GPT · 대화  |  결과 해석</div><div class="sc"># 역할
+너는 성능 측정 결과를 해석하는 시스템 엔지니어다.
+
+# 데이터
+[CSV 내용 붙여넣기]
+
+# 요청
+1. 해상도와 메모리 증가량의 관계를 정리해줘.
+2. Pillow 와 OpenCV 중 어느 쪽이 어떤 상황에 유리한지 근거와 함께 알려줘.
+3. 이 측정에서 신뢰하기 어려운 부분이 있다면 지적해줘.
+4. 추가로 측정하면 좋을 조건을 3가지 제안해줘.
+
+# 제한
+데이터에 없는 내용을 추측해서 쓰지 말 것.</div></div>
+<p class="mn">마지막 제한이 중요합니다. 성능 이야기는 AI가 <strong>일반론으로 그럴듯하게 채우기</strong> 쉬운 영역입니다. 내 데이터에 근거한 답만 받아야 합니다.</p>
+
+<div class="say"><div class="sl">GPT · 대화  |  더 알아보기</div><div class="sc"># 질문
+- Pillow 의 지연 로딩(lazy loading)은 어떤 장점 때문에 그렇게 설계됐나요?
+- OpenCV 가 BGR 순서를 쓰는 이유는 무엇인가요?
+- 이미지를 NumPy 배열로 다루면 메모리 관점에서 무엇이 달라지나요?
+- 대용량 이미지를 다룰 때 메모리를 아끼는 방법을 알려줘 (썸네일, 타일 처리)</div></div>
+<div class="memo"><div class="ml">기록해 두기</div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div></div><div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">32</div></section><section class="page"><div class="rh"><div class="l"><b>PYTHON</b> · STEP 6</div><div class="r">웹캠 실시간 측정<span class="pg">33</span></div></div>
+<div class="kicker">WEBCAM · 시간에 따른 변화</div>
+<h1>돌아가는 동안 자원을 기록한다</h1>
+<div class="mission"><b>MISSION</b><h3>웹캠을 열어 프레임마다 자원을 측정하고 CSV에 쌓는다. <b>해상도를 바꿔 가며</b> 비교하고, 시간이 지나며 메모리가 늘어나는지 확인한다.</h3>
+<p class="wy"><b>WHY</b> 이미지 한 장은 한 번 재면 끝입니다. 실시간 처리는 <b>계속 도는 동안의 변화</b>를 봐야 합니다. 서버 모니터링과 같은 관점입니다.</p></div>
+
+<h2>웹캠을 다루는 기본</h2>
+<div class="code">
+  <div class="ch2"><span>가장 단순한 형태</span><span>PYTHON</span></div>
+  <div class="cb2"><span class="fn">import</span> cv2
+
+cap = cv2.<span class="fn">VideoCapture</span>(<span class="str">0</span>)          <span class="cmt"># 0 = 기본 카메라</span>
+
+<span class="fn">if</span> <span class="fn">not</span> cap.<span class="fn">isOpened</span>():
+    <span class="fn">raise</span> <span class="fn">RuntimeError</span>(<span class="str">"카메라를 열 수 없습니다"</span>)
+
+<span class="fn">while</span> <span class="str">True</span>:
+    ok, frame = cap.<span class="fn">read</span>()          <span class="cmt"># ok=성공 여부, frame=이미지 배열</span>
+    <span class="fn">if</span> <span class="fn">not</span> ok:
+        <span class="fn">break</span>
+    cv2.<span class="fn">imshow</span>(<span class="str">"webcam"</span>, frame)
+    <span class="fn">if</span> cv2.<span class="fn">waitKey</span>(<span class="str">1</span>) &amp; <span class="str">0xFF</span> == <span class="fn">ord</span>(<span class="str">"q"</span>):   <span class="cmt"># q 를 누르면 종료</span>
+        <span class="fn">break</span>
+
+cap.<span class="fn">release</span>()                       <span class="cmt"># ← 반드시 닫아야 합니다</span>
+cv2.<span class="fn">destroyAllWindows</span>()</div>
+</div>
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">33</div></section><section class="page"><div class="rh"><div class="l"><b>PYTHON</b> · STEP 6</div><div class="r">웹캠 실시간 측정 (계속) <span class="pg">34</span></div></div>
+<div class="warn"><b>닫지 않으면 다음 실행에서 막힙니다</b>  <code>cap.release()</code>를 빠뜨리거나 중간에 오류가 나면 <strong>카메라가 점유된 채로 남습니다.</strong> 그러면 다시 실행했을 때 <code>isOpened()</code>가 False가 되거나 검은 화면만 나옵니다. <b>STEP 4에서 <code>with</code> 문을 배운 이유가 이것입니다.</b></div>
+
+<h2>알아 둘 메서드</h2>
+<table class="zebra">
+<thead><tr><th style="width:32%">메서드</th><th>하는 일</th></tr></thead>
+<tbody>
+<tr><td><code>VideoCapture(0)</code></td><td>카메라 열기. 여러 대면 1, 2로 지정</td></tr>
+<tr><td><code>isOpened()</code></td><td>실제로 열렸는지 확인 — <b>반드시 검사</b></td></tr>
+<tr><td><code>read()</code></td><td>프레임 한 장 가져오기</td></tr>
+<tr><td><code>set(cv2.CAP_PROP_FRAME_WIDTH, 1280)</code></td><td>해상도 요청 — <b>요청일 뿐 적용은 카메라가 결정</b></td></tr>
+<tr><td><code>get(cv2.CAP_PROP_FRAME_WIDTH)</code></td><td><b>실제로</b> 적용된 값 확인</td></tr>
+<tr><td><code>release()</code></td><td>카메라 반납</td></tr>
+</tbody>
+</table>
+<div class="note"><strong>요청한 해상도와 실제가 다를 수 있습니다</strong>  카메라가 지원하지 않는 값을 <code>set</code>하면 <b>가장 가까운 값으로 바뀌거나 무시</b>됩니다. 그래서 측정할 때는 요청값이 아니라 <b><code>get</code>으로 읽은 실제값</b>을 CSV에 적어야 합니다.</div>
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">34</div></section><section class="page"><div class="rh"><div class="l"><b>PYTHON</b> · STEP 6</div><div class="r">웹캠 실시간 측정 (계속) <span class="pg">35</span></div></div>
+<h2>측정기를 클래스로</h2>
+<div class="code">
+  <div class="ch2"><span>webcam_monitor.py</span><span>PYTHON</span></div>
+  <div class="cb2"><span class="fn">import</span> cv2, os, time, psutil
+<span class="fn">from</span> datetime <span class="fn">import</span> datetime
+<span class="fn">from</span> measure <span class="fn">import</span> to_mb, append_row
+
+<span class="fn">class</span> WebcamMonitor:
+    <span class="fn">def</span> <span class="fn">__init__</span>(self, index=<span class="str">0</span>, width=<span class="str">1280</span>, height=<span class="str">720</span>,
+                 path=<span class="str">"logs/resource_log.csv"</span>):
+        self.index, self.req_w, self.req_h = index, width, height
+        self.path = path
+        self.cap = <span class="str">None</span>
+        self.rows = []
+        self.proc = psutil.<span class="fn">Process</span>(os.<span class="fn">getpid</span>())
+
+    <span class="fn">def</span> <span class="fn">__enter__</span>(self):
+        self.cap = cv2.<span class="fn">VideoCapture</span>(self.index)
+        <span class="fn">if</span> <span class="fn">not</span> self.cap.<span class="fn">isOpened</span>():
+            <span class="fn">raise</span> <span class="fn">RuntimeError</span>(<span class="str">f"카메라 {self.index} 를 열 수 없습니다"</span>)
+        self.cap.<span class="fn">set</span>(cv2.CAP_PROP_FRAME_WIDTH, self.req_w)
+        self.cap.<span class="fn">set</span>(cv2.CAP_PROP_FRAME_HEIGHT, self.req_h)
+        <span class="cmt"># 실제로 적용된 값을 읽어 둔다</span>
+        self.w = <span class="fn">int</span>(self.cap.<span class="fn">get</span>(cv2.CAP_PROP_FRAME_WIDTH))
+        self.h = <span class="fn">int</span>(self.cap.<span class="fn">get</span>(cv2.CAP_PROP_FRAME_HEIGHT))
+        <span class="fn">print</span>(<span class="str">f"요청 {self.req_w}x{self.req_h} → 실제 {self.w}x{self.h}"</span>)
+        self.proc.<span class="fn">cpu_percent</span>(interval=<span class="str">None</span>)
+        <span class="fn">return</span> self
+
+    <span class="fn">def</span> <span class="fn">__exit__</span>(self, exc_type, exc_value, tb):
+        <span class="fn">if</span> self.cap <span class="fn">is</span> <span class="fn">not</span> <span class="str">None</span>:
+            self.cap.<span class="fn">release</span>()            <span class="cmt"># 오류가 나도 반드시 반납</span>
+        cv2.<span class="fn">destroyAllWindows</span>()
+        <span class="fn">for</span> r <span class="fn">in</span> self.rows:
+            <span class="fn">append_row</span>(r, self.path)
+        <span class="fn">print</span>(<span class="str">f"{len(self.rows)} 프레임 기록"</span>)
+        <span class="fn">return</span> <span class="str">False</span>
+
+</div>
+</div>
+<p class="mn"><code>__enter__</code>에서 <b>열고 설정하고 실제값을 확인</b>하고, <code>__exit__</code>에서 <b>반납하고 저장</b>합니다. 나머지는 프레임을 가져오는 메서드 하나뿐입니다.</p>
+
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">35</div></section><section class="page"><div class="rh"><div class="l"><b>PYTHON</b> · STEP 6</div><div class="r">웹캠 실시간 측정 (계속) <span class="pg">36</span></div></div>
+<h2>프레임을 가져오며 측정하는 메서드</h2>
+<div class="code">
+  <div class="ch2"><span>webcam_monitor.py · 이어서</span><span>PYTHON</span></div>
+  <div class="cb2">    <span class="fn">def</span> <span class="fn">grab</span>(self, i):
+        <span class="str">"""프레임 한 장을 가져오며 측정한다."""</span>
+        before = <span class="fn">to_mb</span>(self.proc.<span class="fn">memory_info</span>().rss)
+        t0 = time.<span class="fn">perf_counter</span>()
+        ok, frame = self.cap.<span class="fn">read</span>()
+        elapsed = time.<span class="fn">perf_counter</span>() - t0
+        after = <span class="fn">to_mb</span>(self.proc.<span class="fn">memory_info</span>().rss)
+
+        self.rows.<span class="fn">append</span>({
+            <span class="str">"time"</span>: datetime.<span class="fn">now</span>().<span class="fn">strftime</span>(<span class="str">"%Y-%m-%d %H:%M:%S"</span>),
+            <span class="str">"target"</span>: <span class="str">f"webcam#{i}"</span>, <span class="str">"action"</span>: <span class="str">"frame"</span>, <span class="str">"lib"</span>: <span class="str">"opencv"</span>,
+            <span class="str">"width"</span>: self.w, <span class="str">"height"</span>: self.h,
+            <span class="str">"mem_before_mb"</span>: before, <span class="str">"mem_after_mb"</span>: after,
+            <span class="str">"mem_delta_mb"</span>: <span class="fn">round</span>(after - before, <span class="str">1</span>),
+            <span class="str">"cpu_pct"</span>: self.proc.<span class="fn">cpu_percent</span>(interval=<span class="str">None</span>),
+            <span class="str">"elapsed_s"</span>: <span class="fn">round</span>(elapsed, <span class="str">4</span>),
+        })
+        <span class="fn">return</span> ok, frame</div>
+</div>
+<h2>실행</h2>
+<div class="code">
+  <div class="ch2"><span>200 프레임 측정</span><span>PYTHON</span></div>
+  <div class="cb2"><span class="fn">with</span> <span class="fn">WebcamMonitor</span>(width=<span class="str">1280</span>, height=<span class="str">720</span>) <span class="fn">as</span> cam:
+    <span class="fn">for</span> i <span class="fn">in</span> <span class="fn">range</span>(<span class="str">200</span>):
+        ok, frame = cam.<span class="fn">grab</span>(i)
+        <span class="fn">if</span> <span class="fn">not</span> ok:
+            <span class="fn">print</span>(<span class="str">"프레임을 못 읽었습니다"</span>)
+            <span class="fn">break</span>
+        cv2.<span class="fn">imshow</span>(<span class="str">"webcam"</span>, frame)
+        <span class="fn">if</span> cv2.<span class="fn">waitKey</span>(<span class="str">1</span>) &amp; <span class="str">0xFF</span> == <span class="fn">ord</span>(<span class="str">"q"</span>):
+            <span class="fn">break</span>
+<span class="cmt"># 블록을 벗어나면 카메라 반납 + CSV 저장이 자동으로 끝남</span></div>
+</div>
+<div class="point"><div class="pl">여기서 STEP 4가 값을 합니다</div><p>중간에 <code>q</code>로 멈추든, 오류가 나든, 정상 종료하든 <strong><code>__exit__</code>은 실행됩니다.</strong> 카메라가 반납되고 그때까지의 기록이 저장됩니다.</p></div>
+
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">36</div></section><section class="page"><div class="rh"><div class="l"><b>PYTHON</b> · STEP 6</div><div class="r">웹캠 실시간 측정 (계속) <span class="pg">37</span></div></div>
+<h2>해상도를 바꿔 가며 비교</h2>
+<div class="code">
+  <div class="ch2"><span>세 가지 해상도 연속 측정</span><span>PYTHON</span></div>
+  <div class="cb2"><span class="fn">for</span> w, h <span class="fn">in</span> [(<span class="str">640</span>, <span class="str">480</span>), (<span class="str">1280</span>, <span class="str">720</span>), (<span class="str">1920</span>, <span class="str">1080</span>)]:
+    <span class="fn">try</span>:
+        <span class="fn">with</span> <span class="fn">WebcamMonitor</span>(width=w, height=h) <span class="fn">as</span> cam:
+            <span class="fn">for</span> i <span class="fn">in</span> <span class="fn">range</span>(<span class="str">100</span>):
+                ok, _ = cam.<span class="fn">grab</span>(i)
+                <span class="fn">if</span> <span class="fn">not</span> ok:
+                    <span class="fn">break</span>
+    <span class="fn">except</span> <span class="fn">RuntimeError</span> <span class="fn">as</span> e:
+        <span class="fn">print</span>(<span class="str">"건너뜀:"</span>, e)
+    time.<span class="fn">sleep</span>(<span class="str">1</span>)                  <span class="cmt"># 카메라가 완전히 반납될 시간</span></div>
+</div>
+<p class="mn">해상도를 바꾸려면 <strong>카메라를 닫았다 다시 열어야</strong> 합니다. 그래서 <code>with</code> 블록을 세 번 도는 형태가 됩니다. 사이에 잠깐 쉬는 것은 <b>반납이 끝나기를 기다리는</b> 것입니다.</p>
+
+<h2>결과에서 볼 것</h2>
+<table class="zebra">
+<thead><tr><th style="width:30%">확인할 것</th><th>어떻게 보나</th></tr></thead>
+<tbody>
+<tr><td><b>해상도별 프레임 시간</b></td><td>해상도별로 <code>elapsed_s</code> 평균을 비교. 1초를 이 값으로 나누면 대략적인 FPS</td></tr>
+<tr><td><b>메모리 누수</b></td><td>프레임 번호가 늘어날수록 <code>mem_after_mb</code>가 <b>계속 오르는지</b>. 초반에 오르다 평평해지면 정상</td></tr>
+<tr><td><b>CPU 부하</b></td><td>해상도가 오를 때 <code>cpu_pct</code>가 얼마나 뛰는지</td></tr>
+<tr><td><b>요청 vs 실제</b></td><td>요청한 해상도가 그대로 적용됐는지 — 실행 시 출력된 문구 확인</td></tr>
+</tbody>
+</table>
+<div class="memo"><div class="ml">기록해 두기</div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div></div><div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">37</div></section><section class="page"><div class="rh"><div class="l"><b>PYTHON</b> · STEP 6</div><div class="r">웹캠 실시간 측정 (계속) <span class="pg">38</span></div></div>
+<h2>자주 만나는 문제</h2>
+<table class="zebra">
+<thead><tr><th style="width:30%">증상</th><th>원인과 대응</th></tr></thead>
+<tbody>
+<tr><td>카메라가 안 열림</td><td>다른 프로그램(화상회의 앱)이 점유 중이거나 <b>앞 실행에서 반납 안 됨</b>. 프로그램을 닫고 다시 시도</td></tr>
+<tr><td>첫 프레임이 유독 느림</td><td>카메라 초기화 시간. <b>앞 몇 프레임은 통계에서 제외</b>하는 것이 맞습니다</td></tr>
+<tr><td>검은 화면만 나옴</td><td>카메라 권한 차단. Windows 설정 → 개인정보 → 카메라 확인</td></tr>
+<tr><td>창이 닫히지 않음</td><td><code>destroyAllWindows()</code>가 실행되지 않은 경우. <code>with</code>를 쓰면 해결됩니다</td></tr>
+<tr><td>메모리가 계속 오름</td><td>프레임을 리스트에 쌓고 있지 않은지 확인. <b>측정값만 쌓고 이미지는 버려야</b> 합니다</td></tr>
+</tbody>
+</table>
+<div class="warn"><b>이미지를 모아 두면 안 됩니다</b>  프레임 한 장이 1280×720×3 ≈ <strong>2.6MB</strong>입니다. 200장을 리스트에 담으면 500MB가 넘습니다. 측정 목적이라면 <b>숫자만 남기고 이미지는 버립니다.</b></div>
+
+<h2>실습</h2>
+<ul class="chk">
+<li><code>WebcamMonitor</code>를 만들고 100 프레임을 측정해 CSV에 쌓는다</li>
+<li>실행 시 출력되는 <strong>요청 해상도와 실제 해상도</strong>를 비교한다</li>
+<li>640×480 / 1280×720 / 1920×1080 세 조건으로 각각 100 프레임씩 측정한다</li>
+<li>CSV에서 해상도별 <code>elapsed_s</code> 평균을 구해 <strong>대략적인 FPS</strong>를 계산한다</li>
+<li><code>with</code> 없이 <code>release()</code>를 빼고 실행한 뒤, <strong>다시 실행했을 때 어떻게 되는지</strong> 확인한다</li>
+</ul>
+<p class="mn">마지막 항목은 일부러 문제를 만드는 실습입니다. <strong>왜 반드시 닫아야 하는지</strong>를 몸으로 알게 됩니다. 확인 후에는 프로그램을 완전히 종료해 카메라를 풀어 주세요.</p>
+
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">38</div></section><section class="page"><div class="rh"><div class="l"><b>PYTHON</b> · STEP 6</div><div class="r">웹캠 실시간 측정 (계속) <span class="pg">39</span></div></div>
+<h2>여기까지 만든 것</h2>
+<div class="tree">measure.py               <i>to_mb · append_row · measure · ResourceLogger</i>
+compare_load.py          <i>Pillow vs OpenCV 이미지 로딩 측정</i>
+webcam_monitor.py        <i>WebcamMonitor · 프레임별 측정</i>
+images/                  <i>해상도별 샘플 이미지</i>
+logs/resource_log.csv    <i>모든 측정이 한 파일에 쌓임</i></div>
+<div class="capt"><b>그림 6-1</b> 이미지 로딩과 웹캠 측정이 <b>같은 CSV 파일</b>에 쌓입니다. <code>action</code> 열로 구분하면 되니 파일을 나눌 필요가 없습니다.</div>
+
+<div class="point"><div class="pl">다음 단계</div><p>쌓인 CSV를 <strong>그래프로 그리는 것</strong>은 별도 교재에서 다룹니다. 여기서 만든 데이터가 그대로 재료가 됩니다.</p></div>
+
+<div class="say"><div class="sl">GPT · 대화  |  더 알아보기</div><div class="sc"># 질문
+- OpenCV 의 VideoCapture 는 내부적으로 어떤 방식으로 프레임을 가져오나요?
+- 프레임 드롭(누락)이 생기는 이유와 확인 방법을 알려줘
+- 실시간 처리에서 스레드를 쓰면 무엇이 좋아지나요? 주의할 점은?
+- 서버에서 카메라 없이 같은 코드를 테스트하려면 어떻게 하나요?
+- 이 측정 방식을 컨테이너 환경에 적용할 때 달라지는 점을 알려줘</div></div>
+<div class="memo"><div class="ml">기록해 두기</div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div><div class="line"> </div></div><div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">39</div></section><script>
+document.querySelectorAll(".say").forEach(function(box){
+  var sc=box.querySelector(".sc"), sl=box.querySelector(".sl"); if(!sc||!sl)return;
+  var b=document.createElement("button"); b.className="copybtn"; b.textContent="복사"; b.type="button";
+  b.onclick=function(){navigator.clipboard.writeText(sc.innerText).then(function(){b.textContent="복사됨";setTimeout(function(){b.textContent="복사"},1200)})};
+  sl.appendChild(b);
+});
+</script></body></html>
