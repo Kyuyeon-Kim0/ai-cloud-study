@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>장비 점검 현황</title>
+  <style>
+    body { max-width: 1100px; margin: 40px auto; padding: 0 20px; font-family: Arial, sans-serif; color: #1f2937; background: #f8fafc; }
+    h1 { margin-bottom: 8px; }
+    .meta { color: #64748b; }
+    select { margin: 12px 0; padding: 8px; }
+    table { width: 100%; border-collapse: collapse; background: #fff; }
+    th, td { padding: 12px 16px; border: 1px solid #d1d5db; text-align: left; }
+    th { background: #e0f2fe; }
+    .error { color: #b91c1c; }
+  </style>
+</head>
+<body>
+  <h1>장비 점검 현황</h1>
+  <p id="meta" class="meta">데이터를 불러오는 중입니다.</p>
+  <label>상태 선택 <select id="status"><option>전체</option></select></label>
+  <p id="error" class="error" hidden></p>
+  <table>
+    <thead>
+      <tr><th>장비명</th><th>상태</th><th>점검 시각</th><th>CPU</th><th>메모리</th></tr>
+    </thead>
+    <tbody id="rows"></tbody>
+  </table>
+  <script>
+    const statusSelect = document.querySelector('#status');
+    const rows = document.querySelector('#rows');
+    const meta = document.querySelector('#meta');
+    const error = document.querySelector('#error');
+    let equipment = [];
+
+    function render() {
+      const selected = statusSelect.value;
+      const filtered = selected === '전체' ? equipment : equipment.filter(row => row.status === selected);
+      rows.replaceChildren(...filtered.map(row => {
+        const tr = document.createElement('tr');
+        [row.name, row.status, row.checked_at, `${row.cpu}%`, `${row.mem}%`].forEach(value => {
+          const td = document.createElement('td');
+          td.textContent = value;
+          tr.append(td);
+        });
+        return tr;
+      }));
+      meta.textContent = `조회 건수: ${filtered.length.toLocaleString()}건 · 마지막 갱신: ${new Date().toLocaleString('ko-KR')}`;
+    }
+
+    async function refreshData() {
+      try {
+        const response = await fetch('/api/equipment', { cache: 'no-store' });
+        if (!response.ok) throw new Error(await response.text());
+        equipment = await response.json();
+        const selected = statusSelect.value;
+        const statuses = [...new Set(equipment.map(row => row.status))].sort();
+        statusSelect.replaceChildren(...['전체', ...statuses].map(status => new Option(status, status)));
+        statusSelect.value = statuses.includes(selected) || selected === '전체' ? selected : '전체';
+        error.hidden = true;
+        render();
+      } catch (cause) {
+        error.textContent = `데이터를 갱신하지 못했습니다. ${cause.message}`;
+        error.hidden = false;
+      }
+    }
+
+    statusSelect.addEventListener('change', render);
+    refreshData();
+    setInterval(refreshData, 5000);
+  </script>
+</body>
+</html>
