@@ -1,0 +1,1211 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>3장 · SQLite 저장과 조회</title><style>
+:root{
+  --ink:#1c1b19; --paper:#ffffff; --soft:#f7f6f3; --soft2:#efedea;
+  --line:#e3e0db; --line2:#cfcbc4; --muted:#86827b; --muted2:#5b574f;
+  --accent:#b23c0a; --accent-soft:#fdf3ec; --ink2:#2f2d2a;
+  --pn:#b23c0a; --pnb:#e8c3ad; --pns:#fdf5f0;
+  --pv:#1d4ed8; --pvb:#c3d0f2; --pvs:#f2f5fd;
+  --pa:#15803d; --pab:#bcdcc8; --pas:#f1f7f3;
+  --pd:#6d28d9; --pdb:#d4c6f5; --pds:#f7f3fe;
+  --px:#b91c1c; --pxb:#f0c3c3; --pxs:#fdf2f2;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+body{font-family:'Noto Sans KR','Malgun Gothic',sans-serif;color:var(--ink);
+  background:#eceae5;line-height:1.65;font-weight:400;letter-spacing:-.003em}
+
+.page{width:210mm;min-height:297mm;background:var(--paper);margin:8mm auto;
+  padding:17mm 18mm 14mm;position:relative;box-shadow:0 1px 14px rgba(0,0,0,.07)}
+@page{size:A4 portrait;margin:0}
+@media print{
+  body{background:#fff}
+  .page{margin:0;box-shadow:none;page-break-after:always;break-after:page}
+  .page:last-child{page-break-after:auto}
+}
+
+/* ── 러닝헤드 ── */
+.rh{display:flex;justify-content:space-between;align-items:baseline;
+  margin-bottom:22px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+.rh .l{font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--muted2)}
+.rh .l b{color:var(--accent)}
+.rh .r{font-size:10.5px;color:var(--muted);letter-spacing:.04em;display:flex;align-items:baseline;gap:12px}
+.rh .r .pg{font-family:'Consolas','JetBrains Mono',monospace;font-size:12px;font-weight:700;
+  color:var(--ink);letter-spacing:.06em;border:1px solid var(--line2);padding:1px 7px;border-radius:3px}
+
+/* ── 제목 ── */
+.kicker{font-size:11px;font-weight:700;letter-spacing:.12em;color:var(--accent);margin-bottom:7px}
+h1{font-size:26px;font-weight:900;line-height:1.25;letter-spacing:-.02em;margin-bottom:9px}
+.lede{font-size:13px;color:var(--muted2);line-height:1.7;margin-bottom:14px;max-width:96%}
+.lede em,em{font-style:normal;color:var(--accent);font-weight:700}
+h2{font-size:12.5px;font-weight:700;letter-spacing:.09em;color:var(--accent);
+  margin:17px 0 9px;display:flex;align-items:center;gap:10px}
+h2::after{content:"";flex:1;height:1px;background:var(--line)}
+h3{font-size:15px;font-weight:700;margin:14px 0 5px}
+p{font-size:13px;line-height:1.75;margin:8px 0;color:var(--ink2)}
+strong{font-weight:700;color:var(--ink)}
+.mn{font-size:11.5px;color:var(--muted);margin-top:5px}
+code{font-family:'Consolas','JetBrains Mono',monospace;background:var(--soft2);
+  padding:1px 5px;border-radius:3px;font-size:12px;color:var(--accent)}
+
+ul,ol{margin:9px 0;padding-left:0;list-style:none}
+li{font-size:13px;line-height:1.7;margin:8px 0;padding-left:010px;padding-left:22px;position:relative;color:var(--ink2)}
+ul li::before{content:"";position:absolute;left:3px;top:10px;width:5px;height:5px;
+  background:var(--accent);border-radius:50%}
+li strong{color:var(--ink)}
+
+/* ── 표 ── */
+table{width:100%;border-collapse:collapse;margin:13px 0;font-size:12.5px}
+th,td{padding:9px 12px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line)}
+thead th{border-bottom:1.5px solid var(--ink);font-weight:700;font-size:11.5px;color:var(--ink);background:var(--soft)}
+tbody td{color:var(--muted2)}
+tbody td b{color:var(--ink);font-weight:700}
+table.zebra tbody tr:nth-child(even) td{background:#faf9f7}
+
+/* ── 그리드 카드 ── */
+.grid{display:grid;gap:1px;background:var(--line);border:1px solid var(--line);margin:14px 0}
+.grid.g3{grid-template-columns:repeat(3,1fr)}
+.grid.g2{grid-template-columns:repeat(2,1fr)}
+.grid.g4{grid-template-columns:repeat(4,1fr)}
+.cell{background:var(--paper);padding:15px 14px}
+.cell .num{font-size:10.5px;font-weight:700;letter-spacing:.08em;color:var(--accent)}
+.cell h4{font-size:13.5px;font-weight:700;margin:6px 0 4px;line-height:1.35}
+.cell p{font-size:11.5px;color:var(--muted2);margin:0;line-height:1.6}
+
+/* ── 강조 박스 ── */
+.point{border-left:2.5px solid var(--accent);padding:3px 0 3px 16px;margin:16px 0}
+.point .pl{font-size:10.5px;font-weight:700;letter-spacing:.09em;color:var(--accent);margin-bottom:4px}
+.point p{margin:0;font-size:13px;color:var(--ink2)}
+.note{background:var(--soft);border:1px solid var(--line);border-radius:4px;
+  padding:12px 15px;margin:14px 0;font-size:12.5px;color:var(--muted2);line-height:1.7}
+.note strong{color:var(--accent)}
+.warn{background:var(--pxs);border:1px solid var(--pxb);border-radius:4px;
+  padding:12px 15px;margin:14px 0;font-size:12.5px;color:var(--ink2);line-height:1.7}
+.warn b{color:var(--px)}
+
+.mission{border:1px solid var(--line2);border-left:3px solid var(--accent);
+  background:var(--accent-soft);padding:13px 16px;margin:13px 0;border-radius:4px}
+.mission b{font-size:10.5px;font-weight:700;letter-spacing:.1em;color:var(--accent)}
+.mission h3{font-size:14px;margin:4px 0 0;line-height:1.5}
+.mission .wy{margin:9px 0 0;padding-top:8px;border-top:1px solid var(--line2);font-size:12px;color:var(--muted2);line-height:1.65}
+.mission .wy b{color:var(--ink);font-size:10.5px;letter-spacing:.06em}
+.why{background:var(--soft);border:1px solid var(--line2);border-left:3px solid var(--ink);
+  padding:12px 16px;margin:13px 0;border-radius:4px}
+.why p{color:var(--ink2);margin:0;font-size:12.5px}
+.why b{color:var(--ink);font-size:10.5px;letter-spacing:.08em}
+
+.kw{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
+.kw span{background:#fff;border:1px solid var(--line2);padding:4px 10px;border-radius:20px;
+  font-size:11px;font-weight:700;color:var(--ink2)}
+.kw span::before{content:"# ";color:var(--accent)}
+
+/* ── 정의 목록 / 비유 ── */
+.deflist{margin:12px 0}
+.deflist .d{display:flex;gap:16px;padding:11px 0;border-bottom:1px solid var(--line)}
+.deflist .d:last-child{border-bottom:none}
+.deflist .dt{flex:0 0 27%;font-weight:700;font-size:13px}
+.deflist .dt small{display:block;font-weight:400;color:var(--muted);font-size:11px;margin-top:1px}
+.deflist .dd{flex:1;font-size:12.5px;color:var(--muted2);line-height:1.65}
+
+/* ── 실습 박스 (검정 헤더 제거) ── */
+.lab{margin:16px 0;border:1.5px solid var(--ink);background:#fff}
+.lab-head{padding:10px 18px;display:flex;align-items:center;gap:12px;
+  border-bottom:1.5px solid var(--ink);background:var(--soft)}
+.lab-head .badge{font-size:10px;font-weight:700;letter-spacing:.1em;
+  border:1px solid var(--ink);padding:2px 9px;border-radius:2px;color:var(--ink);background:#fff}
+.lab-head h3{font-size:16px;margin:0;font-weight:700;color:var(--ink)}
+.lab-head .t{margin-left:auto;font-size:10.5px;color:var(--muted);font-family:'Consolas',monospace}
+.lab-body{padding:15px 18px 16px}
+.steps{counter-reset:st;list-style:none;padding:0;margin:0}
+.steps>li{counter-increment:st;position:relative;padding:0 0 13px 40px;margin:0;font-size:13.5px;
+  line-height:1.55;border-left:1px solid var(--line2);margin-left:13px}
+.steps>li:last-child{border-left:1px solid transparent;padding-bottom:0}
+.steps>li::before{content:counter(st);position:absolute;left:-13px;top:-2px;width:26px;height:26px;
+  background:#fff;border:1.5px solid var(--ink);color:var(--ink);border-radius:50%;
+  display:grid;place-items:center;font-weight:700;font-size:12.5px}
+.steps>li .lt{font-weight:700;color:var(--ink)}
+.steps>li .ls{display:block;font-size:12px;color:var(--muted);font-weight:400;margin-top:2px;line-height:1.6}
+
+/* ── 프롬프트 박스 ── */
+.say{margin:10px 0;background:#fff;border:1px solid var(--line2);border-left:3px solid var(--accent);
+  border-radius:4px;padding:10px 13px}
+.say .sl{font-size:10.5px;font-weight:700;letter-spacing:.05em;color:var(--accent);
+  margin-bottom:4px;display:flex;align-items:center;gap:6px}
+.say .sc{font-family:'Consolas','JetBrains Mono',monospace;font-size:12px;line-height:1.65;
+  color:var(--ink);font-weight:500;white-space:pre-wrap}
+.copybtn{margin-left:auto;font-family:'Noto Sans KR',sans-serif;font-size:10px;font-weight:700;
+  letter-spacing:0;color:var(--muted2);background:#fff;border:1px solid var(--line2);
+  border-radius:3px;padding:2px 9px;cursor:pointer;line-height:1.4}
+.copybtn:hover{border-color:var(--accent);color:var(--accent)}
+@media print{.copybtn{display:none}}
+
+/* ── 품사/토큰 칩 ── */
+.chip{display:inline-flex;align-items:baseline;gap:5px;font-size:12px;font-weight:700;
+  padding:3px 8px;border-radius:3px;border:1px solid;margin:3px 4px 3px 0;line-height:1.3}
+.c-n{color:var(--pn);border-color:var(--pnb);background:var(--pns)}
+.c-v{color:var(--pv);border-color:var(--pvb);background:var(--pvs)}
+.c-a{color:var(--pa);border-color:var(--pab);background:var(--pas)}
+.c-d{color:var(--pd);border-color:var(--pdb);background:var(--pds)}
+.c-x{color:var(--px);border-color:var(--pxb);background:var(--pxs)}
+.c-o{color:var(--muted);border-color:var(--line2);background:var(--soft);font-weight:400}
+
+.parse{border:1px solid var(--line2);background:#fff;margin:13px 0}
+.parse .ph{background:var(--soft);border-bottom:1px solid var(--line);padding:6px 14px;
+  font-size:10.5px;font-weight:700;letter-spacing:.06em;color:var(--muted2);display:flex;justify-content:space-between}
+.parse .pb{padding:13px 14px 14px}
+.parse .src{font-size:14.5px;font-weight:500;color:var(--ink);line-height:1.7}
+.parse .arw{font-size:10.5px;color:var(--muted);letter-spacing:.06em;margin:11px 0 7px;
+  display:flex;align-items:center;gap:10px}
+.parse .arw::after{content:"";flex:1;height:1px;background:var(--line)}
+
+/* ── before / after ── */
+.ba{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);
+  border:1px solid var(--line);margin:13px 0}
+.ba>div{background:#fff;padding:12px 14px}
+.ba .h{font-size:10.5px;font-weight:700;letter-spacing:.06em;margin-bottom:8px}
+.ba .bad .h{color:var(--muted)}
+.ba .bad .h::before{content:"✕ ";color:var(--px)}
+.ba .good .h{color:var(--accent)}
+.ba .good .h::before{content:"✓ ";color:var(--pa)}
+.ba .m{font-family:'Consolas','JetBrains Mono',monospace;font-size:11px;line-height:1.7;color:var(--ink2)}
+.ba .m u{text-decoration:none;background:var(--pxs);color:var(--px);padding:0 3px;border-radius:2px}
+.ba .m b{background:var(--pas);color:var(--pa);padding:0 3px;border-radius:2px;font-weight:500}
+.ba .why2{font-size:11px;color:var(--muted);margin-top:8px;line-height:1.6}
+
+/* ── 막대 ── */
+.bars{margin:12px 0}
+.bars .b{display:flex;align-items:center;gap:10px;margin:7px 0}
+.bars .bl{flex:0 0 26%;font-size:12px;font-weight:700;color:var(--ink)}
+.bars .bt{flex:1;height:13px;background:var(--soft2);border:1px solid var(--line)}
+.bars .bf{height:100%;background:var(--accent)}
+.bars .bf.q{background:var(--line2)}
+.bars .bv{flex:0 0 60px;text-align:right;font-family:'Consolas',monospace;font-size:11px;color:var(--muted2)}
+
+/* ── 흐름 ── */
+.flow{display:flex;gap:5px;align-items:center;flex-wrap:wrap;margin:11px 0}
+.flow span{border:1px solid var(--line2);padding:6px 10px;background:#fff;border-radius:4px;
+  font-size:11.5px;font-weight:700}
+.flow i{font-style:normal;color:var(--accent);font-weight:900}
+
+/* ══════ 목업 컴포넌트 ══════ */
+/* 탐색기 / 창 */
+.win{border:1px solid var(--line2);margin:13px 0;background:#fff}
+.win .tb{display:flex;align-items:center;gap:9px;padding:6px 11px;background:var(--soft2);
+  border-bottom:1px solid var(--line2);font-size:11px;color:var(--muted2);font-weight:700}
+.win .tb .dots{display:flex;gap:4px}
+.win .tb .dots i{width:8px;height:8px;border-radius:50%;border:1px solid var(--line2);background:#fff;display:block}
+.win .tb .rt{margin-left:auto;font-weight:400;color:var(--muted);font-size:10px;letter-spacing:.04em}
+.win .addr{display:flex;align-items:center;gap:7px;padding:6px 11px;border-bottom:1px solid var(--line);
+  font-family:'Consolas',monospace;font-size:11px;color:var(--ink2);background:#fff}
+.win .addr .ic{font-size:10px;color:var(--muted)}
+.win .addr .path{border:1px solid var(--line);border-radius:3px;padding:3px 8px;flex:1;background:var(--soft)}
+.win .addr .path b{color:var(--accent);font-weight:700}
+.win table{margin:0;font-size:11px}
+.win th,.win td{padding:5px 11px;border-bottom:1px solid var(--line)}
+.win thead th{background:var(--soft);font-size:10px;border-bottom:1px solid var(--line2);color:var(--muted2)}
+.win tbody td{color:var(--ink2)}
+.win tbody tr.sel td{background:var(--accent-soft)}
+.win td.ic{width:22px;text-align:center;color:var(--muted);font-family:'Consolas',monospace;font-size:9.5px}
+.win .sb{padding:5px 11px;border-top:1px solid var(--line);background:var(--soft);
+  font-size:10px;color:var(--muted);display:flex;justify-content:space-between}
+.capt{font-size:10.5px;color:var(--muted);margin:-6px 0 13px;padding-left:2px}
+.capt b{color:var(--muted2);font-weight:700}
+
+/* 터미널 */
+.term{border:1px solid var(--line2);background:#fbfaf8;margin:13px 0}
+.term .th{background:var(--soft2);padding:5px 12px;font-size:10.5px;color:var(--muted2);
+  border-bottom:1px solid var(--line2);letter-spacing:.04em;font-weight:700;
+  font-family:'Consolas',monospace;display:flex;justify-content:space-between}
+.term .tb2{padding:11px 13px;font-family:'Consolas','JetBrains Mono',monospace;
+  font-size:11px;line-height:1.8;color:var(--ink2);white-space:pre-wrap}
+.term .p{color:var(--accent);font-weight:700}
+.term .c{color:var(--ink);font-weight:700}
+.term .g{color:var(--pa)}
+.term .d{color:var(--muted)}
+
+/* 폴더 트리 */
+.tree{font-family:'Consolas','JetBrains Mono',monospace;font-size:11px;line-height:1.85;
+  color:var(--ink2);background:var(--soft);border:1px solid var(--line);
+  padding:11px 14px;margin:13px 0;white-space:pre;overflow:hidden}
+.tree b{color:var(--accent);font-weight:700}
+.tree u{text-decoration:none;color:var(--px)}
+.tree i{font-style:normal;color:var(--muted)}
+.ba .tree{margin:0;border:none;background:none;padding:0;font-size:10.5px;line-height:1.8}
+
+/* HEX 뷰어 */
+.hex{border:1px solid var(--line2);margin:13px 0;background:#fff;font-family:'Consolas',monospace}
+.hex .hh{background:var(--soft);border-bottom:1px solid var(--line);padding:5px 12px;
+  font-size:10px;color:var(--muted2);letter-spacing:.06em;font-weight:700;display:flex;justify-content:space-between}
+.hex .hr{display:flex;gap:14px;padding:4px 12px;font-size:11px;border-bottom:1px solid #f2f0ec}
+.hex .hr:last-child{border-bottom:none}
+.hex .of{color:var(--muted);flex:0 0 52px}
+.hex .by{flex:1;color:var(--ink2);letter-spacing:.06em}
+.hex .by b{color:var(--accent);background:var(--accent-soft);padding:1px 2px;font-weight:700}
+.hex .as{flex:0 0 90px;color:var(--muted2);border-left:1px solid var(--line);padding-left:12px}
+.hex .as b{color:var(--accent);font-weight:700}
+
+/* JSON 뷰어 */
+.jsonv{border:1px solid var(--line2);margin:13px 0;background:#fff}
+.jsonv .jh{background:var(--soft);border-bottom:1px solid var(--line);padding:5px 12px;
+  font-size:10.5px;color:var(--muted2);font-weight:700;font-family:'Consolas',monospace;
+  display:flex;justify-content:space-between}
+.jsonv .jb{padding:11px 14px;font-family:'Consolas','JetBrains Mono',monospace;
+  font-size:11.5px;line-height:1.9;white-space:pre;color:var(--muted2)}
+.jk{color:var(--pv);font-weight:700}
+.jv{color:var(--pa);font-weight:700}
+.jnum{color:var(--accent);font-weight:700}
+.jp{color:var(--muted)}
+.jmark{background:#fff7ed;outline:1px solid var(--pnb)}
+
+/* 브라우저 목업 */
+.bw{border:1px solid var(--line2);margin:13px 0;background:#fff}
+.bw .bt{background:var(--soft2);padding:6px 11px;display:flex;gap:8px;align-items:center;
+  font-size:10.5px;font-family:'Consolas',monospace;color:var(--muted2);border-bottom:1px solid var(--line2)}
+.bw .bt .dots{display:flex;gap:4px}
+.bw .bt .dots i{width:8px;height:8px;border-radius:50%;border:1px solid var(--line2);background:#fff;display:block}
+.bw .bt .url{flex:1;background:#fff;border:1px solid var(--line);border-radius:11px;padding:3px 10px;color:var(--ink2)}
+.bw .bc{padding:16px 18px}
+.appttl{font-size:15px;font-weight:800;margin-bottom:2px}
+.appsub{font-size:11px;color:var(--muted);margin-bottom:12px}
+.fld{border:1px solid var(--line2);border-radius:4px;padding:8px 11px;background:#fff;
+  display:flex;justify-content:space-between;align-items:center;
+  font-family:'Consolas',monospace;font-size:12.5px;color:var(--ink);margin:6px 0}
+.fld .u{color:var(--muted);font-size:11px}
+.flbl{font-size:10.5px;font-weight:700;color:var(--muted2);letter-spacing:.04em;margin-top:9px}
+.btn{display:inline-block;border:1.5px solid var(--accent);color:var(--accent);background:var(--accent-soft);
+  border-radius:4px;padding:7px 18px;font-size:12px;font-weight:700;margin-top:11px}
+.res{border:1px solid var(--line);border-radius:4px;margin-top:12px}
+.res .rr{display:flex;justify-content:space-between;padding:8px 12px;border-bottom:1px solid var(--line);font-size:12.5px}
+.res .rr:last-child{border-bottom:none}
+.res .rr .k{color:var(--muted2);font-weight:700}
+.res .rr .v{font-family:'Consolas',monospace;font-weight:700;color:var(--ink)}
+.res .rr.hi{background:var(--accent-soft)}
+.res .rr.hi .v{color:var(--accent)}
+.stamp{font-size:10.5px;color:var(--muted);margin-top:9px;font-family:'Consolas',monospace}
+
+/* URL 분해 */
+.urlx{border:1px solid var(--line2);background:var(--soft);padding:13px 15px;margin:13px 0}
+.urlx .u1{font-family:'Consolas',monospace;font-size:13px;line-height:2.2;word-break:break-all}
+.urlx .u1 span{padding:2px 3px;border-bottom:2.5px solid}
+.urlx .s1{border-color:var(--pv);color:var(--pv)}
+.urlx .s2{border-color:var(--accent);color:var(--accent)}
+.urlx .s3{border-color:var(--pa);color:var(--pa)}
+.urlx .s4{border-color:var(--pd);color:var(--pd)}
+.urlx .lg{margin-top:11px;display:grid;grid-template-columns:repeat(2,1fr);gap:6px 16px}
+.urlx .lg div{font-size:11.5px;color:var(--muted2);display:flex;gap:8px;align-items:baseline}
+.urlx .lg b{flex:0 0 78px;font-family:'Consolas',monospace;font-size:11px}
+
+/* 다이어그램 */
+.dia{border:1px solid var(--line);background:#fff;padding:12px;margin:13px 0}
+.dia svg{display:block;width:100%;height:auto}
+
+/* 체크리스트 */
+.chk{margin:11px 0}
+.chk li{padding-left:26px;font-size:12.5px;margin:7px 0}
+.chk li::before{content:"";position:absolute;left:2px;top:4px;width:13px;height:13px;
+  border:1.5px solid var(--muted2);border-radius:2px;background:#fff}
+.kbd{display:inline-block;border:1px solid var(--line2);border-bottom:2px solid var(--line2);
+  border-radius:4px;padding:1px 8px;font-family:'Consolas',monospace;font-size:11.5px;
+  background:var(--soft);font-weight:700;color:var(--ink);margin:0 1px}
+
+/* 확인 문제 */
+.qa{border:1px solid var(--line2);border-top:2.5px solid var(--ink);padding:12px 15px;margin-top:18px;background:#fff}
+.qa .ql{font-size:10.5px;font-weight:700;letter-spacing:.09em;color:var(--accent);margin-bottom:6px}
+.qa ol{counter-reset:q;margin:0}
+.qa ol li{counter-increment:q;padding-left:22px;font-size:12.5px;margin:7px 0;color:var(--ink2)}
+.qa ol li::before{content:counter(q) ".";position:absolute;left:2px;top:0;font-weight:700;color:var(--muted2);font-size:12px}
+.qa .blank{display:inline-block;border-bottom:1px solid var(--line2);min-width:90px;height:14px;margin:0 3px}
+
+/* 표지 · 간지 (검정 배경 제거 → 테두리 프레임) */
+.cover{padding:12mm;display:flex}
+.cover .fr{flex:1;border:2px solid var(--ink);padding:5px;display:flex}
+.cover .fr2{flex:1;border:1px solid var(--line2);padding:14mm 13mm 10mm;display:flex;flex-direction:column}
+.cover .ck{font-size:11px;font-weight:700;letter-spacing:.16em;color:var(--accent);
+  display:flex;align-items:center;gap:11px}
+.cover .ck::after{content:"";flex:1;height:1px;background:var(--line2)}
+.cover h1{font-size:40px;line-height:1.18;margin:18px 0 12px;letter-spacing:-.03em}
+.cover .cs{font-size:14.5px;color:var(--muted2);line-height:1.7;max-width:88%}
+.cover .cs b{color:var(--ink);font-weight:700}
+.hero{margin:24px 0 0;border:1px solid var(--line2);background:var(--soft);padding:17px 19px}
+.hero .hl{font-size:10.5px;letter-spacing:.1em;color:var(--accent);font-weight:700;margin-bottom:9px}
+.hero .hs{font-size:15.5px;color:var(--ink);font-weight:500;line-height:1.6}
+.hero .hs b{font-weight:800}
+.hero .hd{margin:14px 0 11px;height:1px;background:var(--line2)}
+.hero .hrow{display:flex;align-items:baseline;gap:12px;padding:4px 0}
+.hero .hk{flex:0 0 54px;font-size:10.5px;font-weight:700;color:var(--accent);text-align:right}
+.hero .hv{flex:1;font-size:12.5px;color:var(--ink2)}
+.cover .crow{margin-top:20px;display:flex;border-top:1px solid var(--line2);border-bottom:1px solid var(--line2)}
+.cover .ci{flex:1;padding:13px 0;border-right:1px solid var(--line2)}
+.cover .ci:last-child{border-right:none;padding-left:20px}
+.cover .ci:first-child{padding-right:20px}
+.cover .ci .cl{font-size:10px;letter-spacing:.09em;color:var(--muted);font-weight:700}
+.cover .ci .cv{font-size:12.5px;margin-top:5px;color:var(--ink2);line-height:1.5}
+.cover .ci .cv b{color:var(--accent);font-weight:700}
+.cover .toc{margin-top:auto}
+.cover .toc .th{font-size:10.5px;font-weight:700;letter-spacing:.11em;color:var(--accent);margin-bottom:2px}
+.toc-list{list-style:none;padding:0;margin:0}
+.toc-list li{display:flex;align-items:baseline;gap:14px;padding:8px 0;
+  border-bottom:1px solid var(--line);font-size:13px;color:var(--ink2);margin:0;padding-left:0}
+.toc-list li::before{display:none}
+.toc-list li .ti{font-family:'Consolas',monospace;font-size:11px;color:var(--accent);flex:0 0 34px;font-weight:700}
+.toc-list li .tt{flex:1}
+.toc-list li .tg{font-size:10.5px;color:var(--muted);font-family:'Consolas',monospace}
+.cover .sig{margin-top:16px;display:flex;justify-content:space-between;align-items:baseline;
+  border-top:2px solid var(--ink);padding-top:9px}
+.cover .sig .n{font-size:12px;color:var(--ink);font-weight:700}
+.cover .sig .n span{color:var(--muted);font-family:'Consolas',monospace;font-size:10.5px;margin-left:7px;font-weight:400}
+.cover .sig .b{font-size:10.5px;color:var(--muted);letter-spacing:.07em}
+
+.divider{padding:12mm;display:flex}
+.divider .fr{flex:1;border:2px solid var(--ink);padding:5px;display:flex}
+.divider .fr2{flex:1;border:1px solid var(--line2);padding:26mm 18mm;display:flex;flex-direction:column;justify-content:center}
+.divider .part{color:var(--accent);font-size:12px;font-weight:800;letter-spacing:.16em;
+  display:flex;align-items:center;gap:12px}
+.divider .part::after{content:"";flex:1;height:1px;background:var(--line2)}
+.divider h1{font-size:42px;margin:16px 0 12px;line-height:1.18}
+.divider p{font-size:14.5px;color:var(--muted2);max-width:84%;line-height:1.75}
+.divider .route{margin-top:24px;border-top:1px solid var(--line2);padding-top:14px;
+  line-height:2.1;color:var(--muted2);font-size:12.5px}
+.divider .route b{color:var(--accent);font-family:'Consolas',monospace;font-size:11.5px}
+.divider .goal{margin-top:20px;border:1px solid var(--line2);background:var(--soft);padding:14px 16px}
+.divider .goal .gl{font-size:10.5px;font-weight:700;letter-spacing:.09em;color:var(--accent);margin-bottom:6px}
+.divider .goal ul{margin:0}
+.divider .goal li{font-size:12.5px;margin:5px 0}
+
+.pagenum{position:absolute;bottom:9mm;right:18mm;font-size:10.5px;color:var(--muted);
+  font-family:'Consolas',monospace}
+.brand{position:absolute;bottom:9mm;left:18mm;font-size:9px;color:var(--muted);letter-spacing:.03em}
+.brand b{color:var(--muted2);font-weight:500}
+
+@media print{
+  .page{overflow:hidden}
+}
+.page{overflow:hidden}
+
+
+/* ── 작업 관리자 목업 ── */
+.tm{display:flex}
+.tm .nav{flex:0 0 116px;border-right:1px solid var(--line);padding:6px 0;background:var(--soft)}
+.tm .nav div{font-size:10.5px;padding:5px 11px;color:var(--muted2)}
+.tm .nav div.on{background:#fff;color:var(--ink);font-weight:700;border-left:2px solid var(--accent)}
+.tm .bd{flex:1;min-width:0}
+.tm table{margin:0}
+.tm .hdr{display:flex;justify-content:space-between;padding:7px 12px;border-bottom:1px solid var(--line);
+  font-size:11.5px;font-weight:700;color:var(--ink)}
+.tm .hdr span{font-size:10.5px;color:var(--muted);font-weight:400}
+
+/* ── 간지 배경 ── */
+.page.divider .fr{background:var(--soft2)}
+.page.divider .fr2{background:#fff}
+.page.divider .part{background:var(--accent);color:#fff;display:inline-block;
+  padding:4px 12px;border-radius:2px;letter-spacing:.08em}
+
+/* ── 코드 목업 ── */
+.code{border:1px solid var(--line2);margin:13px 0;background:#fff}
+.code .ch2{background:var(--soft);border-bottom:1px solid var(--line);padding:5px 12px;
+  font-family:'Consolas',monospace;font-size:10.5px;color:var(--muted2);font-weight:700;
+  display:flex;justify-content:space-between}
+.code .cb2{padding:11px 14px;font-family:'Consolas','JetBrains Mono',monospace;
+  font-size:11.5px;line-height:1.85;white-space:pre;color:var(--ink2);overflow:hidden}
+.tag{color:var(--pv);font-weight:700}
+.att{color:var(--pd)}
+.str{color:var(--pa)}
+.cmt{color:var(--muted)}
+.fn{color:var(--accent);font-weight:700}
+.hl2{background:#fff7ed;outline:1px solid var(--pnb)}
+
+/* ── GitHub 화면 목업 ── */
+.gh{border:1px solid var(--line2);margin:13px 0;background:#fff}
+.gh .ghh{background:var(--soft2);border-bottom:1px solid var(--line2);padding:6px 12px;
+  font-size:11px;color:var(--muted2);font-weight:700;display:flex;justify-content:space-between}
+.gh .repo{padding:8px 12px;border-bottom:1px solid var(--line);font-size:12.5px;font-weight:700;color:var(--ink)}
+.gh .repo span{color:var(--muted);font-weight:400;font-size:11px;margin-left:8px}
+.gh .row2{display:flex;gap:10px;padding:6px 12px;border-bottom:1px solid #f4f2ef;font-size:11.5px;align-items:baseline}
+.gh .row2 .ic2{flex:0 0 16px;color:var(--muted);font-family:'Consolas',monospace;font-size:10px}
+.gh .row2 .nm{flex:0 0 34%;font-family:'Consolas',monospace;color:var(--pv)}
+.gh .row2 .msg2{flex:1;color:var(--muted2)}
+.gh .row2 .tm2{flex:0 0 62px;text-align:right;color:var(--muted);font-size:10.5px}
+/* 잔디 */
+.grass{display:flex;gap:3px;flex-wrap:wrap;margin:10px 0;max-width:100%}
+.grass i{width:11px;height:11px;border:1px solid var(--line);background:var(--soft);display:block;border-radius:2px}
+.grass i.l1{background:#f7ddcb;border-color:var(--pnb)}
+.grass i.l2{background:#eeb489;border-color:var(--pnb)}
+.grass i.l3{background:var(--accent);border-color:var(--accent)}
+
+/* ── 작업 진행 표시 ── */
+.chat .wk{font-size:10px;color:var(--muted);font-family:'Consolas',monospace;margin:0 0 5px}
+.chat .bub .ok{color:var(--pa);font-weight:700}
+.chat .bub .no{color:var(--px);font-weight:700}
+.chat .bub code{font-size:11px}
+/* ── 속성창 목업 ── */
+.props{border:1px solid var(--line2);margin:13px 0;background:#fff;max-width:72%}
+.props .ph2{background:var(--soft2);border-bottom:1px solid var(--line2);padding:6px 12px;
+  font-size:11px;font-weight:700;color:var(--muted2)}
+.props .tabs{display:flex;gap:0;border-bottom:1px solid var(--line);font-size:10.5px}
+.props .tabs span{padding:5px 12px;color:var(--muted);border-right:1px solid var(--line)}
+.props .tabs span.on{background:#fff;color:var(--ink);font-weight:700;border-bottom:2px solid var(--accent)}
+.props .pr{display:flex;padding:6px 14px;border-bottom:1px solid #f2f0ec;font-size:11.5px}
+.props .pr b{flex:0 0 84px;color:var(--muted2);font-weight:700}
+.props .pr span{flex:1;color:var(--ink2);font-family:'Consolas',monospace;font-size:11px}
+/* ── 슬래시 명령 목록 ── */
+.slash{border:1px solid var(--line2);margin:13px 0;background:#fff}
+.slash .sh{background:var(--soft);border-bottom:1px solid var(--line);padding:5px 12px;
+  font-size:10.5px;font-weight:700;color:var(--muted2);font-family:'Consolas',monospace;
+  display:flex;justify-content:space-between}
+.slash .sr{display:flex;gap:12px;padding:6px 14px;border-bottom:1px solid #f4f2ef;font-size:11.5px;align-items:baseline}
+.slash .sr:last-child{border-bottom:none}
+.slash .sc2{flex:0 0 92px;font-family:'Consolas',monospace;font-weight:700;color:var(--accent)}
+.slash .sd2{flex:1;color:var(--ink2)}
+
+/* ── 결과 이미지 예시 ── */
+.shots{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:13px 0}
+.shots.one{grid-template-columns:1fr}
+.shots figure{margin:0}
+.shots img{width:100%;display:block;border:1px solid var(--line2);border-radius:3px}
+.shots figcaption{font-size:10.5px;color:var(--muted2);margin-top:5px;font-family:'Consolas',monospace}
+.shots figcaption b{color:var(--accent)}
+
+/* ── 토크나이저 비교 ── */
+.tok{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);
+  border:1px solid var(--line);margin:13px 0}
+.tok>div{background:#fff;padding:12px 14px}
+.tok .tkh{font-size:9.5px;font-weight:700;letter-spacing:.07em;color:var(--muted);margin-bottom:6px}
+.tok .in{border:1px solid var(--line2);border-radius:4px;padding:9px 11px;font-size:14px;
+  font-family:'Consolas',monospace;background:var(--soft);color:var(--ink)}
+.tok .in i{font-style:normal;color:var(--muted);font-size:11px}
+.tok .nums{display:flex;gap:26px;margin-top:11px}
+.tok .nl{font-size:9.5px;font-weight:700;letter-spacing:.06em;color:var(--muted)}
+.tok .n{font-size:21px;font-weight:800;font-family:'Consolas',monospace;line-height:1.2;color:var(--ink)}
+.tok .n.acc{color:var(--accent)}
+.tok .ids{margin-top:10px;font-family:'Consolas',monospace;font-size:11px;color:var(--muted2);
+  background:var(--soft);border:1px solid var(--line);padding:6px 9px;border-radius:3px}
+
+/* ── 목차 ── */
+.tocx{margin:2px 0 0}
+.tocx .g{font-size:11px;font-weight:700;letter-spacing:.08em;color:var(--accent);
+  margin:14px 0 4px;padding-bottom:5px;border-bottom:1.5px solid var(--ink);
+  display:flex;justify-content:space-between;align-items:baseline}
+.tocx .g em{font-style:normal;color:var(--muted);font-weight:400;letter-spacing:0;font-size:11px}
+.tocx .it{display:flex;gap:12px;align-items:baseline;padding:6px 0;border-bottom:1px solid var(--line)}
+.tocx .no{flex:0 0 30px;font-family:'Consolas',monospace;font-size:11.5px;font-weight:700;color:var(--accent)}
+.tocx .tt{flex:1}
+.tocx .tt b{font-size:13px;font-weight:700;color:var(--ink);display:block;line-height:1.4}
+.tocx .tt span{font-size:11.5px;color:var(--muted2);display:block;margin-top:1px;line-height:1.5}
+.tocx .pgn{flex:0 0 24px;text-align:right;font-family:'Consolas',monospace;font-size:11.5px;color:var(--muted2)}
+.tocinfo{margin-top:16px;border:1px solid var(--line2);background:var(--soft);padding:12px 15px}
+.tocinfo .til{font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--accent);margin-bottom:6px}
+.tocinfo .row{display:flex;gap:10px;font-size:11.5px;color:var(--ink2);padding:3px 0;align-items:baseline}
+.tocinfo .row b{flex:0 0 88px;color:var(--ink)}
+
+/* ── 난이도 배지 ── */
+.lv{display:inline-block;font-size:9.5px;font-weight:700;border:1px solid;border-radius:10px;
+  padding:1px 8px;letter-spacing:.03em;line-height:1.6;white-space:nowrap}
+.lv1{color:var(--pv);border-color:var(--pvb);background:var(--pvs)}
+.lv2{color:var(--muted2);border-color:var(--line2);background:var(--soft)}
+.lv3{color:var(--accent);border-color:var(--pnb);background:var(--pns)}
+.lvrow{display:flex;gap:8px;align-items:center;margin:10px 0 4px}
+
+/* ── 난이도 보조 상자 ── */
+.tier{border:1px solid var(--line2);border-radius:4px;padding:11px 14px;margin:12px 0}
+.tier .tl{font-size:10px;font-weight:700;letter-spacing:.06em;margin-bottom:5px;
+  display:flex;gap:8px;align-items:center}
+.tier p{margin:0;font-size:12.5px}
+.tier ul{margin:4px 0 0}
+.tier li{font-size:12.5px;margin:5px 0}
+.tier.b{background:var(--soft)}
+.tier.b .tl{color:var(--muted2)}
+.tier.a{background:#fff;border-style:dashed}
+.tier.a .tl{color:var(--accent)}
+.tier .say{margin:8px 0 0}
+
+/* ── 자동화 회로 ── */
+.auto{border:1px solid var(--line2);border-left:3px solid var(--accent);background:var(--soft);
+  padding:10px 14px;margin:14px 0}
+.auto .al{font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--accent);margin-bottom:6px}
+.auto .ar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.auto .ar span{font-size:12px;color:var(--ink2);background:#fff;border:1px solid var(--line2);
+  border-radius:3px;padding:5px 9px}
+.auto .ar span b{color:var(--accent);font-weight:700;margin-right:5px}
+.auto .ar i{font-style:normal;color:var(--accent);font-weight:900}
+
+/* ── AI 낚시 찾기 ── */
+.trap{border:1.5px dashed var(--line2);border-radius:4px;padding:12px 15px;margin:14px 0;background:#fff}
+.trap .trl{font-size:10.5px;font-weight:700;letter-spacing:.06em;color:var(--px);margin-bottom:7px}
+.trap .fake{border:1px solid var(--line);border-left:2.5px solid var(--line2);background:var(--soft);
+  padding:10px 12px;font-size:12.5px;line-height:1.7;color:var(--ink2)}
+.trap .ask{font-size:12px;color:var(--muted2);margin-top:8px}
+.trap .ask b{color:var(--ink)}
+
+/* ── 메모 영역 (여백 활용) ── */
+.memo{margin-top:26px;border-top:1px solid var(--line);padding-top:9px}
+.memo .ml{font-size:9.5px;font-weight:700;letter-spacing:.12em;color:var(--muted);margin-bottom:8px}
+.memo .line{height:25px;border-bottom:1px dotted var(--line2)}
+
+/* ── 채팅 목업 ── */
+.chat{border:1px solid var(--line2);margin:13px 0;background:#fff}
+.chat .ch{background:var(--soft);border-bottom:1px solid var(--line);padding:6px 12px;
+  font-size:10.5px;font-weight:700;color:var(--muted2);display:flex;justify-content:space-between;
+  font-family:'Consolas',monospace}
+.chat .cb{padding:12px 13px}
+.msg{margin:8px 0;display:flex;gap:10px;align-items:flex-start}
+.msg .av{flex:0 0 44px;font-size:9.5px;font-weight:700;letter-spacing:.05em;color:var(--muted);
+  text-align:right;padding-top:9px}
+.msg .bub{flex:1;border:1px solid var(--line);border-radius:5px;padding:9px 12px;
+  font-size:12px;line-height:1.7;color:var(--ink2);background:#fff}
+.msg.u .bub{background:var(--soft);border-color:var(--line2)}
+.msg.a .bub{border-left:2.5px solid var(--accent)}
+.msg .bub b{color:var(--ink)}
+.msg .bub .tbl{margin-top:6px;font-family:'Consolas',monospace;font-size:10.5px;
+  color:var(--muted2);line-height:1.7;white-space:pre}
+
+/* ── 스펙 카드 ── */
+.stat{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);
+  border:1px solid var(--line);margin:13px 0}
+.stat>div{background:#fff;padding:11px 12px}
+.stat .sl2{font-size:9.5px;font-weight:700;color:var(--accent);letter-spacing:.07em}
+.stat .sv{font-size:14px;font-weight:800;margin-top:3px;font-family:'Consolas',monospace;line-height:1.3}
+.stat .sd{font-size:10px;color:var(--muted);margin-top:3px;line-height:1.5}
+
+/* ── 좌우 2단 ── */
+.split{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:13px 0}
+.split h3{margin-top:0}
+
+</style></head><body>
+<section class="page cover"><div class="fr"><div class="fr2">
+<div class="ck">청년취업사관학교 동대문4기 · 3장</div>
+<h1>SQLite로<br>주문을 쌓고 꺼내기</h1>
+<div class="cs">기업연계형 AI 서비스·클라우드 실무 과정<br>
+<b>shop.db · SQL · sqlite3 · INSERT · SELECT · JOIN</b></div>
+
+<div class="hero">
+  <div class="hl">이 장이 답하는 질문</div>
+  <div class="hs">“주문 넣기”를 누른 순간 <b>주문은 어디에 어떻게 적히고,</b> 주문 내역 화면은 <b>그 기록을 어떻게 다시 찾아오는가.</b></div>
+  <div class="hd"></div>
+  <div class="hrow"><div class="hk">개요</div><div class="hv">데이터를 어디에 둘까 · 데이터베이스 종류</div></div>
+  <div class="hrow"><div class="hk">3-1</div><div class="hv">shop.db 들여다보기 — 테이블과 SQL 첫걸음</div></div>
+  <div class="hrow"><div class="hk">3-2</div><div class="hv">db.py 읽기 — 연결하고, 묻고, 닫는다</div></div>
+  <div class="hrow"><div class="hk">3-3</div><div class="hv">저장 — INSERT · commit · ? 자리</div></div>
+  <div class="hrow"><div class="hk">3-4</div><div class="hv">꺼내기 — SELECT · JOIN · WHERE</div></div>
+  <div class="hrow"><div class="hk">3-5</div><div class="hv">주문 내역 페이지 — /orders</div></div>
+  <div class="hrow"><div class="hk">정리</div><div class="hv">고장 내고 고치기 · 확장 미션 · 확인 문제</div></div>
+</div>
+
+<div class="crow">
+  <div class="ci"><div class="cl">읽을 파일</div><div class="cv"><b>db.py</b> · app.py(저장·orders) · orders.html</div></div>
+  <div class="ci"><div class="cl">도구</div><div class="cv"><b>tools/sql.py</b> · SQL 바로 실행</div></div>
+  <div class="ci"><div class="cl">미션</div><div class="cv"><b>12개</b></div></div>
+</div>
+
+<div class="sig" style="margin-top:auto">
+  <div class="n">부성순 <span>/ bakpak@empas.com</span></div>
+  <div class="b">AI SERVICE · CLOUD PRACTICE</div>
+</div>
+</div></div></section>
+<section class="page"><div class="rh"><div class="l"><b>PIZZA</b> · 3장 · 개요</div><div class="r">데이터를 어디에 둘까<span class="pg">02</span></div></div>
+
+<div class="kicker">WHY DATABASE</div>
+<h1>영수증 상자 대신 장부</h1>
+<div class="mission"><b>MISSION</b><h3>파일에 적는 것과 <b>데이터베이스에 적는 것</b>의 차이를 알고, 데이터베이스의 종류를 구분한다.</h3>
+<p class="wy"><b>WHY</b> 2장에서 주문은 “이동”까지만 봤습니다. 그 사이의 <b>저장</b>이 없으면 대시보드도 AI 조언도 만들 수 없습니다.</p></div>
+
+<h2>주문을 남기는 세 가지 방법</h2>
+<table class="zebra">
+<thead><tr><th style="width:18%">방법</th><th style="width:28%">비유</th><th>문제 · 장점</th></tr></thead>
+<tbody>
+<tr><td><b>변수 (메모리)</b></td><td>머릿속으로 기억</td><td>서버를 끄면 <b>전부 사라짐</b></td></tr>
+<tr><td><b>CSV · JSON 파일</b></td><td>영수증을 상자에 모음</td><td>남기는 쉽지만, 찾고 합치려면 <b>전부 꺼내 뒤져야</b> 함. 두 명이 동시에 쓰면 꼬임</td></tr>
+<tr><td><b>데이터베이스</b></td><td>칸이 정해진 장부</td><td>조건으로 <b>빠르게 찾기</b>, 합계 · 순위, 규칙 검사, 동시 기록 관리</td></tr>
+</tbody>
+</table>
+
+<h2>데이터베이스가 대신 해 주는 일</h2>
+<div class="grid g2">
+  <div class="cell"><div class="num">찾기</div><h4>“배달 주문만 최근 50건”</h4><p><code>WHERE</code> · <code>ORDER BY</code> · <code>LIMIT</code> 한 줄. 파일이라면 반복문을 직접 짜야 합니다.</p></div>
+  <div class="cell"><div class="num">묶어 세기</div><h4>“메뉴별로 몇 판?”</h4><p><code>GROUP BY</code> · <code>SUM</code>. 5장 대시보드 숫자가 전부 여기서 나옵니다.</p></div>
+  <div class="cell"><div class="num">규칙 지키기</div><h4>“사이즈는 R·L만”</h4><p><code>CHECK</code> 규칙을 어기는 값은 <b>저장 자체를 거부</b>합니다.</p></div>
+  <div class="cell"><div class="num">잇기</div><h4>“주문의 메뉴 이름은?”</h4><p>주문에는 메뉴 <b>번호만</b> 적고, <code>JOIN</code>으로 메뉴표와 이어 봅니다.</p></div>
+</div>
+
+<h2>SQL — 데이터베이스에게 말 거는 언어</h2>
+<div class="flow"><span>파이썬 (db.py)</span><i>→</i><span>SQL 문장 “SELECT … FROM orders …”</span><i>→</i><span>SQLite</span><i>→</i><span>결과 행들</span><i>→</i><span>파이썬 리스트</span></div>
+<p class="mn">SQL은 거의 모든 관계형 DB에서 <strong>비슷한 문법</strong>으로 씁니다. 여기서 익힌 SQL은 MySQL · PostgreSQL에서도 대부분 그대로 통합니다.</p>
+
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">02</div></section>
+<section class="page"><div class="rh"><div class="l"><b>PIZZA</b> · 3장 · 개요</div><div class="r">데이터베이스 종류<span class="pg">03</span></div></div>
+
+<h2>자주 쓰는 데이터베이스</h2>
+<table class="zebra">
+<thead><tr><th style="width:17%">이름</th><th style="width:12%">형태</th><th style="width:37%">특징</th><th>잘 맞는 곳</th></tr></thead>
+<tbody>
+<tr><td><b>SQLite</b></td><td>파일형</td><td>DB가 <b>파일 하나</b>. 서버 설치 없음. 파이썬에 <code>sqlite3</code> 내장. 동시에 쓰는 사람이 많으면 약함</td><td>학습, 작은 서비스, 앱 · 기기 안 저장소 · <b>이 과정</b></td></tr>
+<tr><td><b>MySQL · MariaDB</b></td><td>서버형</td><td>별도 DB 서버에 접속. 오래되고 자료가 많음</td><td>일반 웹 서비스</td></tr>
+<tr><td><b>PostgreSQL</b></td><td>서버형</td><td>기능이 풍부(JSON, 지리 정보, 확장). 표준 SQL을 충실히 따름</td><td>데이터가 복잡한 서비스, AI 서비스 백엔드</td></tr>
+<tr><td><b>Oracle · SQL Server</b></td><td>서버형</td><td>상용 제품. 기술 지원 · 관리 도구</td><td>대기업 · 금융 · 공공</td></tr>
+<tr><td><b>MongoDB</b></td><td>문서형</td><td>표 대신 <b>JSON 비슷한 문서</b>로 저장. 칸 구성이 자유로움</td><td>형태가 자주 바뀌는 데이터</td></tr>
+<tr><td><b>Redis</b></td><td>키-값</td><td><b>메모리</b>에 저장해 매우 빠름</td><td>캐시, 세션, 실시간 순위</td></tr>
+</tbody>
+</table>
+<div class="deflist">
+  <div class="d"><div class="dt">관계형 (RDB)<small>SQLite · MySQL · PostgreSQL</small></div><div class="dd">칸이 정해진 <b>표(테이블)</b>에 저장하고, 표끼리 <b>번호로 연결</b>합니다. SQL로 다룹니다.</div></div>
+  <div class="d"><div class="dt">NoSQL<small>MongoDB · Redis</small></div><div class="dd">표가 아닌 문서 · 키-값 등으로 저장. 목적에 맞춰 골라 씁니다.</div></div>
+  <div class="d"><div class="dt">파일형 vs 서버형<small>SQLite vs 나머지</small></div><div class="dd">파일형은 <b>프로그램이 파일을 직접</b> 엽니다. 서버형은 <b>DB 서버에 주소·계정으로 접속</b>합니다.</div></div>
+</div>
+
+<h2>클라우드로 가면</h2>
+<div class="split" style="grid-template-columns:minmax(0,1fr) minmax(0,1fr)">
+<div class="cell" style="border:1px solid var(--line)"><div class="num">처음</div><h4>EC2 디스크의 shop.db</h4><p>1장 그림 1-4처럼 <b>파일을 그대로</b> 씁니다. 손님이 적은 가게엔 충분합니다.</p></div>
+<div class="cell" style="border:1px solid var(--line)"><div class="num">커지면</div><h4>관리형 DB (예: AWS RDS)</h4><p>백업 · 확장을 맡기는 PostgreSQL · MySQL 서버로 옮깁니다.</p></div>
+</div>
+<div class="point"><div class="pl">그래서 db.py를 따로 나눴습니다</div><p>SQL과 연결 코드가 <strong>db.py 한 곳에만</strong> 있습니다. DB를 바꿀 때 <strong>db.py만 고치면</strong> app.py · 템플릿은 그대로입니다.</p></div>
+
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">03</div></section>
+<section class="page"><div class="rh"><div class="l"><b>PIZZA</b> · 3장 · STEP 3-1</div><div class="r">shop.db의 구조<span class="pg">04</span></div></div>
+
+<div class="kicker">STEP 3-1 · TABLE</div>
+<h1>장부는 두 권입니다</h1>
+<div class="mission"><b>MISSION</b><h3>shop.db의 <b>menus · orders 두 테이블</b>과 칸의 규칙을 읽고, 두 테이블이 <b>어떻게 이어지는지</b> 설명한다.</h3>
+<p class="wy"><b>WHY</b> SQL을 쓰기 전에 <b>무엇이 어느 칸에 있는지</b> 알아야 합니다. 3장 오류의 대부분은 칸 이름 실수입니다.</p></div>
+
+<div class="dia"><svg viewBox="0 0 700 250" xmlns="http://www.w3.org/2000/svg" font-family="Noto Sans KR, sans-serif">
+  <g font-size="12">
+    <rect x="20" y="20" width="220" height="210" rx="6" fill="#fff" stroke="#1c1b19" stroke-width="1.5"/>
+    <rect x="20" y="20" width="220" height="30" rx="6" fill="#1d4ed8"/><text x="130" y="40" text-anchor="middle" fill="#fff" font-weight="700">menus · 메뉴 6행</text>
+    <text x="36" y="72" font-weight="700" fill="#b23c0a">🔑 id</text><text x="224" y="72" text-anchor="end" fill="#86827b">INTEGER</text>
+    <text x="36" y="96">name</text><text x="224" y="96" text-anchor="end" fill="#86827b">TEXT</text>
+    <text x="36" y="120">emoji</text><text x="224" y="120" text-anchor="end" fill="#86827b">TEXT</text>
+    <text x="36" y="144">price_r · price_l</text><text x="224" y="144" text-anchor="end" fill="#86827b">INTEGER</text>
+    <text x="36" y="168">description</text><text x="224" y="168" text-anchor="end" fill="#86827b">TEXT</text>
+    <text x="36" y="192">tag</text><text x="224" y="192" text-anchor="end" fill="#86827b">TEXT</text>
+
+    <rect x="420" y="20" width="260" height="210" rx="6" fill="#fff" stroke="#1c1b19" stroke-width="1.5"/>
+    <rect x="420" y="20" width="260" height="30" rx="6" fill="#d6332a"/><text x="550" y="40" text-anchor="middle" fill="#fff" font-weight="700">orders · 주문 1,692행</text>
+    <text x="436" y="72" font-weight="700" fill="#b23c0a">🔑 id</text><text x="664" y="72" text-anchor="end" fill="#86827b">자동 증가</text>
+    <text x="436" y="96">ordered_at</text><text x="664" y="96" text-anchor="end" fill="#86827b">'2026-09-15 19:42:38'</text>
+    <text x="436" y="120" font-weight="700" fill="#1d4ed8">🔗 menu_id</text><text x="664" y="120" text-anchor="end" fill="#86827b">menus.id</text>
+    <text x="436" y="144">size</text><text x="664" y="144" text-anchor="end" fill="#86827b">R · L 만</text>
+    <text x="436" y="168">crust · qty</text><text x="664" y="168" text-anchor="end" fill="#86827b">qty 1~10</text>
+    <text x="436" y="192">amount</text><text x="664" y="192" text-anchor="end" fill="#86827b">원</text>
+    <text x="436" y="216">channel</text><text x="664" y="216" text-anchor="end" fill="#86827b">배달·포장·매장</text>
+  </g>
+  <path d="M242 68 C 330 68, 330 116, 418 116" stroke="#1d4ed8" stroke-width="2" fill="none"/>
+  <text x="252" y="62" font-size="13" font-weight="700" fill="#1d4ed8">1</text>
+  <text x="404" y="110" font-size="13" font-weight="700" fill="#1d4ed8">N</text>
+  <text x="330" y="140" text-anchor="middle" font-size="11" fill="#5b574f">메뉴 하나에 주문 여러 개</text>
+</svg></div>
+<div class="capt"><b>그림 3-1</b> 주문에는 메뉴 <b>이름이 아니라 번호(menu_id)</b>만 적습니다. 이름이 필요하면 menus와 이어 봅니다(3-4).</div>
+
+<h2>DB 용어 네 개</h2>
+<div class="deflist">
+  <div class="d"><div class="dt">테이블<small>table · 장부 한 권</small></div><div class="dd">칸이 정해진 표. shop.db에는 <b>menus</b>, <b>orders</b> 두 개</div></div>
+  <div class="d"><div class="dt">행 · 칸<small>row · column</small></div><div class="dd">행 = 주문 한 건, 칸 = 주문 시각 · 사이즈 같은 항목</div></div>
+  <div class="d"><div class="dt">기본 키<small>PRIMARY KEY 🔑</small></div><div class="dd">행마다 겹치지 않는 번호. 주문 번호 #1693</div></div>
+  <div class="d"><div class="dt">외래 키<small>🔗 다른 표를 가리킴</small></div><div class="dd">orders.menu_id → menus.id. 이 번호로 두 표를 잇습니다</div></div>
+</div>
+<div class="why"><b>WHY — 주문마다 “하와이안”이라고 적지 않는 이유</b><p>메뉴 이름을 바꾸면 주문 1,692행을 전부 고쳐야 합니다. 번호만 적어 두면 <strong>menus 한 줄만</strong> 고치면 됩니다.</p></div>
+
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">04</div></section>
+<section class="page"><div class="rh"><div class="l"><b>PIZZA</b> · 3장 · STEP 3-1</div><div class="r">테이블을 만든 SQL<span class="pg">05</span></div></div>
+
+<h2>tools/make_shop_db.py 안의 CREATE TABLE</h2>
+<div class="code">
+  <div class="ch2"><span>tools/make_shop_db.py · 발췌</span><span>SQL</span></div>
+  <div class="cb2"><span class="fn">CREATE TABLE</span> menus (
+<span class="hl2">        id      <span class="fn">INTEGER</span> <span class="fn">PRIMARY KEY</span>,</span>
+        name    <span class="fn">TEXT</span>    <span class="fn">NOT NULL</span>,
+        emoji       <span class="fn">TEXT</span>    <span class="fn">NOT NULL</span>,
+        price_r     <span class="fn">INTEGER</span> <span class="fn">NOT NULL</span>,
+        price_l     <span class="fn">INTEGER</span> <span class="fn">NOT NULL</span>,
+        description <span class="fn">TEXT</span>    <span class="fn">NOT NULL</span> <span class="fn">DEFAULT</span> <span class="str">&#x27;&#x27;</span>,
+        tag     <span class="fn">TEXT</span>    <span class="fn">NOT NULL</span> <span class="fn">DEFAULT</span> <span class="str">&#x27;&#x27;</span>
+    );
+    <span class="fn">CREATE TABLE</span> orders (
+        id     <span class="fn">INTEGER</span> <span class="fn">PRIMARY KEY</span> <span class="fn">AUTOINCREMENT</span>,
+<span class="hl2">        ordered_at <span class="fn">TEXT</span>    <span class="fn">NOT NULL</span>,          <span class="cmt">-- &#x27;YYYY-MM-DD HH:MM:SS&#x27;</span></span>
+        menu_id    <span class="fn">INTEGER</span> <span class="fn">NOT NULL</span> <span class="fn">REFERENCES</span> menus(id),
+<span class="hl2">        size       <span class="fn">TEXT</span>    <span class="fn">NOT NULL</span> <span class="fn">CHECK</span> (size <span class="fn">IN</span> (<span class="str">&#x27;R&#x27;</span>, <span class="str">&#x27;L&#x27;</span>)),</span>
+<span class="hl2">        crust      <span class="fn">TEXT</span>    <span class="fn">NOT NULL</span>,</span>
+<span class="hl2">        qty    <span class="fn">INTEGER</span> <span class="fn">NOT NULL</span> <span class="fn">CHECK</span> (qty <span class="fn">BETWEEN</span> 1 <span class="fn">AND</span> 10),</span>
+        amount     <span class="fn">INTEGER</span> <span class="fn">NOT NULL</span>,
+        channel    <span class="fn">TEXT</span>    <span class="fn">NOT NULL</span> <span class="fn">CHECK</span> (channel <span class="fn">IN</span> (<span class="str">&#x27;배달&#x27;</span>, <span class="str">&#x27;포장&#x27;</span>, <span class="str">&#x27;매장&#x27;</span>))
+<span class="hl2">    );</span>
+    <span class="fn">CREATE INDEX</span> idx_orders_time <span class="fn">ON</span> orders(ordered_at);</div>
+</div>
+<table class="zebra">
+<thead><tr><th style="width:34%">규칙</th><th>뜻</th></tr></thead>
+<tbody>
+<tr><td><code>INTEGER</code> · <code>TEXT</code></td><td>칸의 종류. 날짜도 <b>글자(TEXT)</b>로 <code>'YYYY-MM-DD HH:MM:SS'</code> 형태로 저장</td></tr>
+<tr><td><code>PRIMARY KEY</code></td><td>행마다 겹치지 않는 <b>번호표</b></td></tr>
+<tr><td><code>AUTOINCREMENT</code></td><td>새 주문마다 번호가 <b>자동으로 1씩</b> 증가</td></tr>
+<tr><td><code>NOT NULL</code></td><td><b>비워 둘 수 없음</b></td></tr>
+<tr><td><code>CHECK (…)</code></td><td>조건에 맞지 않으면 <b>저장 거부</b> (3-3에서 실험)</td></tr>
+<tr><td><code>REFERENCES menus(id)</code></td><td>이 칸은 menus의 id를 가리킨다는 <b>표시</b></td></tr>
+<tr><td><code>CREATE INDEX</code></td><td>주문 시각으로 찾을 때 빨라지도록 만든 <b>색인</b></td></tr>
+</tbody>
+</table>
+<p class="mn">이 파일은 <strong>샘플 DB를 만들 때만</strong> 실행합니다. 서버(app.py)는 이미 만들어진 shop.db를 열어 쓰기만 합니다.</p>
+
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">05</div></section>
+<section class="page"><div class="rh"><div class="l"><b>PIZZA</b> · 3장 · STEP 3-1</div><div class="r">SQL 첫걸음 — tools/sql.py<span class="pg">06</span></div></div>
+
+<h2>터미널에서 SQL 실행하기</h2>
+<p><code>tools/sql.py</code>로 shop.db에 바로 질문합니다. <strong>서버와 다른 터미널</strong>에서 실행하세요(VS Code 터미널 <b>+</b>).</p>
+<div class="term"><div class="th"><span>VS Code 새 터미널</span><span>(.venv) · pizza-lab</span></div><div class="tb2"><span class="g">(.venv)</span> <span class="p">&gt;</span> <span class="c">python tools/sql.py "SELECT * FROM menus"</span>
+id | name       | emoji | price_r | price_l | description                         | tag      
+---+------------+-------+---------+---------+-------------------------------------+----------
+1  | 페퍼로니   | 🍕    | 18900   | 24900   | 짭짤한 페퍼로니를 빈틈없이          | 1등 메뉴 
+2  | 불고기     | 🥩    | 21900   | 27900   | 달콤 짭짤한 한국식 불고기           |          
+3  | 고구마     | 🍠    | 20900   | 26900   | 고구마 무스와 콘의 조합             |          
+4  | 포테이토   | 🥔    | 20900   | 26900   | 웨지 감자와 베이컨                  |          
+5  | 마르게리타 | 🌿    | 17900   | 22900   | 토마토, 모차렐라, 바질. 기본에 충실 |          
+6  | 하와이안   | 🍍    | 19900   | 25900   | 파인애플은 피자에 올려도 되는가     | 논쟁 메뉴
+(6행)</div></div>
+<div class="parse">
+  <div class="ph"><span>SELECT 한 줄 분해</span><span>SQL</span></div>
+  <div class="pb">
+    <div class="src"><code style="font-size:14px">SELECT name, price_r FROM menus WHERE id = 6</code></div>
+    <div class="arw">나누어 보면</div>
+    <span class="chip c-v">SELECT name, price_r → 가져올 칸 (* = 전부)</span>
+    <span class="chip c-n">FROM menus → 어느 표에서</span>
+    <span class="chip c-a">WHERE id = 6 → 어떤 행만</span>
+  </div>
+</div>
+
+<h2>이 장에서 쓰는 SQL</h2>
+<table class="zebra">
+<thead><tr><th style="width:44%">문장</th><th>뜻</th></tr></thead>
+<tbody>
+<tr><td><code>SELECT … FROM … WHERE …</code></td><td>조건에 맞는 행 <b>꺼내기</b></td></tr>
+<tr><td><code>ORDER BY id DESC LIMIT 5</code></td><td>번호 큰 순(최신)으로 <b>5개만</b></td></tr>
+<tr><td><code>SELECT COUNT(*) FROM orders</code></td><td>행 <b>개수</b></td></tr>
+<tr><td><code>… GROUP BY channel</code></td><td>같은 값끼리 <b>묶어서</b> 세기 · 더하기</td></tr>
+<tr><td><code>… JOIN menus AS m ON m.id = o.menu_id</code></td><td>두 표를 <b>이어 붙이기</b></td></tr>
+<tr><td><code>INSERT INTO orders (…) VALUES (…)</code></td><td>새 행 <b>추가</b></td></tr>
+<tr><td><code>UPDATE menus SET price_r = … WHERE …</code></td><td>있는 행 <b>고치기</b> — WHERE를 빼면 <b>전부</b> 바뀜!</td></tr>
+</tbody>
+</table>
+
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">06</div></section>
+<section class="page"><div class="rh"><div class="l"><b>PIZZA</b> · 3장 · STEP 3-1</div><div class="r">SQL 미션<span class="pg">07</span></div></div>
+
+<div class="term"><div class="th"><span>최신 주문 3건</span><span>(.venv) · pizza-lab</span></div><div class="tb2"><span class="g">(.venv)</span> <span class="p">&gt;</span> <span class="c">python tools/sql.py "SELECT id, ordered_at, menu_id, size, qty, amount, channel FROM orders ORDER BY id DESC LIMIT 3"</span>
+id   | ordered_at          | menu_id | size | qty | amount | channel
+-----+---------------------+---------+------+-----+--------+--------
+1692 | 2026-09-15 21:21:06 | 1       | R    | 1   | 21900  | 포장   
+1691 | 2026-09-15 20:27:51 | 3       | L    | 3   | 89700  | 포장   
+1690 | 2026-09-15 20:03:02 | 5       | R    | 1   | 17900  | 배달   
+(3행)</div></div>
+<p class="mn" style="margin-top:4px"><b>대화형 모드</b> — 인자 없이 실행하면 여러 문장을 이어서 입력할 수 있습니다.</p>
+<div class="term"><div class="th"><span>python tools/sql.py (인자 없이)</span><span>빈 줄 Enter = 종료</span></div><div class="tb2"><span class="g">(.venv)</span> <span class="p">&gt;</span> <span class="c">python tools/sql.py</span>
+shop.db 에 연결됨. SQL 을 입력하세요 (빈 줄 = 종료)
+sql&gt; <span class="c">SELECT COUNT(*) FROM menus</span>
+COUNT(*) … 6 (1행)
+sql&gt; <span class="d">(빈 줄 Enter)</span></div></div>
+<div class="lab"><div class="lab-head"><span class="badge">3-1 따라하기</span><h3>메뉴 한 줄 꺼내기</h3><span class="t">5분</span></div><div class="lab-body"><p style="margin:0">하와이안의 <b>R · L 가격</b>만 꺼내는 SELECT를 쓰고 실행하세요.<br>SQL: <span style="display:inline-block;border-bottom:1px solid var(--line2);min-width:320px;height:14px"></span><br>결과: R <span style="display:inline-block;border-bottom:1px solid var(--line2);min-width:80px;height:14px"></span> L <span style="display:inline-block;border-bottom:1px solid var(--line2);min-width:80px;height:14px"></span></p></div></div>
+<div class="lab"><div class="lab-head"><span class="badge">3-2 예측하기</span><h3>주문 한 건이 늘어나는 순간</h3><span class="t">7분</span></div><div class="lab-body"><p style="margin:0">① <code>SELECT COUNT(*) FROM orders</code> 결과 <span style="display:inline-block;border-bottom:1px solid var(--line2);min-width:70px;height:14px"></span><br>② 브라우저에서 주문 한 건 넣기 → 영수증 번호 <span style="display:inline-block;border-bottom:1px solid var(--line2);min-width:70px;height:14px"></span><br>③ 다시 COUNT → 예측 <span style="display:inline-block;border-bottom:1px solid var(--line2);min-width:70px;height:14px"></span> 실제 <span style="display:inline-block;border-bottom:1px solid var(--line2);min-width:70px;height:14px"></span><br>④ <code>… ORDER BY id DESC LIMIT 1</code>로 내 주문 확인</p></div></div>
+<div class="lab"><div class="lab-head"><span class="badge">3-3 찾기</span><h3>가장 많이 팔린 메뉴 번호</h3><span class="t">5분</span></div><div class="lab-body"><p style="margin:0"><code>SELECT menu_id, SUM(qty) AS pizzas FROM orders GROUP BY menu_id ORDER BY pizzas DESC</code><br>1위 menu_id <span style="display:inline-block;border-bottom:1px solid var(--line2);min-width:50px;height:14px"></span> = 메뉴 이름 <span style="display:inline-block;border-bottom:1px solid var(--line2);min-width:100px;height:14px"></span> (menus 표에서 찾기)<br><span class="mn">번호 → 이름 바꾸기를 SQL이 대신하는 것이 3-4의 JOIN</span></p></div></div>
+
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">07</div></section>
+<section class="page"><div class="rh"><div class="l"><b>PIZZA</b> · 3장 · STEP 3-2</div><div class="r">db.py — 연결<span class="pg">08</span></div></div>
+
+<div class="kicker">STEP 3-2 · sqlite3</div>
+<h1>연결하고, 묻고, 닫는다</h1>
+<div class="mission"><b>MISSION</b><h3>db.py의 <b>get_conn()</b>이 하는 일과 <b>Row</b>를 쓰는 이유를 설명한다.</h3>
+<p class="wy"><b>WHY</b> db.py의 모든 함수는 같은 순서로 움직입니다. 순서 하나만 익히면 나머지 함수는 <b>SQL만 다른 같은 모양</b>입니다.</p></div>
+<div class="code">
+  <div class="ch2"><span>db.py · 앞부분</span><span>완성본</span></div>
+  <div class="cb2"><span class="fn">import</span> sqlite3
+<span class="fn">from</span> pathlib <span class="fn">import</span> Path
+
+<span class="cmt"># app.py 와 같은 폴더의 shop.db (어디서 실행해도 같은 파일)</span>
+<span class="hl2">DB_PATH = Path(__file__).parent / <span class="str">&quot;shop.db&quot;</span></span>
+
+
+<span class="fn">def</span> get_conn():
+<span class="hl2">    conn = sqlite3.connect(DB_PATH)</span>
+<span class="hl2">    conn.row_factory = sqlite3.Row      <span class="cmt"># 결과를 row[&quot;name&quot;] 처럼 이름으로 꺼내기</span></span>
+<span class="hl2">    <span class="fn">return</span> conn</span></div>
+</div>
+<div class="deflist">
+  <div class="d"><div class="dt">import sqlite3<small>파이썬 내장</small></div><div class="dd">설치 없이 씁니다. requirements.txt에 없는 이유입니다.</div></div>
+  <div class="d"><div class="dt">DB_PATH<small>파일 기준 경로</small></div><div class="dd">db.py 옆의 shop.db. 어느 폴더에서 서버를 켜도 <b>같은 파일</b>을 엽니다. 파일이 없으면 <b>빈 DB를 새로 만들어 버리므로</b> 경로가 중요합니다.</div></div>
+  <div class="d"><div class="dt">sqlite3.connect()<small>장부 펼치기</small></div><div class="dd">연결(conn)을 돌려줍니다. SQL은 이 연결로 실행합니다.</div></div>
+</div>
+
+<h2>row_factory = sqlite3.Row 가 있을 때와 없을 때</h2>
+<div class="ba">
+  <div class="bad"><div class="h">없으면 — 튜플</div>
+  <div class="m">(6, '하와이안', '🍍', 19900, 25900, …)<br><u>row[1]</u> → '하와이안'</div>
+  <div class="why2">몇 번째 칸인지 <b>외워야</b> 합니다. 칸 순서가 바뀌면 조용히 틀립니다.</div></div>
+  <div class="good"><div class="h">있으면 — 이름으로</div>
+  <div class="m"><b>row["name"]</b> → '하와이안'<br><b>dict(row)</b> → {'id': 6, 'name': '하와이안', …}</div>
+  <div class="why2">템플릿의 <code>m.name</code>, JSON 응답에 그대로 쓰도록 <b>딕셔너리로 바꿔</b> 돌려줍니다.</div></div>
+</div>
+
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">08</div></section>
+<section class="page"><div class="rh"><div class="l"><b>PIZZA</b> · 3장 · STEP 3-2</div><div class="r">db.py — 메뉴 꺼내기<span class="pg">09</span></div></div>
+
+<h2>모든 함수의 공통 순서</h2>
+<div class="flow"><span>① conn = get_conn()</span><i>→</i><span>② conn.execute(SQL)</span><i>→</i><span>③ fetchall / fetchone</span><i>→</i><span>④ conn.close()</span><i>→</i><span>⑤ 딕셔너리로 return</span></div>
+<div class="code">
+  <div class="ch2"><span>db.py · get_menus() · get_menu()</span><span>완성본</span></div>
+  <div class="cb2"><span class="fn">def</span> get_menus():
+    conn = get_conn()
+<span class="hl2">    rows = conn.execute(<span class="str">&quot;SELECT * FROM menus ORDER BY id&quot;</span>).fetchall()</span>
+    conn.close()
+    <span class="fn">return</span> [dict(r) <span class="fn">for</span> r <span class="fn">in</span> rows]      <span class="cmt"># Row → 딕셔너리 (템플릿·JSON에서 쓰기 쉽게)</span>
+
+
+<span class="fn">def</span> get_menu(menu_id):
+    conn = get_conn()
+<span class="hl2">    row = conn.execute(<span class="str">&quot;SELECT * FROM menus WHERE id = ?&quot;</span>, (menu_id,)).fetchone()</span>
+    conn.close()
+    <span class="fn">return</span> dict(row) <span class="fn">if</span> row <span class="fn">else</span> <span class="fn">None</span></div>
+</div>
+<table class="zebra">
+<thead><tr><th style="width:30%">코드</th><th>뜻</th></tr></thead>
+<tbody>
+<tr><td><code>.fetchall()</code></td><td>결과 <b>전부</b>를 리스트로. 메뉴판처럼 여러 행</td></tr>
+<tr><td><code>.fetchone()</code></td><td><b>첫 행 하나</b>. 없으면 <b>None</b></td></tr>
+<tr><td><code>[dict(r) for r in rows]</code></td><td>Row 여러 개를 딕셔너리 리스트로 — 2장에서 본 <b>menus</b>의 정체</td></tr>
+<tr><td><code>dict(row) if row else None</code></td><td>없는 번호면 None → app.py가 “이상한 값”으로 판단 (2장 검사)</td></tr>
+</tbody>
+</table>
+
+<div class="lab"><div class="lab-head"><span class="badge">3-4 예측하기</span><h3>없는 메뉴 번호</h3><span class="t">5분</span></div><div class="lab-body"><p style="margin:0">주소창에 <code>/order?menu_id=99</code>를 입력하면 주문서는? <span style="display:inline-block;border-bottom:1px solid var(--line2);min-width:160px;height:14px"></span><br>그 상태로 주문 넣기를 억지로 보내면(개발자 도구로 option 값을 99로) 어디로 가나요? <span style="display:inline-block;border-bottom:1px solid var(--line2);min-width:120px;height:14px"></span></p></div></div>
+
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">09</div></section>
+<section class="page"><div class="rh"><div class="l"><b>PIZZA</b> · 3장 · STEP 3-3</div><div class="r">저장 — INSERT<span class="pg">10</span></div></div>
+
+<div class="kicker">STEP 3-3 · INSERT · commit</div>
+<h1>장부에 한 줄 적기</h1>
+<div class="mission"><b>MISSION</b><h3><b>add_order()</b>가 주문을 적고, <b>저장을 확정</b>하고, <b>새 번호</b>를 돌려주는 과정을 따라간다.</h3>
+<p class="wy"><b>WHY</b> 저장 코드의 실수는 <b>오류 없이</b> 데이터를 잃게 만듭니다. 어디가 “확정” 버튼인지 알아야 합니다.</p></div>
+<div class="code">
+  <div class="ch2"><span>app.py · order() 에서 부르는 곳</span><span>완성본</span></div>
+  <div class="cb2">    amount = calc_amount(menu, size, crust, qty)             <span class="cmt"># 금액은 서버가 계산</span>
+<span class="hl2">    order_id = db.add_order(menu[<span class="str">&quot;id&quot;</span>], size, crust, qty, channel, amount)   <span class="cmt"># 3장: 저장</span></span>
+    <span class="fn">return</span> redirect(url_for(<span class="str">&quot;done&quot;</span>, order_id=order_id))       <span class="cmt"># 저장 후 영수증으로 이동</span></div>
+</div>
+<div class="code">
+  <div class="ch2"><span>db.py · add_order()</span><span>완성본</span></div>
+  <div class="cb2"><span class="fn">def</span> add_order(menu_id, size, crust, qty, channel, amount):
+    <span class="str">&quot;&quot;&quot;주문 한 건 저장하고 새 주문 번호를 돌려준다&quot;&quot;&quot;</span>
+    conn = get_conn()
+    cur = conn.execute(
+<span class="hl2">        <span class="str">&quot;&quot;&quot;INSERT INTO orders (ordered_at, menu_id, size, crust, qty, amount, channel)</span></span>
+<span class="hl2"><span class="str">           VALUES (datetime(&#x27;now&#x27;, &#x27;localtime&#x27;), ?, ?, ?, ?, ?, ?)&quot;&quot;&quot;</span>,</span>
+<span class="hl2">        (menu_id, size, crust, qty, amount, channel),</span>
+    )
+<span class="hl2">    conn.commit()                       <span class="cmt"># 저장 확정 (빠뜨리면 기록되지 않음)</span></span>
+<span class="hl2">    new_id = cur.lastrowid</span>
+    conn.close()
+    <span class="fn">return</span> new_id</div>
+</div>
+<table class="zebra">
+<thead><tr><th style="width:36%">코드</th><th>뜻</th></tr></thead>
+<tbody>
+<tr><td><code>INSERT INTO orders (칸들) VALUES (?, …)</code></td><td>칸 순서와 ? 순서, 튜플 값 순서가 <b>모두 같아야</b> 함</td></tr>
+<tr><td><code>datetime('now', 'localtime')</code></td><td>SQLite가 <b>지금 시각</b>을 적음 (PC의 시간대)</td></tr>
+<tr><td><code>id</code>를 적지 않음</td><td>AUTOINCREMENT가 <b>알아서</b> 번호를 매김</td></tr>
+<tr><td><code>conn.commit()</code></td><td><b>저장 확정.</b> 없으면 연결을 닫을 때 적은 내용이 <b>버려짐</b></td></tr>
+<tr><td><code>cur.lastrowid</code></td><td>방금 들어간 행의 번호 → 영수증 주소 <code>/done/번호</code></td></tr>
+</tbody>
+</table>
+
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">10</div></section>
+<section class="page"><div class="rh"><div class="l"><b>PIZZA</b> · 3장 · STEP 3-3</div><div class="r">? 자리와 CHECK — 이중 안전장치<span class="pg">11</span></div></div>
+
+<h2>? 자리 — 값은 SQL에 직접 붙이지 않는다</h2>
+<div class="parse">
+  <div class="ph"><span>execute 한 줄 분해</span><span>PLACEHOLDER</span></div>
+  <div class="pb">
+    <div class="src"><code style="font-size:13.5px">conn.execute("SELECT * FROM menus WHERE id = ?", (menu_id,))</code></div>
+    <div class="arw">나누어 보면</div>
+    <span class="chip c-v">SQL 틀 — 값 자리는 ?</span>
+    <span class="chip c-a">(menu_id,) — ? 에 들어갈 값 (튜플)</span>
+  </div>
+</div>
+<div class="note"><strong>쉼표 하나에 주의</strong>  값이 하나일 때 <code>(menu_id,)</code>처럼 <b>쉼표</b>가 있어야 튜플이 됩니다. <code>(menu_id)</code>는 그냥 숫자라서 오류가 납니다. 왜 ?를 쓰는지 바로 아래에서 실험합니다.</div>
+<h2>f-string으로 SQL을 만들면 생기는 일</h2>
+<p>누군가 채널 값에 <code>배달' OR '1'='1</code>을 넣었다고 해 봅시다. 실제로 실행한 결과입니다.</p>
+<div class="ba">
+  <div class="bad"><div class="h">값을 SQL 글자에 끼워 넣기</div>
+  <div class="m">f"… WHERE channel = '<u>{ch}</u>'"<br>→ WHERE channel = '배달' <u>OR '1'='1'</u></div>
+  <div class="why2">값이 <b>SQL 문법으로 해석</b>되어 조건이 무너집니다. 결과: <b>1,692건 전부</b> 조회. 이런 공격을 <b>SQL 인젝션</b>이라고 합니다.</div></div>
+  <div class="good"><div class="h">? 자리에 값으로 넘기기</div>
+  <div class="m">"… WHERE channel = <b>?</b>", <b>(ch,)</b></div>
+  <div class="why2">값은 끝까지 <b>그냥 글자</b>로 취급됩니다. 그런 채널은 없으니 결과: <b>0건</b>.</div></div>
+</div>
+<div class="warn"><b>규칙</b>  사용자에게서 온 값은 <strong>반드시 ? 자리로</strong> 넘깁니다. db.py의 모든 SQL이 이 규칙을 따릅니다.</div>
+
+<h2>DB도 한 번 더 검사합니다 — CHECK</h2>
+<div class="term"><div class="th"><span>규칙을 어기는 INSERT</span><span>(.venv) · pizza-lab</span></div><div class="tb2"><span class="g">(.venv)</span> <span class="p">&gt;</span> <span class="c">python tools/sql.py "INSERT INTO orders (ordered_at, menu_id, size, crust, qty, amount, channel) VALUES (datetime(&#x27;now&#x27;), 1, &#x27;R&#x27;, &#x27;기본&#x27;, 0, 0, &#x27;매장&#x27;)"</span>
+❌ IntegrityError: CHECK constraint failed: qty BETWEEN 1 AND 10
+<span class="g">(.venv)</span> <span class="p">&gt;</span> <span class="c">python tools/sql.py "INSERT INTO orders (ordered_at, menu_id, size, crust, qty, amount, channel) VALUES (datetime(&#x27;now&#x27;), 1, &#x27;M&#x27;, &#x27;기본&#x27;, 1, 18900, &#x27;매장&#x27;)"</span>
+❌ IntegrityError: CHECK constraint failed: size IN (&#x27;R&#x27;, &#x27;L&#x27;)</div></div>
+<h2>주문 한 건을 지키는 세 겹의 검사</h2>
+<div class="flow"><span>① 브라우저 · min=1 max=10</span><i>→</i><span>② app.py · if … redirect</span><i>→</i><span>③ shop.db · CHECK</span></div>
+<p class="mn">①은 손님이 우회할 수 있고, ②가 진짜 검사입니다. ③은 <strong>코드에 실수가 있어도</strong> 잘못된 값이 장부에 들어가지 않게 막는 마지막 방어선입니다.</p>
+
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">11</div></section>
+<section class="page"><div class="rh"><div class="l"><b>PIZZA</b> · 3장 · STEP 3-3</div><div class="r">저장 미션<span class="pg">12</span></div></div>
+
+<div class="lab"><div class="lab-head"><span class="badge">3-5 고장 내기</span><h3>commit을 지우면</h3><span class="t">10분</span></div><div class="lab-body"><p style="margin:0">db.py의 <code>conn.commit()</code> 줄 앞에 <code>#</code>을 붙여 주석으로 만들고 저장 → 주문 한 건 넣기.<br>영수증이 뜨나요? <span style="display:inline-block;border-bottom:1px solid var(--line2);min-width:60px;height:14px"></span> 어디로 갔나요? <span style="display:inline-block;border-bottom:1px solid var(--line2);min-width:120px;height:14px"></span><br>COUNT는 늘었나요? <span style="display:inline-block;border-bottom:1px solid var(--line2);min-width:60px;height:14px"></span> 오류 화면이 떴나요? <span style="display:inline-block;border-bottom:1px solid var(--line2);min-width:60px;height:14px"></span><br><span class="mn">힌트: 번호(lastrowid)는 받았지만, 영수증 함수가 <b>새 연결</b>로 그 번호를 찾으면…</span><br>확인 후 <b>반드시 되돌리세요.</b></p></div></div>
+<div class="lab"><div class="lab-head"><span class="badge">3-6 실험하기</span><h3>DB가 거부하는 값</h3><span class="t">5분</span></div><div class="lab-body"><p style="margin:0">앞 페이지의 두 INSERT를 직접 실행하고, 오류 메시지에서 <b>어느 규칙</b>에 걸렸는지 적으세요. 이어서 <code>channel</code>에 <code>'택배'</code>를 넣으면 어떻게 되는지 예측 → 실행.</p></div></div>
+<div class="lab"><div class="lab-head"><span class="badge">3-7 정리하기</span><h3>저장이 되기까지</h3><span class="t">5분</span></div><div class="lab-body"><p style="margin:0">주문 넣기 버튼부터 영수증까지, 아래 빈칸에 <b>함수 이름</b>을 순서대로 채우세요.<br>order() → <span style="display:inline-block;border-bottom:1px solid var(--line2);min-width:90px;height:14px"></span> → <span style="display:inline-block;border-bottom:1px solid var(--line2);min-width:90px;height:14px"></span> → conn.commit() → redirect → <span style="display:inline-block;border-bottom:1px solid var(--line2);min-width:70px;height:14px"></span> → <span style="display:inline-block;border-bottom:1px solid var(--line2);min-width:90px;height:14px"></span></p></div></div>
+
+<h2>저장 흐름 전체</h2>
+<div class="dia"><svg viewBox="0 0 700 150" xmlns="http://www.w3.org/2000/svg" font-family="Noto Sans KR, sans-serif">
+  <defs><marker id="a4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#b23c0a"/></marker></defs>
+  <g font-size="11.5">
+    <rect x="8" y="20" width="120" height="44" rx="5" fill="#fff" stroke="#1c1b19"/><text x="68" y="40" text-anchor="middle" font-weight="700">POST /order</text><text x="68" y="56" text-anchor="middle" fill="#5b574f" font-size="10">폼 값</text>
+    <rect x="150" y="20" width="120" height="44" rx="5" fill="#fdf3ec" stroke="#b23c0a"/><text x="210" y="40" text-anchor="middle" font-weight="700">app.py order()</text><text x="210" y="56" text-anchor="middle" fill="#5b574f" font-size="10">검사 · 계산</text>
+    <rect x="292" y="20" width="120" height="44" rx="5" fill="#f2f5fd" stroke="#1d4ed8"/><text x="352" y="40" text-anchor="middle" font-weight="700">db.add_order()</text><text x="352" y="56" text-anchor="middle" fill="#5b574f" font-size="10">INSERT · commit</text>
+    <path d="M352 66 v30" stroke="#1d4ed8" stroke-width="1.5" marker-end="url(#a4)"/>
+    <rect x="300" y="100" width="104" height="36" rx="5" fill="#fff" stroke="#1d4ed8"/><text x="352" y="123" text-anchor="middle" font-weight="700">shop.db +1행</text>
+    <rect x="434" y="20" width="120" height="44" rx="5" fill="#fff" stroke="#1c1b19"/><text x="494" y="40" text-anchor="middle" font-weight="700">redirect</text><text x="494" y="56" text-anchor="middle" fill="#5b574f" font-size="10">/done/1693</text>
+    <rect x="576" y="20" width="116" height="44" rx="5" fill="#fdf3ec" stroke="#b23c0a"/><text x="634" y="40" text-anchor="middle" font-weight="700">done()</text><text x="634" y="56" text-anchor="middle" fill="#5b574f" font-size="10">db.get_order(1693)</text>
+    <path d="M634 66 v44 H406" stroke="#1d4ed8" stroke-width="1.5" fill="none" stroke-dasharray="4 3" marker-end="url(#a4)"/>
+    <text x="520" y="104" font-size="10" fill="#1d4ed8">새 연결로 다시 읽기</text>
+  </g>
+  <g stroke="#b23c0a" stroke-width="1.5" marker-end="url(#a4)"><path d="M129 42 H147"/><path d="M271 42 H289"/><path d="M413 42 H431"/><path d="M555 42 H573"/></g>
+</svg></div>
+<div class="capt"><b>그림 3-2</b> 영수증은 방금 계산한 값이 아니라 <b>DB에 저장된 값</b>을 다시 읽어 보여줍니다. 그래서 commit이 빠지면 영수증을 찾을 수 없습니다.</div>
+
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">12</div></section>
+<section class="page"><div class="rh"><div class="l"><b>PIZZA</b> · 3장 · STEP 3-4</div><div class="r">꺼내기 — JOIN<span class="pg">13</span></div></div>
+
+<div class="kicker">STEP 3-4 · SELECT · JOIN</div>
+<h1>번호를 이름으로 잇기</h1>
+<div class="mission"><b>MISSION</b><h3><b>JOIN</b>으로 주문과 메뉴를 이어 붙이는 SQL을 읽고, 주문 한 건을 꺼내는 <b>get_order()</b>를 따라간다.</h3>
+<p class="wy"><b>WHY</b> 영수증 · 주문 내역 · 대시보드 모두 “주문 + 메뉴 이름”이 필요합니다. JOIN은 5장 집계의 기본입니다.</p></div>
+<div class="code">
+  <div class="ch2"><span>db.py · ORDER_SELECT · get_order()</span><span>완성본</span></div>
+  <div class="cb2">ORDER_SELECT = <span class="str">&quot;&quot;&quot;</span>
+<span class="str">    SELECT o.id, o.ordered_at, o.size, o.crust, o.qty, o.amount, o.channel,</span>
+<span class="str">           o.menu_id, m.name AS menu_name, m.emoji</span>
+<span class="str">    FROM orders AS o</span>
+<span class="hl2"><span class="str">    JOIN menus  AS m ON m.id = o.menu_id</span></span>
+<span class="hl2"><span class="str">&quot;&quot;&quot;</span></span>
+
+
+<span class="fn">def</span> get_order(order_id):
+    conn = get_conn()
+    row = conn.execute(ORDER_SELECT + <span class="str">&quot; WHERE o.id = ?&quot;</span>, (order_id,)).fetchone()
+    conn.close()
+    <span class="fn">return</span> dict(row) <span class="fn">if</span> row <span class="fn">else</span> <span class="fn">None</span></div>
+</div>
+
+<h2>JOIN이 하는 일</h2>
+<div class="dia"><svg viewBox="0 0 700 120" xmlns="http://www.w3.org/2000/svg" font-family="Consolas, monospace">
+  <g font-size="11.5">
+    <rect x="10" y="10" width="230" height="44" rx="4" fill="#fff" stroke="#d6332a"/><text x="20" y="28" font-weight="700" fill="#d6332a">orders (o)</text><text x="20" y="45">id 1690 · <tspan fill="#1d4ed8" font-weight="700">menu_id 5</tspan> · qty 1</text>
+    <rect x="10" y="66" width="230" height="44" rx="4" fill="#fff" stroke="#1d4ed8"/><text x="20" y="84" font-weight="700" fill="#1d4ed8">menus (m)</text><text x="20" y="101"><tspan fill="#1d4ed8" font-weight="700">id 5</tspan> · 마르게리타 · 🌿</text>
+    <text x="300" y="50" text-anchor="middle" font-size="10.5" fill="#b23c0a" font-weight="700">ON m.id =</text><text x="300" y="80" text-anchor="middle" font-size="10.5" fill="#b23c0a" font-weight="700">o.menu_id</text>
+    <path d="M250 60 H350" stroke="#b23c0a" stroke-width="2"/><path d="M340 54 L352 60 L340 66" fill="none" stroke="#b23c0a" stroke-width="2"/>
+    <rect x="360" y="36" width="330" height="48" rx="4" fill="#fdf3ec" stroke="#b23c0a"/><text x="372" y="55" font-weight="700">한 줄로 합쳐진 결과</text><text x="372" y="73">1690 · 5 · 마르게리타 · 🌿 · qty 1</text>
+  </g>
+</svg></div>
+<table class="zebra">
+<thead><tr><th style="width:34%">코드</th><th>뜻</th></tr></thead>
+<tbody>
+<tr><td><code>FROM orders AS o</code></td><td>orders에 <b>o</b>라는 짧은 별명</td></tr>
+<tr><td><code>m.name AS menu_name</code></td><td>결과 칸 이름을 <b>menu_name</b>으로 → 템플릿의 <code>order.menu_name</code></td></tr>
+<tr><td><code>ORDER_SELECT + " WHERE o.id = ?"</code></td><td>공통 SELECT를 상수로 두고 <b>조건만 붙여</b> 재사용</td></tr>
+</tbody>
+</table>
+
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">13</div></section>
+<section class="page"><div class="rh"><div class="l"><b>PIZZA</b> · 3장 · STEP 3-4</div><div class="r">여러 건 꺼내기 — get_orders()<span class="pg">14</span></div></div>
+
+<h2>조건이 있을 때만 WHERE를 붙이는 함수</h2>
+<div class="code">
+  <div class="ch2"><span>db.py · get_orders()</span><span>완성본</span></div>
+  <div class="cb2"><span class="fn">def</span> get_orders(channel=<span class="fn">None</span>, limit=50):
+    <span class="str">&quot;&quot;&quot;최근 주문 목록. channel 을 주면 그 채널만.&quot;&quot;&quot;</span>
+    sql = ORDER_SELECT
+    params = []
+<span class="hl2">    <span class="fn">if</span> channel:</span>
+<span class="hl2">        sql += <span class="str">&quot; WHERE o.channel = ?&quot;</span></span>
+<span class="hl2">        params.append(channel)</span>
+<span class="hl2">    sql += <span class="str">&quot; ORDER BY o.id DESC LIMIT ?&quot;</span></span>
+<span class="hl2">    params.append(limit)</span>
+
+    conn = get_conn()
+    rows = conn.execute(sql, params).fetchall()
+<span class="hl2">    conn.close()</span>
+    <span class="fn">return</span> [dict(r) <span class="fn">for</span> r <span class="fn">in</span> rows]</div>
+</div>
+<table class="zebra">
+<thead><tr><th style="width:26%">channel 값</th><th style="width:44%">완성되는 SQL (요약)</th><th>params</th></tr></thead>
+<tbody>
+<tr><td><code>None</code> (전체)</td><td><code>… ORDER BY o.id DESC LIMIT ?</code></td><td><code>[50]</code></td></tr>
+<tr><td><code>"배달"</code></td><td><code>… WHERE o.channel = ? ORDER BY … LIMIT ?</code></td><td><code>["배달", 50]</code></td></tr>
+</tbody>
+</table>
+<p class="mn">? 가 두 개면 값도 <strong>순서대로 두 개</strong> — params 리스트에 차례로 쌓습니다.</p>
+
+<h2>돌려받는 모양</h2>
+<div class="code">
+  <div class="ch2"><span>db.get_orders(limit=1)</span><span>실행 결과</span></div>
+  <div class="cb2">[{<span class="str">&#x27;id&#x27;</span>: 1692,
+  <span class="str">&#x27;ordered_at&#x27;</span>: <span class="str">&#x27;2026-09-15 21:21:06&#x27;</span>,
+  <span class="str">&#x27;size&#x27;</span>: <span class="str">&#x27;R&#x27;</span>,
+  <span class="str">&#x27;crust&#x27;</span>: <span class="str">&#x27;치즈크러스트&#x27;</span>,
+  <span class="str">&#x27;qty&#x27;</span>: 1,
+  <span class="str">&#x27;amount&#x27;</span>: 21900,
+  <span class="str">&#x27;channel&#x27;</span>: <span class="str">&#x27;포장&#x27;</span>,
+  <span class="str">&#x27;menu_id&#x27;</span>: 1,
+  <span class="str">&#x27;menu_name&#x27;</span>: <span class="str">&#x27;페퍼로니&#x27;</span>,
+  <span class="str">&#x27;emoji&#x27;</span>: <span class="str">&#x27;🍕&#x27;</span>}]</div>
+</div>
+<p class="mn">한 건 = 딕셔너리 하나, 칸 이름 = 템플릿의 이름(<code>o.menu_name</code>). <code>count_orders()</code>는 <code>COUNT(*)</code>로 “배달 <b>941</b>건”의 숫자만 셉니다.</p>
+
+
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">14</div></section>
+<section class="page"><div class="rh"><div class="l"><b>PIZZA</b> · 3장 · STEP 3-5</div><div class="r">주문 내역 페이지<span class="pg">15</span></div></div>
+
+<div class="kicker">STEP 3-5 · /orders</div>
+<h1>장부를 화면에 펼치기</h1>
+<div class="mission"><b>MISSION</b><h3>주소의 <code>?channel=</code> 값이 <b>SQL의 WHERE까지</b> 전달되는 길을 따라간다.</h3>
+<p class="wy"><b>WHY</b> 필터 버튼 → 주소 → 함수 → SQL → 템플릿. 5장 대시보드의 기간 버튼도 <b>똑같은 길</b>입니다.</p></div>
+<div class="code">
+  <div class="ch2"><span>app.py · orders()</span><span>완성본</span></div>
+  <div class="cb2"><span class="fn">@app.route</span>(<span class="str">&quot;/orders&quot;</span>)
+<span class="fn">def</span> orders():
+<span class="hl2">    channel = request.args.get(<span class="str">&quot;channel&quot;</span>, <span class="str">&quot;&quot;</span>)                 <span class="cmt"># /orders?channel=배달</span></span>
+<span class="hl2">    <span class="fn">if</span> channel <span class="fn">not</span> <span class="fn">in</span> CHANNELS:</span>
+        channel = <span class="str">&quot;&quot;</span>
+<span class="hl2">    rows = db.get_orders(channel <span class="fn">or</span> <span class="fn">None</span>, limit=50)</span>
+<span class="hl2">    total = db.count_orders(channel <span class="fn">or</span> <span class="fn">None</span>)</span>
+    <span class="fn">return</span> render_template(<span class="str">&quot;orders.html&quot;</span>, orders=rows, total=total,
+                           channel=channel, channels=CHANNELS)</div>
+</div>
+<div class="shots one" style="max-width:74%;margin:10px auto"><figure><img src="data:image/jpeg;base64,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" alt=""><figcaption><b>그림 3-3</b> /orders?channel=배달 — “배달 941건 중 최근 50건”</figcaption></figure></div>
+<div class="flow"><span>배달 버튼</span><i>→</i><span>/orders?channel=배달</span><i>→</i><span>request.args</span><i>→</i><span>CHANNELS 확인</span><i>→</i><span>get_orders("배달")</span><i>→</i><span>WHERE o.channel = ?</span></div>
+
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">15</div></section>
+<section class="page"><div class="rh"><div class="l"><b>PIZZA</b> · 3장 · STEP 3-5</div><div class="r">orders.html 읽기<span class="pg">16</span></div></div>
+
+<div class="code">
+  <div class="ch2"><span>templates/orders.html · 발췌</span><span>완성본</span></div>
+  <div class="cb2"><span class="tag">&lt;nav</span> <span class="att">class</span>=<span class="str">&quot;filters&quot;</span><span class="tag">&gt;</span>
+<span class="hl2">  <span class="tag">&lt;a</span> <span class="att">href</span>=&quot;<span class="fn">{{ url_for(&#x27;orders&#x27;) }}</span>&quot;</span>
+<span class="hl2">     <span class="att">class</span>=&quot;<span class="fn">{% if not channel %}</span>on<span class="fn">{% endif %}</span>&quot;<span class="tag">&gt;</span>전체<span class="tag">&lt;/a</span><span class="tag">&gt;</span></span>
+  <span class="fn">{% for c in channels %}</span>
+<span class="hl2">  <span class="tag">&lt;a</span> <span class="att">href</span>=&quot;<span class="fn">{{ url_for(&#x27;orders&#x27;, channel=c) }}</span>&quot;</span>
+<span class="hl2">     <span class="att">class</span>=&quot;<span class="fn">{% if c == channel %}</span>on<span class="fn">{% endif %}</span>&quot;<span class="tag">&gt;</span><span class="fn">{{ c }}</span><span class="tag">&lt;/a</span><span class="tag">&gt;</span></span>
+  <span class="fn">{% endfor %}</span>
+<span class="tag">&lt;/nav</span><span class="tag">&gt;</span>
+
+<span class="fn">{% for o in orders %}</span>
+      <span class="tag">&lt;tr</span><span class="tag">&gt;</span>
+        <span class="tag">&lt;td</span> <span class="att">class</span>=<span class="str">&quot;muted&quot;</span><span class="tag">&gt;</span>#<span class="fn">{{ o.id }}</span><span class="tag">&lt;/td</span><span class="tag">&gt;</span>
+        <span class="tag">&lt;td</span><span class="tag">&gt;</span><span class="fn">{{ o.ordered_at[5:16] }}</span><span class="tag">&lt;/td</span><span class="tag">&gt;</span>
+        <span class="tag">&lt;td</span><span class="tag">&gt;</span><span class="fn">{{ o.emoji }}</span> <span class="fn">{{ o.menu_name }}</span><span class="tag">&lt;/td</span><span class="tag">&gt;</span>
+<span class="hl2">        <span class="tag">&lt;td</span><span class="tag">&gt;</span><span class="fn">{{ o.size }}</span><span class="tag">&lt;/td</span><span class="tag">&gt;</span></span>
+        <span class="tag">&lt;td</span><span class="tag">&gt;</span><span class="fn">{{ o.crust }}</span><span class="tag">&lt;/td</span><span class="tag">&gt;</span>
+        <span class="tag">&lt;td</span> <span class="att">class</span>=<span class="str">&quot;num&quot;</span><span class="tag">&gt;</span><span class="fn">{{ o.qty }}</span><span class="tag">&lt;/td</span><span class="tag">&gt;</span>
+        <span class="tag">&lt;td</span><span class="tag">&gt;</span><span class="tag">&lt;span</span> <span class="att">class</span>=&quot;chip ch-<span class="fn">{{ o.channel }}</span>&quot;<span class="tag">&gt;</span><span class="fn">{{ o.channel }}</span><span class="tag">&lt;/span</span><span class="tag">&gt;</span><span class="tag">&lt;/td</span><span class="tag">&gt;</span>
+        <span class="tag">&lt;td</span> <span class="att">class</span>=<span class="str">&quot;num strong&quot;</span><span class="tag">&gt;</span><span class="fn">{{ &quot;{:,}&quot;.format(o.amount) }}</span><span class="tag">&lt;/td</span><span class="tag">&gt;</span>
+      <span class="tag">&lt;/tr</span><span class="tag">&gt;</span>
+      <span class="fn">{% endfor %}</span></div>
+</div>
+<table class="zebra">
+<thead><tr><th style="width:40%">템플릿</th><th>뜻</th></tr></thead>
+<tbody>
+<tr><td><code>url_for('orders', channel=c)</code></td><td><b>/orders?channel=배달</b> — 함수에 없는 값은 주소 뒤에 붙음 (2장)</td></tr>
+<tr><td><code>{% if c == channel %}on{% endif %}</code></td><td>지금 고른 필터만 검은색</td></tr>
+<tr><td><code>{{ o.ordered_at[5:16] }}</code></td><td>'2026-<b>09-15 19:42</b>:38' — 글자 자르기로 월-일 시:분만</td></tr>
+<tr><td><code>class="chip ch-{{ o.channel }}"</code></td><td>채널마다 다른 색 (style.css의 <code>.ch-배달</code> …)</td></tr>
+</tbody>
+</table>
+<div class="memo"><div class="ml">MEMO</div><div class="line"></div><div class="line"></div><div class="line"></div><div class="line"></div><div class="line"></div><div class="line"></div></div>
+
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">16</div></section>
+<section class="page"><div class="rh"><div class="l"><b>PIZZA</b> · 3장 · STEP 3-5</div><div class="r">주문 내역 미션<span class="pg">17</span></div></div>
+
+<div class="lab"><div class="lab-head"><span class="badge">3-8 따라가기</span><h3>주소를 직접 바꾸기</h3><span class="t">8분</span></div><div class="lab-body"><p style="margin:0">주소창에 차례로 입력하고 결과 문구를 적으세요.<br>① <code>/orders?channel=포장</code> <span style="display:inline-block;border-bottom:1px solid var(--line2);min-width:180px;height:14px"></span><br>② <code>/orders?channel=택배</code> <span style="display:inline-block;border-bottom:1px solid var(--line2);min-width:180px;height:14px"></span> — 왜 “전체”가 나올까요?<br>③ <code>/orders?channel=배달%27%20OR%20%271%27=%271</code> <span style="display:inline-block;border-bottom:1px solid var(--line2);min-width:140px;height:14px"></span> — 막아 준 곳은 어디 어디?</p></div></div>
+<div class="lab"><div class="lab-head"><span class="badge">3-9 바꿔보기</span><h3>데이터만 고쳐서 행사하기</h3><span class="t">8분</span></div><div class="lab-body"><p style="margin:0">서버를 켠 채로 실행 → 메뉴판 새로고침:<br><code>UPDATE menus SET price_r = 9900, tag = '반값 행사' WHERE id = 6</code><br>코드를 한 줄도 안 고쳤는데 바뀐 곳 세 군데: <span style="display:inline-block;border-bottom:1px solid var(--line2);min-width:260px;height:14px"></span></p><div class="shots one" style="max-width:80%;margin:8px 0 0"><figure><img src="data:image/jpeg;base64,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" alt=""></figure></div><p style="margin:6px 0 0">되돌리기: <code>UPDATE menus SET price_r = 19900, tag = '논쟁 메뉴' WHERE id = 6</code></p></div></div>
+<div class="lab"><div class="lab-head"><span class="badge">3-10 고장 내기</span><h3>칸 이름 오타</h3><span class="t">5분</span></div><div class="lab-body"><p style="margin:0">db.py ORDER_SELECT의 <code>o.ordered_at</code> → <code>o.orderd_at</code>. 주문 내역 · 영수증 · 메뉴판 중 <b>깨지는 화면</b>은? <span style="display:inline-block;border-bottom:1px solid var(--line2);min-width:160px;height:14px"></span><br>오류 마지막 줄: <span style="display:inline-block;border-bottom:1px solid var(--line2);min-width:260px;height:14px"></span> — 확인 후 되돌리기</p></div></div>
+
+<div class="memo"><div class="ml">MEMO</div><div class="line"></div><div class="line"></div><div class="line"></div><div class="line"></div></div>
+
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">17</div></section>
+<section class="page"><div class="rh"><div class="l"><b>PIZZA</b> · 3장 · 정리</div><div class="r">확장 미션과 오류 대처<span class="pg">18</span></div></div>
+
+<h2>확장 미션</h2>
+<table class="zebra">
+<thead><tr><th style="width:9%">번호</th><th style="width:10%">난도</th><th style="width:36%">미션</th><th>힌트</th></tr></thead>
+<tbody>
+<tr><td><b>3-11</b></td><td><span class="lv lv1">쉬움</span></td><td><b>주문 내역 20건만</b> 보이게</td><td>app.py의 <code>limit=50</code> 한 곳. 문구 “최근 N건”도 자동으로 바뀌는지</td></tr>
+<tr><td><b>3-12</b></td><td><span class="lv lv2">보통</span></td><td><b>사이즈 필터</b> <code>?size=L</code> 추가</td><td>db.get_orders에 size 조건 · app.py에서 값 검사 · orders.html에 버튼. <b>? 자리</b> 지키기</td></tr>
+<tr><td><b>3-13</b></td><td><span class="lv lv3">도전</span></td><td><b>메뉴별 판매 순위</b>를 SQL 한 문장으로</td><td>JOIN + GROUP BY + SUM + ORDER BY. 5장 stats.py에서 답을 확인할 수 있음</td></tr>
+</tbody>
+</table>
+
+<h2>자주 만나는 오류</h2>
+<table class="zebra">
+<thead><tr><th style="width:44%">메시지 · 증상</th><th>원인과 해결</th></tr></thead>
+<tbody>
+<tr><td><code>OperationalError: no such table: menu</code></td><td>표 이름 오타(menus). 또는 <b>엉뚱한 위치에 빈 shop.db</b>가 새로 생김 → DB_PATH 확인</td></tr>
+<tr><td><code>OperationalError: no such column: …</code></td><td>칸 이름 오타. <code>PRAGMA table_info(orders)</code>로 칸 목록 확인</td></tr>
+<tr><td><code>IntegrityError: CHECK constraint failed</code></td><td>규칙 밖의 값. 앞 단계 검사(app.py)가 빠졌는지</td></tr>
+<tr><td><code>ProgrammingError: Incorrect number of bindings</code></td><td>? 개수와 값 개수가 다름. 값 하나면 <code>(x,)</code> 쉼표</td></tr>
+<tr><td><code>OperationalError: database is locked</code></td><td>다른 프로그램(DB 뷰어 등)이 쓰는 중. 창을 닫고 다시</td></tr>
+<tr><td>주문했는데 저장이 안 됨 · 영수증 대신 메뉴판</td><td><code>commit()</code> 누락</td></tr>
+<tr><td>UPDATE 후 모든 메뉴 가격이 같아짐</td><td><b>WHERE를 빠뜨림.</b> <code>python tools/make_shop_db.py</code>로 샘플 DB 다시 만들기</td></tr>
+</tbody>
+</table>
+<div class="memo"><div class="ml">MEMO</div><div class="line"></div><div class="line"></div><div class="line"></div><div class="line"></div><div class="line"></div></div>
+
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">18</div></section>
+<section class="page"><div class="rh"><div class="l"><b>PIZZA</b> · 3장 · 정리</div><div class="r">바이브 코딩과 확인 문제<span class="pg">19</span></div></div>
+
+<h2>바이브 코딩 연습 — 주문 취소 기능</h2>
+<div class="say"><div class="sl">ChatGPT · 작업  |  주문 취소 (DELETE)</div><div class="sc"># 상황
+Flask 3.1 + SQLite 프로젝트(pizza-lab).
+- db.py : get_conn() 으로 연결, 함수마다 연결 → 실행 → commit → close
+- 모든 SQL 은 ? 자리로 값을 넘김
+- /orders 에서 주문 목록을 표(templates/orders.html)로 보여줌
+
+# 목표
+주문 내역 각 행의 [취소] 버튼으로 주문을 지운다.
+
+# 만들 것
+1. db.py 에 delete_order(order_id) — 지운 행 수를 돌려줄 것
+2. app.py 에 POST /orders/<int:order_id>/delete 라우트
+   - 삭제 후 /orders 로 redirect (보고 있던 channel 필터 유지)
+3. orders.html 의 각 행에 넣을 form + button
+
+# 제한
+- GET 으로 삭제하지 말 것 (링크 클릭만으로 지워지면 안 됨)
+- 누르기 전에 confirm 으로 한 번 묻기</div></div>
+<p class="mn">붙이기 전에 <strong>? 자리 · commit · POST</strong>가 지켜졌는지 먼저 검사합니다 — 6장 “AI 코드 검증” 예행연습.</p>
+
+<div class="qa"><div class="ql">확인 문제</div><ol>
+<li>주문 테이블에 메뉴 이름 대신 <strong>menu_id</strong>만 적는 이유는?</li>
+<li>SQLite가 MySQL · PostgreSQL과 가장 다른 점은?</li>
+<li><code>conn.commit()</code>이 빠지면 어떤 일이 생기는가? 오류가 나는가?</li>
+<li>SQL에 값을 f-string으로 넣으면 안 되는 이유를 예로 설명하라.</li>
+<li>주문 한 건의 잘못된 값을 막는 <strong>세 겹</strong>의 검사는 각각 어디에 있는가?</li>
+<li><code>/orders?channel=배달</code>의 “배달”이 SQL까지 가는 길은?</li>
+</ol></div>
+
+<h2>여기까지 한 일</h2>
+<ul class="chk">
+<li>shop.db의 두 테이블과 <strong>번호로 잇는 구조</strong>를 읽었다</li>
+<li>db.py의 <strong>연결 → 실행 → (commit) → 닫기</strong> 순서를 따라갔다</li>
+<li><strong>? 자리</strong>와 <strong>CHECK</strong>가 데이터를 지키는 것을 실험했다</li>
+<li>필터 버튼이 <strong>SQL의 WHERE</strong>가 되는 길을 설명할 수 있다</li>
+</ul>
+<div class="point"><div class="pl">다음 장 예고 · 4장</div><p>데이터는 쌓였습니다. 이제 <code>ai.py</code>의 호출 템플릿으로 <strong>OpenAI에게 질문</strong>하고 터미널에서 답을 받아 봅니다.</p></div>
+
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">19</div></section><script>
+document.querySelectorAll(".say").forEach(function(box){
+  var sc=box.querySelector(".sc"), sl=box.querySelector(".sl"); if(!sc||!sl)return;
+  var b=document.createElement("button"); b.className="copybtn"; b.textContent="복사"; b.type="button";
+  b.onclick=function(){navigator.clipboard.writeText(sc.innerText).then(function(){b.textContent="복사됨";setTimeout(function(){b.textContent="복사"},1200)})};
+  sl.appendChild(b);
+});
+</script></body></html>

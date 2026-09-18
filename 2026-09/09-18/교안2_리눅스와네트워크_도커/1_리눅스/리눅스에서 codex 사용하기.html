@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Linux Codex CLI 처음부터 실습</title>
+<style>
+body{margin:0;background:#f3f5f7;color:#18222c;font-family:"Malgun Gothic","Noto Sans KR",sans-serif;line-height:1.7}
+header{background:#152330;color:white;padding:36px 7%} header h1{margin:0 0 8px}
+main{max-width:1080px;margin:auto;padding:22px}
+section{background:white;margin:18px 0;padding:26px;border:1px solid #d9dee3;border-radius:12px}
+h2{border-bottom:2px solid #e4e9ed;padding-bottom:9px} h3{color:#174f78}
+pre{position:relative;background:#101820;color:#f5f7f8;padding:18px;border-radius:8px;overflow:auto;font:15px/1.55 Consolas,monospace}
+.copy{position:absolute;right:8px;top:8px;border:0;border-radius:5px;padding:6px 9px;cursor:pointer}
+.why,.important,.warn{padding:14px 16px;margin:14px 0;border-radius:7px}
+.why{background:#eaf3fa;border-left:5px solid #2471a3}.important{background:#edf7ed;border-left:5px solid #388e3c}
+.warn{background:#fff4e5;border-left:5px solid #ef6c00}
+table{width:100%;border-collapse:collapse}th,td{border:1px solid #d5dadd;padding:10px;text-align:left}th{background:#eaf2f8}
+.flow{text-align:center;font-weight:bold;background:#f4f6f7;padding:14px;border-radius:8px}
+kbd{background:#eee;border:1px solid #aaa;border-radius:4px;padding:2px 6px}
+</style></head>
+<body>
+<header><h1>Linux에서 Codex CLI 사용하기</h1>
+<p>Multipass Ubuntu 준비 완료 → 작업 폴더 → 최초 인증 → Linux 운영 실습 → AGENTS.md</p></header>
+<main>
+
+<section>
+<h2>0. 학습 전제</h2>
+<p>이 교재는 <b>Multipass Ubuntu 설치와 Linux 터미널 기초 학습이 완료</b>되어 있다는 전제에서 시작한다. Python 개발보다 Linux 운영 명령을 Codex와 함께 사용하는 데 초점을 둔다.</p>
+</section>
+
+<section>
+<h2>1. Codex 작업 폴더부터 만든다</h2>
+<pre><code>mkdir ~/codex_linux
+cd ~/codex_linux</code></pre>
+<p>현재 위치와 자료를 확인한다.</p>
+<pre><code>pwd
+ls -la</code></pre>
+<div class="why"><b>왜 폴더부터 만드는가?</b><br>Codex는 현재 작업 위치를 기준으로 프로젝트 파일을 읽고 작업한다. 따라서 먼저 “어디에서 Codex에게 일을 시킬 것인가”를 정한다.</div>
+</section>
+
+<section>
+<h2>2. Codex 실행</h2>
+<pre><code>codex</code></pre>
+<p>처음 사용하는 계정/환경이라면 로그인 선택 화면이 나타날 수 있다.</p>
+<table>
+<tr><th>번호</th><th>방식</th><th>의미</th></tr>
+<tr><td>1</td><td>Sign in with ChatGPT</td><td>브라우저를 직접 사용할 수 있는 환경의 일반적인 ChatGPT 로그인</td></tr>
+<tr><td><b>2</b></td><td><b>Sign in with Device Code</b></td><td>Multipass처럼 브라우저가 없는 Linux에서 다른 브라우저를 이용해 인증</td></tr>
+<tr><td>3</td><td>Provide your own API key</td><td>API Key를 직접 사용하는 별도 방식</td></tr>
+</table>
+<div class="important"><b>이 실습에서는 2번 Device Code 방식을 사용한다.</b></div>
+<div class="why"><b>왜 2번인가?</b><br>Codex는 Multipass Ubuntu에서 실행하지만 로그인 화면은 Windows 브라우저에서 처리하는 것이 편하기 때문이다.</div>
+</section>
+
+<section>
+<h2>3. Device Code 인증 — 최초 실행의 핵심</h2>
+<p>2번을 선택하면 Ubuntu 터미널에 <b>인증 페이지 주소와 일회용 Device Code</b>가 표시된다.</p>
+<pre><code>예시
+
+Open this URL in your browser:
+https://auth.openai.com/codex/device
+
+Enter this one-time code:
+XXXX-XXXX</code></pre>
+<div class="warn"><b>중요:</b> <code>XXXX-XXXX</code>는 API Key가 아니며 ChatGPT의 “보안 키/패스키” 입력란에 넣는 값도 아니다. Codex 장치 인증 과정에서만 사용하는 일회용 Device Code다.</div>
+
+<h3>Windows 브라우저에서 진행</h3>
+<ol>
+<li>Ubuntu 화면에 표시된 인증 링크를 Windows의 Chrome/Edge에서 연다.</li>
+<li>ChatGPT/OpenAI 계정으로 로그인한다.</li>
+<li>계정에서 Codex의 <b>장치 코드 인증 사용</b>을 요구하면 안내에 따라 허용한다.</li>
+<li>다시 Device 인증 페이지로 이동한다.</li>
+<li>Ubuntu 터미널에 표시된 <b>일회용 Device Code</b>를 코드 입력란에 입력한다.</li>
+<li>연결을 승인한다.</li>
+<li>Ubuntu 터미널로 돌아온다.</li>
+</ol>
+
+<div class="flow">Ubuntu Codex → Device Code 발급 → Windows 브라우저 → Codex 장치 인증 허용 → Device Code 입력 → 승인 → Ubuntu Codex 연결</div>
+
+<div class="why"><b>왜 이런 과정을 거치는가?</b><br>Multipass Ubuntu 안에서 브라우저 로그인을 직접 처리하는 대신, 브라우저가 있는 Windows에서 사용자 인증을 완료하고 그 결과를 Ubuntu의 Codex CLI와 연결하기 위해서다.</div>
+
+<h3>인증이 막힌 경우</h3>
+<p>터미널에서 장치 코드 인증을 다시 시작할 필요가 있다면:</p>
+<pre><code>codex login --device-auth</code></pre>
+<p>화면에 새 링크와 새 Device Code가 표시되면 그 값을 사용한다.</p>
+<div class="warn">Device Code는 일회용이며 만료될 수 있다. 수업 자료 캡처에는 실제 코드를 노출하지 말고 <b>XXXX-XXXX</b>처럼 가린다.</div>
+</section>
+
+<section>
+<h2>4. 인증 후 Codex 첫 작업 — 무조건 자료부터 확인</h2>
+<p>Codex에 바로 파일 생성을 지시하지 않는다. 먼저 현재 프로젝트를 확인하게 한다.</p>
+<pre><code>현재 작업 디렉터리의 모든 자료를 먼저 확인해줘.
+ls -la를 사용해.
+
+파일과 디렉터리가 무엇이 있는지 간단히 설명하고
+아직 아무 파일도 수정하지 마.</code></pre>
+<div class="why"><b>왜 ls부터 시키는가?</b><br>사람과 Codex 모두 현재 프로젝트에 어떤 자료가 있는지 확인한 다음 작업해야 기존 파일을 불필요하게 덮어쓰거나 잘못된 위치에서 작업하는 것을 줄일 수 있다.</div>
+</section>
+
+<section>
+<h2>5. Codex 작업 중단과 종료</h2>
+<table>
+<tr><th>목적</th><th>키</th></tr>
+<tr><td>현재 진행 중인 Codex 작업 중단</td><td><kbd>Esc</kbd></td></tr>
+<tr><td>Codex CLI 종료</td><td><kbd>Ctrl</kbd> + <kbd>C</kbd></td></tr>
+<tr><td>다시 실행</td><td><code>codex</code></td></tr>
+</table>
+</section>
+
+<section>
+<h2>6. Codex 기본 지침 파일 — AGENTS.md 두 위치</h2>
+<table>
+<tr><th>파일</th><th>적용 범위</th></tr>
+<tr><td><code>~/.codex/AGENTS.md</code></td><td>내 Codex 작업의 공통 지침</td></tr>
+<tr><td><code>현재프로젝트/AGENTS.md</code></td><td>현재 프로젝트에 적용할 지침</td></tr>
+</table>
+<div class="important"><b>파일명이 두 종류인 것이 아니다.</b> 둘 다 <code>AGENTS.md</code>이고 위치와 적용 범위가 다르다.</div>
+</section>
+
+<section>
+<h2>7. 모든 프로젝트 공통 AGENTS.md 만들기</h2>
+<h3> ~/.codex/AGENTS.md 가 모든 프로젝트에 적용할 사용자 공통 지침위치임 </h3>
+<p> ubuntu@myUbuntu:~/codex_linux$ <font color=red> ls ~/. -la </font> 로 .codex 폴더가 있는지 확인한다.</p>
+<p> ls ~/.codex -la 로 목록리스트를 확인한다.
+
+<code><pre>
+cat &gt; ~/.codex/AGENTS.md &lt;&lt;'EOF'
+# Common Codex Rules
+
+- 작업 전에 현재 디렉터리와 파일을 확인한다.
+- Linux 명령을 실행하기 전에 왜 필요한지 설명한다.
+- 답변은 짧고 단계적으로 작성한다.
+- 삭제, 프로세스 종료, 서비스 중지는 사용자 확인 없이 실행하지 않는다.
+- 시스템 점검은 조회 명령을 우선한다.
+- 작업 후 무엇이 변경되었는지 알려준다.
+EOF</code></pre>
+<p>반드시 확인한다.</p>
+<pre><code>cat ~/.codex/AGENTS.md</code></pre>
+</section>
+
+<section>
+<h2>8. 현재 프로젝트 전용 AGENTS.md 만들기</h2>
+<p>작업 폴더로 돌아온다.</p>
+<pre><code>cd ~/codex_linux
+ls -la</code></pre>
+<pre><code>cat &gt; AGENTS.md &lt;&lt;'EOF'
+# Linux Codex Lab Rules
+
+- 작업 시작 시 ls -la로 자료를 먼저 확인한다.
+- Linux 명령어를 사용할 때 사용 이유를 설명한다.
+- 기존 파일은 내용을 확인한 뒤 수정한다.
+- rm 명령은 사용자 승인 없이 실행하지 않는다.
+- CPU, 메모리, 디스크 상태는 조회 명령으로 먼저 조사한다.
+EOF</code></pre>
+<p>확인:</p>
+<pre><code>ls -la
+cat AGENTS.md</code></pre>
+</section>
+
+<section>
+<h2>9. cat으로 AGENTS.md 추가·수정 실습</h2>
+<p><code>&gt;</code>는 새로 작성/덮어쓰기, <code>&gt;&gt;</code>는 기존 내용 뒤에 추가한다.</p>
+<div class="warn"><b>주의:</b> 기존 파일에 <code>&gt;</code>를 잘못 사용하면 기존 내용이 사라질 수 있다.</div>
+<p>기존 AGENTS.md에 규칙 추가:</p>
+<pre><code>cat &gt;&gt; AGENTS.md &lt;&lt;'EOF'
+
+- 로그 분석은 최근 기록부터 확인한다.
+- 오류 발생 시 원인을 설명하고 다음 확인 명령을 제안한다.
+EOF
+</pre></code>
+<code><pre>
+cat AGENTS.md</code></pre>
+</section>
+
+<section>
+<h2>10. Codex에게 AGENTS.md를 수정시키기</h2>
+<pre><code>codex</code></pre>
+<p>Codex에게:</p>
+<pre><code>먼저 ls -la로 현재 프로젝트의 모든 자료를 확인해줘.
+
+AGENTS.md가 있으면 내용을 확인해줘.
+
+다음 규칙을 기존 AGENTS.md에 추가해줘.
+
+- 시스템 변경 명령보다 조회 명령을 먼저 사용한다.
+- 위험한 작업은 실행 전에 사용자에게 알려준다.
+
+기존 내용은 삭제하지 마.</code></pre>
+<p>작업 후 직접 검증:</p>
+<pre><code>cat AGENTS.md</code></pre>
+<div class="flow">ls -la → AGENTS.md 확인 → Codex 수정 → cat으로 사람이 검증</div>
+</section>
+
+<section>
+<h2>11. /init 활용</h2>
+
+<p>Codex -> 작업폴더에서 /init 를 실행하면 자동으로 AGENTS.md 가 생성됨</p>
+<pre><code>현재 프로젝트 분석
+       ↓
+프로젝트 구조와 작업 방식 파악
+        ↓
+AGENTS.md 생성
+</code></pre>
+<p>작업 후 파일 확인:</p>
+<pre><code>ls -la
+cat AGENTS.md</code></pre>
+
+</section>
+
+<section>
+<h2>12-1. Linux 운영 실습 샘플1</h2>
+<p>Codex에게:</p>
+<pre><code>현재 Linux 시스템 상태를 조사하려고 해.
+
+1. CPU, 메모리, 디스크 순으로 확인해줘.
+2. 사용할 Linux 명령어를 먼저 알려줘.
+3. 각 명령을 왜 사용하는지 설명해줘.
+4. 아직 삭제, 종료, 설정 변경은 하지 마.</code></pre>
+<p>예상되는 조회 명령 예:</p>
+<pre><code>uptime
+free -h
+df -h
+ps aux --sort=-%cpu | head
+ps aux --sort=-%mem | head</code></pre>
+</section>
+
+
+<section>
+<h2>12-2. Linux 운영실습 샘플2</h2>
+<h3>서버가 갑자기 느려졌다: 평소에는 괜찮았는데 Ubuntu가 갑자기 느려졌다. 원인은 모른다.</h3>
+<h3>느리다 → 원인 가설 → 확인 → 범위 좁히기</h3>
+<p>Codex에게:</p>
+<pre><code>현재 Linux 시스템 상태를 조사하려고 해.
+
+현재 Linux 시스템이 평소보다 느리다.
+트러블슈팅 방식으로 원인을 조사해줘.
+
+조건:
+1. 먼저 원인 후보를 생각해줘.
+2. CPU, 메모리, 디스크, 프로세스 상태를 순서대로 조사해줘.
+3. Linux 명령을 실행하기 전에 왜 사용하는지 설명해줘.
+4. 한꺼번에 모든 명령을 실행하지 말고 결과를 보고 다음 조사를 결정해줘.
+5. 프로세스 종료나 시스템 설정 변경은 하지 마.</code></pre>
+<p>예상되는 조회 명령 예:</p>
+<pre><code>uptime
+free -h
+df -h
+ps aux --sort=-%cpu | head
+ps aux --sort=-%mem | head</code></pre>
+</section>
+
+<section>
+<h2>12-3. Linux 운영실습 샘플3</h2>
+<h3>디스크 용량이 부족하다:Linux를 사용하다 보니 디스크 공간이 부족한 것 같다. 어떤 파일이 문제인지는 모른다. </h3>
+<h3>느리다 → 원인 가설 → 확인 → 범위 좁히기</h3>
+<p>Codex에게:</p>
+<pre><code>현재 Linux 시스템의 디스크 공간이 부족한 것 같다.
+
+트러블슈팅 방식으로 조사해줘.
+
+조건:
+1. 먼저 전체 디스크 상태를 확인해줘.
+2. 문제가 있는 영역을 찾으면 범위를 단계적으로 좁혀줘.
+3. 각 명령을 왜 사용하는지 실행 전에 설명해줘.
+4. 큰 파일이나 디렉터리를 찾더라도 삭제하지 마.
+5. 한 단계 결과를 확인한 후 다음 명령을 결정해줘.</code></pre>
+
+<p>예상되는 조회 명령 예:</p>
+<pre><code>df -h  #어느 파일 시스템이 큰지 확인
+sort
+find  
+ ==>등을 조합해서 원인을 좁혀가는지를 확인해봄
+</code></pre>
+<p> 학습포인트: 다음처럼 넓게 보고 좁혀가는 트러블슈팅 방식을 배울수 있다.</p>
+<pre><code> 전체 디스크
+   ↓
+문제 파일시스템
+   ↓
+큰 디렉터리
+   ↓
+큰 파일
+   ↓
+원인 후보</pre></code>
+
+</section>
+
+
+
+</main>
+<script>
+document.querySelectorAll('pre').forEach(p=>{let b=document.createElement('button');b.className='copy';b.textContent='복사';b.onclick=async()=>{let c=p.querySelector('code');await navigator.clipboard.writeText(c?c.innerText:p.innerText);b.textContent='완료';setTimeout(()=>b.textContent='복사',900)};p.appendChild(b)})
+</script>
+</body></html>

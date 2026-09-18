@@ -1,0 +1,1509 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Hyper-V + Multipass로 만드는 우분투 리눅스 서버</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1c1b19; --paper:#ffffff; --soft:#f7f6f3; --soft2:#efedea;
+  --line:#e3e0db; --line2:#cfcbc4; --muted:#86827b; --muted2:#5b574f;
+  --accent:#b23c0a; --accent-soft:#fdf3ec; --ink2:#2f2d2a;
+  --pn:#b23c0a; --pnb:#e8c3ad; --pns:#fdf5f0;
+  --pv:#1d4ed8; --pvb:#c3d0f2; --pvs:#f2f5fd;
+  --pa:#15803d; --pab:#bcdcc8; --pas:#f1f7f3;
+  --pd:#6d28d9; --pdb:#d4c6f5; --pds:#f7f3fe;
+  --px:#b91c1c; --pxb:#f0c3c3; --pxs:#fdf2f2;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+body{font-family:'Noto Sans KR','Malgun Gothic',sans-serif;color:var(--ink);
+  background:#eceae5;line-height:1.65;font-weight:400;letter-spacing:-.003em}
+
+.page{width:210mm;min-height:297mm;background:var(--paper);margin:8mm auto;
+  padding:17mm 18mm 14mm;position:relative;box-shadow:0 1px 14px rgba(0,0,0,.07)}
+@page{size:A4 portrait;margin:0}
+@media print{
+  body{background:#fff}
+  .page{margin:0;box-shadow:none;page-break-after:always;break-after:page}
+  .page:last-child{page-break-after:auto}
+}
+
+/* ── 러닝헤드 ── */
+.rh{display:flex;justify-content:space-between;align-items:baseline;
+  margin-bottom:22px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+.rh .l{font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--muted2)}
+.rh .l b{color:var(--accent)}
+.rh .r{font-size:10.5px;color:var(--muted);letter-spacing:.04em;display:flex;align-items:baseline;gap:12px}
+.rh .r .pg{font-family:'Consolas','JetBrains Mono',monospace;font-size:12px;font-weight:700;
+  color:var(--ink);letter-spacing:.06em;border:1px solid var(--line2);padding:1px 7px;border-radius:3px}
+
+/* ── 제목 ── */
+.kicker{font-size:11px;font-weight:700;letter-spacing:.12em;color:var(--accent);margin-bottom:7px}
+h1{font-size:26px;font-weight:900;line-height:1.25;letter-spacing:-.02em;margin-bottom:9px}
+.lede{font-size:13px;color:var(--muted2);line-height:1.7;margin-bottom:14px;max-width:96%}
+.lede em,em{font-style:normal;color:var(--accent);font-weight:700}
+h2{font-size:12.5px;font-weight:700;letter-spacing:.09em;color:var(--accent);
+  margin:17px 0 9px;display:flex;align-items:center;gap:10px}
+h2::after{content:"";flex:1;height:1px;background:var(--line)}
+h3{font-size:15px;font-weight:700;margin:14px 0 5px}
+p{font-size:13px;line-height:1.75;margin:8px 0;color:var(--ink2)}
+strong{font-weight:700;color:var(--ink)}
+.mn{font-size:11.5px;color:var(--muted);margin-top:5px}
+code{font-family:'Consolas','JetBrains Mono',monospace;background:var(--soft2);
+  padding:1px 5px;border-radius:3px;font-size:12px;color:var(--accent)}
+
+ul,ol{margin:9px 0;padding-left:0;list-style:none}
+li{font-size:13px;line-height:1.7;margin:8px 0;padding-left:010px;padding-left:22px;position:relative;color:var(--ink2)}
+ul li::before{content:"";position:absolute;left:3px;top:10px;width:5px;height:5px;
+  background:var(--accent);border-radius:50%}
+li strong{color:var(--ink)}
+
+/* ── 표 ── */
+table{width:100%;border-collapse:collapse;margin:13px 0;font-size:12.5px}
+th,td{padding:9px 12px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line)}
+thead th{border-bottom:1.5px solid var(--ink);font-weight:700;font-size:11.5px;color:var(--ink);background:var(--soft)}
+tbody td{color:var(--muted2)}
+tbody td b{color:var(--ink);font-weight:700}
+table.zebra tbody tr:nth-child(even) td{background:#faf9f7}
+
+/* ── 그리드 카드 ── */
+.grid{display:grid;gap:1px;background:var(--line);border:1px solid var(--line);margin:14px 0}
+.grid.g3{grid-template-columns:repeat(3,1fr)}
+.grid.g2{grid-template-columns:repeat(2,1fr)}
+.grid.g4{grid-template-columns:repeat(4,1fr)}
+.cell{background:var(--paper);padding:15px 14px}
+.cell .num{font-size:10.5px;font-weight:700;letter-spacing:.08em;color:var(--accent)}
+.cell h4{font-size:13.5px;font-weight:700;margin:6px 0 4px;line-height:1.35}
+.cell p{font-size:11.5px;color:var(--muted2);margin:0;line-height:1.6}
+
+/* ── 강조 박스 ── */
+.point{border-left:2.5px solid var(--accent);padding:3px 0 3px 16px;margin:16px 0}
+.point .pl{font-size:10.5px;font-weight:700;letter-spacing:.09em;color:var(--accent);margin-bottom:4px}
+.point p{margin:0;font-size:13px;color:var(--ink2)}
+.note{background:var(--soft);border:1px solid var(--line);border-radius:4px;
+  padding:12px 15px;margin:14px 0;font-size:12.5px;color:var(--muted2);line-height:1.7}
+.note strong{color:var(--accent)}
+.warn{background:var(--pxs);border:1px solid var(--pxb);border-radius:4px;
+  padding:12px 15px;margin:14px 0;font-size:12.5px;color:var(--ink2);line-height:1.7}
+.warn b{color:var(--px)}
+
+.mission{border:1px solid var(--line2);border-left:3px solid var(--accent);
+  background:var(--accent-soft);padding:13px 16px;margin:13px 0;border-radius:4px}
+.mission b{font-size:10.5px;font-weight:700;letter-spacing:.1em;color:var(--accent)}
+.mission h3{font-size:14px;margin:4px 0 0;line-height:1.5}
+.mission .wy{margin:9px 0 0;padding-top:8px;border-top:1px solid var(--line2);font-size:12px;color:var(--muted2);line-height:1.65}
+.mission .wy b{color:var(--ink);font-size:10.5px;letter-spacing:.06em}
+.why{background:var(--soft);border:1px solid var(--line2);border-left:3px solid var(--ink);
+  padding:12px 16px;margin:13px 0;border-radius:4px}
+.why p{color:var(--ink2);margin:0;font-size:12.5px}
+.why b{color:var(--ink);font-size:10.5px;letter-spacing:.08em}
+
+.kw{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
+.kw span{background:#fff;border:1px solid var(--line2);padding:4px 10px;border-radius:20px;
+  font-size:11px;font-weight:700;color:var(--ink2)}
+.kw span::before{content:"# ";color:var(--accent)}
+
+/* ── 정의 목록 / 비유 ── */
+.deflist{margin:12px 0}
+.deflist .d{display:flex;gap:16px;padding:11px 0;border-bottom:1px solid var(--line)}
+.deflist .d:last-child{border-bottom:none}
+.deflist .dt{flex:0 0 27%;font-weight:700;font-size:13px}
+.deflist .dt small{display:block;font-weight:400;color:var(--muted);font-size:11px;margin-top:1px}
+.deflist .dd{flex:1;font-size:12.5px;color:var(--muted2);line-height:1.65}
+
+/* ── 실습 박스 (검정 헤더 제거) ── */
+.lab{margin:16px 0;border:1.5px solid var(--ink);background:#fff}
+.lab-head{padding:10px 18px;display:flex;align-items:center;gap:12px;
+  border-bottom:1.5px solid var(--ink);background:var(--soft)}
+.lab-head .badge{font-size:10px;font-weight:700;letter-spacing:.1em;
+  border:1px solid var(--ink);padding:2px 9px;border-radius:2px;color:var(--ink);background:#fff}
+.lab-head h3{font-size:16px;margin:0;font-weight:700;color:var(--ink)}
+.lab-head .t{margin-left:auto;font-size:10.5px;color:var(--muted);font-family:'Consolas',monospace}
+.lab-body{padding:15px 18px 16px}
+.steps{counter-reset:st;list-style:none;padding:0;margin:0}
+.steps>li{counter-increment:st;position:relative;padding:0 0 13px 40px;margin:0;font-size:13.5px;
+  line-height:1.55;border-left:1px solid var(--line2);margin-left:13px}
+.steps>li:last-child{border-left:1px solid transparent;padding-bottom:0}
+.steps>li::before{content:counter(st);position:absolute;left:-13px;top:-2px;width:26px;height:26px;
+  background:#fff;border:1.5px solid var(--ink);color:var(--ink);border-radius:50%;
+  display:grid;place-items:center;font-weight:700;font-size:12.5px}
+.steps>li .lt{font-weight:700;color:var(--ink)}
+.steps>li .ls{display:block;font-size:12px;color:var(--muted);font-weight:400;margin-top:2px;line-height:1.6}
+
+/* ── 프롬프트 박스 ── */
+.say{margin:10px 0;background:#fff;border:1px solid var(--line2);border-left:3px solid var(--accent);
+  border-radius:4px;padding:10px 13px}
+.say .sl{font-size:10.5px;font-weight:700;letter-spacing:.05em;color:var(--accent);
+  margin-bottom:4px;display:flex;align-items:center;gap:6px}
+.say .sc{font-family:'Consolas','JetBrains Mono',monospace;font-size:12px;line-height:1.65;
+  color:var(--ink);font-weight:500;white-space:pre-wrap}
+.copybtn{margin-left:auto;font-family:'Noto Sans KR',sans-serif;font-size:10px;font-weight:700;
+  letter-spacing:0;color:var(--muted2);background:#fff;border:1px solid var(--line2);
+  border-radius:3px;padding:2px 9px;cursor:pointer;line-height:1.4}
+.copybtn:hover{border-color:var(--accent);color:var(--accent)}
+@media print{.copybtn{display:none}}
+
+/* ── 품사/토큰 칩 ── */
+.chip{display:inline-flex;align-items:baseline;gap:5px;font-size:12px;font-weight:700;
+  padding:3px 8px;border-radius:3px;border:1px solid;margin:3px 4px 3px 0;line-height:1.3}
+.c-n{color:var(--pn);border-color:var(--pnb);background:var(--pns)}
+.c-v{color:var(--pv);border-color:var(--pvb);background:var(--pvs)}
+.c-a{color:var(--pa);border-color:var(--pab);background:var(--pas)}
+.c-d{color:var(--pd);border-color:var(--pdb);background:var(--pds)}
+.c-x{color:var(--px);border-color:var(--pxb);background:var(--pxs)}
+.c-o{color:var(--muted);border-color:var(--line2);background:var(--soft);font-weight:400}
+
+.parse{border:1px solid var(--line2);background:#fff;margin:13px 0}
+.parse .ph{background:var(--soft);border-bottom:1px solid var(--line);padding:6px 14px;
+  font-size:10.5px;font-weight:700;letter-spacing:.06em;color:var(--muted2);display:flex;justify-content:space-between}
+.parse .pb{padding:13px 14px 14px}
+.parse .src{font-size:14.5px;font-weight:500;color:var(--ink);line-height:1.7}
+.parse .arw{font-size:10.5px;color:var(--muted);letter-spacing:.06em;margin:11px 0 7px;
+  display:flex;align-items:center;gap:10px}
+.parse .arw::after{content:"";flex:1;height:1px;background:var(--line)}
+
+/* ── before / after ── */
+.ba{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);
+  border:1px solid var(--line);margin:13px 0}
+.ba>div{background:#fff;padding:12px 14px}
+.ba .h{font-size:10.5px;font-weight:700;letter-spacing:.06em;margin-bottom:8px}
+.ba .bad .h{color:var(--muted)}
+.ba .bad .h::before{content:"✕ ";color:var(--px)}
+.ba .good .h{color:var(--accent)}
+.ba .good .h::before{content:"✓ ";color:var(--pa)}
+.ba .m{font-family:'Consolas','JetBrains Mono',monospace;font-size:11px;line-height:1.7;color:var(--ink2)}
+.ba .m u{text-decoration:none;background:var(--pxs);color:var(--px);padding:0 3px;border-radius:2px}
+.ba .m b{background:var(--pas);color:var(--pa);padding:0 3px;border-radius:2px;font-weight:500}
+.ba .why2{font-size:11px;color:var(--muted);margin-top:8px;line-height:1.6}
+
+/* ── 막대 ── */
+.bars{margin:12px 0}
+.bars .b{display:flex;align-items:center;gap:10px;margin:7px 0}
+.bars .bl{flex:0 0 26%;font-size:12px;font-weight:700;color:var(--ink)}
+.bars .bt{flex:1;height:13px;background:var(--soft2);border:1px solid var(--line)}
+.bars .bf{height:100%;background:var(--accent)}
+.bars .bf.q{background:var(--line2)}
+.bars .bv{flex:0 0 60px;text-align:right;font-family:'Consolas',monospace;font-size:11px;color:var(--muted2)}
+
+/* ── 흐름 ── */
+.flow{display:flex;gap:5px;align-items:center;flex-wrap:wrap;margin:11px 0}
+.flow span{border:1px solid var(--line2);padding:6px 10px;background:#fff;border-radius:4px;
+  font-size:11.5px;font-weight:700}
+.flow i{font-style:normal;color:var(--accent);font-weight:900}
+
+/* ══════ 목업 컴포넌트 ══════ */
+/* 탐색기 / 창 */
+.win{border:1px solid var(--line2);margin:13px 0;background:#fff}
+.win .tb{display:flex;align-items:center;gap:9px;padding:6px 11px;background:var(--soft2);
+  border-bottom:1px solid var(--line2);font-size:11px;color:var(--muted2);font-weight:700}
+.win .tb .dots{display:flex;gap:4px}
+.win .tb .dots i{width:8px;height:8px;border-radius:50%;border:1px solid var(--line2);background:#fff;display:block}
+.win .tb .rt{margin-left:auto;font-weight:400;color:var(--muted);font-size:10px;letter-spacing:.04em}
+.win .addr{display:flex;align-items:center;gap:7px;padding:6px 11px;border-bottom:1px solid var(--line);
+  font-family:'Consolas',monospace;font-size:11px;color:var(--ink2);background:#fff}
+.win .addr .ic{font-size:10px;color:var(--muted)}
+.win .addr .path{border:1px solid var(--line);border-radius:3px;padding:3px 8px;flex:1;background:var(--soft)}
+.win .addr .path b{color:var(--accent);font-weight:700}
+.win table{margin:0;font-size:11px}
+.win th,.win td{padding:5px 11px;border-bottom:1px solid var(--line)}
+.win thead th{background:var(--soft);font-size:10px;border-bottom:1px solid var(--line2);color:var(--muted2)}
+.win tbody td{color:var(--ink2)}
+.win tbody tr.sel td{background:var(--accent-soft)}
+.win td.ic{width:22px;text-align:center;color:var(--muted);font-family:'Consolas',monospace;font-size:9.5px}
+.win .sb{padding:5px 11px;border-top:1px solid var(--line);background:var(--soft);
+  font-size:10px;color:var(--muted);display:flex;justify-content:space-between}
+.capt{font-size:10.5px;color:var(--muted);margin:-6px 0 13px;padding-left:2px}
+.capt b{color:var(--muted2);font-weight:700}
+
+/* 터미널 */
+.term{border:1px solid var(--line2);background:#fbfaf8;margin:13px 0}
+.term .th{background:var(--soft2);padding:5px 12px;font-size:10.5px;color:var(--muted2);
+  border-bottom:1px solid var(--line2);letter-spacing:.04em;font-weight:700;
+  font-family:'Consolas',monospace;display:flex;justify-content:space-between}
+.term .tb2{padding:11px 13px;font-family:'Consolas','JetBrains Mono',monospace;
+  font-size:11px;line-height:1.8;color:var(--ink2);white-space:pre-wrap}
+.term .p{color:var(--accent);font-weight:700}
+.term .c{color:var(--ink);font-weight:700}
+.term .g{color:var(--pa)}
+.term .d{color:var(--muted)}
+
+/* 폴더 트리 */
+.tree{font-family:'Consolas','JetBrains Mono',monospace;font-size:11px;line-height:1.85;
+  color:var(--ink2);background:var(--soft);border:1px solid var(--line);
+  padding:11px 14px;margin:13px 0;white-space:pre;overflow:hidden}
+.tree b{color:var(--accent);font-weight:700}
+.tree u{text-decoration:none;color:var(--px)}
+.tree i{font-style:normal;color:var(--muted)}
+.ba .tree{margin:0;border:none;background:none;padding:0;font-size:10.5px;line-height:1.8}
+
+/* HEX 뷰어 */
+.hex{border:1px solid var(--line2);margin:13px 0;background:#fff;font-family:'Consolas',monospace}
+.hex .hh{background:var(--soft);border-bottom:1px solid var(--line);padding:5px 12px;
+  font-size:10px;color:var(--muted2);letter-spacing:.06em;font-weight:700;display:flex;justify-content:space-between}
+.hex .hr{display:flex;gap:14px;padding:4px 12px;font-size:11px;border-bottom:1px solid #f2f0ec}
+.hex .hr:last-child{border-bottom:none}
+.hex .of{color:var(--muted);flex:0 0 52px}
+.hex .by{flex:1;color:var(--ink2);letter-spacing:.06em}
+.hex .by b{color:var(--accent);background:var(--accent-soft);padding:1px 2px;font-weight:700}
+.hex .as{flex:0 0 90px;color:var(--muted2);border-left:1px solid var(--line);padding-left:12px}
+.hex .as b{color:var(--accent);font-weight:700}
+
+/* JSON 뷰어 */
+.jsonv{border:1px solid var(--line2);margin:13px 0;background:#fff}
+.jsonv .jh{background:var(--soft);border-bottom:1px solid var(--line);padding:5px 12px;
+  font-size:10.5px;color:var(--muted2);font-weight:700;font-family:'Consolas',monospace;
+  display:flex;justify-content:space-between}
+.jsonv .jb{padding:11px 14px;font-family:'Consolas','JetBrains Mono',monospace;
+  font-size:11.5px;line-height:1.9;white-space:pre;color:var(--muted2)}
+.jk{color:var(--pv);font-weight:700}
+.jv{color:var(--pa);font-weight:700}
+.jnum{color:var(--accent);font-weight:700}
+.jp{color:var(--muted)}
+.jmark{background:#fff7ed;outline:1px solid var(--pnb)}
+
+/* 브라우저 목업 */
+.bw{border:1px solid var(--line2);margin:13px 0;background:#fff}
+.bw .bt{background:var(--soft2);padding:6px 11px;display:flex;gap:8px;align-items:center;
+  font-size:10.5px;font-family:'Consolas',monospace;color:var(--muted2);border-bottom:1px solid var(--line2)}
+.bw .bt .dots{display:flex;gap:4px}
+.bw .bt .dots i{width:8px;height:8px;border-radius:50%;border:1px solid var(--line2);background:#fff;display:block}
+.bw .bt .url{flex:1;background:#fff;border:1px solid var(--line);border-radius:11px;padding:3px 10px;color:var(--ink2)}
+.bw .bc{padding:16px 18px}
+.appttl{font-size:15px;font-weight:800;margin-bottom:2px}
+.appsub{font-size:11px;color:var(--muted);margin-bottom:12px}
+.fld{border:1px solid var(--line2);border-radius:4px;padding:8px 11px;background:#fff;
+  display:flex;justify-content:space-between;align-items:center;
+  font-family:'Consolas',monospace;font-size:12.5px;color:var(--ink);margin:6px 0}
+.fld .u{color:var(--muted);font-size:11px}
+.flbl{font-size:10.5px;font-weight:700;color:var(--muted2);letter-spacing:.04em;margin-top:9px}
+.btn{display:inline-block;border:1.5px solid var(--accent);color:var(--accent);background:var(--accent-soft);
+  border-radius:4px;padding:7px 18px;font-size:12px;font-weight:700;margin-top:11px}
+.res{border:1px solid var(--line);border-radius:4px;margin-top:12px}
+.res .rr{display:flex;justify-content:space-between;padding:8px 12px;border-bottom:1px solid var(--line);font-size:12.5px}
+.res .rr:last-child{border-bottom:none}
+.res .rr .k{color:var(--muted2);font-weight:700}
+.res .rr .v{font-family:'Consolas',monospace;font-weight:700;color:var(--ink)}
+.res .rr.hi{background:var(--accent-soft)}
+.res .rr.hi .v{color:var(--accent)}
+.stamp{font-size:10.5px;color:var(--muted);margin-top:9px;font-family:'Consolas',monospace}
+
+/* URL 분해 */
+.urlx{border:1px solid var(--line2);background:var(--soft);padding:13px 15px;margin:13px 0}
+.urlx .u1{font-family:'Consolas',monospace;font-size:13px;line-height:2.2;word-break:break-all}
+.urlx .u1 span{padding:2px 3px;border-bottom:2.5px solid}
+.urlx .s1{border-color:var(--pv);color:var(--pv)}
+.urlx .s2{border-color:var(--accent);color:var(--accent)}
+.urlx .s3{border-color:var(--pa);color:var(--pa)}
+.urlx .s4{border-color:var(--pd);color:var(--pd)}
+.urlx .lg{margin-top:11px;display:grid;grid-template-columns:repeat(2,1fr);gap:6px 16px}
+.urlx .lg div{font-size:11.5px;color:var(--muted2);display:flex;gap:8px;align-items:baseline}
+.urlx .lg b{flex:0 0 78px;font-family:'Consolas',monospace;font-size:11px}
+
+/* 다이어그램 */
+.dia{border:1px solid var(--line);background:#fff;padding:12px;margin:13px 0}
+.dia svg{display:block;width:100%;height:auto}
+
+/* 체크리스트 */
+.chk{margin:11px 0}
+.chk li{padding-left:26px;font-size:12.5px;margin:7px 0}
+.chk li::before{content:"";position:absolute;left:2px;top:4px;width:13px;height:13px;
+  border:1.5px solid var(--muted2);border-radius:2px;background:#fff}
+.kbd{display:inline-block;border:1px solid var(--line2);border-bottom:2px solid var(--line2);
+  border-radius:4px;padding:1px 8px;font-family:'Consolas',monospace;font-size:11.5px;
+  background:var(--soft);font-weight:700;color:var(--ink);margin:0 1px}
+
+/* 확인 문제 */
+.qa{border:1px solid var(--line2);border-top:2.5px solid var(--ink);padding:12px 15px;margin-top:18px;background:#fff}
+.qa .ql{font-size:10.5px;font-weight:700;letter-spacing:.09em;color:var(--accent);margin-bottom:6px}
+.qa ol{counter-reset:q;margin:0}
+.qa ol li{counter-increment:q;padding-left:22px;font-size:12.5px;margin:7px 0;color:var(--ink2)}
+.qa ol li::before{content:counter(q) ".";position:absolute;left:2px;top:0;font-weight:700;color:var(--muted2);font-size:12px}
+.qa .blank{display:inline-block;border-bottom:1px solid var(--line2);min-width:90px;height:14px;margin:0 3px}
+
+/* 표지 · 간지 (검정 배경 제거 → 테두리 프레임) */
+.cover{padding:12mm;display:flex}
+.cover .fr{flex:1;border:2px solid var(--ink);padding:5px;display:flex}
+.cover .fr2{flex:1;border:1px solid var(--line2);padding:14mm 13mm 10mm;display:flex;flex-direction:column}
+.cover .ck{font-size:11px;font-weight:700;letter-spacing:.16em;color:var(--accent);
+  display:flex;align-items:center;gap:11px}
+.cover .ck::after{content:"";flex:1;height:1px;background:var(--line2)}
+.cover h1{font-size:40px;line-height:1.18;margin:18px 0 12px;letter-spacing:-.03em}
+.cover .cs{font-size:14.5px;color:var(--muted2);line-height:1.7;max-width:88%}
+.cover .cs b{color:var(--ink);font-weight:700}
+.hero{margin:24px 0 0;border:1px solid var(--line2);background:var(--soft);padding:17px 19px}
+.hero .hl{font-size:10.5px;letter-spacing:.1em;color:var(--accent);font-weight:700;margin-bottom:9px}
+.hero .hs{font-size:15.5px;color:var(--ink);font-weight:500;line-height:1.6}
+.hero .hs b{font-weight:800}
+.hero .hd{margin:14px 0 11px;height:1px;background:var(--line2)}
+.hero .hrow{display:flex;align-items:baseline;gap:12px;padding:4px 0}
+.hero .hk{flex:0 0 54px;font-size:10.5px;font-weight:700;color:var(--accent);text-align:right}
+.hero .hv{flex:1;font-size:12.5px;color:var(--ink2)}
+.cover .crow{margin-top:20px;display:flex;border-top:1px solid var(--line2);border-bottom:1px solid var(--line2)}
+.cover .ci{flex:1;padding:13px 0;border-right:1px solid var(--line2)}
+.cover .ci:last-child{border-right:none;padding-left:20px}
+.cover .ci:first-child{padding-right:20px}
+.cover .ci .cl{font-size:10px;letter-spacing:.09em;color:var(--muted);font-weight:700}
+.cover .ci .cv{font-size:12.5px;margin-top:5px;color:var(--ink2);line-height:1.5}
+.cover .ci .cv b{color:var(--accent);font-weight:700}
+.cover .toc{margin-top:auto}
+.cover .toc .th{font-size:10.5px;font-weight:700;letter-spacing:.11em;color:var(--accent);margin-bottom:2px}
+.toc-list{list-style:none;padding:0;margin:0}
+.toc-list li{display:flex;align-items:baseline;gap:14px;padding:8px 0;
+  border-bottom:1px solid var(--line);font-size:13px;color:var(--ink2);margin:0;padding-left:0}
+.toc-list li::before{display:none}
+.toc-list li .ti{font-family:'Consolas',monospace;font-size:11px;color:var(--accent);flex:0 0 34px;font-weight:700}
+.toc-list li .tt{flex:1}
+.toc-list li .tg{font-size:10.5px;color:var(--muted);font-family:'Consolas',monospace}
+.cover .sig{margin-top:16px;display:flex;justify-content:space-between;align-items:baseline;
+  border-top:2px solid var(--ink);padding-top:9px}
+.cover .sig .n{font-size:12px;color:var(--ink);font-weight:700}
+.cover .sig .n span{color:var(--muted);font-family:'Consolas',monospace;font-size:10.5px;margin-left:7px;font-weight:400}
+.cover .sig .b{font-size:10.5px;color:var(--muted);letter-spacing:.07em}
+
+.divider{padding:12mm;display:flex}
+.divider .fr{flex:1;border:2px solid var(--ink);padding:5px;display:flex}
+.divider .fr2{flex:1;border:1px solid var(--line2);padding:26mm 18mm;display:flex;flex-direction:column;justify-content:center}
+.divider .part{color:var(--accent);font-size:12px;font-weight:800;letter-spacing:.16em;
+  display:flex;align-items:center;gap:12px}
+.divider .part::after{content:"";flex:1;height:1px;background:var(--line2)}
+.divider h1{font-size:42px;margin:16px 0 12px;line-height:1.18}
+.divider p{font-size:14.5px;color:var(--muted2);max-width:84%;line-height:1.75}
+.divider .route{margin-top:24px;border-top:1px solid var(--line2);padding-top:14px;
+  line-height:2.1;color:var(--muted2);font-size:12.5px}
+.divider .route b{color:var(--accent);font-family:'Consolas',monospace;font-size:11.5px}
+.divider .goal{margin-top:20px;border:1px solid var(--line2);background:var(--soft);padding:14px 16px}
+.divider .goal .gl{font-size:10.5px;font-weight:700;letter-spacing:.09em;color:var(--accent);margin-bottom:6px}
+.divider .goal ul{margin:0}
+.divider .goal li{font-size:12.5px;margin:5px 0}
+
+.pagenum{position:absolute;bottom:9mm;right:18mm;font-size:10.5px;color:var(--muted);
+  font-family:'Consolas',monospace}
+.brand{position:absolute;bottom:9mm;left:18mm;font-size:9px;color:var(--muted);letter-spacing:.03em}
+.brand b{color:var(--muted2);font-weight:500}
+
+@media print{
+  .page{overflow:hidden}
+}
+.page{overflow:hidden}
+
+
+/* ── 작업 관리자 목업 ── */
+.tm{display:flex}
+.tm .nav{flex:0 0 116px;border-right:1px solid var(--line);padding:6px 0;background:var(--soft)}
+.tm .nav div{font-size:10.5px;padding:5px 11px;color:var(--muted2)}
+.tm .nav div.on{background:#fff;color:var(--ink);font-weight:700;border-left:2px solid var(--accent)}
+.tm .bd{flex:1;min-width:0}
+.tm table{margin:0}
+.tm .hdr{display:flex;justify-content:space-between;padding:7px 12px;border-bottom:1px solid var(--line);
+  font-size:11.5px;font-weight:700;color:var(--ink)}
+.tm .hdr span{font-size:10.5px;color:var(--muted);font-weight:400}
+
+/* ── 간지 배경 ── */
+.page.divider .fr{background:var(--soft2)}
+.page.divider .fr2{background:#fff}
+.page.divider .part{background:var(--accent);color:#fff;display:inline-block;
+  padding:4px 12px;border-radius:2px;letter-spacing:.08em}
+
+/* ── 코드 목업 ── */
+.code{border:1px solid var(--line2);margin:13px 0;background:#fff}
+.code .ch2{background:var(--soft);border-bottom:1px solid var(--line);padding:5px 12px;
+  font-family:'Consolas',monospace;font-size:10.5px;color:var(--muted2);font-weight:700;
+  display:flex;justify-content:space-between}
+.code .cb2{padding:11px 14px;font-family:'Consolas','JetBrains Mono',monospace;
+  font-size:11.5px;line-height:1.85;white-space:pre;color:var(--ink2);overflow:hidden}
+.tag{color:var(--pv);font-weight:700}
+.att{color:var(--pd)}
+.str{color:var(--pa)}
+.cmt{color:var(--muted)}
+.fn{color:var(--accent);font-weight:700}
+.hl2{background:#fff7ed;outline:1px solid var(--pnb)}
+
+/* ── GitHub 화면 목업 ── */
+.gh{border:1px solid var(--line2);margin:13px 0;background:#fff}
+.gh .ghh{background:var(--soft2);border-bottom:1px solid var(--line2);padding:6px 12px;
+  font-size:11px;color:var(--muted2);font-weight:700;display:flex;justify-content:space-between}
+.gh .repo{padding:8px 12px;border-bottom:1px solid var(--line);font-size:12.5px;font-weight:700;color:var(--ink)}
+.gh .repo span{color:var(--muted);font-weight:400;font-size:11px;margin-left:8px}
+.gh .row2{display:flex;gap:10px;padding:6px 12px;border-bottom:1px solid #f4f2ef;font-size:11.5px;align-items:baseline}
+.gh .row2 .ic2{flex:0 0 16px;color:var(--muted);font-family:'Consolas',monospace;font-size:10px}
+.gh .row2 .nm{flex:0 0 34%;font-family:'Consolas',monospace;color:var(--pv)}
+.gh .row2 .msg2{flex:1;color:var(--muted2)}
+.gh .row2 .tm2{flex:0 0 62px;text-align:right;color:var(--muted);font-size:10.5px}
+/* 잔디 */
+.grass{display:flex;gap:3px;flex-wrap:wrap;margin:10px 0;max-width:100%}
+.grass i{width:11px;height:11px;border:1px solid var(--line);background:var(--soft);display:block;border-radius:2px}
+.grass i.l1{background:#f7ddcb;border-color:var(--pnb)}
+.grass i.l2{background:#eeb489;border-color:var(--pnb)}
+.grass i.l3{background:var(--accent);border-color:var(--accent)}
+
+/* ── 작업 진행 표시 ── */
+.chat .wk{font-size:10px;color:var(--muted);font-family:'Consolas',monospace;margin:0 0 5px}
+.chat .bub .ok{color:var(--pa);font-weight:700}
+.chat .bub .no{color:var(--px);font-weight:700}
+.chat .bub code{font-size:11px}
+/* ── 속성창 목업 ── */
+.props{border:1px solid var(--line2);margin:13px 0;background:#fff;max-width:72%}
+.props .ph2{background:var(--soft2);border-bottom:1px solid var(--line2);padding:6px 12px;
+  font-size:11px;font-weight:700;color:var(--muted2)}
+.props .tabs{display:flex;gap:0;border-bottom:1px solid var(--line);font-size:10.5px}
+.props .tabs span{padding:5px 12px;color:var(--muted);border-right:1px solid var(--line)}
+.props .tabs span.on{background:#fff;color:var(--ink);font-weight:700;border-bottom:2px solid var(--accent)}
+.props .pr{display:flex;padding:6px 14px;border-bottom:1px solid #f2f0ec;font-size:11.5px}
+.props .pr b{flex:0 0 84px;color:var(--muted2);font-weight:700}
+.props .pr span{flex:1;color:var(--ink2);font-family:'Consolas',monospace;font-size:11px}
+/* ── 슬래시 명령 목록 ── */
+.slash{border:1px solid var(--line2);margin:13px 0;background:#fff}
+.slash .sh{background:var(--soft);border-bottom:1px solid var(--line);padding:5px 12px;
+  font-size:10.5px;font-weight:700;color:var(--muted2);font-family:'Consolas',monospace;
+  display:flex;justify-content:space-between}
+.slash .sr{display:flex;gap:12px;padding:6px 14px;border-bottom:1px solid #f4f2ef;font-size:11.5px;align-items:baseline}
+.slash .sr:last-child{border-bottom:none}
+.slash .sc2{flex:0 0 92px;font-family:'Consolas',monospace;font-weight:700;color:var(--accent)}
+.slash .sd2{flex:1;color:var(--ink2)}
+
+/* ── 결과 이미지 예시 ── */
+.shots{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:13px 0}
+.shots.one{grid-template-columns:1fr}
+.shots figure{margin:0}
+.shots img{width:100%;display:block;border:1px solid var(--line2);border-radius:3px}
+.shots figcaption{font-size:10.5px;color:var(--muted2);margin-top:5px;font-family:'Consolas',monospace}
+.shots figcaption b{color:var(--accent)}
+
+/* ── 토크나이저 비교 ── */
+.tok{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);
+  border:1px solid var(--line);margin:13px 0}
+.tok>div{background:#fff;padding:12px 14px}
+.tok .tkh{font-size:9.5px;font-weight:700;letter-spacing:.07em;color:var(--muted);margin-bottom:6px}
+.tok .in{border:1px solid var(--line2);border-radius:4px;padding:9px 11px;font-size:14px;
+  font-family:'Consolas',monospace;background:var(--soft);color:var(--ink)}
+.tok .in i{font-style:normal;color:var(--muted);font-size:11px}
+.tok .nums{display:flex;gap:26px;margin-top:11px}
+.tok .nl{font-size:9.5px;font-weight:700;letter-spacing:.06em;color:var(--muted)}
+.tok .n{font-size:21px;font-weight:800;font-family:'Consolas',monospace;line-height:1.2;color:var(--ink)}
+.tok .n.acc{color:var(--accent)}
+.tok .ids{margin-top:10px;font-family:'Consolas',monospace;font-size:11px;color:var(--muted2);
+  background:var(--soft);border:1px solid var(--line);padding:6px 9px;border-radius:3px}
+
+/* ── 목차 ── */
+.tocx{margin:2px 0 0}
+.tocx .g{font-size:11px;font-weight:700;letter-spacing:.08em;color:var(--accent);
+  margin:14px 0 4px;padding-bottom:5px;border-bottom:1.5px solid var(--ink);
+  display:flex;justify-content:space-between;align-items:baseline}
+.tocx .g em{font-style:normal;color:var(--muted);font-weight:400;letter-spacing:0;font-size:11px}
+.tocx .it{display:flex;gap:12px;align-items:baseline;padding:6px 0;border-bottom:1px solid var(--line)}
+.tocx .no{flex:0 0 30px;font-family:'Consolas',monospace;font-size:11.5px;font-weight:700;color:var(--accent)}
+.tocx .tt{flex:1}
+.tocx .tt b{font-size:13px;font-weight:700;color:var(--ink);display:block;line-height:1.4}
+.tocx .tt span{font-size:11.5px;color:var(--muted2);display:block;margin-top:1px;line-height:1.5}
+.tocx .pgn{flex:0 0 24px;text-align:right;font-family:'Consolas',monospace;font-size:11.5px;color:var(--muted2)}
+.tocinfo{margin-top:16px;border:1px solid var(--line2);background:var(--soft);padding:12px 15px}
+.tocinfo .til{font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--accent);margin-bottom:6px}
+.tocinfo .row{display:flex;gap:10px;font-size:11.5px;color:var(--ink2);padding:3px 0;align-items:baseline}
+.tocinfo .row b{flex:0 0 88px;color:var(--ink)}
+
+/* ── 난이도 배지 ── */
+.lv{display:inline-block;font-size:9.5px;font-weight:700;border:1px solid;border-radius:10px;
+  padding:1px 8px;letter-spacing:.03em;line-height:1.6;white-space:nowrap}
+.lv1{color:var(--pv);border-color:var(--pvb);background:var(--pvs)}
+.lv2{color:var(--muted2);border-color:var(--line2);background:var(--soft)}
+.lv3{color:var(--accent);border-color:var(--pnb);background:var(--pns)}
+.lvrow{display:flex;gap:8px;align-items:center;margin:10px 0 4px}
+
+/* ── 난이도 보조 상자 ── */
+.tier{border:1px solid var(--line2);border-radius:4px;padding:11px 14px;margin:12px 0}
+.tier .tl{font-size:10px;font-weight:700;letter-spacing:.06em;margin-bottom:5px;
+  display:flex;gap:8px;align-items:center}
+.tier p{margin:0;font-size:12.5px}
+.tier ul{margin:4px 0 0}
+.tier li{font-size:12.5px;margin:5px 0}
+.tier.b{background:var(--soft)}
+.tier.b .tl{color:var(--muted2)}
+.tier.a{background:#fff;border-style:dashed}
+.tier.a .tl{color:var(--accent)}
+.tier .say{margin:8px 0 0}
+
+/* ── 자동화 회로 ── */
+.auto{border:1px solid var(--line2);border-left:3px solid var(--accent);background:var(--soft);
+  padding:10px 14px;margin:14px 0}
+.auto .al{font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--accent);margin-bottom:6px}
+.auto .ar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.auto .ar span{font-size:12px;color:var(--ink2);background:#fff;border:1px solid var(--line2);
+  border-radius:3px;padding:5px 9px}
+.auto .ar span b{color:var(--accent);font-weight:700;margin-right:5px}
+.auto .ar i{font-style:normal;color:var(--accent);font-weight:900}
+
+/* ── AI 낚시 찾기 ── */
+.trap{border:1.5px dashed var(--line2);border-radius:4px;padding:12px 15px;margin:14px 0;background:#fff}
+.trap .trl{font-size:10.5px;font-weight:700;letter-spacing:.06em;color:var(--px);margin-bottom:7px}
+.trap .fake{border:1px solid var(--line);border-left:2.5px solid var(--line2);background:var(--soft);
+  padding:10px 12px;font-size:12.5px;line-height:1.7;color:var(--ink2)}
+.trap .ask{font-size:12px;color:var(--muted2);margin-top:8px}
+.trap .ask b{color:var(--ink)}
+
+/* ── 메모 영역 (여백 활용) ── */
+.memo{margin-top:26px;border-top:1px solid var(--line);padding-top:9px}
+.memo .ml{font-size:9.5px;font-weight:700;letter-spacing:.12em;color:var(--muted);margin-bottom:8px}
+.memo .line{height:25px;border-bottom:1px dotted var(--line2)}
+
+/* ── 채팅 목업 ── */
+.chat{border:1px solid var(--line2);margin:13px 0;background:#fff}
+.chat .ch{background:var(--soft);border-bottom:1px solid var(--line);padding:6px 12px;
+  font-size:10.5px;font-weight:700;color:var(--muted2);display:flex;justify-content:space-between;
+  font-family:'Consolas',monospace}
+.chat .cb{padding:12px 13px}
+.msg{margin:8px 0;display:flex;gap:10px;align-items:flex-start}
+.msg .av{flex:0 0 44px;font-size:9.5px;font-weight:700;letter-spacing:.05em;color:var(--muted);
+  text-align:right;padding-top:9px}
+.msg .bub{flex:1;border:1px solid var(--line);border-radius:5px;padding:9px 12px;
+  font-size:12px;line-height:1.7;color:var(--ink2);background:#fff}
+.msg.u .bub{background:var(--soft);border-color:var(--line2)}
+.msg.a .bub{border-left:2.5px solid var(--accent)}
+.msg .bub b{color:var(--ink)}
+.msg .bub .tbl{margin-top:6px;font-family:'Consolas',monospace;font-size:10.5px;
+  color:var(--muted2);line-height:1.7;white-space:pre}
+
+/* ── 스펙 카드 ── */
+.stat{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);
+  border:1px solid var(--line);margin:13px 0}
+.stat>div{background:#fff;padding:11px 12px}
+.stat .sl2{font-size:9.5px;font-weight:700;color:var(--accent);letter-spacing:.07em}
+.stat .sv{font-size:14px;font-weight:800;margin-top:3px;font-family:'Consolas',monospace;line-height:1.3}
+.stat .sd{font-size:10px;color:var(--muted);margin-top:3px;line-height:1.5}
+
+/* ── 좌우 2단 ── */
+.split{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:13px 0}
+.split h3{margin-top:0}
+
+
+/* ── 화면 폭이 좁을 때 (모바일 열람용) ── */
+@media screen and (max-width:820px){
+  .page{width:auto;min-height:0;margin:0 0 10px;padding:22px 18px 46px;overflow:visible}
+  .cover,.divider{padding:10px}
+  .cover h1{font-size:30px}
+  .grid.g3,.grid.g4,.stat{grid-template-columns:repeat(2,1fr)}
+  .ba,.split,.shots{grid-template-columns:1fr}
+  .shots.one{max-width:100%!important}
+  .tm .nav{display:none}
+  .split[style]{display:block}
+  .term .tb2,.code .cb2{overflow-x:auto;white-space:pre}
+  table{display:block;overflow-x:auto}
+  .brand{position:static;margin-top:18px}
+  .pagenum{bottom:12px}
+}
+</style></head><body>
+<section class="page cover"><div class="fr"><div class="fr2">
+<div class="ck">청년취업사관학교 동대문4기</div>
+<h1>Hyper-V + Multipass로 만드는<br>우분투 리눅스 서버</h1>
+<div class="cs">기업연계형 AI 서비스·클라우드 실무 과정<br>
+<b>가상 머신 개념부터 서버 생성 · 접속 · 패키지 설치까지</b></div>
+
+<div class="hero">
+  <div class="hl">이 교재가 답하는 질문</div>
+  <div class="hs">클라우드 서버는 <b>가상 머신 위의 리눅스</b>다. <b>내 노트북에서 그 구조를 그대로 만들어 보려면?</b></div>
+  <div class="hd"></div>
+  <div class="hrow"><div class="hk">개념</div><div class="hv">가상 머신 · 하이퍼바이저 · Hyper-V</div></div>
+  <div class="hrow"><div class="hk">개념</div><div class="hv">리눅스 배포판 · 우분투 버전</div></div>
+  <div class="hrow"><div class="hk">STEP 0</div><div class="hv">시작 전 점검 — winver · 작업 관리자 읽기</div></div>
+  <div class="hrow"><div class="hk">STEP 1</div><div class="hv">Hyper-V 켜기</div></div>
+  <div class="hrow"><div class="hk">STEP 2</div><div class="hv">Multipass 설치 — Hyper-V와 연결</div></div>
+  <div class="hrow"><div class="hk">STEP 3</div><div class="hv">우분투 서버 만들기 — 명령어 한 줄</div></div>
+  <div class="hrow"><div class="hk">STEP 4</div><div class="hv">서버 접속 — 프롬프트 · 초간단 명령어</div></div>
+  <div class="hrow"><div class="hk">STEP 5</div><div class="hv">sudo와 apt — 프로그램 설치</div></div>
+  <div class="hrow"><div class="hk">STEP 6</div><div class="hv">나가기 · 종료 · 스냅샷</div></div>
+  <div class="hrow"><div class="hk">STEP 7</div><div class="hv">서버의 주소, IP</div></div>
+  <div class="hrow"><div class="hk">부록</div><div class="hv">문제 해결 · 명령어 · 체크리스트</div></div>
+</div>
+
+<div class="sig" style="margin-top:auto">
+  <div class="n">부성순 <span>/ bakpak@empas.com</span></div>
+  <div class="b">AI SERVICE · CLOUD PRACTICE</div>
+</div>
+</div></div></section>
+
+<!-- 02 -->
+<section class="page"><div class="rh"><div class="l"><b>PART 0</b> · 준비</div><div class="r">시작하기 전에<span class="pg">02</span></div></div>
+
+<div class="kicker">BEFORE START</div>
+<h1>실무의 축소판을 노트북 안에</h1>
+<div class="mission"><b>MISSION</b><h3>실무에서 리눅스 서버를 쓰는 흐름과, 이 교재에서 만들 구조를 비교한다.</h3>
+<p class="wy"><b>WHY</b> 실무에서 리눅스는 <b>내 노트북에 설치하는 것</b>이 아니라 <b>가상 머신 위의 서버에 원격 접속</b>해서 씁니다. 이 교재는 그 구조를 노트북 한 대로 만듭니다.</p></div>
+
+<h2>실무에서는</h2>
+<div class="flow"><span>내 노트북 (Windows · Mac)</span><i>→ SSH →</i><span>클라우드 VM (AWS · Azure …)</span><i>·</i><span>그 안의 리눅스</span></div>
+<h2>이 교재에서는</h2>
+<div class="flow"><span>PowerShell (Windows 10 Pro)</span><i>→ multipass shell →</i><span>Hyper-V 가상 컴퓨터</span><i>·</i><span>그 안의 우분투 서버</span></div>
+<div class="deflist">
+  <div class="d"><div class="dt">SSH<small>Secure Shell</small></div><div class="dd">네트워크로 떨어져 있는 서버에 <b>암호화된 연결로 접속해 명령어를 입력</b>하는 방법입니다. 실무의 서버 작업은 대부분 SSH로 합니다. 이 교재에서는 SSH를 직접 다루지 않고, Multipass가 SSH 연결을 대신 만들어 주는 <code>multipass shell</code>로 접속합니다.</div></div>
+</div>
+<p class="mn">클라우드로 넘어가면 달라지는 것은 <strong>VM을 만드는 화면</strong>과 <strong>접속 방법(SSH)</strong>이고, 리눅스 명령어는 그대로 씁니다. 참고로 Azure는 Hyper-V 기반입니다.</p>
+
+<h2>명령어를 입력하는 두 곳</h2>
+<div class="ba">
+  <div class="good"><div class="h">윈도우 PowerShell (관리자)</div>
+  <div class="m"><b>PS C:\WINDOWS\system32&gt;</b></div>
+  <div class="why2"><code>multipass</code> 명령어로 서버를 만들고, 켜고, 끄고, 접속합니다.</div></div>
+  <div class="good"><div class="h">우분투 서버 안</div>
+  <div class="m"><b>ubuntu@myUbuntu:~$</b></div>
+  <div class="why2"><code>ls</code>, <code>apt</code>, <code>sudo</code> 같은 리눅스 명령어를 여기서 입력합니다.</div></div>
+</div>
+
+<h2>실습 환경</h2>
+<div class="stat">
+  <div><div class="sl2">HOST</div><div class="sv">Win 10 Pro</div><div class="sd">학원 대여 노트북 · 22H2</div></div>
+  <div><div class="sl2">ENGINE · TOOL</div><div class="sv">Hyper-V</div><div class="sd">윈도우 내장 엔진 + Multipass 관리 도구</div></div>
+  <div><div class="sl2">GUEST</div><div class="sv">Ubuntu</div><div class="sd">Server 24.04 LTS (amd64)</div></div>
+  <div><div class="sl2">NETWORK</div><div class="sv">Default Switch</div><div class="sd">IP 자동 할당 · 인터넷 공유</div></div>
+</div>
+
+<div class="note"><strong>권장 사양</strong>  메모리 8GB 이상 · 여유 디스크 30GB 이상 · CPU 가상화 지원. 모두 STEP 0에서 확인합니다.</div>
+
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">02</div></section>
+
+<!-- 03 PART1 VM -->
+<section class="page"><div class="rh"><div class="l"><b>PART 0</b> · 개념</div><div class="r">가상 머신(VM)이란<span class="pg">03</span></div></div>
+
+<div class="kicker">CONCEPT</div>
+<h1>소프트웨어로 만든 컴퓨터, VM</h1>
+<div class="mission"><b>MISSION</b><h3>VM이 무엇이고, <b>실제 컴퓨터와 무엇이 다른지</b> 설명할 수 있다.</h3>
+<p class="wy"><b>WHY</b> 클라우드 엔지니어에게 VM은 모든 클라우드 인프라의 <b>기초 공사</b>입니다. 클라우드가 자원을 어떻게 나누고 운영하는지 이해하는 출발점입니다.</p></div>
+
+<p><strong>VM(Virtual Machine, 가상 머신)</strong>은 실제 컴퓨터처럼 동작하도록 소프트웨어로 만든 가상의 컴퓨터입니다. Windows, Linux, Windows Server를 실제 PC처럼 설치하고 실행할 수 있습니다.</p>
+
+<h2>VM이 갖춘 부품</h2>
+<div class="grid g4">
+  <div class="cell"><div class="num">vCPU</div><h4>가상 CPU</h4><p>실제 CPU 코어를 나눠 받음</p></div>
+  <div class="cell"><div class="num">vRAM</div><h4>가상 메모리</h4><p>실제 RAM 일부를 할당</p></div>
+  <div class="cell"><div class="num">vDISK</div><h4>가상 하드디스크</h4><p>실제로는 파일 하나 (.vhdx)</p></div>
+  <div class="cell"><div class="num">vNIC</div><h4>가상 네트워크 카드</h4><p>가상 스위치에 연결</p></div>
+</div>
+
+<h2>실제 컴퓨터와 비교</h2>
+<table class="zebra">
+<thead><tr><th style="width:22%">구분</th><th style="width:36%">실제 컴퓨터</th><th>VM</th></tr></thead>
+<tbody>
+<tr><td><b>하드웨어</b></td><td>실제 부품</td><td>가상 부품 (실제 자원을 빌려 씀)</td></tr>
+<tr><td><b>OS 설치</b></td><td>보통 1개</td><td><b>한 PC에 여러 개</b> 동시에 가능</td></tr>
+<tr><td><b>고장 시</b></td><td>수리 · 재설치가 위험하고 번거로움</td><td><b>삭제하거나 검사점으로 되돌리면 끝</b></td></tr>
+<tr><td><b>용도</b></td><td>실사용</td><td>실습 · 테스트 · 서버 운영</td></tr>
+</tbody>
+</table>
+
+<h2>VM을 쓰는 경우</h2>
+<ul>
+<li>윈도우에서 리눅스를 쓰고 싶을 때처럼 <strong>서로 다른 OS</strong>가 필요할 때</li>
+<li>실제 컴퓨터와 <strong>완벽하게 격리</strong>해야 할 때 (예: 악성코드 분석, 검증 안 된 프로그램 테스트)</li>
+<li>한 대의 PC로 <strong>회사 서버 환경을 그대로 연습</strong>할 때</li>
+</ul>
+<div class="tree"><b>노트북 한 대</b>
+├─ VM 1  <i>Windows Server (AD 서버)</i>
+├─ VM 2  <i>Windows 10 (클라이언트)</i>
+└─ VM 3  <b>Linux 서버</b>   <i>← 이 교재에서 만드는 것</i></div>
+
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">03</div></section>
+
+<!-- 04 hypervisor -->
+<section class="page"><div class="rh"><div class="l"><b>PART 0</b> · 개념</div><div class="r">가상화 소프트웨어<span class="pg">04</span></div></div>
+
+<div class="kicker">HYPERVISOR</div>
+<h1>VM을 돌리는 엔진, 하이퍼바이저</h1>
+<p>가상화 소프트웨어는 한 대의 물리 컴퓨터 자원(CPU, 메모리, 디스크, 네트워크)을 <strong>논리적으로 나눠</strong> 여러 VM이 각각 독립된 컴퓨터처럼 동작하게 합니다. 하드웨어를 직접 다루는 이 소프트웨어를 <strong>하이퍼바이저(Hypervisor)</strong>라고 부릅니다.</p>
+
+<div class="tree"><b>VM 1 (Windows Server)   VM 2 (Linux)   VM 3 (Windows 10)</b>
+        ↑ 자원을 나눠 받음
+<b>가상화 소프트웨어 (Hypervisor)</b>
+        ↑
+<b>하드웨어 (CPU / RAM / Disk / NIC)</b>        <i>한 대의 서버 = 여러 대의 서버처럼</i></div>
+
+<h2>설치 위치에 따른 두 가지 유형</h2>
+<div class="split">
+  <div class="tier b"><div class="tl">TYPE 1 · 베어메탈 (Bare-Metal)</div>
+  <p>하드웨어 <b>바로 위</b>에 설치. 중간 OS가 없어 성능과 안정성이 뛰어나 <b>데이터센터 · 기업 서버</b>에서 사용합니다.</p>
+  <ul>
+  <li><b>VMware ESXi</b> 기업용 업계 표준</li>
+  <li><b>Microsoft Hyper-V</b> 윈도우에 내장, Azure의 기반</li>
+  <li><b>KVM</b> 리눅스 커널 기반, 많은 클라우드의 핵심</li>
+  <li><b>Xen</b> 과거 AWS가 주력으로 사용</li>
+  </ul></div>
+  <div class="tier b"><div class="tl">TYPE 2 · 호스트형 (Hosted)</div>
+  <p>이미 쓰는 OS(Windows, macOS) 위에 <b>앱처럼</b> 설치. <b>학습 · 개발용</b>으로 많이 씁니다.</p>
+  <ul>
+  <li><b>Oracle VirtualBox</b> 무료, 다양한 OS 지원</li>
+  <li><b>VMware Workstation / Fusion</b> 기능이 풍부</li>
+  <li><b>Parallels Desktop</b> Mac에서 윈도우 실행용</li>
+  </ul></div>
+</div>
+
+<div class="point"><div class="pl">Hyper-V가 TYPE 1인 이유</div><p>Hyper-V를 켜면 <strong>하이퍼바이저가 하드웨어 바로 위</strong>에서 먼저 실행되고, 우리가 쓰는 윈도우도 그 위의 특별한 구역(루트 파티션)에서 돌아갑니다. 그래서 윈도우 기능으로 켜지만 데이터센터용과 같은 구조입니다.</p></div>
+
+<h2>컨테이너 가상화</h2>
+<p>OS 전체가 아니라 <strong>애플리케이션 실행 환경만</strong> 격리하는 방식입니다. <b>Docker</b>(대표), <b>LXC</b>(리눅스 시스템 수준), <b>Podman</b>(보안 강점) 등이 있습니다.</p>
+
+<table class="zebra">
+<thead><tr><th style="width:18%">비교</th><th>Type 1 (서버용)</th><th>Type 2 (학습용)</th><th>컨테이너 (실무형)</th></tr></thead>
+<tbody>
+<tr><td><b>대표 예시</b></td><td><b>Hyper-V</b>, KVM, ESXi</td><td>VirtualBox, VMware Workstation</td><td>Docker, Podman</td></tr>
+<tr><td><b>주요 용도</b></td><td>실제 서비스 운영</td><td>개인 학습, 개발 테스트</td><td>마이크로서비스 배포</td></tr>
+<tr><td><b>핵심 이점</b></td><td>높은 성능과 격리성</td><td>간편한 설치와 사용</td><td>가벼움, 빠른 배포</td></tr>
+</tbody>
+</table>
+
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">04</div></section>
+
+<!-- 05 Hyper-V & editions -->
+<section class="page"><div class="rh"><div class="l"><b>PART 0</b> · 개념</div><div class="r">Hyper-V와 윈도우 에디션<span class="pg">05</span></div></div>
+
+<div class="kicker">HYPER-V</div>
+<h1>마이크로소프트의 하이퍼바이저</h1>
+<div class="grid g3">
+  <div class="cell"><div class="num">FREE</div><h4>무료 · 내장</h4><p>Windows Pro, Enterprise, Education에 기본 포함. 따로 설치할 프로그램이 없습니다.</p></div>
+  <div class="cell"><div class="num">STABLE</div><h4>안정성</h4><p>윈도우와 호환성이 가장 높고, 하드웨어 가까이에서 동작해 빠르고 자원 효율이 좋습니다.</p></div>
+  <div class="cell"><div class="num">ISOLATION</div><h4>격리</h4><p>테스트용 소프트웨어 설치나 보안이 중요한 작업을 실제 PC와 분리해서 할 수 있습니다.</p></div>
+</div>
+
+<h2>윈도우 에디션별 차이 (Windows 10 · 11 공통)</h2>
+<table class="zebra">
+<thead><tr><th style="width:17%">에디션</th><th style="width:24%">대상</th><th>특징</th><th style="width:12%">Hyper-V</th></tr></thead>
+<tbody>
+<tr><td><b>Home</b></td><td>개인 사용자</td><td>기본 기능 중심의 가정용</td><td>미포함</td></tr>
+<tr><td><b>Pro</b></td><td>중소기업 · IT 전문가</td><td><b>Hyper-V</b>, <b>BitLocker</b>, <b>원격 데스크톱</b> 등 관리 기능</td><td><b>포함</b></td></tr>
+<tr><td><b>Enterprise</b></td><td>대기업</td><td>Pro 기능 + <b>AppLocker</b>, 고급 그룹 정책 등 보안·관리·배포 기능</td><td><b>포함</b></td></tr>
+<tr><td><b>Education</b></td><td>교육 기관</td><td>Enterprise와 비슷한 기능, 교육용 라이선스</td><td><b>포함</b></td></tr>
+</tbody>
+</table>
+<p class="mn">Home에서도 비공식 방법으로 Hyper-V를 켜는 사례가 있지만, 환경에 따라 동작하지 않을 수 있어 <strong>수업에서는 사용하지 않습니다.</strong> 학원 노트북은 모두 Pro입니다.</p>
+
+<h2>클라우드 엔지니어가 VM을 알아야 하는 이유</h2>
+<div class="grid g2">
+  <div class="cell"><div class="num">01</div><h4>하이퍼바이저의 이해</h4><p>구조를 알아야 성능 병목을 진단하고, 물리 서버 한 대를 얼마나 쪼개 쓸지(밀도) 결정할 수 있습니다.</p></div>
+  <div class="cell"><div class="num">02</div><h4>비용 최적화 (FinOps)</h4><p>AWS EC2, Azure VM, GCP Compute Engine 비용은 <b>어떤 사양의 VM을 얼마나 오래</b> 띄우느냐로 정해집니다.</p></div>
+  <div class="cell"><div class="num">03</div><h4>확장성과 가용성</h4><p>VM은 이미지로 저장·복제됩니다. 부하가 커질 때 같은 VM을 자동으로 늘리는 <b>오토 스케일링</b>의 바탕입니다.</p></div>
+  <div class="cell"><div class="num">04</div><h4>컨테이너와의 차이</h4><p>컨테이너도 결국 VM 위에서 도는 경우가 많습니다. 언제 VM을, 언제 컨테이너를 쓸지 판단하려면 둘 다 알아야 합니다.</p></div>
+</div>
+
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">05</div></section>
+
+<!-- 06 host guest + research -->
+<section class="page"><div class="rh"><div class="l"><b>PART 0</b> · 개념</div><div class="r">호스트와 게스트<span class="pg">06</span></div></div>
+
+<div class="kicker">HOST · GUEST</div>
+<h1>VM은 호스트와 주고받으며 동작한다</h1>
+<p>VM은 독립된 컴퓨터처럼 보이지만, 실제로는 <strong>호스트의 자원을 빌려서</strong> 동작하고 네트워크 · 파일 · 입력을 호스트와 주고받습니다.</p>
+
+<div class="deflist">
+  <div class="d"><div class="dt">호스트<small>Host</small></div><div class="dd">실제로 사용하는 내 컴퓨터. 이 교재에서는 <b>Windows 10 Pro 노트북</b>입니다.</div></div>
+  <div class="d"><div class="dt">게스트<small>Guest</small></div><div class="dd">VM 안에서 실행되는 가상 컴퓨터. 이 교재에서는 <b>우분투 서버</b>입니다.</div></div>
+</div>
+
+<table class="zebra">
+<thead><tr><th style="width:18%">상호작용</th><th style="width:40%">내용</th><th>이 교재에서</th></tr></thead>
+<tbody>
+<tr><td><b>자원</b></td><td>CPU · 메모리 · 디스크를 호스트에서 나눠 받음</td><td>STEP 3 · launch 옵션으로 할당</td></tr>
+<tr><td><b>네트워크</b></td><td>가상 스위치를 통해 호스트 · 인터넷과 통신</td><td>STEP 7 · IP 주소</td></tr>
+<tr><td><b>입력 · 화면</b></td><td>명령어 창으로 입력을 전달하고 결과를 봄</td><td>STEP 4 · multipass shell</td></tr>
+<tr><td><b>인터넷</b></td><td>호스트의 인터넷 연결을 함께 사용</td><td>STEP 5 · apt로 패키지 받기</td></tr>
+</tbody>
+</table>
+
+<h2>조사 과제</h2>
+<div class="tier a"><div class="tl"><span class="lv lv2">검색</span>간단히 개념만 정리합니다 (복잡하게 X)</div>
+<ul>
+<li><b>가상 머신과 컨테이너의 차이</b> — 격리 수준, 무게, 시작 속도</li>
+<li><b>VM을 만들 때 알아야 할 사양</b> — 클라우드 엔지니어 관점에서 vCPU, 메모리, 디스크, 네트워크만</li>
+<li><b>VM 네트워크 방식 차이</b> — NAT / 내부 / 브리지</li>
+<li><b>서버 실습에서 VM 간 통신 구조</b></li>
+<li><b>AD 실습용 VM 최소 구성</b></li>
+<li><b>Windows 11 에디션별 차이</b> — 05쪽 표와 비교</li>
+</ul></div>
+
+<div class="memo"><div class="ml">MEMO</div><div class="line"></div><div class="line"></div><div class="line"></div><div class="line"></div></div>
+
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">06</div></section>
+
+<!-- 07 Linux distros -->
+<section class="page"><div class="rh"><div class="l"><b>PART 0</b> · 개념</div><div class="r">리눅스와 배포판<span class="pg">07</span></div></div>
+
+<div class="kicker">LINUX</div>
+<h1>리눅스는 하나인데 종류는 여러 개?</h1>
+<div class="mission"><b>MISSION</b><h3><b>커널</b>과 <b>배포판</b>의 차이를 알고, 주요 배포판 계열을 구분한다.</h3>
+<p class="wy"><b>WHY</b> 클라우드에서 서버를 만들 때 가장 먼저 <b>어떤 리눅스(이미지)</b>를 고릅니다. 계열마다 설치 방법이 다릅니다.</p></div>
+
+<h2>커널과 배포판</h2>
+<div class="deflist">
+  <div class="d"><div class="dt">리눅스 커널<small>Kernel</small></div><div class="dd">운영체제의 <b>심장</b>. CPU · 메모리 · 디스크 · 네트워크 같은 하드웨어를 직접 관리합니다. 1991년 리누스 토르발스가 만들었고, 엄밀히 말해 ‘리눅스’는 이 커널의 이름입니다.</div></div>
+  <div class="d"><div class="dt">배포판<small>Distribution</small></div><div class="dd">커널에 <b>명령어 도구 · 패키지 관리자 · 설치 프로그램 · 기본 설정</b>을 묶어 바로 쓸 수 있게 만든 완성품. 우분투가 대표적인 배포판입니다.</div></div>
+</div>
+<div class="flow"><span>리눅스 커널</span><i>+</i><span>명령어 도구</span><i>+</i><span>패키지 관리자</span><i>+</i><span>설치 · 설정</span><i>=</i><span>배포판 (예: Ubuntu)</span></div>
+<p class="mn">비유하면 커널은 <strong>자동차 엔진</strong>, 배포판은 엔진을 얹어 완성한 <strong>차 모델</strong>입니다. 엔진은 같아도 회사마다 차의 구성과 조작법이 조금씩 다릅니다.</p>
+
+<h2>주요 배포판 계열</h2>
+<table class="zebra">
+<thead><tr><th style="width:17%">계열</th><th style="width:33%">대표 배포판</th><th style="width:20%">패키지 관리</th><th>특징</th></tr></thead>
+<tbody>
+<tr><td><b>Debian 계열</b></td><td><b>Ubuntu</b>, Debian, Linux Mint</td><td><code>apt</code> · .deb</td><td>자료가 가장 많고 클라우드 · 교육에서 널리 사용</td></tr>
+<tr><td><b>Red Hat 계열</b></td><td>RHEL, Rocky, AlmaLinux, Fedora<br><span style="font-size:11px">(지원 종료된 CentOS의 후속)</span></td><td><code>dnf</code>(<code>yum</code>) · .rpm</td><td>기업 · 금융권 서버에서 많이 사용. RHEL은 유료 지원</td></tr>
+<tr><td><b>클라우드 전용</b></td><td>Amazon Linux</td><td><code>dnf</code> · .rpm</td><td>AWS가 만든 배포판. Red Hat 계열과 사용법이 비슷</td></tr>
+<tr><td><b>경량</b></td><td>Alpine Linux</td><td><code>apk</code></td><td>매우 작아서 Docker 컨테이너 이미지로 많이 사용</td></tr>
+</tbody>
+</table>
+
+<div class="point"><div class="pl">이 교재가 우분투를 쓰는 이유</div><p>무료이고, 클라우드에서 기본 이미지로 흔히 제공되며, 자료가 많습니다. 익힌 명령어 대부분은 다른 배포판에서도 같고, <strong>패키지 설치 명령(apt ↔ dnf)</strong>만 다릅니다.</p></div>
+
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">07</div></section>
+
+<!-- 08 Ubuntu versions -->
+<section class="page"><div class="rh"><div class="l"><b>PART 0</b> · 개념</div><div class="r">우분투 버전 읽기<span class="pg">08</span></div></div>
+
+<div class="kicker">UBUNTU</div>
+<h1>24.04 LTS는 무슨 뜻일까?</h1>
+<p><strong>우분투</strong>는 <b>캐노니컬(Canonical)</b>이 만드는 배포판으로(Multipass도 같은 회사), <strong>매년 4월과 10월</strong>에 새 버전이 나옵니다.</p>
+
+<h2>버전 이름 뜯어보기</h2>
+<div class="parse">
+  <div class="ph"><span>Ubuntu 24.04.4 LTS (Noble Numbat)</span><span>VERSION</span></div>
+  <div class="pb"><div class="src"><span class="chip c-n">24 <span style="font-weight:400">2024년</span></span><span class="chip c-o">.</span><span class="chip c-v">04 <span style="font-weight:400">4월 출시</span></span><span class="chip c-o">.</span><span class="chip c-a">4 <span style="font-weight:400">4번째 보완판</span></span><span class="chip c-d">LTS <span style="font-weight:400">장기 지원</span></span><span class="chip c-x">Noble Numbat <span style="font-weight:400">별명</span></span></div></div>
+</div>
+<div class="deflist">
+  <div class="d"><div class="dt">연.월<small>24.04</small></div><div class="dd">출시 <b>연도와 월</b>입니다. 숫자가 클수록 최신입니다.</div></div>
+  <div class="d"><div class="dt">보완판<small>.1 .2 .3 .4</small></div><div class="dd">그동안의 업데이트를 합쳐 다시 낸 설치본. 설치된 서버는 <code>apt</code> 업데이트로 같아집니다.</div></div>
+  <div class="d"><div class="dt">별명<small>Codename</small></div><div class="dd">‘형용사 + 동물’이며 두 단어의 첫 글자가 같습니다. 설정 파일이나 저장소 주소에는 앞 단어(<code>noble</code>)가 자주 보입니다.</div></div>
+</div>
+
+<h2>LTS와 일반 버전</h2>
+<div class="ba">
+  <div class="good"><div class="h">LTS (Long Term Support)</div>
+  <div class="m"><b>2년마다 · 짝수 해 4월</b></div>
+  <div class="why2">보안 업데이트 <b>5년</b> 무료 지원 (Ubuntu Pro로 더 연장 가능). <b>서버는 LTS를 씁니다.</b></div></div>
+  <div class="bad"><div class="h">일반 버전 (Interim)</div>
+  <div class="m">LTS 사이의 버전 (예: 24.10, 25.04, 25.10)</div>
+  <div class="why2">지원 기간 <b>9개월</b>. 새 기능을 먼저 써 보는 용도.</div></div>
+</div>
+
+<table class="zebra">
+<thead><tr><th style="width:16%">버전</th><th style="width:26%">별명</th><th style="width:22%">기본 커널</th><th>무료 지원 종료</th></tr></thead>
+<tbody>
+<tr><td><b>22.04 LTS</b></td><td>Jammy Jellyfish</td><td>5.15</td><td>2027년 4월</td></tr>
+<tr><td><b>24.04 LTS</b></td><td>Noble Numbat</td><td>6.8</td><td>2029년 4월 · <b>이 교재 기준</b></td></tr>
+<tr><td><b>26.04 LTS</b></td><td>Resolute Raccoon</td><td>7.0</td><td>2031년 4월 · 현재 최신 LTS</td></tr>
+</tbody>
+</table>
+<p class="mn">최신 LTS 직후에는 자료 · 호환성이 부족해 실무에서도 <strong>직전 LTS</strong>를 한동안 씁니다. 우분투 버전과 <strong>커널 버전은 다른 번호</strong>입니다.</p>
+
+<div class="note"><strong>내 서버에서 확인하기</strong>  STEP 4에서 <code>lsb_release -a</code>(우분투 버전 · 별명)와 <code>uname -r</code>(커널 버전)로 직접 확인합니다.</div>
+
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">08</div></section>
+
+<!-- 07 STEP 0 -->
+<section class="page"><div class="rh"><div class="l"><b>PART 0</b> · STEP 0</div><div class="r">시작 전 점검<span class="pg">09</span></div></div>
+
+<div class="kicker">CHECK FIRST</div>
+<h1>이 노트북에서 Hyper-V를 쓸 수 있나요?</h1>
+<div class="mission"><b>MISSION</b><h3><b>winver</b>로 에디션을, 작업 관리자로 <b>CPU 가상화</b>를 확인한다.</h3>
+<p class="wy"><b>WHY</b> Hyper-V는 Home에 없고, CPU 가상화가 꺼져 있으면 켤 수 없습니다. 화면의 다른 숫자는 다음 두 쪽에서 설명합니다.</p></div>
+
+<h2>① 윈도우 에디션 확인 — winver</h2>
+<div class="split" style="align-items:start;grid-template-columns:33% 1fr">
+  <div class="shots one" style="margin:0"><figure><img src="data:image/png;base64,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" alt="Windows 정보 창. Windows 10 Pro, 버전 22H2 (OS 빌드 19045.6466)"><figcaption><b>그림 0-1</b> winver 실행 결과</figcaption></figure></div>
+  <div>
+  <ol class="steps">
+    <li><span class="lt"><span class="kbd">Win</span> + <span class="kbd">R</span> → <code>winver</code> → Enter</span><span class="ls">‘Windows 정보’ 창이 열립니다</span></li>
+    <li><span class="lt">빨간 상자 위치의 에디션 확인</span><span class="ls"><b>Windows 10 Pro</b>이면 통과 (Enterprise, Education도 가능). 버전 22H2 · OS 빌드 19045.xxxx</span></li>
+  </ol>
+  </div>
+</div>
+
+<h2>② CPU 가상화 확인 — 작업 관리자</h2>
+<div class="split" style="align-items:start;grid-template-columns:1fr 34%">
+  <div class="shots one" style="margin:0"><figure><img src="data:image/png;base64,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" alt="작업 관리자 성능 탭 CPU 화면. 11th Gen Intel Core i7-1165G7, 이용률 6%, 속도 2.65GHz, 프로세스 221, 스레드 2679, 핸들 100451, 코어 4, 논리 프로세서 8, 가상화 사용"><figcaption><b>그림 0-2</b> 작업 관리자 · 성능 · CPU</figcaption></figure></div>
+  <div>
+  <ol class="steps">
+    <li><span class="lt"><span class="kbd">Ctrl</span>+<span class="kbd">Shift</span>+<span class="kbd">Esc</span></span><span class="ls">창이 작으면 ‘자세히’</span></li>
+    <li><span class="lt">위쪽 <b>성능</b> 탭</span><span class="ls">빨간 상자 1</span></li>
+    <li><span class="lt">왼쪽 <b>CPU</b> 선택</span><span class="ls">빨간 상자 2</span></li>
+    <li><span class="lt">오른쪽 아래 <b>가상화: 사용</b></span><span class="ls">통과. 메모리가 8GB 이상인지도 확인 (그림은 31.7GB)</span></li>
+  </ol>
+  </div>
+</div>
+
+<div class="warn"><b>‘사용 안 함’이면</b>  재부팅하며 BIOS/UEFI(<span class="kbd">F2</span> <span class="kbd">Del</span> <span class="kbd">F10</span> 등)에서 Intel은 <code>VT-x</code>, AMD는 <code>SVM Mode</code>를 Enabled로 바꿉니다. 학원 노트북이면 <b>강사에게 먼저 알립니다.</b></div>
+
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">09</div></section>
+
+<!-- 08 CPU screen -->
+<section class="page"><div class="rh"><div class="l"><b>PART 0</b> · STEP 0</div><div class="r">CPU 화면 읽기 ①<span class="pg">10</span></div></div>
+
+<div class="kicker">READ THE SCREEN</div>
+<h1>작업 관리자 숫자 읽기 — 지금 CPU가 하는 일</h1>
+<p>그림 0-2의 왼쪽 아래 숫자들은 <strong>지금 이 순간</strong> CPU와 윈도우가 얼마나 일하고 있는지를 보여 줍니다. 서버를 운영할 때도 똑같은 항목을 리눅스 명령어로 확인합니다.</p>
+
+<div class="stat">
+  <div><div class="sl2">이용률</div><div class="sv">6%</div><div class="sd">CPU가 일한 시간 비율</div></div>
+  <div><div class="sl2">속도</div><div class="sv">2.65GHz</div><div class="sd">기본 속도 2.80GHz</div></div>
+  <div><div class="sl2">프로세스</div><div class="sv">221</div><div class="sd">실행 중인 프로그램 수</div></div>
+  <div><div class="sl2">스레드 · 핸들</div><div class="sv">2,679 · 100,451</div><div class="sd">작업 단위 · 자원 번호표</div></div>
+</div>
+
+<h2>속도 (GHz)</h2>
+<p><strong>Hz(헤르츠)</strong>는 1초에 몇 번 반복하는지를 나타내는 단위이고, <strong>GHz(기가헤르츠)</strong>는 <b>1초에 10억 번</b>입니다. CPU는 시계처럼 일정한 박자(클럭)에 맞춰 일하는데, 2.65GHz는 <b>1초에 약 26억 5천만 번</b> 박자를 맞춘다는 뜻입니다.</p>
+<div class="deflist">
+  <div class="d"><div class="dt">기본 속도 2.80GHz<small>제품 규격</small></div><div class="dd">이 CPU(i7-1165G7)에 정해진 기준 속도입니다.</div></div>
+  <div class="d"><div class="dt">속도 2.65GHz<small>지금 이 순간</small></div><div class="dd">한가할 때는 <b>전기를 아끼려고 낮추고</b>, 바쁠 때는 터보 부스트로 <b>기본 속도보다 높입니다</b>(이 CPU는 최대 4.7GHz). 그래서 계속 바뀝니다.</div></div>
+</div>
+<p class="mn">GHz는 같은 세대 CPU끼리 비교할 때만 의미가 있습니다. 세대가 다르면 박자 한 번에 처리하는 양이 달라서, <strong>숫자가 낮아도 더 빠를 수 있습니다.</strong></p>
+
+<h2>프로세스 · 스레드 · 핸들</h2>
+<div class="flow"><span>프로세스 (프로그램)</span><i>⊃</i><span>스레드 (일하는 단위)</span><i>→</i><span>논리 프로세서에서 실행</span><i>·</i><span>핸들 = 빌린 자원의 번호표</span></div>
+<div class="deflist">
+  <div class="d"><div class="dt">프로세스 221<small>Process</small></div><div class="dd"><b>실행 중인 프로그램 하나</b>입니다. 크롬, 메모장, 백그라운드 서비스가 각각 프로세스이고, 같은 프로그램을 두 번 열면 두 개가 됩니다. 운영체제는 프로세스마다 <b>메모리 공간을 따로</b> 나눠 줍니다. ‘프로세스’ 탭에서 목록을 볼 수 있습니다.</div></div>
+  <div class="d"><div class="dt">스레드 2,679<small>Thread</small></div><div class="dd">프로세스 안에서 <b>실제로 일을 하는 작업 단위</b>입니다. 프로세스 하나는 스레드를 1개 이상 가집니다. 예를 들어 브라우저는 화면 그리기, 다운로드, 소리 재생을 각각 다른 스레드로 동시에 처리합니다. 운영체제는 이 스레드들을 다음 쪽의 <b>논리 프로세서</b>에 번갈아 배정합니다.</div></div>
+  <div class="d"><div class="dt">핸들 100,451<small>Handle</small></div><div class="dd">프로세스가 파일, 창, 레지스트리 같은 <b>운영체제 자원을 열 때 받는 번호표</b>입니다. 프로그램이 파일을 닫았는데도 번호표를 반납하지 않으면 핸들 수가 계속 늘어나는데, 이를 <b>핸들 누수</b>라고 하며 오래 켜 둔 서버가 느려지는 원인이 됩니다.</div></div>
+  <div class="d"><div class="dt">작동 시간 3:17:10:15<small>Up time</small></div><div class="dd">마지막으로 켠 뒤 지난 시간으로 <b>일:시:분:초</b>입니다. 이 노트북은 3일 17시간째 켜져 있습니다. 리눅스에서는 <code>uptime</code>으로 확인합니다.</div></div>
+</div>
+
+
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">10</div></section>
+
+<!-- 09 CPU structure -->
+<section class="page"><div class="rh"><div class="l"><b>PART 0</b> · STEP 0</div><div class="r">CPU 화면 읽기 ②<span class="pg">11</span></div></div>
+
+<div class="kicker">CPU STRUCTURE</div>
+<h1>소켓 · 코어 · 논리 프로세서 · 캐시</h1>
+
+<h2>소켓 1 · 코어 4 · 논리 프로세서 8</h2>
+<div class="dia">
+  <div style="border:1.5px solid var(--ink);padding:10px 12px">
+    <div style="font-size:11px;font-weight:700;color:var(--accent);margin-bottom:8px">소켓 1개 = CPU 칩 1개 (i7-1165G7) · <span style="color:var(--muted2);font-weight:400">L3 캐시 12MB — 모든 코어가 함께 사용</span></div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+      <div style="border:1px solid var(--line2);background:var(--soft);padding:8px"><div style="font-size:11px;font-weight:700">코어 1</div><div style="display:flex;gap:4px;margin:6px 0"><span class="chip c-v" style="margin:0">논리 1</span><span class="chip c-v" style="margin:0">논리 2</span></div><div style="font-size:9.5px;color:var(--muted2)">L1 80KB · L2 1.25MB</div></div>
+      <div style="border:1px solid var(--line2);background:var(--soft);padding:8px"><div style="font-size:11px;font-weight:700">코어 2</div><div style="display:flex;gap:4px;margin:6px 0"><span class="chip c-v" style="margin:0">논리 3</span><span class="chip c-v" style="margin:0">논리 4</span></div><div style="font-size:9.5px;color:var(--muted2)">L1 80KB · L2 1.25MB</div></div>
+      <div style="border:1px solid var(--line2);background:var(--soft);padding:8px"><div style="font-size:11px;font-weight:700">코어 3</div><div style="display:flex;gap:4px;margin:6px 0"><span class="chip c-v" style="margin:0">논리 5</span><span class="chip c-v" style="margin:0">논리 6</span></div><div style="font-size:9.5px;color:var(--muted2)">L1 80KB · L2 1.25MB</div></div>
+      <div style="border:1px solid var(--line2);background:var(--soft);padding:8px"><div style="font-size:11px;font-weight:700">코어 4</div><div style="display:flex;gap:4px;margin:6px 0"><span class="chip c-v" style="margin:0">논리 7</span><span class="chip c-v" style="margin:0">논리 8</span></div><div style="font-size:9.5px;color:var(--muted2)">L1 80KB · L2 1.25MB</div></div>
+    </div>
+  </div>
+</div>
+
+<table class="zebra">
+<thead><tr><th style="width:22%">항목</th><th>뜻</th></tr></thead>
+<tbody>
+<tr><td><b>소켓 1</b></td><td>메인보드에서 <b>CPU 칩을 꽂는 자리</b> 수. 노트북은 보통 1개, 서버는 2개 이상도 많음</td></tr>
+<tr><td><b>코어 4</b></td><td>칩 안의 <b>실제 계산 장치</b> 수. 일꾼 4명이 동시에 일할 수 있음</td></tr>
+<tr><td><b>논리 프로세서 8</b></td><td>운영체제가 보는 CPU 수. 인텔 <b>하이퍼스레딩</b>으로 코어 하나를 둘처럼 써서 <b>4 × 2 = 8</b>. 진짜 코어 8개만큼 빠르지는 않지만 스레드를 더 많이 동시에 처리</td></tr>
+</tbody>
+</table>
+
+<h2>L1 · L2 · L3 캐시</h2>
+<p><strong>캐시</strong>는 CPU 안의 아주 빠르고 작은 메모리로, 자주 쓰는 데이터를 가까이 두어 RAM까지 가는 시간을 줄입니다.</p>
+<table class="zebra">
+<thead><tr><th style="width:13%">구분</th><th style="width:14%">이 노트북</th><th style="width:20%">위치</th><th style="width:14%">속도 · 크기</th><th>비유</th></tr></thead>
+<tbody>
+<tr><td><b>L1 캐시</b></td><td>320KB</td><td>코어마다 (80KB × 4)</td><td>가장 빠름 · 가장 작음</td><td>손에 들고 있는 메모지</td></tr>
+<tr><td><b>L2 캐시</b></td><td>5.0MB</td><td>코어마다 (1.25MB × 4)</td><td>빠름 · 작음</td><td>책상 위</td></tr>
+<tr><td><b>L3 캐시</b></td><td>12.0MB</td><td>모든 코어 공용</td><td>조금 느림 · 조금 큼</td><td>사무실 공용 책장</td></tr>
+<tr><td><b>RAM</b></td><td>31.7GB</td><td>CPU 밖</td><td>더 느림 · 큼</td><td>옆 건물 창고 (디스크는 더 먼 물류센터)</td></tr>
+</tbody>
+</table>
+
+<div class="point"><div class="pl">VM과 연결하면</div><p>Hyper-V와 Multipass가 VM에 나눠 주는 CPU(<strong>vCPU</strong>)는 이 <strong>논리 프로세서</strong> 단위입니다. STEP 3의 <code>--cpus 2</code>는 논리 프로세서 8개 중 <b>2개 분량</b>을 쓴다는 뜻이라, 한 VM에는 최대 8개까지 줄 수 있고, 여러 VM의 합계가 8을 넘으면 서로 나눠 쓰느라 느려집니다. 클라우드 vCPU도 보통 논리 프로세서 1개입니다.</p></div>
+
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">11</div></section>
+<!-- 08 STEP 1 -->
+<section class="page"><div class="rh"><div class="l"><b>PART 0</b> · STEP 1</div><div class="r">Hyper-V 켜기<span class="pg">12</span></div></div>
+
+<div class="kicker">ENABLE</div>
+<h1>윈도우에 들어 있는 Hyper-V 켜기</h1>
+<div class="mission"><b>MISSION</b><h3>Hyper-V 기능을 켜고 재부팅한 뒤 <b>켜졌는지 확인</b>한다.</h3>
+<p class="wy"><b>WHY</b> Multipass는 Hyper-V를 엔진으로 씁니다. Hyper-V는 Pro에 들어 있지만 <b>기본으로는 꺼져 있습니다.</b> 이미 켜 둔 노트북이면 ‘확인’만 하고 STEP 2로 갑니다.</p></div>
+
+<h2>방법 1 · 화면에서 켜기</h2>
+<div class="win">
+  <div class="tb"><div class="dots"><i></i><i></i><i></i></div>Windows 기능<span class="rt">Windows 기능 켜기/끄기</span></div>
+  <table><tbody>
+  <tr class="sel"><td class="ic">☑</td><td><b>Hyper-V</b></td></tr>
+  <tr class="sel"><td class="ic"></td><td>　☑ Hyper-V 관리 도구</td></tr>
+  <tr class="sel"><td class="ic"></td><td>　☑ Hyper-V 플랫폼</td></tr>
+  </tbody></table>
+  <div class="sb"><span>하위 항목까지 모두 체크</span><span>[ 확인 ] [ 취소 ]</span></div>
+</div>
+<ol class="steps">
+  <li><span class="lt">시작 메뉴 검색 → ‘Windows 기능 켜기/끄기’</span></li>
+  <li><span class="lt"><b>Hyper-V</b> 체크 (하위 항목 전부 체크되는지 확인) → 확인</span><span class="ls">Hyper-V 플랫폼이 회색이면 STEP 0의 가상화 설정을 다시 확인</span></li>
+  <li><span class="lt">‘지금 다시 시작’으로 재부팅</span></li>
+</ol>
+
+<h2>방법 2 · PowerShell로 켜기</h2>
+<p>시작 버튼 <b>마우스 오른쪽 클릭 → Windows PowerShell(관리자)</b></p>
+<div class="say"><div class="sl">PowerShell (관리자) · Hyper-V 켜기 · 끝나면 재시작 질문에 Y</div><div class="sc">Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V -All</div></div>
+
+<h2>확인</h2>
+<div class="say"><div class="sl">PowerShell (관리자) · 상태 확인</div><div class="sc">Get-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V</div></div>
+<div class="term">
+  <div class="th"><span>PowerShell · 관리자</span><span>C:\WINDOWS\system32</span></div>
+  <div class="tb2"><span class="d">FeatureName      : Microsoft-Hyper-V</span>
+<span class="g">State            : Enabled</span>     <span class="d">← Enabled 면 성공 · EnablePending 이면 재부팅 필요</span></div>
+</div>
+
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">12</div></section>
+
+
+<!-- 09 STEP 2 -->
+<section class="page"><div class="rh"><div class="l"><b>PART 0</b> · STEP 2</div><div class="r">Multipass 설치<span class="pg">13</span></div></div>
+
+<div class="kicker">MULTIPASS</div>
+<h1>Hyper-V에 일을 시키는 도구</h1>
+<div class="mission"><b>MISSION</b><h3>Multipass를 설치하고, 엔진이 <b>Hyper-V</b>로 잡혔는지 확인한다.</h3>
+<p class="wy"><b>WHY</b> Multipass는 우분투 제작사(Canonical)가 만든 도구로, <b>클라우드와 같은 방식</b>(설치가 끝난 클라우드 이미지 + 자동 초기 설정)으로 우분투 서버를 명령어 한 줄에 만들어 줍니다.</p></div>
+
+<h2>직접 만들기와 비교</h2>
+<div class="ba">
+  <div class="bad"><div class="h">Hyper-V 관리자로 직접</div>
+  <div class="m">ISO 다운로드 → 마법사 7단계 → 보안 부팅 변경 → 설치 화면 13단계 → ISO 꺼내기</div>
+  <div class="why2">30분 이상. 한 단계만 놓쳐도 부팅 실패.</div></div>
+  <div class="good"><div class="h">Multipass로</div>
+  <div class="m"><b>multipass launch 24.04 --name myUbuntu</b></div>
+  <div class="why2">몇 분. 명령어 → Multipass → <b>Hyper-V</b> 순서로 전달되어, VM은 Hyper-V 관리자에 그대로 나타납니다.</div></div>
+</div>
+
+<h2>설치하기</h2>
+<div class="lab">
+  <div class="lab-head"><span class="badge">LAB 2</span><h3>Multipass 설치 (Windows)</h3><span class="t">약 5분</span></div>
+  <div class="lab-body">
+  <ol class="steps">
+    <li><span class="lt">canonical.com/multipass 에서 <b>Windows</b>용 설치 파일 받기</span></li>
+    <li><span class="lt">설치 파일 실행 → 기본값으로 설치</span><span class="ls">관리자 허락 창이 뜨면 ‘예’. Hyper-V가 켜져 있으면 엔진이 자동으로 <b>hyperv</b>로 정해집니다</span></li>
+    <li><span class="lt">PowerShell을 <b>새로</b>, 관리자 권한으로 열기</span></li>
+  </ol>
+  </div>
+</div>
+
+<h2>설치 확인</h2>
+<div class="term">
+  <div class="th"><span>PowerShell · 관리자</span><span>C:\WINDOWS\system32</span></div>
+  <div class="tb2"><span class="p">PS&gt;</span> <span class="c">multipass version</span>
+<span class="g">multipass   1.x.x+win</span>
+<span class="g">multipassd  1.x.x+win</span>        <span class="d">← 두 줄이 나오면 서비스까지 정상</span>
+
+<span class="p">PS&gt;</span> <span class="c">multipass get local.driver</span>
+<span class="g">hyperv</span>                        <span class="d">← 엔진이 Hyper-V</span></div>
+</div>
+<div class="note"><strong>hyperv가 아니라면</strong>  관리자 PowerShell에서 <code>multipass set local.driver=hyperv</code>를 입력합니다. <code>'multipass' 용어가 인식되지 않습니다</code>가 나오면 <b>재부팅</b> 후 다시 합니다.</div>
+
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">13</div></section>
+
+<!-- 10 STEP 3 -->
+<section class="page"><div class="rh"><div class="l"><b>PART 0</b> · STEP 3</div><div class="r">우분투 서버 만들기<span class="pg">14</span></div></div>
+
+<div class="kicker">LAUNCH</div>
+<h1>명령어 한 줄로 서버 만들기</h1>
+<div class="mission"><b>MISSION</b><h3>사양을 지정해 <b>myUbuntu</b> 서버를 만들고, Hyper-V 관리자에서 확인한다.</h3>
+<p class="wy"><b>WHY</b> 클라우드에서도 서버는 <b>이미지 · 이름 · CPU · 메모리 · 디스크</b>를 정해 한 번에 만듭니다. launch 명령의 옵션이 바로 그 항목들입니다.</p></div>
+
+<div class="say"><div class="sl">PowerShell (관리자) · 서버 생성</div><div class="sc">multipass launch 24.04 --name myUbuntu --cpus 2 --memory 2G --disk 10G</div></div>
+
+<div class="parse">
+  <div class="ph"><span>launch 명령어 구조</span><span>클라우드 VM 생성 항목과 같음</span></div>
+  <div class="pb"><div class="src"><span class="chip c-n">24.04 <span style="font-weight:400">이미지</span></span><span class="chip c-v">--name myUbuntu <span style="font-weight:400">이름</span></span><span class="chip c-a">--cpus 2 <span style="font-weight:400">vCPU</span></span><span class="chip c-d">--memory 2G <span style="font-weight:400">메모리</span></span><span class="chip c-x">--disk 10G <span style="font-weight:400">디스크</span></span></div>
+  <div class="arw">옵션을 빼면</div>
+  <p style="margin:0;font-size:12px">이미지는 <b>최신 LTS</b>(현재 26.04), 사양은 <b>CPU 1 · 메모리 1GB · 디스크 5GB</b>로 만들어집니다. 수업은 <b>24.04 LTS</b>로 통일합니다(버전 설명은 08쪽).</p></div>
+</div>
+
+<div class="term">
+  <div class="th"><span>PowerShell · 관리자</span><span>진행 과정</span></div>
+  <div class="tb2"><span class="d">Retrieving image: 100%</span>       <span class="d">← 클라우드 이미지 다운로드 (처음 한 번만)</span>
+<span class="d">Launching myUbuntu -</span>          <span class="d">← Hyper-V에 VM 생성 · 부팅 · 초기 설정</span>
+<span class="g">Launched: myUbuntu</span>            <span class="d">← 완료</span></div>
+</div>
+
+<div class="ba">
+  <div class="good"><div class="h">서버 이름 · 사용 가능</div>
+  <div class="m"><b>myUbuntu</b>  <b>lab-01</b>  <b>web2</b></div>
+  <div class="why2">영문자 · 숫자 · 하이픈(<code>-</code>), <b>영문자로 시작</b></div></div>
+  <div class="bad"><div class="h">사용 불가</div>
+  <div class="m"><u>my_ubuntu</u>  <u>1server</u>  <u>내서버</u></div>
+  <div class="why2">밑줄, 숫자로 시작, 한글 · 공백 → <b>Invalid instance name</b></div></div>
+</div>
+
+<h2>Hyper-V 관리자에서 확인 (<code>virtmgmt.msc</code>)</h2>
+<div class="win">
+  <div class="tb"><div class="dots"><i></i><i></i><i></i></div>Hyper-V 관리자<span class="rt">DESKTOP-XXXX</span></div>
+  <table>
+  <thead><tr><th>이름</th><th>상태</th><th>CPU 사용량</th><th>할당된 메모리</th><th>작동 시간</th></tr></thead>
+  <tbody><tr class="sel"><td><b>myUbuntu</b></td><td>실행 중</td><td>0%</td><td>2048MB</td><td>00:02:15</td></tr></tbody>
+  </table>
+</div>
+<div class="warn"><b>관리는 multipass 명령어로만</b>  Hyper-V 관리자에서 이 VM을 삭제하거나 설정을 바꾸면 Multipass가 VM 상태를 알 수 없게 됩니다. <b>보기만 합니다.</b></div>
+
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">14</div></section>
+
+<!-- 11 STEP 4 -->
+<section class="page"><div class="rh"><div class="l"><b>PART 0</b> · STEP 4</div><div class="r">서버 접속<span class="pg">15</span></div></div>
+
+<div class="kicker">SHELL</div>
+<h1>서버 안으로 들어가기</h1>
+<div class="mission"><b>MISSION</b><h3>서버 상태를 확인하고 <code>multipass shell</code>로 접속한다.</h3>
+<p class="wy"><b>WHY</b> 서버 관리자는 화면 대신 <b>셸(명령어 창)</b>로 일합니다. 접속하면 나오는 환영 화면에 서버 상태가 요약되어 있습니다.</p></div>
+
+<h2>목록과 상세 정보</h2>
+<div class="term">
+  <div class="th"><span>PowerShell · 관리자</span><span>C:\WINDOWS\system32</span></div>
+  <div class="tb2"><span class="p">PS&gt;</span> <span class="c">multipass list</span>
+<span class="d">Name          State        IPv4             Image</span>
+myUbuntu      <span class="g">Running</span>      <span class="g">172.xx.xx.xx</span>     Ubuntu 24.04 LTS
+
+<span class="p">PS&gt;</span> <span class="c">multipass info myUbuntu</span>
+<span class="d">State: Running · IPv4: 172.xx.xx.xx · Release: Ubuntu 24.04.x LTS</span>
+<span class="d">CPU(s): 2 · Disk usage · Memory usage · Snapshots: 0</span></div>
+</div>
+<p class="mn">IPv4는 서버의 주소입니다. 숫자는 노트북마다 다르며, STEP 7에서 간단히 설명합니다.</p>
+
+<h2>접속하기</h2>
+<div class="say"><div class="sl">PowerShell (관리자) · 서버 접속</div><div class="sc">multipass shell myUbuntu</div></div>
+
+<div class="term">
+  <div class="th"><span>Ubuntu · myUbuntu</span><span>welcome</span></div>
+  <div class="tb2"><span class="d">Welcome to Ubuntu 24.04.x LTS (GNU/Linux 6.8.0-xx-generic x86_64)</span>
+<span class="d">System information as of …</span>
+<span class="d">System load:           0.15       Processes:             112</span>
+<span class="d">Usage of /:            19.8% of 9.51GB</span>
+<span class="d">Memory usage:          11%        Users logged in:       0</span>
+<span class="d">Swap usage:            0%         IPv4 address for eth0: 172.xx.xx.xx</span>
+<span class="d">xx updates can be applied immediately.</span>
+<span class="d">To run a command as administrator (user "root"), use "sudo &lt;command&gt;".</span>
+
+<span class="p">ubuntu@myUbuntu:~$</span>   <span class="g">← 명령어 입력 대기</span></div>
+</div>
+<p class="mn">이제부터 입력하는 명령어는 윈도우가 아니라 <strong>우분투 서버 안</strong>에서 실행됩니다. 비밀번호 없이 들어가지는 것은 Multipass가 <strong>SSH 연결(02쪽)</strong>을 대신 만들어 주기 때문입니다.</p>
+
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">15</div></section>
+
+<!-- 12 STEP 4 cont -->
+<section class="page"><div class="rh"><div class="l"><b>PART 0</b> · STEP 4</div><div class="r">서버 접속 (계속)<span class="pg">16</span></div></div>
+
+<h2>환영 화면 해석하기</h2>
+<table class="zebra">
+<thead><tr><th style="width:36%">화면 내용</th><th>의미</th></tr></thead>
+<tbody>
+<tr><td><code>Ubuntu 24.04.x LTS</code></td><td>우분투 버전. <b>LTS</b>는 장기간 보안 업데이트를 지원하는 판</td></tr>
+<tr><td><code>6.8.0-xx-generic x86_64</code></td><td>리눅스 커널 버전과 CPU 구조(64비트)</td></tr>
+<tr><td><code>System load</code></td><td>CPU가 얼마나 바쁜지. CPU 개수(2)보다 작으면 여유</td></tr>
+<tr><td><code>Usage of /: … of 9.51GB</code></td><td>디스크 사용량. 10G로 만든 디스크. <code>/</code>는 리눅스의 최상위 폴더</td></tr>
+<tr><td><code>Memory · Swap usage</code></td><td>메모리 사용량 / 메모리 부족 시 디스크를 대신 쓰는 공간</td></tr>
+<tr><td><code>Processes</code></td><td>실행 중인 프로그램(프로세스) 수</td></tr>
+<tr><td><code>IPv4 address for eth0</code></td><td>Hyper-V 가상 네트워크 카드 <b>eth0</b>의 IP. <code>multipass list</code>의 IPv4와 같음</td></tr>
+<tr><td><code>xx updates can be applied</code></td><td>설치 가능한 업데이트 수</td></tr>
+<tr><td><code>use "sudo &lt;command&gt;"</code></td><td>관리자 권한이 필요하면 명령 앞에 <b>sudo</b>를 붙이라는 안내</td></tr>
+</tbody>
+</table>
+
+<h2>프롬프트 읽는 법</h2>
+<div class="parse">
+  <div class="ph"><span>ubuntu@myUbuntu:~$</span><span>PROMPT</span></div>
+  <div class="pb"><div class="src"><span class="chip c-n">ubuntu <span style="font-weight:400">사용자</span></span><span class="chip c-o">@</span><span class="chip c-v">myUbuntu <span style="font-weight:400">서버 이름</span></span><span class="chip c-o">:</span><span class="chip c-a">~ <span style="font-weight:400">현재 위치(홈)</span></span><span class="chip c-d">$ <span style="font-weight:400">일반 사용자</span></span></div></div>
+</div>
+<div class="warn"><b>root 계정이 아닙니다</b>  로그인한 계정은 <b>일반 사용자 ubuntu</b>입니다. 끝이 <code>$</code>이면 일반 사용자, <code>#</code>이면 관리자(root)입니다. Multipass의 ubuntu 계정은 <code>sudo</code>(STEP 5)를 <b>비밀번호 없이</b> 쓸 수 있습니다.</div>
+
+<h2>첫 명령어 연습</h2>
+<div class="term">
+  <div class="th"><span>Ubuntu · myUbuntu</span><span>~</span></div>
+  <div class="tb2"><span class="p">$</span> <span class="c">whoami</span>             <span class="d"># 나는 누구?       → ubuntu</span>
+<span class="p">$</span> <span class="c">hostname</span>           <span class="d"># 서버 이름        → myUbuntu</span>
+<span class="p">$</span> <span class="c">pwd</span>                <span class="d"># 현재 위치        → /home/ubuntu</span>
+<span class="p">$</span> <span class="c">nproc</span>              <span class="d"># CPU 개수         → 2 (--cpus 값과 비교)</span>
+<span class="p">$</span> <span class="c">df -h</span>              <span class="d"># 디스크 사용량</span>
+<span class="p">$</span> <span class="c">free -h</span>            <span class="d"># 메모리 사용량</span>
+<span class="p">$</span> <span class="c">lsb_release -a</span>     <span class="d"># 우분투 버전 · 별명 (08쪽)</span>
+<span class="p">$</span> <span class="c">uname -r</span>           <span class="d"># 커널 버전</span></div>
+</div>
+
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">16</div></section>
+
+
+<!-- STEP 4 basic commands -->
+<section class="page"><div class="rh"><div class="l"><b>PART 0</b> · STEP 4</div><div class="r">초간단 리눅스 명령어<span class="pg">17</span></div></div>
+
+<h1>이것만 알면 시작할 수 있다</h1>
+<div class="mission"><b>MISSION</b><h3>폴더를 이동하고, 파일을 만들고, 내용을 보고, 지울 수 있다.</h3>
+<p class="wy"><b>WHY</b> 서버에는 탐색기가 없습니다. <b>어디에 있고 무엇이 있는지</b> 명령어로 확인하는 것이 시작입니다.</p></div>
+
+<h2>기본 명령어 8개</h2>
+<table class="zebra">
+<thead><tr><th style="width:24%">명령어</th><th style="width:36%">하는 일</th><th>예시</th></tr></thead>
+<tbody>
+<tr><td><code>pwd</code></td><td>지금 있는 위치 보기</td><td><code>pwd</code> → <code>/home/ubuntu</code></td></tr>
+<tr><td><code>ls</code></td><td>현재 폴더의 파일 · 폴더 목록</td><td><code>ls</code> · 자세히 <code>ls -l</code> · 숨김 포함 <code>ls -a</code></td></tr>
+<tr><td><code>mkdir</code></td><td>폴더 만들기</td><td><code>mkdir practice</code></td></tr>
+<tr><td><code>cd</code></td><td>폴더 이동</td><td><code>cd practice</code> · 위로 <code>cd ..</code> · 홈으로 <code>cd ~</code></td></tr>
+<tr><td><code>touch</code></td><td>빈 파일 만들기</td><td><code>touch memo.txt</code></td></tr>
+<tr><td><code>echo</code></td><td>글자 출력 · <code>&gt;</code>로 파일에 쓰기</td><td><code>echo "hello" &gt; memo.txt</code></td></tr>
+<tr><td><code>cat</code></td><td>파일 내용 보기</td><td><code>cat memo.txt</code> → <code>hello</code></td></tr>
+<tr><td><code>rm</code></td><td>파일 삭제 (휴지통 없음)</td><td><code>rm memo.txt</code> · 빈 폴더 <code>rmdir practice</code></td></tr>
+</tbody>
+</table>
+
+<div class="term">
+  <div class="th"><span>Ubuntu · myUbuntu</span><span>실습 · 위에서부터 한 줄씩</span></div>
+  <div class="tb2"><span class="p">$</span> <span class="c">mkdir practice</span>               <span class="d"># 폴더 만들기</span>
+<span class="p">$</span> <span class="c">cd practice</span>                  <span class="d"># 들어가기 → 프롬프트가 ~/practice 로 바뀜</span>
+<span class="p">$</span> <span class="c">echo "hello linux" &gt; memo.txt</span>   <span class="d"># 파일 만들고 글 쓰기</span>
+<span class="p">$</span> <span class="c">ls -l</span>                        <span class="d"># memo.txt 확인</span>
+<span class="p">$</span> <span class="c">cat memo.txt</span>                 <span class="d"># hello linux</span>
+<span class="p">$</span> <span class="c">rm memo.txt</span>                  <span class="d"># 파일 지우기</span>
+<span class="p">$</span> <span class="c">cd ..</span>                        <span class="d"># 한 칸 위로 (홈)</span>
+<span class="p">$</span> <span class="c">rmdir practice</span>               <span class="d"># 빈 폴더 지우기</span></div>
+</div>
+
+<div class="note"><strong>손이 편해지는 키</strong>  <span class="kbd">Tab</span> 이름 자동 완성 · <span class="kbd">↑</span> 이전 명령 다시 부르기 · <span class="kbd">Ctrl</span>+<span class="kbd">C</span> 실행 중인 명령 멈추기(복사 아님) · <code>clear</code> 화면 지우기</div>
+
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">17</div></section>
+
+<!-- STEP 5 sudo -->
+<section class="page"><div class="rh"><div class="l"><b>PART 0</b> · STEP 5</div><div class="r">sudo와 패키지<span class="pg">18</span></div></div>
+
+<div class="kicker">SUDO · APT</div>
+<h1>관리자 권한과 프로그램 설치</h1>
+<div class="mission"><b>MISSION</b><h3><b>sudo</b>가 무엇인지, 우분투에서 프로그램을 설치하는 <b>apt</b>가 어떻게 동작하는지 설명할 수 있다.</h3>
+<p class="wy"><b>WHY</b> 서버를 받으면 가장 먼저 하는 일이 <b>업데이트와 필요한 프로그램 설치</b>입니다. 웹 서버, 데이터베이스, 파이썬 모두 이 방법으로 설치합니다.</p></div>
+
+<h2>sudo — 잠깐 관리자 권한 빌리기</h2>
+<div class="deflist">
+  <div class="d"><div class="dt">root<small>최고 관리자</small></div><div class="dd">리눅스에서 <b>모든 것을 할 수 있는 계정</b>입니다. 시스템 파일을 지우는 것도 막지 않기 때문에 평소에는 root로 일하지 않습니다.</div></div>
+  <div class="d"><div class="dt">sudo<small>superuser do</small></div><div class="dd">일반 사용자가 <b>명령 하나만 root 권한으로</b> 실행하게 해 줍니다. 명령 앞에 붙여 씁니다. 누가 언제 sudo를 썼는지 기록이 남습니다.</div></div>
+</div>
+
+<div class="ba">
+  <div class="bad"><div class="h">sudo 없이 설치하면</div>
+  <div class="m">$ apt install cowsay<br><u>E: Could not open lock file … (13: Permission denied)</u><br><u>E: Unable to acquire the dpkg frontend lock …, are you root?</u></div>
+  <div class="why2">“관리자(root)냐?”고 되묻으며 거절합니다.</div></div>
+  <div class="good"><div class="h">sudo를 붙이면</div>
+  <div class="m">$ <b>sudo</b> apt install cowsay</div>
+  <div class="why2">root 권한으로 실행되어 설치됩니다.</div></div>
+</div>
+
+<table class="zebra">
+<thead><tr><th style="width:36%">sudo가 필요한 일</th><th>sudo가 필요 없는 일</th></tr></thead>
+<tbody>
+<tr><td>프로그램 설치 · 삭제 · 업데이트</td><td>파일 목록 보기 (<code>ls</code>), 위치 확인 (<code>pwd</code>)</td></tr>
+<tr><td>시스템 설정 파일 수정 (<code>/etc</code> 아래)</td><td>내 홈 폴더(<code>/home/ubuntu</code>) 안의 파일 만들기 · 수정</td></tr>
+<tr><td>서비스 시작 · 중지, 서버 끄기 (<code>sudo poweroff</code>)</td><td>상태 확인 (<code>df -h</code>, <code>free -h</code>)</td></tr>
+</tbody>
+</table>
+
+<div class="note"><strong>비밀번호를 묻지 않는 이유</strong>  보통 sudo는 <b>내 비밀번호</b>를 한 번 묻습니다. Multipass가 만든 <code>ubuntu</code> 계정은 클라우드 서버처럼 <b>비밀번호 없이 sudo를 쓰도록</b> 미리 설정되어 있습니다.</div>
+
+<div class="warn"><b>sudo는 확인 없이 실행됩니다.</b>  특히 <code>sudo rm</code>(삭제)은 되돌릴 수 없습니다. 명령을 <b>한 번 더 읽고</b> Enter를 누르는 습관을 들입니다.</div>
+
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">18</div></section>
+
+<!-- STEP 5 apt -->
+<section class="page"><div class="rh"><div class="l"><b>PART 0</b> · STEP 5</div><div class="r">apt 패키지 관리<span class="pg">19</span></div></div>
+
+<h2>apt — 우분투의 앱스토어</h2>
+<p>리눅스는 배포판이 운영하는 <strong>저장소</strong>에서 <strong>패키지</strong>로 프로그램을 받아 설치합니다. 우분투(Debian 계열)는 <strong>apt</strong>(Advanced Package Tool), Red Hat 계열은 <code>dnf</code>가 맡습니다(07쪽).</p>
+<p class="mn"><strong>패키지</strong>: 프로그램 · 설정 · 필요한 부품 정보를 묶은 설치 꾸러미 · <strong>저장소</strong>: 검증된 패키지를 모아 둔 서버(앱스토어) · <strong>의존성</strong>: 함께 필요한 다른 패키지(apt가 자동 설치)</p>
+
+<h2>자주 쓰는 apt 명령</h2>
+<table class="zebra">
+<thead><tr><th style="width:36%">명령어 (<b>update → install</b> 순서)</th><th>하는 일 (검색 · 목록은 sudo 불필요)</th><th style="width:22%">스마트폰에 비유하면</th></tr></thead>
+<tbody>
+<tr><td><code>sudo apt update</code></td><td>저장소에서 <b>최신 목록만</b> 받아 옴. 설치는 하지 않음</td><td>앱스토어 새로고침</td></tr>
+<tr><td><code>apt list --upgradable</code></td><td>업데이트할 수 있는 패키지 보기</td><td>업데이트 목록 보기</td></tr>
+<tr><td><code>sudo apt upgrade</code></td><td>설치된 패키지를 <b>실제로 업데이트</b></td><td>모두 업데이트</td></tr>
+<tr><td><code>apt search 이름</code></td><td>패키지 검색</td><td>앱 검색</td></tr>
+<tr><td><code>sudo apt install 이름</code></td><td>패키지 설치 (<code>-y</code>: 확인 질문에 자동으로 예)</td><td>설치</td></tr>
+<tr><td><code>sudo apt remove 이름</code></td><td>패키지 삭제</td><td>삭제</td></tr>
+</tbody>
+</table>
+
+<h2>실습</h2>
+<div class="lab">
+  <div class="lab-head"><span class="badge">LAB 5</span><h3>재미있는 패키지 설치하고 지우기</h3><span class="t">약 10분</span></div>
+  <div class="lab-body">
+  <ol class="steps">
+    <li><span class="lt">sudo 없이 <code>apt install cowsay</code> → 오류 확인 후, 목록 새로고침</span><span class="ls"><code>sudo apt update</code> → <code>apt list --upgradable</code></span></li>
+    <li><span class="lt">cowsay — 말하는 소</span><span class="ls"><code>sudo apt install -y cowsay</code> → <code>cowsay Hello Linux</code> · 소 대신 용: <code>cowsay -f dragon Hi</code></span></li>
+    <li><span class="lt">sl — <code>ls</code>를 거꾸로 치면 기차가 지나감</span><span class="ls"><code>sudo apt install -y sl</code> → <code>sl</code> · 끝까지 지나가면 프롬프트로 돌아옴</span></li>
+    <li><span class="lt">설치 위치 확인</span><span class="ls">입력: <code>which cowsay sl</code> → 결과: <code>/usr/games/cowsay</code> · <code>/usr/games/sl</code> (시스템 폴더라서 설치에 sudo가 필요)</span></li>
+    <li><span class="lt">한 번에 삭제</span><span class="ls">입력: <code>sudo apt remove -y cowsay sl</code> (앞에 <b>/</b> 없이 <b>sudo</b>로 시작) → 다시 <code>sl</code> 입력 시 명령을 찾지 못함</span></li>
+  </ol>
+  </div>
+</div>
+
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">19</div></section>
+
+<!-- 13 STEP 5 -->
+<section class="page"><div class="rh"><div class="l"><b>PART 0</b> · STEP 6</div><div class="r">나가기 · 종료 · 스냅샷<span class="pg">20</span></div></div>
+
+<div class="kicker">LIFECYCLE</div>
+<h1>빠져나오기와 끄기는 다릅니다</h1>
+<div class="mission"><b>MISSION</b><h3><code>exit</code>와 <code>multipass stop</code>의 차이를 확인하고, <b>스냅샷</b>으로 되돌려 본다.</h3>
+<p class="wy"><b>WHY</b> 셸에서 나와도 서버는 켜져 있어 <b>메모리를 차지</b>합니다. 클라우드에서는 켜 둔 시간만큼 <b>비용</b>이 나갑니다.</p></div>
+
+<div class="term">
+  <div class="th"><span>Ubuntu → PowerShell</span><span>stop 흐름</span></div>
+  <div class="tb2"><span class="p">ubuntu@myUbuntu:~$</span> <span class="c">exit</span>
+<span class="p">PS&gt;</span> <span class="c">multipass list</span>           <span class="d">→ myUbuntu</span> <span class="g">Running</span>   <span class="d">나오기만 했음</span>
+<span class="p">PS&gt;</span> <span class="c">multipass stop myUbuntu</span>
+<span class="p">PS&gt;</span> <span class="c">multipass list</span>           <span class="d">→ myUbuntu</span> <span class="g">Stopped</span></div>
+</div>
+<div class="note"><strong>오래 기다려도 멈추지 않으면</strong>  <code>multipass stop myUbuntu --force</code>. 전원 코드를 뽑는 것과 같아서, 실제 서버에서는 <b>정상 종료를 기다리는 습관</b>이 좋습니다.</div>
+
+<h2>서버 관리 명령어</h2>
+<table class="zebra">
+<thead><tr><th style="width:15%">기능</th><th style="width:44%">명령어 (PowerShell)</th><th>비고</th></tr></thead>
+<tbody>
+<tr><td><b>서버 시작</b></td><td><code>multipass start myUbuntu</code></td><td><code>shell</code>을 바로 입력해도 자동으로 켜짐</td></tr>
+<tr><td><b>서버 종료</b></td><td><code>multipass stop myUbuntu</code></td><td>실습 끝날 때</td></tr>
+<tr><td><b>재시작</b></td><td><code>multipass restart myUbuntu</code></td><td></td></tr>
+<tr><td><b>사양 변경</b></td><td><code>multipass set local.myUbuntu.memory=4G</code></td><td><b>꺼진 상태</b>에서. <code>.cpus</code> · <code>.disk</code>도 가능 (디스크는 늘리기만)</td></tr>
+<tr><td><b>서버 삭제</b></td><td><code>multipass delete myUbuntu</code></td><td>휴지통으로 · <code>multipass recover</code>로 복구 가능</td></tr>
+<tr><td><b>완전 제거</b></td><td><code>multipass purge</code></td><td>삭제된 서버를 완전히 지움 · 복구 불가</td></tr>
+</tbody>
+</table>
+
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">20</div></section>
+
+<!-- 13b -->
+<section class="page"><div class="rh"><div class="l"><b>PART 0</b> · STEP 6</div><div class="r">스냅샷<span class="pg">21</span></div></div>
+
+<div class="kicker">SNAPSHOT</div>
+<h1>망가져도 되돌릴 수 있게</h1>
+<p>스냅샷은 서버의 특정 시점을 통째로 저장해 두는 기능입니다. 실습 중 설정을 망가뜨려도 <strong>몇 초 만에 그 시점으로</strong> 돌아갈 수 있습니다. 클라우드에서도 서버 백업과 복제의 기본 단위입니다.</p>
+<h2>실습</h2>
+<div class="lab">
+  <div class="lab-head"><span class="badge">LAB 5</span><h3>스냅샷 만들고 되돌리기</h3><span class="t">약 5분</span></div>
+  <div class="lab-body">
+  <ol class="steps">
+    <li><span class="lt">서버를 끈 상태에서 스냅샷 만들기</span><span class="ls"><code>multipass snapshot myUbuntu --name clean</code> · 스냅샷은 <b>꺼진 상태</b>에서만 가능</span></li>
+    <li><span class="lt">접속해서 파일 만들기</span><span class="ls"><code>multipass shell myUbuntu</code> → <code>touch test.txt</code> → <code>ls</code> → <code>exit</code> → <code>multipass stop myUbuntu</code></span></li>
+    <li><span class="lt">되돌리기</span><span class="ls"><code>multipass restore myUbuntu.clean --destructive</code> → 다시 접속해 <code>ls</code> → test.txt가 사라졌으면 성공</span></li>
+  </ol>
+  </div>
+</div>
+<p class="mn"><code>--destructive</code>는 “지금 상태를 따로 저장하지 않고 버린다”는 뜻입니다. Hyper-V 관리자의 <strong>검사점</strong> 창에도 같은 스냅샷이 보입니다. 클라우드의 <b>스냅샷</b>과 같은 개념입니다.</p>
+
+<div class="qa"><div class="ql">생각해 보기</div><ol>
+<li>스냅샷을 서버가 <b>꺼진 상태</b>에서만 만들 수 있게 한 이유는 무엇일까?</li>
+<li>클라우드에서 스냅샷을 오래 쌓아 두면 어떤 문제가 생길까? (힌트: 비용)</li>
+</ol></div>
+<div class="memo"><div class="ml">MEMO</div><div class="line"></div><div class="line"></div><div class="line"></div><div class="line"></div><div class="line"></div><div class="line"></div></div>
+
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">21</div></section>
+
+
+<!-- STEP 7 IP -->
+<section class="page"><div class="rh"><div class="l"><b>PART 0</b> · STEP 7</div><div class="r">서버의 주소, IP<span class="pg">22</span></div></div>
+
+<div class="kicker">IP ADDRESS</div>
+<h1>서버에도 주소가 있다</h1>
+<div class="mission"><b>MISSION</b><h3><code>multipass list</code>에 보이는 <b>IPv4</b>가 무엇인지 설명할 수 있다.</h3>
+<p class="wy"><b>WHY</b> 네트워크의 모든 컴퓨터는 주소를 가집니다. 여기서는 개념만 간단히 봅니다.</p></div>
+
+<h2>IP 주소란</h2>
+<p><strong>IP 주소</strong>는 네트워크 안에서 컴퓨터를 구분하는 <strong>집 주소</strong>입니다. <code>172.25.30.12</code>처럼 0~255 사이 숫자 4개를 점으로 이어 쓰며, 이런 형식을 <strong>IPv4</strong>라고 합니다.</p>
+
+<h2>내 서버의 IP 보기</h2>
+<div class="term">
+  <div class="th"><span>PowerShell</span><span>밖에서 보기</span></div>
+  <div class="tb2"><span class="p">PS&gt;</span> <span class="c">multipass list</span>
+<span class="d">Name          State        IPv4             Image</span>
+myUbuntu      Running      <span class="g">172.xx.xx.xx</span>     Ubuntu 24.04 LTS</div>
+</div>
+<div class="term">
+  <div class="th"><span>Ubuntu · myUbuntu</span><span>안에서 보기</span></div>
+  <div class="tb2"><span class="p">$</span> <span class="c">hostname -I</span>
+<span class="g">172.xx.xx.xx</span>                 <span class="d">← 밖에서 본 값과 같음</span></div>
+</div>
+
+<h2>기억할 세 가지</h2>
+<div class="grid g3">
+  <div class="cell"><div class="num">AUTO</div><h4>자동으로 받는다</h4><p>서버를 만들 때 Hyper-V의 <b>Default Switch</b>가 주소를 자동으로 나눠 줍니다. 직접 정할 필요가 없습니다.</p></div>
+  <div class="cell"><div class="num">PRIVATE</div><h4>내 노트북 안에서만 통한다</h4><p><code>172.…</code>은 <b>내부용(사설) 주소</b>입니다. 내 노트북과 VM 사이에서만 쓰이고, 다른 사람의 컴퓨터에서는 찾아올 수 없습니다.</p></div>
+  <div class="cell"><div class="num">CHANGE</div><h4>바뀔 수 있다</h4><p>노트북을 재부팅하면 주소가 달라질 수 있습니다. 필요할 때마다 <code>multipass list</code>로 다시 확인합니다.</p></div>
+</div>
+
+<div class="term">
+  <div class="th"><span>Ubuntu · myUbuntu</span><span>~</span></div>
+  <div class="tb2"><span class="p">$</span> <span class="c">ping -c 3 ubuntu.com</span>       <span class="d"># 3번만 신호를 보내 봄</span>
+<span class="d">3 packets transmitted, 3 received, 0% packet loss</span>   <span class="g">← 인터넷 연결 정상</span></div>
+</div>
+<p class="mn">VM은 노트북의 인터넷을 함께 씁니다. STEP 5에서 <code>apt</code>가 패키지를 받아 온 이유입니다. 네트워크 방식과 고정 IP는 네트워크 단원에서 다룹니다.</p>
+
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">22</div></section>
+
+<!-- 18 troubleshooting -->
+<section class="page"><div class="rh"><div class="l"><b>PART 0</b> · 부록</div><div class="r">문제 해결<span class="pg">23</span></div></div>
+
+<div class="kicker">TROUBLESHOOTING</div>
+<h1>막혔을 때 보는 쪽</h1>
+<table class="zebra">
+<thead><tr><th style="width:38%">증상</th><th>해결</th></tr></thead>
+<tbody>
+<tr><td><b>Windows 기능에 Hyper-V가 없음</b></td><td><code>winver</code>로 에디션 확인. Home이면 사용 불가 → 강사에게 알림 (09쪽)</td></tr>
+<tr><td><b>Hyper-V 플랫폼이 회색으로 체크 불가</b></td><td>CPU 가상화가 꺼져 있음. BIOS에서 VT-x / SVM 켜기 (09쪽)</td></tr>
+<tr><td><b>‘multipass’ 용어가 인식되지 않습니다</b></td><td>PowerShell을 새로 열기. 그래도 같으면 재부팅</td></tr>
+<tr><td><b>The Hyper-V Windows feature is disabled</b></td><td>Hyper-V가 꺼져 있음. STEP 1 진행 후 재부팅 (12쪽)</td></tr>
+<tr><td><b>하이퍼바이저가 실행되고 있지 않음</b></td><td>관리자 PowerShell에서 <code>bcdedit /set hypervisorlaunchtype auto</code> 후 재부팅</td></tr>
+<tr><td><b>launch 중 timed out</b></td><td>첫 이미지 다운로드가 느린 경우. <code>multipass list</code>로 생성 여부 확인 후, 없으면 <code>--timeout 600</code>을 붙여 다시 실행</td></tr>
+<tr><td><b>Invalid instance name</b></td><td>이름에 <code>_</code>, 한글, 공백이 있거나 숫자로 시작 (14쪽)</td></tr>
+<tr><td><b>list에서 IPv4가 비어 있음 · Unknown</b></td><td>부팅 중. 1~2분 뒤 다시 확인. 계속 비면 <code>multipass restart myUbuntu</code></td></tr>
+<tr><td><b>stop 후에도 계속 Running</b></td><td>1~2분 뒤 다시 <code>list</code>. 그래도 그대로면 <code>--force</code></td></tr>
+<tr><td><b>snapshot · restore 실패</b></td><td>서버가 <b>Stopped</b>인지 확인. 이름 형식은 <code>서버이름.스냅샷이름</code></td></tr>
+<tr><td><b>are you root? · Permission denied</b></td><td>apt 설치 · 삭제 앞에 <code>sudo</code>를 붙이지 않음 (STEP 5)</td></tr>
+<tr><td><b>Unable to locate package</b></td><td>패키지 이름 오타 확인 → <code>sudo apt update</code> 후 다시 설치</td></tr>
+<tr><td><b>Could not get lock /var/lib/dpkg/lock-frontend</b></td><td>서버를 막 만들었을 때 자동 업데이트가 돌고 있는 경우. 몇 분 기다렸다가 다시 실행</td></tr>
+<tr><td><b>처음부터 다시 만들고 싶다</b></td><td><code>multipass delete myUbuntu</code> → <code>multipass purge</code> → STEP 3</td></tr>
+</tbody>
+</table>
+<div class="warn"><b>Hyper-V 관리자에서 Multipass 서버를 직접 지우거나 설정을 바꾸지 않습니다.</b>  Multipass가 서버를 찾지 못하게 됩니다. 이미 그렇게 됐다면 강사에게 알립니다.</div>
+
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">23</div></section>
+
+<!-- 19 wrap-up -->
+<section class="page"><div class="rh"><div class="l"><b>PART 0</b> · 부록</div><div class="r">정리 · 체크리스트<span class="pg">24</span></div></div>
+
+<div class="kicker">WRAP UP</div>
+<h1>여기까지 한 일</h1>
+<ul class="chk">
+<li><code>winver</code>로 <strong>Windows 10 Pro</strong>, 작업 관리자로 <strong>가상화: 사용</strong>을 확인했다</li>
+<li><strong>Hyper-V</strong>를 켜고 <code>State : Enabled</code>를 확인했다</li>
+<li>Multipass를 설치하고 <code>multipass get local.driver</code> → <strong>hyperv</strong>를 확인했다</li>
+<li><strong>myUbuntu</strong>(24.04 · CPU 2 · 2G · 10G)를 만들고 Hyper-V 관리자에서 확인했다</li>
+<li><code>multipass shell</code>로 접속해 <code>whoami</code> → <strong>ubuntu</strong>를 확인했다</li>
+<li><strong>스냅샷</strong>을 만들고 되돌리기를 해 봤다</li>
+<li><code>mkdir</code> · <code>cd</code> · <code>echo</code> · <code>cat</code> · <code>rm</code>으로 <strong>폴더와 파일을 만들고 지웠다</strong></li>
+<li><code>sudo apt install</code>로 <strong>cowsay · sl을 설치하고 삭제</strong>했다</li>
+<li><code>multipass list</code>와 <code>hostname -I</code>로 <strong>서버 IP</strong>를 확인했다</li>
+</ul>
+
+<h2>자주 쓰는 명령어</h2>
+<table class="zebra">
+<thead><tr><th style="width:13%">어디서</th><th style="width:47%">명령어</th><th>하는 일</th></tr></thead>
+<tbody>
+<tr><td><b>Windows</b></td><td><code>multipass launch 24.04 --name [이름] …</code></td><td>서버 생성</td></tr>
+<tr><td><b>Windows</b></td><td><code>multipass list</code> · <code>info [이름]</code></td><td>목록 · 상태 · IP 확인</td></tr>
+<tr><td><b>Windows</b></td><td><code>multipass shell [이름]</code></td><td><b>서버 접속 (가장 많이 씀)</b></td></tr>
+<tr><td><b>Windows</b></td><td><code>multipass start</code> · <code>stop [이름]</code></td><td>켜기 · 끄기</td></tr>
+<tr><td><b>Windows</b></td><td><code>multipass snapshot</code> · <code>restore</code></td><td>저장 시점 만들기 · 되돌리기</td></tr>
+<tr><td><b>Ubuntu</b></td><td><code>pwd</code> · <code>ls</code> · <code>cd</code> · <code>mkdir</code></td><td>위치 · 목록 · 이동 · 폴더 만들기</td></tr>
+<tr><td><b>Ubuntu</b></td><td><code>touch</code> · <code>echo</code> · <code>cat</code> · <code>rm</code></td><td>파일 만들기 · 쓰기 · 보기 · 지우기</td></tr>
+<tr><td><b>Ubuntu</b></td><td><code>sudo apt update</code> · <code>install</code> · <code>remove</code></td><td>목록 새로고침 · 설치 · 삭제</td></tr>
+<tr><td><b>Ubuntu</b></td><td><code>lsb_release -a</code> · <code>hostname -I</code></td><td>우분투 버전 · IP 확인</td></tr>
+<tr><td><b>Ubuntu</b></td><td><code>exit</code></td><td>접속 끊기 (서버는 계속 켜져 있음)</td></tr>
+</tbody>
+</table>
+
+<div class="qa"><div class="ql">확인 문제</div><ol>
+<li>우분투 <code>24.04 LTS</code>에서 24, 04, LTS는 각각 무슨 뜻인가?</li>
+<li><code>sudo apt update</code>와 <code>sudo apt upgrade</code>의 차이는?</li>
+</ol></div>
+
+<div class="brand">청년취업사관학교 동대문4기 · <b>기업연계형 AI 서비스·클라우드 실무 과정</b> / 강사 부성순(bakpak@empas.com)</div><div class="pagenum">24</div></section>
+
+<script>
+document.querySelectorAll(".say").forEach(function(box){
+  var sc=box.querySelector(".sc"), sl=box.querySelector(".sl"); if(!sc||!sl)return;
+  var b=document.createElement("button"); b.className="copybtn"; b.textContent="복사"; b.type="button";
+  function done(){b.textContent="복사됨";setTimeout(function(){b.textContent="복사"},1200)}
+  function fallback(t){try{var ta=document.createElement("textarea");ta.value=t;ta.style.position="fixed";ta.style.opacity="0";document.body.appendChild(ta);ta.select();document.execCommand("copy");ta.remove();}catch(e){}}
+  b.onclick=function(){var t=sc.innerText;try{navigator.clipboard.writeText(t).then(done,function(){fallback(t);done()})}catch(e){fallback(t);done()}};
+  sl.appendChild(b);
+});
+</script></body></html>
