@@ -1,0 +1,1147 @@
+<!DOCTYPE html><html lang="ko"><head><meta charset="utf-8"><meta content="width=device-width,initial-scale=1.0" name="viewport"><title>제2계층 · 데이터링크 계층</title><style>
+:root{
+  --ink:#1c1b19; --paper:#ffffff; --soft:#f7f6f3; --soft2:#efedea;
+  --line:#e3e0db; --line2:#cfcbc4; --muted:#86827b; --muted2:#5b574f;
+  --accent:#b23c0a; --accent-soft:#fdf3ec; --ink2:#2f2d2a;
+  --pn:#b23c0a; --pnb:#e8c3ad; --pns:#fdf5f0;
+  --pv:#1d4ed8; --pvb:#c3d0f2; --pvs:#f2f5fd;
+  --pa:#15803d; --pab:#bcdcc8; --pas:#f1f7f3;
+  --pd:#6d28d9; --pdb:#d4c6f5; --pds:#f7f3fe;
+  --px:#b91c1c; --pxb:#f0c3c3; --pxs:#fdf2f2;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+body{font-family:'Noto Sans KR','Malgun Gothic',sans-serif;color:var(--ink);
+  background:#eceae5;line-height:1.65;font-weight:400;letter-spacing:-.003em}
+
+.page{width:210mm;min-height:297mm;background:var(--paper);margin:8mm auto;
+  padding:17mm 18mm 14mm;position:relative;box-shadow:0 1px 14px rgba(0,0,0,.07)}
+@page{size:A4 portrait;margin:0}
+@media print{
+  body{background:#fff}
+  .page{margin:0;box-shadow:none;page-break-after:always;break-after:page}
+  .page:last-child{page-break-after:auto}
+}
+
+/* ── 러닝헤드 ── */
+.rh{display:flex;justify-content:space-between;align-items:baseline;
+  margin-bottom:22px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+.rh .l{font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--muted2)}
+.rh .l b{color:var(--accent)}
+.rh .r{font-size:10.5px;color:var(--muted);letter-spacing:.04em;display:flex;align-items:baseline;gap:12px}
+.rh .r .pg{font-family:'Consolas','JetBrains Mono',monospace;font-size:12px;font-weight:700;
+  color:var(--ink);letter-spacing:.06em;border:1px solid var(--line2);padding:1px 7px;border-radius:3px}
+
+/* ── 제목 ── */
+.kicker{font-size:11px;font-weight:700;letter-spacing:.12em;color:var(--accent);margin-bottom:7px}
+h1{font-size:26px;font-weight:900;line-height:1.25;letter-spacing:-.02em;margin-bottom:9px}
+.lede{font-size:13px;color:var(--muted2);line-height:1.7;margin-bottom:14px;max-width:96%}
+.lede em,em{font-style:normal;color:var(--accent);font-weight:700}
+h2{font-size:12.5px;font-weight:700;letter-spacing:.09em;color:var(--accent);
+  margin:17px 0 9px;display:flex;align-items:center;gap:10px}
+h2::after{content:"";flex:1;height:1px;background:var(--line)}
+h3{font-size:15px;font-weight:700;margin:14px 0 5px}
+p{font-size:13px;line-height:1.75;margin:8px 0;color:var(--ink2)}
+strong{font-weight:700;color:var(--ink)}
+.mn{font-size:11.5px;color:var(--muted);margin-top:5px}
+code{font-family:'Consolas','JetBrains Mono',monospace;background:var(--soft2);
+  padding:1px 5px;border-radius:3px;font-size:12px;color:var(--accent)}
+
+ul,ol{margin:9px 0;padding-left:0;list-style:none}
+li{font-size:13px;line-height:1.7;margin:8px 0;padding-left:010px;padding-left:22px;position:relative;color:var(--ink2)}
+ul li::before{content:"";position:absolute;left:3px;top:10px;width:5px;height:5px;
+  background:var(--accent);border-radius:50%}
+li strong{color:var(--ink)}
+
+/* ── 표 ── */
+table{width:100%;border-collapse:collapse;margin:13px 0;font-size:12.5px}
+th,td{padding:9px 12px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line)}
+thead th{border-bottom:1.5px solid var(--ink);font-weight:700;font-size:11.5px;color:var(--ink);background:var(--soft)}
+tbody td{color:var(--muted2)}
+tbody td b{color:var(--ink);font-weight:700}
+table.zebra tbody tr:nth-child(even) td{background:#faf9f7}
+
+/* ── 그리드 카드 ── */
+.grid{display:grid;gap:1px;background:var(--line);border:1px solid var(--line);margin:14px 0}
+.grid.g3{grid-template-columns:repeat(3,1fr)}
+.grid.g2{grid-template-columns:repeat(2,1fr)}
+.grid.g4{grid-template-columns:repeat(4,1fr)}
+.cell{background:var(--paper);padding:15px 14px}
+.cell .num{font-size:10.5px;font-weight:700;letter-spacing:.08em;color:var(--accent)}
+.cell h4{font-size:13.5px;font-weight:700;margin:6px 0 4px;line-height:1.35}
+.cell p{font-size:11.5px;color:var(--muted2);margin:0;line-height:1.6}
+
+/* ── 강조 박스 ── */
+.point{border-left:2.5px solid var(--accent);padding:3px 0 3px 16px;margin:16px 0}
+.point .pl{font-size:10.5px;font-weight:700;letter-spacing:.09em;color:var(--accent);margin-bottom:4px}
+.point p{margin:0;font-size:13px;color:var(--ink2)}
+.note{background:var(--soft);border:1px solid var(--line);border-radius:4px;
+  padding:12px 15px;margin:14px 0;font-size:12.5px;color:var(--muted2);line-height:1.7}
+.note strong{color:var(--accent)}
+.warn{background:var(--pxs);border:1px solid var(--pxb);border-radius:4px;
+  padding:12px 15px;margin:14px 0;font-size:12.5px;color:var(--ink2);line-height:1.7}
+.warn b{color:var(--px)}
+
+.mission{border:1px solid var(--line2);border-left:3px solid var(--accent);
+  background:var(--accent-soft);padding:13px 16px;margin:13px 0;border-radius:4px}
+.mission b{font-size:10.5px;font-weight:700;letter-spacing:.1em;color:var(--accent)}
+.mission h3{font-size:14px;margin:4px 0 0;line-height:1.5}
+.mission .wy{margin:9px 0 0;padding-top:8px;border-top:1px solid var(--line2);font-size:12px;color:var(--muted2);line-height:1.65}
+.mission .wy b{color:var(--ink);font-size:10.5px;letter-spacing:.06em}
+.why{background:var(--soft);border:1px solid var(--line2);border-left:3px solid var(--ink);
+  padding:12px 16px;margin:13px 0;border-radius:4px}
+.why p{color:var(--ink2);margin:0;font-size:12.5px}
+.why b{color:var(--ink);font-size:10.5px;letter-spacing:.08em}
+
+.kw{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
+.kw span{background:#fff;border:1px solid var(--line2);padding:4px 10px;border-radius:20px;
+  font-size:11px;font-weight:700;color:var(--ink2)}
+.kw span::before{content:"# ";color:var(--accent)}
+
+/* ── 정의 목록 / 비유 ── */
+.deflist{margin:12px 0}
+.deflist .d{display:flex;gap:16px;padding:11px 0;border-bottom:1px solid var(--line)}
+.deflist .d:last-child{border-bottom:none}
+.deflist .dt{flex:0 0 27%;font-weight:700;font-size:13px}
+.deflist .dt small{display:block;font-weight:400;color:var(--muted);font-size:11px;margin-top:1px}
+.deflist .dd{flex:1;font-size:12.5px;color:var(--muted2);line-height:1.65}
+
+/* ── 실습 박스 (검정 헤더 제거) ── */
+.lab{margin:16px 0;border:1.5px solid var(--ink);background:#fff}
+.lab-head{padding:10px 18px;display:flex;align-items:center;gap:12px;
+  border-bottom:1.5px solid var(--ink);background:var(--soft)}
+.lab-head .badge{font-size:10px;font-weight:700;letter-spacing:.1em;
+  border:1px solid var(--ink);padding:2px 9px;border-radius:2px;color:var(--ink);background:#fff}
+.lab-head h3{font-size:16px;margin:0;font-weight:700;color:var(--ink)}
+.lab-head .t{margin-left:auto;font-size:10.5px;color:var(--muted);font-family:'Consolas',monospace}
+.lab-body{padding:15px 18px 16px}
+.steps{counter-reset:st;list-style:none;padding:0;margin:0}
+.steps>li{counter-increment:st;position:relative;padding:0 0 13px 40px;margin:0;font-size:13.5px;
+  line-height:1.55;border-left:1px solid var(--line2);margin-left:13px}
+.steps>li:last-child{border-left:1px solid transparent;padding-bottom:0}
+.steps>li::before{content:counter(st);position:absolute;left:-13px;top:-2px;width:26px;height:26px;
+  background:#fff;border:1.5px solid var(--ink);color:var(--ink);border-radius:50%;
+  display:grid;place-items:center;font-weight:700;font-size:12.5px}
+.steps>li .lt{font-weight:700;color:var(--ink)}
+.steps>li .ls{display:block;font-size:12px;color:var(--muted);font-weight:400;margin-top:2px;line-height:1.6}
+
+/* ── 프롬프트 박스 ── */
+.say{margin:10px 0;background:#fff;border:1px solid var(--line2);border-left:3px solid var(--accent);
+  border-radius:4px;padding:10px 13px}
+.say .sl{font-size:10.5px;font-weight:700;letter-spacing:.05em;color:var(--accent);
+  margin-bottom:4px;display:flex;align-items:center;gap:6px}
+.say .sc{font-family:'Consolas','JetBrains Mono',monospace;font-size:12px;line-height:1.65;
+  color:var(--ink);font-weight:500;white-space:pre-wrap}
+.copybtn{margin-left:auto;font-family:'Noto Sans KR',sans-serif;font-size:10px;font-weight:700;
+  letter-spacing:0;color:var(--muted2);background:#fff;border:1px solid var(--line2);
+  border-radius:3px;padding:2px 9px;cursor:pointer;line-height:1.4}
+.copybtn:hover{border-color:var(--accent);color:var(--accent)}
+@media print{.copybtn{display:none}}
+
+/* ── 품사/토큰 칩 ── */
+.chip{display:inline-flex;align-items:baseline;gap:5px;font-size:12px;font-weight:700;
+  padding:3px 8px;border-radius:3px;border:1px solid;margin:3px 4px 3px 0;line-height:1.3}
+.c-n{color:var(--pn);border-color:var(--pnb);background:var(--pns)}
+.c-v{color:var(--pv);border-color:var(--pvb);background:var(--pvs)}
+.c-a{color:var(--pa);border-color:var(--pab);background:var(--pas)}
+.c-d{color:var(--pd);border-color:var(--pdb);background:var(--pds)}
+.c-x{color:var(--px);border-color:var(--pxb);background:var(--pxs)}
+.c-o{color:var(--muted);border-color:var(--line2);background:var(--soft);font-weight:400}
+
+.parse{border:1px solid var(--line2);background:#fff;margin:13px 0}
+.parse .ph{background:var(--soft);border-bottom:1px solid var(--line);padding:6px 14px;
+  font-size:10.5px;font-weight:700;letter-spacing:.06em;color:var(--muted2);display:flex;justify-content:space-between}
+.parse .pb{padding:13px 14px 14px}
+.parse .src{font-size:14.5px;font-weight:500;color:var(--ink);line-height:1.7}
+.parse .arw{font-size:10.5px;color:var(--muted);letter-spacing:.06em;margin:11px 0 7px;
+  display:flex;align-items:center;gap:10px}
+.parse .arw::after{content:"";flex:1;height:1px;background:var(--line)}
+
+/* ── before / after ── */
+.ba{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);
+  border:1px solid var(--line);margin:13px 0}
+.ba>div{background:#fff;padding:12px 14px}
+.ba .h{font-size:10.5px;font-weight:700;letter-spacing:.06em;margin-bottom:8px}
+.ba .bad .h{color:var(--muted)}
+.ba .bad .h::before{content:"✕ ";color:var(--px)}
+.ba .good .h{color:var(--accent)}
+.ba .good .h::before{content:"✓ ";color:var(--pa)}
+.ba .m{font-family:'Consolas','JetBrains Mono',monospace;font-size:11px;line-height:1.7;color:var(--ink2)}
+.ba .m u{text-decoration:none;background:var(--pxs);color:var(--px);padding:0 3px;border-radius:2px}
+.ba .m b{background:var(--pas);color:var(--pa);padding:0 3px;border-radius:2px;font-weight:500}
+.ba .why2{font-size:11px;color:var(--muted);margin-top:8px;line-height:1.6}
+
+/* ── 막대 ── */
+.bars{margin:12px 0}
+.bars .b{display:flex;align-items:center;gap:10px;margin:7px 0}
+.bars .bl{flex:0 0 26%;font-size:12px;font-weight:700;color:var(--ink)}
+.bars .bt{flex:1;height:13px;background:var(--soft2);border:1px solid var(--line)}
+.bars .bf{height:100%;background:var(--accent)}
+.bars .bf.q{background:var(--line2)}
+.bars .bv{flex:0 0 60px;text-align:right;font-family:'Consolas',monospace;font-size:11px;color:var(--muted2)}
+
+/* ── 흐름 ── */
+.flow{display:flex;gap:5px;align-items:center;flex-wrap:wrap;margin:11px 0}
+.flow span{border:1px solid var(--line2);padding:6px 10px;background:#fff;border-radius:4px;
+  font-size:11.5px;font-weight:700}
+.flow i{font-style:normal;color:var(--accent);font-weight:900}
+
+/* ══════ 목업 컴포넌트 ══════ */
+/* 탐색기 / 창 */
+.win{border:1px solid var(--line2);margin:13px 0;background:#fff}
+.win .tb{display:flex;align-items:center;gap:9px;padding:6px 11px;background:var(--soft2);
+  border-bottom:1px solid var(--line2);font-size:11px;color:var(--muted2);font-weight:700}
+.win .tb .dots{display:flex;gap:4px}
+.win .tb .dots i{width:8px;height:8px;border-radius:50%;border:1px solid var(--line2);background:#fff;display:block}
+.win .tb .rt{margin-left:auto;font-weight:400;color:var(--muted);font-size:10px;letter-spacing:.04em}
+.win .addr{display:flex;align-items:center;gap:7px;padding:6px 11px;border-bottom:1px solid var(--line);
+  font-family:'Consolas',monospace;font-size:11px;color:var(--ink2);background:#fff}
+.win .addr .ic{font-size:10px;color:var(--muted)}
+.win .addr .path{border:1px solid var(--line);border-radius:3px;padding:3px 8px;flex:1;background:var(--soft)}
+.win .addr .path b{color:var(--accent);font-weight:700}
+.win table{margin:0;font-size:11px}
+.win th,.win td{padding:5px 11px;border-bottom:1px solid var(--line)}
+.win thead th{background:var(--soft);font-size:10px;border-bottom:1px solid var(--line2);color:var(--muted2)}
+.win tbody td{color:var(--ink2)}
+.win tbody tr.sel td{background:var(--accent-soft)}
+.win td.ic{width:22px;text-align:center;color:var(--muted);font-family:'Consolas',monospace;font-size:9.5px}
+.win .sb{padding:5px 11px;border-top:1px solid var(--line);background:var(--soft);
+  font-size:10px;color:var(--muted);display:flex;justify-content:space-between}
+.capt{font-size:10.5px;color:var(--muted);margin:-6px 0 13px;padding-left:2px}
+.capt b{color:var(--muted2);font-weight:700}
+
+/* 터미널 */
+.term{border:1px solid var(--line2);background:#fbfaf8;margin:13px 0}
+.term .th{background:var(--soft2);padding:5px 12px;font-size:10.5px;color:var(--muted2);
+  border-bottom:1px solid var(--line2);letter-spacing:.04em;font-weight:700;
+  font-family:'Consolas',monospace;display:flex;justify-content:space-between}
+.term .tb2{padding:11px 13px;font-family:'Consolas','JetBrains Mono',monospace;
+  font-size:11px;line-height:1.8;color:var(--ink2);white-space:pre-wrap}
+.term .p{color:var(--accent);font-weight:700}
+.term .c{color:var(--ink);font-weight:700}
+.term .g{color:var(--pa)}
+.term .d{color:var(--muted)}
+
+/* 폴더 트리 */
+.tree{font-family:'Consolas','JetBrains Mono',monospace;font-size:11px;line-height:1.85;
+  color:var(--ink2);background:var(--soft);border:1px solid var(--line);
+  padding:11px 14px;margin:13px 0;white-space:pre;overflow:hidden}
+.tree b{color:var(--accent);font-weight:700}
+.tree u{text-decoration:none;color:var(--px)}
+.tree i{font-style:normal;color:var(--muted)}
+.ba .tree{margin:0;border:none;background:none;padding:0;font-size:10.5px;line-height:1.8}
+
+/* HEX 뷰어 */
+.hex{border:1px solid var(--line2);margin:13px 0;background:#fff;font-family:'Consolas',monospace}
+.hex .hh{background:var(--soft);border-bottom:1px solid var(--line);padding:5px 12px;
+  font-size:10px;color:var(--muted2);letter-spacing:.06em;font-weight:700;display:flex;justify-content:space-between}
+.hex .hr{display:flex;gap:14px;padding:4px 12px;font-size:11px;border-bottom:1px solid #f2f0ec}
+.hex .hr:last-child{border-bottom:none}
+.hex .of{color:var(--muted);flex:0 0 52px}
+.hex .by{flex:1;color:var(--ink2);letter-spacing:.06em}
+.hex .by b{color:var(--accent);background:var(--accent-soft);padding:1px 2px;font-weight:700}
+.hex .as{flex:0 0 90px;color:var(--muted2);border-left:1px solid var(--line);padding-left:12px}
+.hex .as b{color:var(--accent);font-weight:700}
+
+/* JSON 뷰어 */
+.jsonv{border:1px solid var(--line2);margin:13px 0;background:#fff}
+.jsonv .jh{background:var(--soft);border-bottom:1px solid var(--line);padding:5px 12px;
+  font-size:10.5px;color:var(--muted2);font-weight:700;font-family:'Consolas',monospace;
+  display:flex;justify-content:space-between}
+.jsonv .jb{padding:11px 14px;font-family:'Consolas','JetBrains Mono',monospace;
+  font-size:11.5px;line-height:1.9;white-space:pre;color:var(--muted2)}
+.jk{color:var(--pv);font-weight:700}
+.jv{color:var(--pa);font-weight:700}
+.jnum{color:var(--accent);font-weight:700}
+.jp{color:var(--muted)}
+.jmark{background:#fff7ed;outline:1px solid var(--pnb)}
+
+/* 브라우저 목업 */
+.bw{border:1px solid var(--line2);margin:13px 0;background:#fff}
+.bw .bt{background:var(--soft2);padding:6px 11px;display:flex;gap:8px;align-items:center;
+  font-size:10.5px;font-family:'Consolas',monospace;color:var(--muted2);border-bottom:1px solid var(--line2)}
+.bw .bt .dots{display:flex;gap:4px}
+.bw .bt .dots i{width:8px;height:8px;border-radius:50%;border:1px solid var(--line2);background:#fff;display:block}
+.bw .bt .url{flex:1;background:#fff;border:1px solid var(--line);border-radius:11px;padding:3px 10px;color:var(--ink2)}
+.bw .bc{padding:16px 18px}
+.appttl{font-size:15px;font-weight:800;margin-bottom:2px}
+.appsub{font-size:11px;color:var(--muted);margin-bottom:12px}
+.fld{border:1px solid var(--line2);border-radius:4px;padding:8px 11px;background:#fff;
+  display:flex;justify-content:space-between;align-items:center;
+  font-family:'Consolas',monospace;font-size:12.5px;color:var(--ink);margin:6px 0}
+.fld .u{color:var(--muted);font-size:11px}
+.flbl{font-size:10.5px;font-weight:700;color:var(--muted2);letter-spacing:.04em;margin-top:9px}
+.btn{display:inline-block;border:1.5px solid var(--accent);color:var(--accent);background:var(--accent-soft);
+  border-radius:4px;padding:7px 18px;font-size:12px;font-weight:700;margin-top:11px}
+.res{border:1px solid var(--line);border-radius:4px;margin-top:12px}
+.res .rr{display:flex;justify-content:space-between;padding:8px 12px;border-bottom:1px solid var(--line);font-size:12.5px}
+.res .rr:last-child{border-bottom:none}
+.res .rr .k{color:var(--muted2);font-weight:700}
+.res .rr .v{font-family:'Consolas',monospace;font-weight:700;color:var(--ink)}
+.res .rr.hi{background:var(--accent-soft)}
+.res .rr.hi .v{color:var(--accent)}
+.stamp{font-size:10.5px;color:var(--muted);margin-top:9px;font-family:'Consolas',monospace}
+
+/* URL 분해 */
+.urlx{border:1px solid var(--line2);background:var(--soft);padding:13px 15px;margin:13px 0}
+.urlx .u1{font-family:'Consolas',monospace;font-size:13px;line-height:2.2;word-break:break-all}
+.urlx .u1 span{padding:2px 3px;border-bottom:2.5px solid}
+.urlx .s1{border-color:var(--pv);color:var(--pv)}
+.urlx .s2{border-color:var(--accent);color:var(--accent)}
+.urlx .s3{border-color:var(--pa);color:var(--pa)}
+.urlx .s4{border-color:var(--pd);color:var(--pd)}
+.urlx .lg{margin-top:11px;display:grid;grid-template-columns:repeat(2,1fr);gap:6px 16px}
+.urlx .lg div{font-size:11.5px;color:var(--muted2);display:flex;gap:8px;align-items:baseline}
+.urlx .lg b{flex:0 0 78px;font-family:'Consolas',monospace;font-size:11px}
+
+/* 다이어그램 */
+.dia{border:1px solid var(--line);background:#fff;padding:12px;margin:13px 0}
+.dia svg{display:block;width:100%;height:auto}
+
+/* 체크리스트 */
+.chk{margin:11px 0}
+.chk li{padding-left:26px;font-size:12.5px;margin:7px 0}
+.chk li::before{content:"";position:absolute;left:2px;top:4px;width:13px;height:13px;
+  border:1.5px solid var(--muted2);border-radius:2px;background:#fff}
+.kbd{display:inline-block;border:1px solid var(--line2);border-bottom:2px solid var(--line2);
+  border-radius:4px;padding:1px 8px;font-family:'Consolas',monospace;font-size:11.5px;
+  background:var(--soft);font-weight:700;color:var(--ink);margin:0 1px}
+
+/* 확인 문제 */
+.qa{border:1px solid var(--line2);border-top:2.5px solid var(--ink);padding:12px 15px;margin-top:18px;background:#fff}
+.qa .ql{font-size:10.5px;font-weight:700;letter-spacing:.09em;color:var(--accent);margin-bottom:6px}
+.qa ol{counter-reset:q;margin:0}
+.qa ol li{counter-increment:q;padding-left:22px;font-size:12.5px;margin:7px 0;color:var(--ink2)}
+.qa ol li::before{content:counter(q) ".";position:absolute;left:2px;top:0;font-weight:700;color:var(--muted2);font-size:12px}
+.qa .blank{display:inline-block;border-bottom:1px solid var(--line2);min-width:90px;height:14px;margin:0 3px}
+
+/* 표지 · 간지 (검정 배경 제거 → 테두리 프레임) */
+.cover{padding:12mm;display:flex}
+.cover .fr{flex:1;border:2px solid var(--ink);padding:5px;display:flex}
+.cover .fr2{flex:1;border:1px solid var(--line2);padding:14mm 13mm 10mm;display:flex;flex-direction:column}
+.cover .ck{font-size:11px;font-weight:700;letter-spacing:.16em;color:var(--accent);
+  display:flex;align-items:center;gap:11px}
+.cover .ck::after{content:"";flex:1;height:1px;background:var(--line2)}
+.cover h1{font-size:40px;line-height:1.18;margin:18px 0 12px;letter-spacing:-.03em}
+.cover .cs{font-size:14.5px;color:var(--muted2);line-height:1.7;max-width:88%}
+.cover .cs b{color:var(--ink);font-weight:700}
+.hero{margin:24px 0 0;border:1px solid var(--line2);background:var(--soft);padding:17px 19px}
+.hero .hl{font-size:10.5px;letter-spacing:.1em;color:var(--accent);font-weight:700;margin-bottom:9px}
+.hero .hs{font-size:15.5px;color:var(--ink);font-weight:500;line-height:1.6}
+.hero .hs b{font-weight:800}
+.hero .hd{margin:14px 0 11px;height:1px;background:var(--line2)}
+.hero .hrow{display:flex;align-items:baseline;gap:12px;padding:4px 0}
+.hero .hk{flex:0 0 54px;font-size:10.5px;font-weight:700;color:var(--accent);text-align:right}
+.hero .hv{flex:1;font-size:12.5px;color:var(--ink2)}
+.cover .crow{margin-top:20px;display:flex;border-top:1px solid var(--line2);border-bottom:1px solid var(--line2)}
+.cover .ci{flex:1;padding:13px 0;border-right:1px solid var(--line2)}
+.cover .ci:last-child{border-right:none;padding-left:20px}
+.cover .ci:first-child{padding-right:20px}
+.cover .ci .cl{font-size:10px;letter-spacing:.09em;color:var(--muted);font-weight:700}
+.cover .ci .cv{font-size:12.5px;margin-top:5px;color:var(--ink2);line-height:1.5}
+.cover .ci .cv b{color:var(--accent);font-weight:700}
+.cover .toc{margin-top:auto}
+.cover .toc .th{font-size:10.5px;font-weight:700;letter-spacing:.11em;color:var(--accent);margin-bottom:2px}
+.toc-list{list-style:none;padding:0;margin:0}
+.toc-list li{display:flex;align-items:baseline;gap:14px;padding:8px 0;
+  border-bottom:1px solid var(--line);font-size:13px;color:var(--ink2);margin:0;padding-left:0}
+.toc-list li::before{display:none}
+.toc-list li .ti{font-family:'Consolas',monospace;font-size:11px;color:var(--accent);flex:0 0 34px;font-weight:700}
+.toc-list li .tt{flex:1}
+.toc-list li .tg{font-size:10.5px;color:var(--muted);font-family:'Consolas',monospace}
+.cover .sig{margin-top:16px;display:flex;justify-content:space-between;align-items:baseline;
+  border-top:2px solid var(--ink);padding-top:9px}
+.cover .sig .n{font-size:12px;color:var(--ink);font-weight:700}
+.cover .sig .n span{color:var(--muted);font-family:'Consolas',monospace;font-size:10.5px;margin-left:7px;font-weight:400}
+.cover .sig .b{font-size:10.5px;color:var(--muted);letter-spacing:.07em}
+
+.divider{padding:12mm;display:flex}
+.divider .fr{flex:1;border:2px solid var(--ink);padding:5px;display:flex}
+.divider .fr2{flex:1;border:1px solid var(--line2);padding:26mm 18mm;display:flex;flex-direction:column;justify-content:center}
+.divider .part{color:var(--accent);font-size:12px;font-weight:800;letter-spacing:.16em;
+  display:flex;align-items:center;gap:12px}
+.divider .part::after{content:"";flex:1;height:1px;background:var(--line2)}
+.divider h1{font-size:42px;margin:16px 0 12px;line-height:1.18}
+.divider p{font-size:14.5px;color:var(--muted2);max-width:84%;line-height:1.75}
+.divider .route{margin-top:24px;border-top:1px solid var(--line2);padding-top:14px;
+  line-height:2.1;color:var(--muted2);font-size:12.5px}
+.divider .route b{color:var(--accent);font-family:'Consolas',monospace;font-size:11.5px}
+.divider .goal{margin-top:20px;border:1px solid var(--line2);background:var(--soft);padding:14px 16px}
+.divider .goal .gl{font-size:10.5px;font-weight:700;letter-spacing:.09em;color:var(--accent);margin-bottom:6px}
+.divider .goal ul{margin:0}
+.divider .goal li{font-size:12.5px;margin:5px 0}
+
+.pagenum{position:absolute;bottom:9mm;right:18mm;font-size:10.5px;color:var(--muted);
+  font-family:'Consolas',monospace}
+.brand{position:absolute;bottom:9mm;left:18mm;font-size:9px;color:var(--muted);letter-spacing:.03em}
+.brand b{color:var(--muted2);font-weight:500}
+
+@media print{
+  .page{overflow:hidden}
+}
+.page{overflow:hidden}
+
+
+/* ── 작업 관리자 목업 ── */
+.tm{display:flex}
+.tm .nav{flex:0 0 116px;border-right:1px solid var(--line);padding:6px 0;background:var(--soft)}
+.tm .nav div{font-size:10.5px;padding:5px 11px;color:var(--muted2)}
+.tm .nav div.on{background:#fff;color:var(--ink);font-weight:700;border-left:2px solid var(--accent)}
+.tm .bd{flex:1;min-width:0}
+.tm table{margin:0}
+.tm .hdr{display:flex;justify-content:space-between;padding:7px 12px;border-bottom:1px solid var(--line);
+  font-size:11.5px;font-weight:700;color:var(--ink)}
+.tm .hdr span{font-size:10.5px;color:var(--muted);font-weight:400}
+
+/* ── 간지 배경 ── */
+.page.divider .fr{background:var(--soft2)}
+.page.divider .fr2{background:#fff}
+.page.divider .part{background:var(--accent);color:#fff;display:inline-block;
+  padding:4px 12px;border-radius:2px;letter-spacing:.08em}
+
+/* ── 코드 목업 ── */
+.code{border:1px solid var(--line2);margin:13px 0;background:#fff}
+.code .ch2{background:var(--soft);border-bottom:1px solid var(--line);padding:5px 12px;
+  font-family:'Consolas',monospace;font-size:10.5px;color:var(--muted2);font-weight:700;
+  display:flex;justify-content:space-between}
+.code .cb2{padding:11px 14px;font-family:'Consolas','JetBrains Mono',monospace;
+  font-size:11.5px;line-height:1.85;white-space:pre;color:var(--ink2);overflow:hidden}
+.tag{color:var(--pv);font-weight:700}
+.att{color:var(--pd)}
+.str{color:var(--pa)}
+.cmt{color:var(--muted)}
+.fn{color:var(--accent);font-weight:700}
+.hl2{background:#fff7ed;outline:1px solid var(--pnb)}
+
+/* ── GitHub 화면 목업 ── */
+.gh{border:1px solid var(--line2);margin:13px 0;background:#fff}
+.gh .ghh{background:var(--soft2);border-bottom:1px solid var(--line2);padding:6px 12px;
+  font-size:11px;color:var(--muted2);font-weight:700;display:flex;justify-content:space-between}
+.gh .repo{padding:8px 12px;border-bottom:1px solid var(--line);font-size:12.5px;font-weight:700;color:var(--ink)}
+.gh .repo span{color:var(--muted);font-weight:400;font-size:11px;margin-left:8px}
+.gh .row2{display:flex;gap:10px;padding:6px 12px;border-bottom:1px solid #f4f2ef;font-size:11.5px;align-items:baseline}
+.gh .row2 .ic2{flex:0 0 16px;color:var(--muted);font-family:'Consolas',monospace;font-size:10px}
+.gh .row2 .nm{flex:0 0 34%;font-family:'Consolas',monospace;color:var(--pv)}
+.gh .row2 .msg2{flex:1;color:var(--muted2)}
+.gh .row2 .tm2{flex:0 0 62px;text-align:right;color:var(--muted);font-size:10.5px}
+/* 잔디 */
+.grass{display:flex;gap:3px;flex-wrap:wrap;margin:10px 0;max-width:100%}
+.grass i{width:11px;height:11px;border:1px solid var(--line);background:var(--soft);display:block;border-radius:2px}
+.grass i.l1{background:#f7ddcb;border-color:var(--pnb)}
+.grass i.l2{background:#eeb489;border-color:var(--pnb)}
+.grass i.l3{background:var(--accent);border-color:var(--accent)}
+
+/* ── 작업 진행 표시 ── */
+.chat .wk{font-size:10px;color:var(--muted);font-family:'Consolas',monospace;margin:0 0 5px}
+.chat .bub .ok{color:var(--pa);font-weight:700}
+.chat .bub .no{color:var(--px);font-weight:700}
+.chat .bub code{font-size:11px}
+/* ── 속성창 목업 ── */
+.props{border:1px solid var(--line2);margin:13px 0;background:#fff;max-width:72%}
+.props .ph2{background:var(--soft2);border-bottom:1px solid var(--line2);padding:6px 12px;
+  font-size:11px;font-weight:700;color:var(--muted2)}
+.props .tabs{display:flex;gap:0;border-bottom:1px solid var(--line);font-size:10.5px}
+.props .tabs span{padding:5px 12px;color:var(--muted);border-right:1px solid var(--line)}
+.props .tabs span.on{background:#fff;color:var(--ink);font-weight:700;border-bottom:2px solid var(--accent)}
+.props .pr{display:flex;padding:6px 14px;border-bottom:1px solid #f2f0ec;font-size:11.5px}
+.props .pr b{flex:0 0 84px;color:var(--muted2);font-weight:700}
+.props .pr span{flex:1;color:var(--ink2);font-family:'Consolas',monospace;font-size:11px}
+/* ── 슬래시 명령 목록 ── */
+.slash{border:1px solid var(--line2);margin:13px 0;background:#fff}
+.slash .sh{background:var(--soft);border-bottom:1px solid var(--line);padding:5px 12px;
+  font-size:10.5px;font-weight:700;color:var(--muted2);font-family:'Consolas',monospace;
+  display:flex;justify-content:space-between}
+.slash .sr{display:flex;gap:12px;padding:6px 14px;border-bottom:1px solid #f4f2ef;font-size:11.5px;align-items:baseline}
+.slash .sr:last-child{border-bottom:none}
+.slash .sc2{flex:0 0 92px;font-family:'Consolas',monospace;font-weight:700;color:var(--accent)}
+.slash .sd2{flex:1;color:var(--ink2)}
+
+/* ── 결과 이미지 예시 ── */
+.shots{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:13px 0}
+.shots.one{grid-template-columns:1fr}
+.shots figure{margin:0}
+.shots img{width:100%;display:block;border:1px solid var(--line2);border-radius:3px}
+.shots figcaption{font-size:10.5px;color:var(--muted2);margin-top:5px;font-family:'Consolas',monospace}
+.shots figcaption b{color:var(--accent)}
+
+/* ── 토크나이저 비교 ── */
+.tok{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);
+  border:1px solid var(--line);margin:13px 0}
+.tok>div{background:#fff;padding:12px 14px}
+.tok .tkh{font-size:9.5px;font-weight:700;letter-spacing:.07em;color:var(--muted);margin-bottom:6px}
+.tok .in{border:1px solid var(--line2);border-radius:4px;padding:9px 11px;font-size:14px;
+  font-family:'Consolas',monospace;background:var(--soft);color:var(--ink)}
+.tok .in i{font-style:normal;color:var(--muted);font-size:11px}
+.tok .nums{display:flex;gap:26px;margin-top:11px}
+.tok .nl{font-size:9.5px;font-weight:700;letter-spacing:.06em;color:var(--muted)}
+.tok .n{font-size:21px;font-weight:800;font-family:'Consolas',monospace;line-height:1.2;color:var(--ink)}
+.tok .n.acc{color:var(--accent)}
+.tok .ids{margin-top:10px;font-family:'Consolas',monospace;font-size:11px;color:var(--muted2);
+  background:var(--soft);border:1px solid var(--line);padding:6px 9px;border-radius:3px}
+
+/* ── 목차 ── */
+.tocx{margin:2px 0 0}
+.tocx .g{font-size:11px;font-weight:700;letter-spacing:.08em;color:var(--accent);
+  margin:14px 0 4px;padding-bottom:5px;border-bottom:1.5px solid var(--ink);
+  display:flex;justify-content:space-between;align-items:baseline}
+.tocx .g em{font-style:normal;color:var(--muted);font-weight:400;letter-spacing:0;font-size:11px}
+.tocx .it{display:flex;gap:12px;align-items:baseline;padding:6px 0;border-bottom:1px solid var(--line)}
+.tocx .no{flex:0 0 30px;font-family:'Consolas',monospace;font-size:11.5px;font-weight:700;color:var(--accent)}
+.tocx .tt{flex:1}
+.tocx .tt b{font-size:13px;font-weight:700;color:var(--ink);display:block;line-height:1.4}
+.tocx .tt span{font-size:11.5px;color:var(--muted2);display:block;margin-top:1px;line-height:1.5}
+.tocx .pgn{flex:0 0 24px;text-align:right;font-family:'Consolas',monospace;font-size:11.5px;color:var(--muted2)}
+.tocinfo{margin-top:16px;border:1px solid var(--line2);background:var(--soft);padding:12px 15px}
+.tocinfo .til{font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--accent);margin-bottom:6px}
+.tocinfo .row{display:flex;gap:10px;font-size:11.5px;color:var(--ink2);padding:3px 0;align-items:baseline}
+.tocinfo .row b{flex:0 0 88px;color:var(--ink)}
+
+/* ── 난이도 배지 ── */
+.lv{display:inline-block;font-size:9.5px;font-weight:700;border:1px solid;border-radius:10px;
+  padding:1px 8px;letter-spacing:.03em;line-height:1.6;white-space:nowrap}
+.lv1{color:var(--pv);border-color:var(--pvb);background:var(--pvs)}
+.lv2{color:var(--muted2);border-color:var(--line2);background:var(--soft)}
+.lv3{color:var(--accent);border-color:var(--pnb);background:var(--pns)}
+.lvrow{display:flex;gap:8px;align-items:center;margin:10px 0 4px}
+
+/* ── 난이도 보조 상자 ── */
+.tier{border:1px solid var(--line2);border-radius:4px;padding:11px 14px;margin:12px 0}
+.tier .tl{font-size:10px;font-weight:700;letter-spacing:.06em;margin-bottom:5px;
+  display:flex;gap:8px;align-items:center}
+.tier p{margin:0;font-size:12.5px}
+.tier ul{margin:4px 0 0}
+.tier li{font-size:12.5px;margin:5px 0}
+.tier.b{background:var(--soft)}
+.tier.b .tl{color:var(--muted2)}
+.tier.a{background:#fff;border-style:dashed}
+.tier.a .tl{color:var(--accent)}
+.tier .say{margin:8px 0 0}
+
+/* ── 자동화 회로 ── */
+.auto{border:1px solid var(--line2);border-left:3px solid var(--accent);background:var(--soft);
+  padding:10px 14px;margin:14px 0}
+.auto .al{font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--accent);margin-bottom:6px}
+.auto .ar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.auto .ar span{font-size:12px;color:var(--ink2);background:#fff;border:1px solid var(--line2);
+  border-radius:3px;padding:5px 9px}
+.auto .ar span b{color:var(--accent);font-weight:700;margin-right:5px}
+.auto .ar i{font-style:normal;color:var(--accent);font-weight:900}
+
+/* ── AI 낚시 찾기 ── */
+.trap{border:1.5px dashed var(--line2);border-radius:4px;padding:12px 15px;margin:14px 0;background:#fff}
+.trap .trl{font-size:10.5px;font-weight:700;letter-spacing:.06em;color:var(--px);margin-bottom:7px}
+.trap .fake{border:1px solid var(--line);border-left:2.5px solid var(--line2);background:var(--soft);
+  padding:10px 12px;font-size:12.5px;line-height:1.7;color:var(--ink2)}
+.trap .ask{font-size:12px;color:var(--muted2);margin-top:8px}
+.trap .ask b{color:var(--ink)}
+
+/* ── 메모 영역 (여백 활용) ── */
+.memo{margin-top:26px;border-top:1px solid var(--line);padding-top:9px}
+.memo .ml{font-size:9.5px;font-weight:700;letter-spacing:.12em;color:var(--muted);margin-bottom:8px}
+.memo .line{height:25px;border-bottom:1px dotted var(--line2)}
+
+/* ── 채팅 목업 ── */
+.chat{border:1px solid var(--line2);margin:13px 0;background:#fff}
+.chat .ch{background:var(--soft);border-bottom:1px solid var(--line);padding:6px 12px;
+  font-size:10.5px;font-weight:700;color:var(--muted2);display:flex;justify-content:space-between;
+  font-family:'Consolas',monospace}
+.chat .cb{padding:12px 13px}
+.msg{margin:8px 0;display:flex;gap:10px;align-items:flex-start}
+.msg .av{flex:0 0 44px;font-size:9.5px;font-weight:700;letter-spacing:.05em;color:var(--muted);
+  text-align:right;padding-top:9px}
+.msg .bub{flex:1;border:1px solid var(--line);border-radius:5px;padding:9px 12px;
+  font-size:12px;line-height:1.7;color:var(--ink2);background:#fff}
+.msg.u .bub{background:var(--soft);border-color:var(--line2)}
+.msg.a .bub{border-left:2.5px solid var(--accent)}
+.msg .bub b{color:var(--ink)}
+.msg .bub .tbl{margin-top:6px;font-family:'Consolas',monospace;font-size:10.5px;
+  color:var(--muted2);line-height:1.7;white-space:pre}
+
+/* ── 스펙 카드 ── */
+.stat{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);
+  border:1px solid var(--line);margin:13px 0}
+.stat>div{background:#fff;padding:11px 12px}
+.stat .sl2{font-size:9.5px;font-weight:700;color:var(--accent);letter-spacing:.07em}
+.stat .sv{font-size:14px;font-weight:800;margin-top:3px;font-family:'Consolas',monospace;line-height:1.3}
+.stat .sd{font-size:10px;color:var(--muted);margin-top:3px;line-height:1.5}
+
+/* ── 좌우 2단 ── */
+.split{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:13px 0}
+.split h3{margin-top:0}
+
+
+/* ── v3 추가 ── */
+.term .e{color:var(--px);font-weight:700}
+.term .y{color:var(--pd)}
+.term .b{color:var(--pv);font-weight:700}
+.term.host{background:#f6f8fe}
+.term.host .th{background:var(--pvs);color:var(--pv);border-bottom-color:var(--pvb)}
+.term.root .th{background:var(--pxs);color:var(--px);border-bottom-color:var(--pxb)}
+.term.dev .th{background:var(--pas);color:var(--pa);border-bottom-color:var(--pab)}
+.rh .l .sec{color:var(--ink);margin-left:2px}
+
+/* 로드맵 */
+.road{display:grid;grid-template-columns:repeat(5,1fr);gap:0;border:1.5px solid var(--ink);margin:16px 0}
+.road>div{padding:12px 11px;border-right:1px solid var(--line2);position:relative}
+.road>div:last-child{border-right:none}
+.road .rk{font-family:'Consolas',monospace;font-size:20px;font-weight:900;color:var(--accent);line-height:1}
+.road .rt{font-size:13.5px;font-weight:800;margin:6px 0 4px}
+.road .rq{font-size:11px;color:var(--muted2);line-height:1.55}
+.road .rc{font-family:'Consolas',monospace;font-size:10px;color:var(--ink2);margin-top:7px;line-height:1.6;
+  border-top:1px dashed var(--line2);padding-top:6px}
+
+/* ls -l 해부 */
+.anat{border:1px solid var(--line2);background:#fff;margin:13px 0;overflow:hidden}
+.anat .ah{background:var(--soft);border-bottom:1px solid var(--line);padding:5px 12px;font-size:10.5px;
+  font-weight:700;color:var(--muted2);font-family:'Consolas',monospace}
+.anat .row{display:flex;padding:12px 10px 4px;gap:0;font-family:'Consolas',monospace;font-size:14px}
+.anat .seg{padding:3px 6px;border-bottom:3px solid;margin-right:6px;white-space:pre;font-weight:700}
+.anat .lab{display:flex;padding:0 10px 12px;gap:0}
+.anat .lab div{font-size:10.5px;line-height:1.35;color:var(--muted2);margin-right:6px}
+.anat .lab b{display:block;font-size:10px;color:var(--ink)}
+.s1{border-color:var(--px);color:var(--px)}
+.s2{border-color:var(--accent);color:var(--accent)}
+.s3{border-color:var(--muted);color:var(--muted2)}
+.s4{border-color:var(--pv);color:var(--pv)}
+.s5{border-color:var(--pa);color:var(--pa)}
+.s6{border-color:var(--line2);color:var(--ink2)}
+.s7{border-color:var(--pd);color:var(--pd)}
+.s8{border-color:var(--ink);color:var(--ink)}
+
+/* 권한 비트 */
+.bits{display:grid;grid-template-columns:44px repeat(9,1fr);border:1.5px solid var(--ink);margin:14px 0;
+  font-family:'Consolas',monospace;text-align:center}
+.bits>div{padding:8px 0;border-right:1px solid var(--line2);font-size:17px;font-weight:800}
+.bits>div:last-child{border-right:none}
+.bits .ty{background:var(--pxs);color:var(--px)}
+.bits .u{background:var(--pns);color:var(--pn)}
+.bits .g{background:var(--pas);color:var(--pa)}
+.bits .o{background:var(--pvs);color:var(--pv)}
+.bits .cap{font-size:10px;font-weight:700;padding:5px 0;border-top:1px solid var(--line2);font-family:'Noto Sans KR',sans-serif}
+.bits .sp3{grid-column:span 3}
+
+/* O / X 표 */
+td.ok,td.no,td.mid{text-align:center;font-weight:800;font-family:'Consolas',monospace}
+td.ok{color:var(--pa)!important}
+td.no{color:var(--px)!important}
+td.mid{color:var(--pd)!important}
+th.c{text-align:center}
+
+/* 서버 구성도 */
+.topo{display:grid;grid-template-columns:1fr 1.25fr 1fr;gap:14px;margin:14px 0;align-items:stretch}
+.topo .box{border:1.5px solid var(--ink);background:#fff}
+.topo .box .bh{padding:6px 10px;font-size:11px;font-weight:800;border-bottom:1px solid var(--line2);background:var(--soft);
+  font-family:'Consolas',monospace;display:flex;justify-content:space-between}
+.topo .box .bh span{font-weight:400;color:var(--muted)}
+.topo .box .bb{padding:9px 10px;font-size:11px;line-height:1.7;color:var(--ink2)}
+.topo .box .bb code{font-size:10.5px}
+.topo .box.h{border-color:var(--pv)} .topo .box.h .bh{background:var(--pvs);color:var(--pv)}
+.topo .acct{display:block;border:1px solid var(--line2);border-radius:3px;padding:4px 7px;margin:5px 0;background:var(--soft)}
+.topo .acct b{color:var(--accent)}
+.arrowline{font-size:11px;color:var(--muted2);text-align:center;margin:-4px 0 10px;font-family:'Consolas',monospace}
+.arrowline b{color:var(--accent)}
+
+/* 8진수 */
+.oct{display:flex;gap:10px;margin:12px 0;align-items:stretch}
+.oct>div{flex:1;border:1px solid var(--line2);text-align:center;padding:10px 6px;background:#fff}
+.oct .ov{font-family:'Consolas',monospace;font-size:24px;font-weight:900;color:var(--accent)}
+.oct .ol{font-size:11px;color:var(--muted2);margin-top:2px}
+.oct .op{align-self:center;border:none;flex:0 0 14px;font-size:18px;font-weight:900;color:var(--muted);padding:0;background:none}
+
+.opener .big{font-family:'Consolas',monospace;font-size:120px;font-weight:900;line-height:.9;color:var(--accent);margin:18mm 0 6mm}
+.opener h1{font-size:34px;margin-bottom:12px}
+.opener .oq{border-top:1.5px solid var(--ink);border-bottom:1px solid var(--line2);margin:18px 0;padding:6px 0}
+.opener .oq div{display:flex;gap:14px;padding:8px 0;border-bottom:1px dotted var(--line2);font-size:14px}
+.opener .oq div:last-child{border-bottom:none}
+.opener .oq span{flex:0 0 26px;font-family:'Consolas',monospace;font-weight:900;color:var(--accent)}
+.opener .otoc{columns:2;column-gap:24px;margin-top:10px}
+.opener .otoc div{break-inside:avoid;display:flex;justify-content:space-between;font-size:12.5px;padding:5px 0;border-bottom:1px solid var(--line)}
+.opener .otoc b{font-family:'Consolas',monospace;color:var(--muted2)}
+.lvl{border:1px solid var(--line2);margin:11px 0;background:#fff}
+.lvl .lh{display:flex;align-items:center;gap:10px;padding:7px 13px;border-bottom:1px solid var(--line2);background:var(--soft)}
+.lvl .lh b{font-size:11px;font-weight:800;border:1px solid;border-radius:2px;padding:1px 8px}
+.lvl .lh span{font-size:12px;color:var(--muted2)}
+.lvl.l1 .lh b{color:var(--pa);border-color:var(--pab);background:var(--pas)}
+.lvl.l2 .lh b{color:var(--pv);border-color:var(--pvb);background:var(--pvs)}
+.lvl.l3 .lh b{color:var(--px);border-color:var(--pxb);background:var(--pxs)}
+.lvl ol{counter-reset:q;margin:0;padding:6px 13px 9px}
+.lvl ol li{counter-increment:q;padding-left:30px;margin:6px 0;font-size:12.5px}
+.lvl ol li::before{content:"Q" counter(q);position:absolute;left:0;top:1px;font-family:'Consolas',monospace;font-size:11px;font-weight:800;color:var(--muted)}
+.ans{border-top:1.5px dashed var(--line2);margin-top:14px;padding-top:8px;font-size:11px;color:var(--muted2);line-height:1.7}
+.ans b{color:var(--ink)}
+.ans .al{font-size:10px;font-weight:800;letter-spacing:.08em;color:var(--muted);margin-bottom:3px}
+
+tbody td:first-child b{white-space:nowrap}
+
+th.c{white-space:nowrap}
+
+.code .cb2{font-size:10px;line-height:1.5;padding:9px 12px}
+
+.lwhy{margin:0 0 10px;padding:7px 11px;background:var(--soft);border-left:3px solid var(--accent);font-size:11.8px;line-height:1.55;color:var(--ink2)}
+.lwhy b{color:var(--accent);margin-right:8px;font-size:11px}
+.opener.has-why .big{font-size:84px;margin:8mm 0 4mm}
+.oscene{margin:12px 0 4px;border:1.5px solid var(--accent);background:#fff}
+.oscene .osh{padding:5px 12px;font-size:10.5px;font-weight:800;color:#fff;background:var(--accent);letter-spacing:.08em}
+.oscene .osb{padding:10px 13px 6px;font-size:13px;line-height:1.75;color:var(--ink)}
+.oscene table{margin:4px 13px 12px;width:calc(100% - 26px)}
+.opener.has-why .oq{margin:12px 0}
+.opener.has-why .oq div{padding:6px 0;font-size:13px}
+
+table.quiz td.qn{width:26px;font-family:'Consolas',monospace;font-weight:800;color:var(--accent);text-align:center}
+table.quiz td.qb{width:96px;white-space:nowrap;color:var(--muted2);font-family:'Consolas',monospace}
+.inc{border:1.5px solid var(--ink);margin:10px 0;background:#fff}
+.inc .inh{display:flex;align-items:center;gap:10px;padding:7px 12px;background:var(--ink);color:#fff}
+.inc .inh b{font-size:14px;flex:1}
+.inc .inno{font-family:'Consolas',monospace;font-size:11px;font-weight:900;background:var(--accent);padding:2px 7px}
+.inc .inlv{font-size:10.5px;border:1px solid #fff;padding:1px 7px;border-radius:2px}
+.inc .inb{padding:6px 12px 10px}
+.inc .inrow{display:flex;gap:12px;padding:6px 0;border-bottom:1px dotted var(--line2);font-size:12px;line-height:1.6}
+.inc .inrow>span{flex:0 0 64px;font-size:10.5px;font-weight:800;color:var(--accent);padding-top:2px}
+.inc .inrow>div{flex:1}
+.inc .inrow.learn{border-bottom:none}
+.inc .inrow.learn>div{font-weight:700}
+.inc .term{margin:6px 0}
+
+table.cmdt{table-layout:fixed}
+table.cmdt th:nth-child(1){width:27%} table.cmdt th:nth-child(2){width:13%}
+table.cmdt th:nth-child(3){width:17%} table.cmdt th:nth-child(4){width:27%} table.cmdt th:nth-child(5){width:16%}
+table.cmdt td:first-child code{word-break:break-all}
+
+table.quiz th{white-space:nowrap}
+
+.msn{border:1.5px solid var(--ink);margin:10px 0;background:#fff;break-inside:avoid}
+.msn .mh{display:flex;align-items:center;gap:9px;padding:6px 11px;background:var(--soft);border-bottom:1px solid var(--line2)}
+.msn .mh b{flex:1;font-size:13.5px}
+.msn .mid{font-family:'Consolas',monospace;font-size:11.5px;font-weight:900;color:#fff;background:var(--ink);padding:2px 7px;border-radius:2px}
+.msn .mlv{font-size:10.5px;font-weight:800;border:1px solid;border-radius:2px;padding:1px 7px}
+.msn .mlv.l1{color:var(--pa);border-color:var(--pab);background:var(--pas)}
+.msn .mlv.l2{color:var(--pv);border-color:var(--pvb);background:var(--pvs)}
+.msn .mlv.l3{color:var(--px);border-color:var(--pxb);background:var(--pxs)}
+.msn .mlv.l4{color:#fff;border-color:var(--accent);background:var(--accent)}
+.msn .mtm{font-size:10.5px;color:var(--muted2);font-family:'Consolas',monospace}
+.msn .mb{padding:4px 11px 7px}
+.msn .mr{display:flex;gap:10px;padding:4px 0;border-bottom:1px dotted var(--line);font-size:11.8px;line-height:1.55}
+.msn .mr:last-child{border-bottom:none}
+.msn .mr>span{flex:0 0 34px;font-size:10.5px;font-weight:800;color:var(--accent);padding-top:1px}
+.msn .mr>div{flex:1}
+.msn .mr.ref>div{color:var(--muted2)}
+
+/* ── 간지(파트 표지): 배경색 ── */
+.page.opener{background:#1e2638 !important;color:#e9edf5;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.page.opener .rh{border-bottom-color:rgba(255,255,255,.22)}
+.page.opener .rh .l,.page.opener .rh .r{color:#b7c0d3}
+.page.opener .rh .l b{color:#ff9a6b}
+.page.opener .rh .pg{color:#fff;border-color:rgba(255,255,255,.5);background:transparent}
+.page.opener .big{color:#ff9a6b}
+.page.opener h1,.page.opener h1 *{color:#fff}
+.page.opener .kicker{color:#ff9a6b}
+.page.opener .oq{border-top-color:rgba(255,255,255,.7);border-bottom-color:rgba(255,255,255,.25)}
+.page.opener .oq div{border-bottom-color:rgba(255,255,255,.15);color:#e9edf5}
+.page.opener .oq span{color:#ff9a6b}
+.page.opener .otoc div.it{border-bottom-color:rgba(255,255,255,.14);color:#e9edf5}
+.page.opener .otoc b{color:#8f9bb3}
+.page.opener .otoc .och{break-after:avoid;break-inside:avoid;margin:9px 0 2px;font-size:11px;font-weight:800;color:#ff9a6b;letter-spacing:.04em}
+.page.opener .otoc .och:first-child{margin-top:0}
+.page.opener .brand,.page.opener .pagenum{color:#8f9bb3}
+.page.opener .oscene{border-color:#ff9a6b}
+.page.opener .oscene .osh{background:#ff9a6b;color:#1e2638}
+.page.opener .oscene .osb,.page.opener .oscene td,.page.opener .oscene th{color:var(--ink)}
+.opener .otoc div.it{break-inside:avoid;display:flex;justify-content:space-between;font-size:12.5px;padding:4px 0;border-bottom:1px solid var(--line)}
+
+/* ── 장 표시 ── */
+.rh .l .chip{margin-left:2px;padding:1px 7px;border-radius:2px;background:var(--soft);border:1px solid var(--line2);color:var(--ink2);font-weight:700}
+.chap{display:flex;align-items:baseline;gap:10px;margin:-6px 0 14px;padding:8px 14px;background:#1e2638;color:#fff;font-size:15px;font-weight:800;
+  -webkit-print-color-adjust:exact;print-color-adjust:exact;border-left:6px solid #ff9a6b}
+.chap b{font-size:18px;color:#ff9a6b}
+.chap span{font-size:11.5px;font-weight:500;color:#b7c0d3;margin-left:auto}
+
+.page.opener .otoc .och{display:block;border-bottom:none;padding:0}
+
+.page.opener .otoc{columns:2;column-gap:22px;margin-top:6px}
+.page.opener .otoc div.it{font-size:11.2px;padding:2px 0}
+.page.opener .otoc .och{margin:6px 0 1px;font-size:10.5px}
+.page.opener.has-why .oq div{padding:4px 0;font-size:12.5px}
+
+/* ── v5 글꼴 확대 (가독성) ── */
+h1{font-size:25px;line-height:1.35}
+h3{font-size:15.5px}
+.kicker{font-size:11.5px}
+table{font-size:13px}
+thead th{font-size:12px}
+th,td{padding:6px 10px;line-height:1.55}
+.term .tb2{font-size:12px;line-height:1.65}
+.term .th{font-size:11.5px}
+.code .cb2{font-size:11.6px;line-height:1.55}
+.code .ch2{font-size:11.5px}
+.steps>li{font-size:14px}
+.steps>li .ls{font-size:13px;line-height:1.6}
+.lab-head h3{font-size:15.5px}
+.lwhy{font-size:13px}
+.why p,.note,.warn{font-size:13.2px;line-height:1.65}
+.why b{font-size:13.5px}
+.point p{font-size:13.6px;line-height:1.65}
+.mission h3{font-size:14.8px}
+.mission .wy{font-size:13px}
+.deflist .dd{font-size:13.2px;line-height:1.6}
+.deflist .dt{font-size:14px}
+.flow span{font-size:12.3px}
+.tree{font-size:12.2px}
+.cell p{font-size:13px}
+.cell h4{font-size:15px}
+.msn .mr{font-size:13.2px}
+.msn .mh b{font-size:15px}
+.msn .mr>span{font-size:11.5px;flex-basis:38px}
+.inc .inrow{font-size:13.2px}
+.inc .inrow>span{font-size:11.5px}
+.inc .inh b{font-size:15px}
+.lvl ol li{font-size:13.2px}
+.ans{font-size:12.4px}
+.say .sc{font-size:12.4px}
+.anat .col .cp{font-size:11.2px}
+.oscene .osb{font-size:14px}
+.chap{font-size:16px}
+.rh .l,.rh .r{font-size:11.5px}
+.ba .m{font-size:13px}
+.topo .box .bb{font-size:12.4px}
+.road .rq{font-size:12px}
+table.cmdt{font-size:12.4px}
+
+.grid.g1{grid-template-columns:1fr}
+td.ok,td.mid,td.no{white-space:nowrap}
+.pbreak{height:0;margin:0}
+.calc{font-family:'Consolas',monospace;font-size:12px;line-height:1.8;color:var(--ink2);background:var(--soft);padding:10px 12px;border-radius:3px;margin:10px 0}
+.calc b{color:var(--accent)}
+.page.opener .otoc div.it span{flex:1}
+.cover .toc-list li{padding:5px 0}
+.split .term{margin:0}
+.dia svg{max-height:220px}
+</style></head><body><section class="page cover"><div class="fr"><div class="fr2">
+<div class="ck">청년취업사관학교 동대문4기 · NETWORK · OSI LAYER 2</div>
+<h1>제2계층 · 데이터링크 계층<br>MAC · ARP · 스위치</h1>
+<div class="cs">물리 계층 다음, 같은 네트워크 안에서 프레임을 배달하는 계층<br><b>기업연계형 AI 서비스·클라우드 실무 과정</b></div>
+<div class="hero"><div class="hl">이 교재가 답하는 질문</div><div class="hs">IP 주소는 아는데 <b>실제로 프레임을 받을 상대(MAC)</b>는 어떻게 찾고, 스위치는 그 프레임을 <b>어느 포트로</b> 보내는가?</div><div class="hd"></div>
+<div class="hrow"><div class="hk">개념</div><div class="hv">2계층의 역할 · 이더넷 프레임 · MAC 주소 · ARP</div></div>
+<div class="hrow"><div class="hk">스위치</div><div class="hv">학습·플러딩·포워딩 · VLAN · STP · 리눅스 브리지</div></div>
+<div class="hrow"><div class="hk">분산</div><div class="hv">링크 묶기 · LACP · bonding · L2 로드밸런싱 · Failover</div></div>
+<div class="hrow"><div class="hk">실습</div><div class="hv">2-VM ARP · tcpdump -e · Wireshark 분석 · 네임스페이스 스위치 · VLAN · LACP</div></div></div>
+<div class="crow"><div class="ci"><div class="cl">LEVEL</div><div class="cv"><b>선수학습</b> · IPv4 · 물리 계층</div></div><div class="ci"><div class="cl">LAB</div><div class="cv"><b>Multipass 24.04 · Wireshark</b></div></div><div class="ci"><div class="cl">TIME</div><div class="cv"><b>약 6~7시간</b></div></div></div>
+<div class="toc" style="margin-top:auto;padding-top:14px"><div class="th">CONTENTS</div><ul class="toc-list"><li><span class="ti">01</span><span class="tt">데이터링크 계층의 개념</span><span class="tg" data-toc="ch1">03</span></li><li><span class="ti">02</span><span class="tt">이더넷 프레임과 MAC 주소</span><span class="tg" data-toc="ch2">08</span></li><li><span class="ti">03</span><span class="tt">ARP</span><span class="tg" data-toc="ch3">12</span></li><li><span class="ti">04</span><span class="tt">L2 스위치</span><span class="tg" data-toc="ch4">17</span></li><li><span class="ti">05</span><span class="tt">실습 ① 2-VM 프레임 분석</span><span class="tg" data-toc="ch5">23</span></li><li><span class="ti">06</span><span class="tt">실습 ② 스위치 · VLAN · 링크 묶기</span><span class="tg" data-toc="ch6">29</span></li><li><span class="ti">07</span><span class="tt">장애 대응과 정리</span><span class="tg" data-toc="ch7">42</span></li></ul></div>
+<div class="sig"><div class="n">부성순</div><div class="b">AI SERVICE · CLOUD PRACTICE</div></div></div></div></section>
+<section class="page" data-sec="0" data-title="한눈에 보는 2계층"><div class="rh"><div class="l"><b>NETWORK L2</b> · <span class="sec">시작하기</span></div><div class="r">한눈에 보는 2계층<span class="pg">02</span></div></div><div style="margin:0 auto;width:94%"><svg viewBox="0 0 700 1000" xmlns="http://www.w3.org/2000/svg" style="font-family:'Noto Sans KR',sans-serif"><defs><marker id="ar" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#b23c0a"></path></marker></defs><rect x="0" y="0" width="700" height="64" rx="8" fill="#1e2638"></rect><text x="24" y="32" font-size="22" font-weight="900" fill="#fff">2계층(데이터링크)은 무엇을 하나?</text><text x="24" y="53" font-size="12" fill="#ff9a6b">같은 네트워크 안에서, 옆 장비까지 프레임을 배달한다</text><g transform="translate(0,78)"><rect x="0" y="0" width="700" height="30" rx="4" fill="#f2f5fd" stroke="#cfcbc4" stroke-width="1"></rect><text x="14" y="20" font-size="12.5" font-weight="800" fill="#1c1b19">3계층 · 네트워크</text><text x="220" y="20" font-size="11.5" fill="#2f2d2a">IP 패킷 · “최종 목적지는 8.8.8.8”</text><rect x="0" y="34" width="700" height="30" rx="4" fill="#fdf3ec" stroke="#b23c0a" stroke-width="2"></rect><text x="14" y="54" font-size="12.5" font-weight="800" fill="#b23c0a">2계층 · 데이터링크</text><text x="220" y="54" font-size="11.5" fill="#2f2d2a">패킷을 프레임에 담고 MAC 주소를 붙인다</text><rect x="0" y="68" width="700" height="30" rx="4" fill="#efedea" stroke="#cfcbc4" stroke-width="1"></rect><text x="14" y="88" font-size="12.5" font-weight="800" fill="#1c1b19">1계층 · 물리</text><text x="220" y="88" font-size="11.5" fill="#2f2d2a">프레임을 비트 · 신호로 바꿔 선에 싣는다</text></g><rect x="0" y="195" width="340" height="235" rx="10" fill="#fff" stroke="#b23c0a" stroke-width="2"></rect><path d="M10,195 h320 a10,10 0 0 1 10,10 v28 h-340 v-28 a10,10 0 0 1 10,-10 z" fill="#b23c0a"></path><circle cx="22" cy="214" r="12" fill="#fff"></circle><text x="22" y="219" text-anchor="middle" font-size="14" font-weight="900" fill="#b23c0a">1</text><text x="42" y="220" font-size="15" font-weight="800" fill="#fff">프레임 만들기</text><rect x="15" y="265" width="60" height="44" fill="#fdf3ec" stroke="#1c1b19"></rect><text x="45.0" y="291" text-anchor="middle" font-size="9.5" font-weight="700">목적지 MAC</text><rect x="75" y="265" width="60" height="44" fill="#fdf3ec" stroke="#1c1b19"></rect><text x="105.0" y="291" text-anchor="middle" font-size="9.5" font-weight="700">출발지 MAC</text><rect x="135" y="265" width="38" height="44" fill="#f2f5fd" stroke="#1c1b19"></rect><text x="154.0" y="291" text-anchor="middle" font-size="9.5" font-weight="700">타입</text><rect x="173" y="265" width="110" height="44" fill="#f1f7f3" stroke="#1c1b19"></rect><text x="228.0" y="291" text-anchor="middle" font-size="9.5" font-weight="700">데이터 (IP 패킷)</text><rect x="283" y="265" width="42" height="44" fill="#fdf2f2" stroke="#1c1b19"></rect><text x="304.0" y="291" text-anchor="middle" font-size="9.5" font-weight="700">FCS</text><text x="15" y="335" font-size="11" fill="#2f2d2a" text-anchor="start" font-weight="700">3계층 패킷을 봉투(프레임)에 담는다</text><text x="15" y="355" font-size="10.5" fill="#2f2d2a" text-anchor="start" font-weight="400">· 앞에 누구에게·누가(MAC), 무엇이 들었나(타입)</text><text x="15" y="373" font-size="10.5" fill="#2f2d2a" text-anchor="start" font-weight="400">· 뒤에 FCS를 붙여 깨졌는지 검사한다</text><text x="15" y="391" font-size="10.5" fill="#2f2d2a" text-anchor="start" font-weight="400">· 데이터 칸 최대 1500바이트 = MTU</text><text x="15" y="415" font-size="10" fill="#b23c0a" text-anchor="start" font-weight="700">Wireshark의 “Ethernet II” 줄</text><rect x="360" y="195" width="340" height="235" rx="10" fill="#fff" stroke="#1d4ed8" stroke-width="2"></rect><path d="M370,195 h320 a10,10 0 0 1 10,10 v28 h-340 v-28 a10,10 0 0 1 10,-10 z" fill="#1d4ed8"></path><circle cx="382" cy="214" r="12" fill="#fff"></circle><text x="382" y="219" text-anchor="middle" font-size="14" font-weight="900" fill="#1d4ed8">2</text><text x="402" y="220" font-size="15" font-weight="800" fill="#fff">MAC 주소로 옆 장비 찾기</text><rect x="380" y="257" width="120" height="48" rx="4" fill="#fff" stroke="#1c1b19"></rect><text x="440.0" y="281.0" text-anchor="middle" font-size="11" font-weight="700" fill="#1c1b19">PC-A</text><text x="440.0" y="293.0" text-anchor="middle" font-size="9" fill="#b23c0a" font-family="Consolas,monospace">00:15:5d:01:2a:3b</text><rect x="560" y="257" width="120" height="48" rx="4" fill="#fff" stroke="#1c1b19"></rect><text x="620.0" y="281.0" text-anchor="middle" font-size="11" font-weight="700" fill="#1c1b19">PC-B</text><text x="620.0" y="293.0" text-anchor="middle" font-size="9" fill="#b23c0a" font-family="Consolas,monospace">00:15:5d:01:2a:3c</text><line x1="500" y1="281" x2="558" y2="281" stroke="#b23c0a" stroke-width="2" marker-end="url(#ar)"></line><rect x="380" y="317" width="300" height="26" rx="4" fill="#f2f5fd" stroke="#c3d0f2"></rect><text x="530" y="334" text-anchor="middle" font-size="10" font-family="Consolas,monospace" fill="#1d4ed8">00:15:5d │ 01:2a:3b  (제조사 OUI │ 일련번호)</text><text x="380" y="367" font-size="11" fill="#2f2d2a" text-anchor="start" font-weight="700">랜카드마다 붙은 48비트 주소 = MAC</text><text x="380" y="387" font-size="10.5" fill="#2f2d2a" text-anchor="start" font-weight="400">· 같은 네트워크 안에서 “어느 랜카드인가”를 구분</text><text x="380" y="405" font-size="10.5" fill="#2f2d2a" text-anchor="start" font-weight="400">· ff:ff:ff:ff:ff:ff = 모두에게(브로드캐스트)</text><rect x="0" y="445" width="340" height="235" rx="10" fill="#fff" stroke="#15803d" stroke-width="2"></rect><path d="M10,445 h320 a10,10 0 0 1 10,10 v28 h-340 v-28 a10,10 0 0 1 10,-10 z" fill="#15803d"></path><circle cx="22" cy="464" r="12" fill="#fff"></circle><text x="22" y="469" text-anchor="middle" font-size="14" font-weight="900" fill="#15803d">3</text><text x="42" y="470" font-size="15" font-weight="800" fill="#fff">ARP로 상대 MAC 알아내기</text><rect x="15" y="503" width="90" height="40" rx="4" fill="#fff" stroke="#1c1b19"></rect><text x="60.0" y="523.0" text-anchor="middle" font-size="11" font-weight="700" fill="#1c1b19">PC-A</text><text x="60.0" y="535.0" text-anchor="middle" font-size="9" fill="#b23c0a" font-family="Consolas,monospace">10.0.0.11</text><rect x="235" y="503" width="90" height="40" rx="4" fill="#fff" stroke="#1c1b19"></rect><text x="280.0" y="523.0" text-anchor="middle" font-size="11" font-weight="700" fill="#1c1b19">PC-B</text><text x="280.0" y="535.0" text-anchor="middle" font-size="9" fill="#b23c0a" font-family="Consolas,monospace">10.0.0.12</text><rect x="112" y="501" width="116" height="20" rx="10" fill="#f1f7f3" stroke="#15803d"></rect><text x="170" y="515" text-anchor="middle" font-size="9.5" fill="#15803d" font-weight="700">① 10.0.0.12 누구? (전체)</text><rect x="112" y="527" width="116" height="20" rx="10" fill="#fdf3ec" stroke="#b23c0a"></rect><text x="170" y="541" text-anchor="middle" font-size="9.5" fill="#b23c0a" font-weight="700">② 나야, MAC은 …:3c</text><text x="15" y="573" font-size="11" fill="#15803d" text-anchor="start" font-weight="800">ARP = Address Resolution Protocol</text><text x="15" y="591" font-size="10.5" fill="#2f2d2a" text-anchor="start" font-weight="400">주소 해석 규약 · IP 주소 → MAC 주소로 바꿔 준다</text><text x="15" y="613" font-size="10.5" fill="#2f2d2a" text-anchor="start" font-weight="400">· 요청은 브로드캐스트, 응답은 당사자에게만</text><text x="15" y="631" font-size="10.5" fill="#2f2d2a" text-anchor="start" font-weight="400">· 알아낸 짝은 ARP 테이블에 잠시 저장 (ip neigh)</text><text x="15" y="649" font-size="10.5" fill="#2f2d2a" text-anchor="start" font-weight="400">· 다른 네트워크로 갈 때는 게이트웨이의 MAC을 묻는다</text><rect x="360" y="445" width="340" height="235" rx="10" fill="#fff" stroke="#6d28d9" stroke-width="2"></rect><path d="M370,445 h320 a10,10 0 0 1 10,10 v28 h-340 v-28 a10,10 0 0 1 10,-10 z" fill="#6d28d9"></path><circle cx="382" cy="464" r="12" fill="#fff"></circle><text x="382" y="469" text-anchor="middle" font-size="14" font-weight="900" fill="#6d28d9">4</text><text x="402" y="470" font-size="15" font-weight="800" fill="#fff">스위치가 필요한 포트로만</text><rect x="470" y="505" width="120" height="44" rx="5" fill="#1e2638"></rect><text x="530" y="525" text-anchor="middle" font-size="11" font-weight="800" fill="#fff">L2 스위치</text><text x="530" y="541" text-anchor="middle" font-size="9" fill="#ff9a6b">MAC 주소 테이블</text><rect x="375" y="497" width="70" height="26" rx="4" fill="#fff" stroke="#1c1b19"></rect><text x="410.0" y="514.0" text-anchor="middle" font-size="10" font-weight="700" fill="#1c1b19">h1</text><line x1="445" y1="510" x2="470" y2="527" stroke="#5b574f" stroke-width="1.5"></line><rect x="375" y="541" width="70" height="26" rx="4" fill="#fff" stroke="#1c1b19"></rect><text x="410.0" y="558.0" text-anchor="middle" font-size="10" font-weight="700" fill="#1c1b19">h2</text><line x1="445" y1="554" x2="470" y2="527" stroke="#5b574f" stroke-width="1.5"></line><rect x="615" y="515" width="70" height="26" rx="4" fill="#fff" stroke="#1c1b19"></rect><text x="650.0" y="532.0" text-anchor="middle" font-size="10" font-weight="700" fill="#1c1b19">h3</text><line x1="590" y1="527" x2="615" y2="528" stroke="#5b574f" stroke-width="1.5"></line><rect x="375" y="577" width="310" height="24" fill="#faf9f7" stroke="#e3e0db"></rect><text x="385" y="593" font-size="9.5" font-family="Consolas,monospace" fill="#2f2d2a">…:11 → port1   …:12 → port2   …:13 → port3</text><text x="375" y="621" font-size="11" fill="#2f2d2a" text-anchor="start" font-weight="700">출발지 MAC을 배우고, 목적지 포트로만 보낸다</text><text x="375" y="641" font-size="10.5" fill="#2f2d2a" text-anchor="start" font-weight="400">· 모르는 목적지·브로드캐스트는 모든 포트로(플러딩)</text><text x="375" y="659" font-size="10.5" fill="#2f2d2a" text-anchor="start" font-weight="400">· 허브(1계층)와 달리 포트마다 동시에 통신</text><rect x="0" y="695" width="340" height="235" rx="10" fill="#fff" stroke="#0e7490" stroke-width="2"></rect><path d="M10,695 h320 a10,10 0 0 1 10,10 v28 h-340 v-28 a10,10 0 0 1 10,-10 z" fill="#0e7490"></path><circle cx="22" cy="714" r="12" fill="#fff"></circle><text x="22" y="719" text-anchor="middle" font-size="14" font-weight="900" fill="#0e7490">5</text><text x="42" y="720" font-size="15" font-weight="800" fill="#fff">VLAN으로 네트워크 나누기</text><rect x="15" y="751" width="150" height="70" rx="6" fill="#f2f5fd" stroke="#1d4ed8" stroke-dasharray="4 3"></rect><text x="90" y="769" text-anchor="middle" font-size="11" font-weight="800" fill="#1d4ed8">VLAN 10 · 개발팀</text><rect x="175" y="751" width="150" height="70" rx="6" fill="#f1f7f3" stroke="#15803d" stroke-dasharray="4 3"></rect><text x="250" y="769" text-anchor="middle" font-size="11" font-weight="800" fill="#15803d">VLAN 20 · 영업팀</text><rect x="25" y="779" width="60" height="30" rx="4" fill="#fff" stroke="#1c1b19"></rect><text x="55.0" y="798.0" text-anchor="middle" font-size="10" font-weight="700" fill="#1c1b19">PC1</text><rect x="185" y="779" width="60" height="30" rx="4" fill="#fff" stroke="#1c1b19"></rect><text x="215.0" y="798.0" text-anchor="middle" font-size="10" font-weight="700" fill="#1c1b19">PC3</text><rect x="95" y="779" width="60" height="30" rx="4" fill="#fff" stroke="#1c1b19"></rect><text x="125.0" y="798.0" text-anchor="middle" font-size="10" font-weight="700" fill="#1c1b19">PC2</text><rect x="255" y="779" width="60" height="30" rx="4" fill="#fff" stroke="#1c1b19"></rect><text x="285.0" y="798.0" text-anchor="middle" font-size="10" font-weight="700" fill="#1c1b19">PC4</text><text x="170" y="843" font-size="11" fill="#b91c1c" text-anchor="middle" font-weight="800">✕ 직접 통신 불가</text><text x="15" y="871" font-size="11" fill="#2f2d2a" text-anchor="start" font-weight="700">스위치 한 대를 여러 네트워크로 나눈다</text><text x="15" y="891" font-size="10.5" fill="#2f2d2a" text-anchor="start" font-weight="400">· 브로드캐스트(ARP)도 VLAN 안에서만</text><text x="15" y="909" font-size="10.5" fill="#2f2d2a" text-anchor="start" font-weight="400">· VLAN 사이는 라우터(3계층)를 거친다</text><rect x="360" y="695" width="340" height="235" rx="10" fill="#fff" stroke="#b45309" stroke-width="2"></rect><path d="M370,695 h320 a10,10 0 0 1 10,10 v28 h-340 v-28 a10,10 0 0 1 10,-10 z" fill="#b45309"></path><circle cx="382" cy="714" r="12" fill="#fff"></circle><text x="382" y="719" text-anchor="middle" font-size="14" font-weight="900" fill="#b45309">6</text><text x="402" y="720" font-size="15" font-weight="800" fill="#fff">링크 묶기 · L2 로드밸런싱</text><rect x="375" y="761" width="90" height="48" rx="4" fill="#fff" stroke="#1c1b19"></rect><text x="420.0" y="785.0" text-anchor="middle" font-size="11" font-weight="700" fill="#1c1b19">서버</text><text x="420.0" y="797.0" text-anchor="middle" font-size="9" fill="#b23c0a" font-family="Consolas,monospace">bond0</text><rect x="595" y="761" width="90" height="48" rx="4" fill="#1e2638"></rect><text x="640" y="789" text-anchor="middle" font-size="11" font-weight="800" fill="#fff">스위치</text><line x1="465" y1="775" x2="595" y2="775" stroke="#b45309" stroke-width="3"></line><line x1="465" y1="795" x2="595" y2="795" stroke="#b45309" stroke-width="3"></line><ellipse cx="530" cy="785" rx="22" ry="20" fill="none" stroke="#b45309" stroke-dasharray="3 3"></ellipse><text x="530" y="827" text-anchor="middle" font-size="10" font-weight="700" fill="#b45309">LACP로 2가닥을 1링크처럼</text><text x="375" y="855" font-size="11" fill="#2f2d2a" text-anchor="start" font-weight="700">여러 가닥에 나눠 싣고, 끊겨도 버틴다</text><text x="375" y="875" font-size="10.5" fill="#2f2d2a" text-anchor="start" font-weight="400">· MAC 해시로 상대마다 가닥을 나눔 (로드밸런싱)</text><text x="375" y="893" font-size="10.5" fill="#2f2d2a" text-anchor="start" font-weight="400">· 한 가닥이 끊기면 남은 가닥으로 (Failover)</text><text x="375" y="911" font-size="10.5" fill="#2f2d2a" text-anchor="start" font-weight="400">· 한 흐름은 한 가닥 · 합계 대역폭이 늘어남</text><rect x="0" y="945" width="700" height="52" rx="8" fill="#f1f7f3" stroke="#bcdcc8"></rect><text x="18" y="967" font-size="13" font-weight="900" fill="#15803d">핵심 정리</text><text x="110" y="966" font-size="11" fill="#2f2d2a" text-anchor="start" font-weight="400">✔ 2계층의 주소는 MAC, 단위는 프레임, 범위는 같은 네트워크(한 구간)</text><text x="110" y="985" font-size="11" fill="#2f2d2a" text-anchor="start" font-weight="400">✔ ARP로 MAC을 찾고 · 스위치가 MAC을 보고 전달 · VLAN으로 나누고 · LACP로 묶는다</text></svg></div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">02</div></section>
+<section class="page opener has-why" data-ch="1"><div class="rh"><div class="l"><b>NETWORK L2</b> · 1장</div><div class="r">데이터링크 계층의 개념<span class="pg">03</span></div></div><div class="big">1</div><h1>데이터링크 계층의 개념<br>옆 장비까지 프레임을 배달한다</h1><div class="oscene"><div class="osh">WHY · 현장 장면</div><div class="osb">L1 교안에서 링크는 UP, 카운터도 늘어나는 것까지 확인했다. 그런데도 A에서 B로 ping이 안 된다. 신호는 흐르는데 <b>프레임이 B에게 가지 않는다면</b>, 이제 2계층을 볼 차례다.</div><table class="zebra osx"><thead><tr><th>이 장을 모르면</th><th>생기는 일</th></tr></thead><tbody><tr><td>2계층과 3계층을 섞으면</td><td>MAC 문제를 IP 설정으로 고치려 함</td></tr><tr><td>2계층의 일을 모르면</td><td>CRC 오류·Wi-Fi 지연의 이유를 모름</td></tr><tr><td>구간 전달을 모르면</td><td>게이트웨이 MAC이 왜 보이는지 모름</td></tr></tbody></table></div><div class="oq"><div><span>01</span>2계층은 3계층과 무엇이 다르고, 전달 범위는 어디까지인가?</div><div><span>02</span>2계층이 하는 네 가지 일은 무엇인가?</div><div><span>03</span>왜 MAC은 구간마다 바뀌고 IP는 그대로인가?</div></div><div class="kicker">이 장의 구성</div><div class="otoc"><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">1.1</b>OSI 속 데이터링크 계층</span><b data-toc="1.1">04</b></div><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">1.2</b>2계층이 하는 일</span><b data-toc="1.2">05</b></div><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">1.3</b>약자 사전</span><b data-toc="1.3">06</b></div></div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">03</div></section>
+<section class="page" data-sec="1.1" data-title="1.1 OSI 속 데이터링크 계층"><div class="rh"><div class="l"><b>NETWORK L2</b> · 1장 · <span class="sec">데이터링크 계층의 개념</span></div><div class="r">1.1 OSI 속 데이터링크 계층<span class="pg">04</span></div></div><div class="kicker">1.1 · OSI LAYER 2</div><h1>1계층이 비트를 옮긴다면<br><em>2계층은 옆 장비까지</em> 프레임을 배달한다</h1>
+<div class="why"><b>왜 배워야 하나?</b><p>1계층은 “신호가 흐르는가”만 봅니다. 하지만 같은 스위치에 PC가 50대 붙어 있으면, 이 비트 묶음이 <strong>누구에게 가는 것인지</strong> 정해야 합니다. 그 일을 하는 것이 2계층이고, 그 주소가 MAC 주소입니다.</p></div>
+<table class="zebra"><thead><tr><th style="width:17%">계층</th><th style="width:14%">주소</th><th style="width:37%">전달 범위</th><th style="width:14%">데이터 단위</th><th style="width:18%">장비</th></tr></thead><tbody><tr><td>3 · 네트워크</td><td>IP 주소</td><td>출발지 → <b>최종 목적지</b> (여러 네트워크를 건너)</td><td>패킷</td><td>라우터</td></tr><tr><td><b style="color:var(--accent)">2 · 데이터링크</b></td><td><b>MAC 주소</b></td><td><b>같은 네트워크 안의 바로 옆 장비까지</b> (한 구간)</td><td><b>프레임</b></td><td><b>스위치 · 브리지</b></td></tr><tr><td>1 · 물리</td><td>없음</td><td>신호가 닿는 곳까지</td><td>비트</td><td>케이블 · 허브 · 랜카드 PHY</td></tr></tbody></table>
+<div class="point"><div class="pl">택배 비유</div><p>3계층 IP는 송장의 <strong>최종 받는 사람 주소</strong>, 2계층 MAC은 <strong>“다음 집하장까지”</strong> 붙이는 구간 스티커입니다. 집하장을 지날 때마다 구간 스티커는 새로 붙지만, 최종 주소는 끝까지 그대로입니다.</p></div>
+<h3>MAC은 구간마다 바뀌고, IP는 그대로다</h3><div class="dia"><svg viewBox="0 0 640 170" xmlns="http://www.w3.org/2000/svg" style="font-family:'Noto Sans KR',sans-serif"><rect x="20" y="20" width="130" height="54" rx="4" fill="#fff" stroke="#1c1b19"></rect><text x="85" y="40" text-anchor="middle" font-size="12" font-weight="700">내 PC</text><text x="85" y="56" text-anchor="middle" font-size="10" fill="#5b574f" font-family="Consolas,monospace">192.168.1.23</text><text x="85" y="69" text-anchor="middle" font-size="10" fill="#b23c0a" font-family="Consolas,monospace">MAC aa:aa</text><rect x="250" y="20" width="130" height="54" rx="4" fill="#fff" stroke="#1c1b19"></rect><text x="315" y="40" text-anchor="middle" font-size="12" font-weight="700">공유기(게이트웨이)</text><text x="315" y="56" text-anchor="middle" font-size="10" fill="#5b574f" font-family="Consolas,monospace">.1 / 203.0.113.10</text><text x="315" y="69" text-anchor="middle" font-size="10" fill="#b23c0a" font-family="Consolas,monospace">MAC bb:bb | cc:cc</text><rect x="500" y="20" width="130" height="54" rx="4" fill="#fff" stroke="#1c1b19"></rect><text x="565" y="40" text-anchor="middle" font-size="12" font-weight="700">통신사 라우터</text><text x="565" y="56" text-anchor="middle" font-size="10" fill="#5b574f" font-family="Consolas,monospace">203.0.113.9</text><text x="565" y="69" text-anchor="middle" font-size="10" fill="#b23c0a" font-family="Consolas,monospace">MAC dd:dd</text><line x1="150" y1="47" x2="250" y2="47" stroke="#b23c0a" stroke-width="2" marker-end="url(#a)"></line><rect x="130" y="90" width="140" height="44" fill="#fdf3ec" stroke="#e8c3ad"></rect><text x="200.0" y="106" text-anchor="middle" font-size="10.5" font-weight="700" fill="#b23c0a">MAC aa → bb</text><text x="200.0" y="122" text-anchor="middle" font-size="10" fill="#1d4ed8">IP 192.168.1.23 → 8.8.8.8</text><line x1="380" y1="47" x2="500" y2="47" stroke="#b23c0a" stroke-width="2" marker-end="url(#a)"></line><rect x="360" y="90" width="160" height="44" fill="#fdf3ec" stroke="#e8c3ad"></rect><text x="440.0" y="106" text-anchor="middle" font-size="10.5" font-weight="700" fill="#b23c0a">MAC cc → dd</text><text x="440.0" y="122" text-anchor="middle" font-size="10" fill="#1d4ed8">IP 203.0.113.10 → 8.8.8.8</text><defs><marker id="a" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#b23c0a"></path></marker></defs><text x="20" y="160" font-size="10.5" fill="#5b574f">MAC(2계층)은 구간마다 새로 바뀌고, IP(3계층) 목적지는 끝까지 그대로다 · NAT 구간에서는 출발지 IP만 공인 IP로 바뀐다</text></svg></div>
+<div class="note"><strong>IPv4 교안 3.0과 연결</strong> 목적지가 다른 네트워크(8.8.8.8)이면 내 PC는 IP 목적지는 8.8.8.8로 두고, <b>MAC 목적지는 게이트웨이의 MAC</b>으로 적어 보냅니다. 2계층은 “다음 한 칸”만 책임지기 때문입니다. 5.3에서 직접 확인합니다.</div>
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">04</div></section>
+<section class="page" data-sec="1.2" data-title="1.2 2계층이 하는 일"><div class="rh"><div class="l"><b>NETWORK L2</b> · 1장 · <span class="sec">데이터링크 계층의 개념</span></div><div class="r">1.2 2계층이 하는 일<span class="pg">05</span></div></div><div class="kicker">1.2 · WHAT L2 DOES</div><h1>2계층이 하는 네 가지 일<br><em>프레임 · 주소 · 오류 검출 · 매체 접근</em></h1>
+<div class="why"><b>왜 배워야 하나?</b><p>“2계층 = MAC 주소”라고만 외우면 스위치 장애, CRC 오류, Wi-Fi가 느려지는 이유를 설명할 수 없습니다. 2계층이 맡은 일을 네 가지로 나눠 봅니다.</p></div>
+<table class="zebra"><thead><tr><th style="width:22%">하는 일</th><th style="width:46%">뜻</th><th style="width:32%">예</th></tr></thead><tbody><tr><td><b>프레이밍</b> (Framing)</td><td>비트의 흐름에서 “여기서부터 여기까지가 한 덩어리”를 정함</td><td>이더넷 프레임 (2.1)</td></tr><tr><td><b>물리 주소 지정</b></td><td>프레임에 출발지·목적지 <b>MAC 주소</b>를 적음</td><td><code>02:00:00:00:00:11 → ff:ff:ff:ff:ff:ff</code></td></tr><tr><td><b>오류 검출</b></td><td>프레임 끝의 <b>FCS(CRC)</b>로 깨졌는지 검사 · 깨지면 버림</td><td><code>ip -s -s link</code>의 crc 카운터 (L1 교안 4.5)</td></tr><tr><td><b>매체 접근 제어</b></td><td>여럿이 같은 매체를 쓸 때 누가 언제 보낼지</td><td>옛 이더넷 CSMA/CD · Wi-Fi CSMA/CA</td></tr></tbody></table>
+<div class="point"><div class="pl">오류 검출 ≠ 오류 복구</div><p>2계층은 깨진 프레임을 <strong>찾아서 버릴 뿐</strong> 다시 보내 달라고 하지 않습니다. 재전송은 4계층 TCP의 일입니다. 그래서 CRC 오류가 많으면 TCP 재전송이 늘어 “느려지는” 것입니다.</p></div>
+<table class="zebra"><thead><tr><th>부계층</th><th>맡은 일</th><th>어디에 구현</th></tr></thead><tbody><tr><td><b>LLC</b> (Logical Link Control)</td><td>위 계층(IPv4·IPv6·ARP)에 어떤 프로토콜인지 알려 줌 · 이더넷에서는 타입 필드가 대신함</td><td>운영체제 · 드라이버</td></tr><tr><td><b>MAC</b> (Media Access Control)</td><td>MAC 주소, 프레임 조립, FCS, 매체 접근</td><td>랜카드의 MAC 컨트롤러 (L1 교안 3.3)</td></tr></tbody></table>
+<table class="zebra"><thead><tr><th>매체 접근 방식</th><th>어디서</th><th>동작</th></tr></thead><tbody><tr><td><b>CSMA/CD</b></td><td>허브 시절 반이중 이더넷</td><td>보내면서 듣다가 충돌이 감지되면 잠시 기다렸다 재전송 · 스위치·전이중에서는 쓰지 않음</td></tr><tr><td><b>CSMA/CA</b></td><td>Wi-Fi</td><td>공기는 충돌을 감지하기 어려워 <b>보내기 전에</b> 비었는지 확인하고 기다림 → 기기가 많으면 느려짐</td></tr></tbody></table>
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">05</div></section>
+<section class="page" data-sec="1.3" data-title="1.3 약자 사전"><div class="rh"><div class="l"><b>NETWORK L2</b> · 1장 · <span class="sec">데이터링크 계층의 개념</span></div><div class="r">1.3 약자 사전<span class="pg">06</span></div></div><div class="kicker">1.3 · ABBREVIATIONS</div><h1>2계층에서 쓰는 약자<br><em>풀어 쓰면 뜻이 보인다</em></h1>
+<table class="zebra"><thead><tr><th style="width:13%">약자</th><th style="width:31%">풀어 쓰면</th><th style="width:40%">우리말 뜻</th><th style="width:16%">어디서 나오나</th></tr></thead><tbody><tr><td><b>MAC</b></td><td>Media Access Control</td><td>매체 접근 제어 · 랜카드의 2계층 주소</td><td>1.2 · 2.2</td></tr><tr><td><b>LLC</b></td><td>Logical Link Control</td><td>논리 링크 제어 · 위 계층 프로토콜 구분</td><td>1.2</td></tr><tr><td><b>FCS</b></td><td>Frame Check Sequence</td><td>프레임 검사 값 · 프레임 끝 4바이트</td><td>2.1</td></tr><tr><td><b>CRC</b></td><td>Cyclic Redundancy Check</td><td>순환 중복 검사 · FCS를 계산하는 방법</td><td>1.2 · 2.1</td></tr><tr><td><b>CSMA/CD</b></td><td>Carrier Sense Multiple Access / Collision Detection</td><td>신호를 듣고 보내다 충돌을 감지 · 옛 유선 이더넷</td><td>1.2</td></tr><tr><td><b>CSMA/CA</b></td><td>… / Collision Avoidance</td><td>보내기 전에 충돌을 피함 · Wi-Fi</td><td>1.2</td></tr><tr><td><b>MTU</b></td><td>Maximum Transmission Unit</td><td>한 프레임에 실을 수 있는 최대 데이터 크기(1500)</td><td>2.1</td></tr><tr><td><b>SFD</b></td><td>Start Frame Delimiter</td><td>프레임 시작 표시 1바이트</td><td>2.1</td></tr><tr><td><b>OUI</b></td><td>Organizationally Unique Identifier</td><td>MAC 앞 3바이트 · 제조사 번호</td><td>2.2</td></tr><tr><td><b>I/G · U/L</b></td><td>Individual/Group · Universal/Local</td><td>MAC 첫 바이트 끝 두 비트 · 한 대/여럿 · 제조사/로컬</td><td>2.2</td></tr><tr><td><b>ARP</b></td><td><b>Address Resolution Protocol</b></td><td><b>주소 해석 규약</b> · IP 주소로 MAC 주소를 알아냄</td><td>3장</td></tr><tr><td><b>GARP</b></td><td>Gratuitous ARP</td><td>묻지 않았는데 보내는 ARP 알림</td><td>3.3</td></tr><tr><td><b>NDP</b></td><td>Neighbor Discovery Protocol</td><td>IPv6에서 ARP 역할을 하는 규약</td><td>3.1</td></tr><tr><td><b>DAI</b></td><td>Dynamic ARP Inspection</td><td>스위치가 거짓 ARP를 걸러 내는 기능</td><td>3.3</td></tr><tr><td><b>FDB</b></td><td>Forwarding DataBase</td><td>스위치의 MAC 주소 테이블</td><td>4.1 · 6.2</td></tr><tr><td><b>VLAN</b></td><td>Virtual Local Area Network</td><td>가상 LAN · 스위치를 논리적으로 나눔</td><td>4.2</td></tr><tr><td><b>PVID</b></td><td>Port VLAN ID</td><td>태그 없이 들어온 프레임을 넣을 VLAN</td><td>6.3</td></tr><tr><td><b>STP · RSTP</b></td><td>(Rapid) Spanning Tree Protocol</td><td>루프를 막는 규약 · 빠른 버전</td><td>4.3</td></tr><tr><td><b>BPDU</b></td><td>Bridge Protocol Data Unit</td><td>STP 제어 프레임</td><td>4.3</td></tr><tr><td><b>LACP</b></td><td>Link Aggregation Control Protocol</td><td>여러 링크를 묶는 협상 규약 (802.3ad)</td><td>6.4</td></tr></tbody></table>
+
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">06</div></section><section class="page" data-sec="1.3" data-title="1.3 약자 사전" data-cont="1"><div class="rh"><div class="l"><b>NETWORK L2</b> · 1장 · <span class="sec">데이터링크 계층의 개념</span></div><div class="r">1.3 약자 사전 (계속)<span class="pg">07</span></div></div><div class="kicker">1.3 · ABBREVIATIONS</div><h1>2계층에서 쓰는 약자<br><em>풀어 쓰면 뜻이 보인다</em> <small class="cont" style="font-size:.55em;color:var(--muted)">(계속)</small></h1><table class="zebra"><thead><tr><th style="width:13%">약자</th><th style="width:31%">풀어 쓰면</th><th style="width:40%">우리말 뜻</th><th style="width:16%">어디서 나오나</th></tr></thead><tbody><tr><td><b>MII</b></td><td>Media Independent Interface</td><td>bond가 링크 상태를 감시하는 방식 (miimon)</td><td>6.5</td></tr><tr><td><b>veth · netns</b></td><td>virtual ethernet · network namespace</td><td>가상 랜선 한 쌍 · 독립된 가상 네트워크 공간</td><td>4.4</td></tr></tbody></table><div class="note"><strong>802.3, 802.1Q, 802.3ad는 무엇?</strong> IEEE(미국 전기전자학회)가 붙인 표준 번호입니다. 802.3 = 이더넷, 802.1Q = VLAN 태그, 802.1D = STP, 802.3ad(현재 802.1AX) = 링크 묶기, 802.11 = Wi-Fi.</div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">07</div></section>
+<section class="page opener has-why" data-ch="2"><div class="rh"><div class="l"><b>NETWORK L2</b> · 2장</div><div class="r">이더넷 프레임과 MAC 주소<span class="pg">08</span></div></div><div class="big">2</div><h1>이더넷 프레임과 MAC 주소<br>Wireshark 첫 줄을 읽는다</h1><div class="oscene"><div class="osh">WHY · 현장 장면</div><div class="osb">Wireshark를 열었더니 모든 패킷 맨 위에 <code>Ethernet II</code>가 있고, Source 칸에 <code>Microsof_01:2a:3b</code> 같은 이름이 보인다. <b>이 줄을 읽지 못하면</b> 캡처의 나머지도 읽을 수 없다.</div><table class="zebra osx"><thead><tr><th>이 장을 모르면</th><th>생기는 일</th></tr></thead><tbody><tr><td>프레임 구조를 모르면</td><td>캡처의 필드를 해석 못 함</td></tr><tr><td>MTU를 모르면</td><td>큰 전송만 실패하는 장애를 못 찾음</td></tr><tr><td>MAC 종류를 모르면</td><td>VM·실물·브로드캐스트를 구분 못 함</td></tr></tbody></table></div><div class="oq"><div><span>01</span>이더넷 프레임은 어떤 필드로 이루어져 있는가?</div><div><span>02</span>EtherType은 무엇을 알려 주는가?</div><div><span>03</span>MAC 주소 48비트는 어떻게 읽는가?</div></div><div class="kicker">이 장의 구성</div><div class="otoc"><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">2.1</b>이더넷 프레임 구조</span><b data-toc="2.1">09</b></div><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">2.2</b>MAC 주소 구조</span><b data-toc="2.2">10</b></div></div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">08</div></section>
+<section class="page" data-sec="2.1" data-title="2.1 이더넷 프레임 구조"><div class="rh"><div class="l"><b>NETWORK L2</b> · 2장 · <span class="sec">이더넷 프레임과 MAC 주소</span></div><div class="r">2.1 이더넷 프레임 구조<span class="pg">09</span></div></div><div class="kicker">2.1 · ETHERNET FRAME</div><h1>이더넷 프레임은<br><em>MAC 두 개 · 타입 · 데이터 · FCS</em></h1>
+<div class="why" style="zoom: 0.92;"><b>왜 배워야 하나?</b><p>Wireshark에서 패킷 하나를 열면 맨 위에 <code>Ethernet II</code>가 나옵니다. 이 구조를 알아야 캡처 화면의 첫 줄부터 읽을 수 있습니다.</p></div>
+<div class="dia" style="zoom: 0.92;"><svg viewBox="0 0 620 120" xmlns="http://www.w3.org/2000/svg" style="font-family:'Noto Sans KR',sans-serif"><rect x="10" y="20" width="80" height="50" fill="#efedea" stroke="#1c1b19" stroke-width="1.2"></rect><text x="50.0" y="42" text-anchor="middle" font-size="11" font-weight="700" fill="#1c1b19">프리앰블+SFD</text><text x="50.0" y="60" text-anchor="middle" font-size="10" fill="#b23c0a" font-family="Consolas,monospace">8 B</text><text x="50.0" y="88" text-anchor="middle" font-size="10" fill="#5b574f">1계층 · 박자 맞추기</text><rect x="90" y="20" width="90" height="50" fill="#fdf3ec" stroke="#1c1b19" stroke-width="1.2"></rect><text x="135.0" y="42" text-anchor="middle" font-size="11" font-weight="700" fill="#1c1b19">목적지 MAC</text><text x="135.0" y="60" text-anchor="middle" font-size="10" fill="#b23c0a" font-family="Consolas,monospace">6 B</text><text x="135.0" y="88" text-anchor="middle" font-size="10" fill="#5b574f">누구에게</text><rect x="180" y="20" width="90" height="50" fill="#fdf3ec" stroke="#1c1b19" stroke-width="1.2"></rect><text x="225.0" y="42" text-anchor="middle" font-size="11" font-weight="700" fill="#1c1b19">출발지 MAC</text><text x="225.0" y="60" text-anchor="middle" font-size="10" fill="#b23c0a" font-family="Consolas,monospace">6 B</text><text x="225.0" y="88" text-anchor="middle" font-size="10" fill="#5b574f">누가</text><rect x="270" y="20" width="55" height="50" fill="#f2f5fd" stroke="#1c1b19" stroke-width="1.2"></rect><text x="297.5" y="42" text-anchor="middle" font-size="11" font-weight="700" fill="#1c1b19">타입</text><text x="297.5" y="60" text-anchor="middle" font-size="10" fill="#b23c0a" font-family="Consolas,monospace">2 B</text><text x="297.5" y="88" text-anchor="middle" font-size="10" fill="#5b574f">안에 든 것</text><rect x="325" y="20" width="210" height="50" fill="#f1f7f3" stroke="#1c1b19" stroke-width="1.2"></rect><text x="430.0" y="42" text-anchor="middle" font-size="11" font-weight="700" fill="#1c1b19">데이터 (Payload)</text><text x="430.0" y="60" text-anchor="middle" font-size="10" fill="#b23c0a" font-family="Consolas,monospace">46~1500 B</text><text x="430.0" y="88" text-anchor="middle" font-size="10" fill="#5b574f">IP 패킷 등</text><rect x="535" y="20" width="60" height="50" fill="#fdf2f2" stroke="#1c1b19" stroke-width="1.2"></rect><text x="565.0" y="42" text-anchor="middle" font-size="11" font-weight="700" fill="#1c1b19">FCS</text><text x="565.0" y="60" text-anchor="middle" font-size="10" fill="#b23c0a" font-family="Consolas,monospace">4 B</text><text x="565.0" y="88" text-anchor="middle" font-size="10" fill="#5b574f">오류 검사</text><text x="10" y="112" font-size="10" fill="#86827b">Wireshark에는 보통 목적지 MAC부터 데이터까지만 보인다 (프리앰블·FCS는 랜카드가 처리)</text></svg></div>
+<table class="zebra" style="zoom: 0.92;"><thead><tr><th style="width:22%">필드</th><th style="width:14%">크기</th><th style="width:64%">설명</th></tr></thead><tbody><tr><td><b>목적지 MAC</b></td><td>6B</td><td>받을 인터페이스 · <code>ff:ff:ff:ff:ff:ff</code>이면 모두에게</td></tr><tr><td><b>출발지 MAC</b></td><td>6B</td><td>보낸 인터페이스</td></tr><tr><td><b>타입</b> (EtherType)</td><td>2B</td><td>데이터 안에 무엇이 들었는지 · 받는 쪽 운영체제가 누구에게 넘길지 결정</td></tr><tr><td><b>데이터</b></td><td>46~1500B</td><td>IP 패킷 등 · 46B보다 작으면 0으로 채움(패딩) · 최대 1500B = <b>MTU</b></td></tr><tr><td><b>FCS</b></td><td>4B</td><td>CRC 값 · 받는 쪽이 다시 계산해 다르면 버림</td></tr></tbody></table>
+<table class="zebra" style="zoom: 0.92;"><thead><tr><th>EtherType</th><th>뜻</th></tr></thead><tbody><tr><td><code>0x0800</code></td><td>IPv4</td></tr><tr><td><code>0x0806</code></td><td>ARP (3장)</td></tr><tr><td><code>0x86DD</code></td><td>IPv6</td></tr><tr><td><code>0x8100</code></td><td>VLAN 태그 (4.2)</td></tr><tr><td><code>0x8809</code></td><td>Slow Protocols · LACP (6장)</td></tr></tbody></table>
+<div class="point" style="zoom: 0.92;"><div class="pl">크기 기억하기</div><p>이더넷 프레임은 <strong>최소 64바이트 ~ 최대 1518바이트</strong>(FCS 포함, VLAN 태그가 있으면 1522)입니다. MTU 1500은 그중 <strong>데이터 칸의 최대 크기</strong>입니다. 서버실에서 쓰는 점보 프레임은 MTU를 9000으로 늘린 것입니다.</p></div>
+<div class="note" style="zoom: 0.92;"><strong>tcpdump의 “length 42”</strong> ARP는 14B(헤더) + 28B(ARP) = 42B라 최소 크기보다 작습니다. 실제 전선 위에서는 패딩으로 60B + FCS 4B = 64B가 되지만, 보낸 쪽에서 캡처하면 패딩 전의 42B가 보입니다.</div>
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">09</div></section>
+<section class="page" data-sec="2.2" data-title="2.2 MAC 주소 구조"><div class="rh"><div class="l"><b>NETWORK L2</b> · 2장 · <span class="sec">이더넷 프레임과 MAC 주소</span></div><div class="r">2.2 MAC 주소 구조<span class="pg">10</span></div></div><div class="kicker">2.2 · MAC ADDRESS</div><h1>MAC 주소 48비트를<br><em>읽는 법</em></h1>
+<div class="why"><b>왜 배워야 하나?</b><p>MAC 주소 앞자리만 보고도 “실물 랜카드인지, VM인지, 모두에게 보내는 주소인지”를 판단할 수 있습니다. 장애 조사와 보안 점검에서 바로 쓰는 지식입니다.</p></div>
+<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:4px;margin:10px 0"><span style="font-family:Consolas,monospace;text-align:center;border:1px solid var(--line2);padding:8px 3px;background:var(--pvs);font-weight:800">00</span><span style="font-family:Consolas,monospace;text-align:center;border:1px solid var(--line2);padding:8px 3px;background:var(--pvs);font-weight:800">15</span><span style="font-family:Consolas,monospace;text-align:center;border:1px solid var(--line2);padding:8px 3px;background:var(--pvs);font-weight:800">5d</span><span style="font-family:Consolas,monospace;text-align:center;border:1px solid var(--line2);padding:8px 3px;background:var(--pas);font-weight:800">01</span><span style="font-family:Consolas,monospace;text-align:center;border:1px solid var(--line2);padding:8px 3px;background:var(--pas);font-weight:800">2a</span><span style="font-family:Consolas,monospace;text-align:center;border:1px solid var(--line2);padding:8px 3px;background:var(--pas);font-weight:800">3b</span></div><div class="split" style="margin:0"><p class="mn" style="text-align:center;color:var(--pv)"><b>앞 3바이트 · OUI</b> 제조사 번호 (00:15:5d = Microsoft Hyper-V)</p><p class="mn" style="text-align:center;color:var(--pa)"><b>뒤 3바이트</b> 제조사가 매긴 일련번호</p></div>
+<h3>첫 바이트의 마지막 두 비트가 성격을 정한다</h3>
+<table class="zebra"><thead><tr><th style="width:12%">첫 바이트</th><th style="width:18%">2진수</th><th style="width:20%">맨 끝 비트 (I/G)</th><th style="width:24%">끝에서 둘째 비트 (U/L)</th><th style="width:26%">뜻</th></tr></thead><tbody><tr><td><code>00</code></td><td>0000 00<b>00</b></td><td>0 · 한 대에게</td><td>0 · 제조사가 부여</td><td>실물 랜카드 · Hyper-V VM</td></tr><tr><td><code>52</code></td><td>0101 00<b>10</b></td><td>0 · 한 대에게</td><td><b>1 · 로컬에서 만든 주소</b></td><td>QEMU/KVM VM (52:54:00)</td></tr><tr><td><code>02</code></td><td>0000 00<b>10</b></td><td>0 · 한 대에게</td><td><b>1 · 로컬</b></td><td>실습에서 직접 정한 주소 · Docker</td></tr><tr><td><code>01</code></td><td>0000 00<b>01</b></td><td><b>1 · 여러 대에게</b></td><td>0</td><td>멀티캐스트 (01:00:5e = IPv4 멀티캐스트)</td></tr><tr><td><code>ff</code></td><td>1111 11<b>11</b></td><td>1</td><td>1</td><td><b>브로드캐스트</b> · 같은 네트워크 전체</td></tr></tbody></table>
+<table class="zebra"><thead><tr><th>종류</th><th>목적지 MAC</th><th>누가 받나</th></tr></thead><tbody><tr><td><b>유니캐스트</b></td><td>특정 MAC</td><td>그 인터페이스 하나</td></tr><tr><td><b>브로드캐스트</b></td><td><code>ff:ff:ff:ff:ff:ff</code></td><td>같은 네트워크(브로드캐스트 도메인)의 모두</td></tr><tr><td><b>멀티캐스트</b></td><td><code>01:00:5e:…</code>, <code>33:33:…</code></td><td>그 그룹에 가입한 기기</td></tr></tbody></table>
+
+
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">10</div></section><section class="page" data-sec="2.2" data-title="2.2 MAC 주소 구조" data-cont="1"><div class="rh"><div class="l"><b>NETWORK L2</b> · 2장 · <span class="sec">이더넷 프레임과 MAC 주소</span></div><div class="r">2.2 MAC 주소 구조 (계속)<span class="pg">11</span></div></div><div class="kicker">2.2 · MAC ADDRESS</div><h1>MAC 주소 48비트를<br><em>읽는 법</em> <small class="cont" style="font-size:.55em;color:var(--muted)">(계속)</small></h1><div class="term keep"><div class="th"><span>myUbuntu1</span><span>내 MAC 주소 확인</span></div><div class="tb2"><span class="p">$</span> <span class="c">ip link show eth0</span>
+2: eth0: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1500 ... state UP
+<span class="d"># brd = 브로드캐스트 주소</span>
+    link/ether 00:15:5d:01:2a:3b brd ff:ff:ff:ff:ff:ff
+<span class="p">$</span> <span class="c">cat /sys/class/net/eth0/address</span>
+00:15:5d:01:2a:3b</div></div><div class="note"><strong>MAC은 바뀔 수 있다</strong> 운영체제에서 바꿀 수 있고(<code>ip link set eth0 address …</code>), 요즘 휴대폰은 개인정보 보호를 위해 Wi-Fi마다 <b>무작위 MAC</b>(U/L 비트 = 1)을 씁니다. “MAC = 절대 안 바뀌는 고유번호”가 아닙니다.</div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">11</div></section>
+<section class="page opener has-why" data-ch="3"><div class="rh"><div class="l"><b>NETWORK L2</b> · 3장</div><div class="r">ARP<span class="pg">12</span></div></div><div class="big">3</div><h1>ARP<br>IP로 MAC을 찾는다</h1><div class="oscene"><div class="osh">WHY · 현장 장면</div><div class="osb">서버 IP도 맞고 게이트웨이도 맞는데 통신이 안 된다. <code>ip neigh</code>를 보니 게이트웨이 줄이 <b>FAILED</b>. IP는 아는데 MAC을 모르면 프레임을 만들 수 없다.</div><table class="zebra osx"><thead><tr><th>이 장을 모르면</th><th>생기는 일</th></tr></thead><tbody><tr><td>ARP를 모르면</td><td>첫 통신이 느린 이유·FAILED의 뜻을 모름</td></tr><tr><td>ARP 테이블을 못 읽으면</td><td>2계층 장애를 IP 문제로 오해</td></tr><tr><td>ARP의 약점을 모르면</td><td>IP 충돌·스푸핑을 알아채지 못함</td></tr></tbody></table></div><div class="oq"><div><span>01</span>ARP 요청과 응답은 어떻게 오가는가?</div><div><span>02</span>ARP 테이블의 상태(REACHABLE·STALE·FAILED)는 무엇을 뜻하는가?</div><div><span>03</span>ARP 스푸핑은 어떻게 일어나고 어떻게 막는가?</div></div><div class="kicker">이 장의 구성</div><div class="otoc"><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">3.1</b>ARP란 · ARP 동작</span><b data-toc="3.1">13</b></div><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">3.2</b>ARP 테이블</span><b data-toc="3.2">15</b></div><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">3.3</b>ARP의 약점과 보안</span><b data-toc="3.3">16</b></div></div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">12</div></section>
+<section class="page" data-sec="3.1" data-title="3.1 ARP 동작"><div class="rh"><div class="l"><b>NETWORK L2</b> · 3장 · <span class="sec">ARP</span></div><div class="r">3.1 ARP 동작<span class="pg">13</span></div></div><div class="kicker">3.1 · ARP</div><h1>IP는 아는데 MAC은 모른다<br><em>ARP</em>가 물어본다</h1>
+<h3>ARP란 무엇인가</h3><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0"><div style="border:1.5px solid var(--ink);background:#fff;padding:10px 12px"><div style="font-family:Consolas,monospace;font-size:26px;font-weight:900;color:var(--accent);line-height:1">A</div><div style="font-weight:800;margin-top:4px">Address</div><div class="mn" style="margin-top:2px">주소 · 여기서는 IP 주소와 MAC 주소</div></div><div style="border:1.5px solid var(--ink);background:#fff;padding:10px 12px"><div style="font-family:Consolas,monospace;font-size:26px;font-weight:900;color:var(--accent);line-height:1">R</div><div style="font-weight:800;margin-top:4px">Resolution</div><div class="mn" style="margin-top:2px">해석·풀이 · 하나를 보고 다른 하나를 알아냄</div></div><div style="border:1.5px solid var(--ink);background:#fff;padding:10px 12px"><div style="font-family:Consolas,monospace;font-size:26px;font-weight:900;color:var(--accent);line-height:1">P</div><div style="font-weight:800;margin-top:4px">Protocol</div><div class="mn" style="margin-top:2px">규약·약속 · 모두가 같은 방식으로 묻고 답함</div></div></div>
+<div class="point"><div class="pl">한 문장 정의</div><p><strong>ARP(Address Resolution Protocol, 주소 해석 규약)</strong>는 <strong>“이 IP 주소를 쓰는 랜카드의 MAC 주소가 무엇인가?”</strong>를 같은 네트워크 전체에 물어보고 답을 받는 약속입니다. 3계층 주소(IP)와 2계층 주소(MAC)를 이어 주는 다리입니다.</p></div>
+<table class="zebra"><thead><tr><th>비슷한 이름</th><th>풀어 쓰면</th><th>하는 일</th></tr></thead><tbody><tr><td><b>ARP</b></td><td>Address Resolution Protocol</td><td>IP → MAC 알아내기 (IPv4)</td></tr><tr><td><b>GARP</b></td><td>Gratuitous ARP</td><td>묻지 않았는데 “내 IP는 이 MAC”이라고 알림 (3.3)</td></tr><tr><td><b>Proxy ARP</b></td><td>—</td><td>라우터가 다른 네트워크의 기기 대신 응답</td></tr><tr><td><b>RARP</b></td><td>Reverse ARP</td><td>MAC → IP (옛 방식 · 지금은 DHCP가 대신)</td></tr><tr><td><b>NDP</b></td><td>Neighbor Discovery Protocol</td><td>IPv6에서 ARP 역할 (<code>ip -6 neigh</code>)</td></tr></tbody></table>
+
+
+
+
+
+
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">13</div></section><section class="page" data-sec="3.1" data-title="3.1 ARP 동작" data-cont="1" data-brk="1"><div class="rh"><div class="l"><b>NETWORK L2</b> · 3장 · <span class="sec">ARP</span></div><div class="r">3.1 ARP 동작 (계속)<span class="pg">14</span></div></div><div class="kicker">3.1 · ARP</div><h1>IP는 아는데 MAC은 모른다<br><em>ARP</em>가 물어본다 <small class="cont" style="font-size:.55em;color:var(--muted)">(계속)</small></h1><div class="why" style="zoom: 0.97;"><b>왜 배워야 하나?</b><p>ping 10.0.0.12를 치면 운영체제는 IP만 압니다. 그런데 프레임을 만들려면 <strong>목적지 MAC</strong>이 필요합니다. 이 빈칸을 채우는 것이 ARP(Address Resolution Protocol)입니다. L1 교안의 마지막 질문에 대한 답입니다.</p></div><div class="flow" style="flex-direction: column; align-items: stretch; zoom: 0.97;"><span><b>① 요청 · 브로드캐스트</b><br><small>h1 → ff:ff:ff:ff:ff:ff · “10.0.0.12 가진 사람? 10.0.0.11에게 알려 줘”</small></span><i style="text-align:center">↓ 같은 네트워크의 모두가 받음 · 주인만 응답</i><span><b>② 응답 · 유니캐스트</b><br><small>h2 → h1 · “10.0.0.12는 02:00:00:00:00:12야”</small></span><i style="text-align:center">↓</i><span><b>③ 기록하고 전송</b><br><small>h1이 ARP 테이블에 저장 → 이제 IP 패킷을 프레임에 담아 보냄</small></span></div><div class="term keep" style="zoom: 0.97;"><div class="th"><span>h2</span><span>tcpdump -e -n · 실제 캡처</span></div><div class="tb2"><span class="p">$</span> <span class="c">sudo tcpdump -e -n -i eth0</span>
+02:00:00:00:00:11 &gt; ff:ff:ff:ff:ff:ff, ethertype ARP (0x0806), length 42: Request who-has 10.0.0.12 tell 10.0.0.11
+02:00:00:00:00:12 &gt; 02:00:00:00:00:11, ethertype ARP (0x0806), length 42: Reply 10.0.0.12 is-at 02:00:00:00:00:12
+02:00:00:00:00:11 &gt; 02:00:00:00:00:12, ethertype IPv4 (0x0800), length 98: 10.0.0.11 &gt; 10.0.0.12: ICMP echo request
+02:00:00:00:00:12 &gt; 02:00:00:00:00:11, ethertype IPv4 (0x0800), length 98: 10.0.0.12 &gt; 10.0.0.11: ICMP echo reply</div></div><table class="zebra" style="zoom: 0.97;"><thead><tr><th>줄</th><th>출발지 → 목적지 MAC</th><th>타입</th><th>읽는 법</th></tr></thead><tbody><tr><td>1</td><td>h1 → <b>ff:ff:…</b></td><td>ARP</td><td>요청 · 모두에게 · <code>-e</code> 옵션이 MAC을 보여 줌</td></tr><tr><td>2</td><td>h2 → h1</td><td>ARP</td><td>응답 · 당사자에게만</td></tr><tr><td>3·4</td><td>h1 ↔ h2</td><td>IPv4</td><td>이제야 ping(ICMP)이 오감 · ARP는 첫 통신에서 한 번만</td></tr></tbody></table><div class="point" style="zoom: 0.97;"><div class="pl">다른 네트워크로 갈 때</div><p>목적지가 다른 네트워크면(CIDR 계산 결과가 다르면) 운영체제는 목적지 IP가 아니라 <strong>게이트웨이 IP의 MAC</strong>을 ARP로 물어봅니다. “이 목적지에 직접 보낼까, 게이트웨이로 보낼까”(IPv4 교안 3.3)의 결과가 여기서 MAC으로 바뀝니다.</p></div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">14</div></section>
+<section class="page" data-sec="3.2" data-title="3.2 ARP 테이블"><div class="rh"><div class="l"><b>NETWORK L2</b> · 3장 · <span class="sec">ARP</span></div><div class="r">3.2 ARP 테이블<span class="pg">15</span></div></div><div class="kicker">3.2 · IP NEIGH</div><h1>ARP 결과는<br><em>ARP 테이블</em>에 잠시 저장된다</h1>
+<div class="why"><b>왜 배워야 하나?</b><p>매번 브로드캐스트로 물어보면 네트워크가 시끄러워집니다. 그래서 알아낸 IP ↔ MAC 짝을 잠시 저장해 두고 재사용합니다. 통신 장애 때 가장 먼저 보는 표 중 하나입니다.</p></div>
+<div class="term keep"><div class="th"><span>h1</span><span>ip neigh · 실제 출력</span></div><div class="tb2"><span class="p">$</span> <span class="c">ip neigh show</span>
+10.0.0.12 dev eth0 lladdr 02:00:00:00:00:12 REACHABLE
+<span class="p">$</span> <span class="c">ip -s neigh show</span>   <span class="d"># 사용 시간·확인 횟수까지</span>
+10.0.0.12 dev eth0 lladdr 02:00:00:00:00:12 ref 1 used 1/1/1 probes 4 REACHABLE
+<span class="p">$</span> <span class="c">sudo ip neigh flush dev eth0</span>   <span class="d"># 테이블 비우기 · 다음 통신 때 ARP가 다시 일어남</span></div></div>
+<table class="zebra"><thead><tr><th>상태</th><th>뜻</th><th>볼 때</th></tr></thead><tbody><tr><td><b>REACHABLE</b></td><td>최근에 확인된 정상 항목</td><td>정상</td></tr><tr><td><b>STALE</b></td><td>오래돼서 다음에 쓸 때 다시 확인할 항목</td><td>정상 · 흔함</td></tr><tr><td><b>DELAY · PROBE</b></td><td>지금 다시 확인 중</td><td>잠깐 보임</td></tr><tr><td><b>INCOMPLETE</b></td><td>물어봤는데 아직 답이 없음</td><td>상대가 꺼짐·다른 네트워크·VLAN 분리</td></tr><tr><td><b>FAILED</b></td><td>여러 번 물어봐도 답이 없음</td><td><b>2계층 장애 신호</b> · 상대 MAC을 모르니 IP 통신 불가</td></tr><tr><td><b>PERMANENT</b></td><td>사람이 고정한 항목</td><td>정적 ARP</td></tr></tbody></table>
+<table class="zebra"><thead><tr><th>운영체제</th><th>ARP 테이블 보기</th></tr></thead><tbody><tr><td>Linux</td><td><code>ip neigh</code> (옛 명령 <code>arp -n</code>)</td></tr><tr><td>Windows</td><td><code>arp -a</code></td></tr><tr><td>macOS</td><td><code>arp -a</code></td></tr></tbody></table>
+<div class="note"><strong>게이트웨이 항목은 항상 있어야 한다</strong> 인터넷이 된다면 <code>ip neigh</code>에 게이트웨이 IP와 그 MAC이 보입니다. 게이트웨이 항목이 FAILED이면 IP 설정보다 먼저 2계층(연결·VLAN)을 의심합니다.</div>
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">15</div></section>
+<section class="page" data-sec="3.3" data-title="3.3 ARP의 약점과 보안"><div class="rh"><div class="l"><b>NETWORK L2</b> · 3장 · <span class="sec">ARP</span></div><div class="r">3.3 ARP의 약점과 보안<span class="pg">16</span></div></div><div class="kicker">3.3 · ARP SECURITY</div><h1>ARP는 누구 말이든 믿는다<br><em>IP 충돌</em>과 <em>ARP 스푸핑</em></h1>
+<div class="why"><b>왜 배워야 하나?</b><p>ARP에는 “응답한 사람이 진짜 주인인지” 확인하는 장치가 없습니다. 그래서 설정 실수(IP 충돌)와 공격(ARP 스푸핑)이 모두 2계층에서 일어납니다.</p></div>
+<table class="zebra"><thead><tr><th style="width:18%">현상</th><th style="width:40%">무슨 일</th><th style="width:42%">증상 · 확인</th></tr></thead><tbody><tr><td><b>IP 충돌</b></td><td>두 기기가 같은 IP를 씀 → 두 MAC이 번갈아 응답</td><td>통신이 됐다 안 됐다 · <code>ip neigh</code>의 MAC이 계속 바뀜 · Wireshark 경고 “duplicate use of IP”</td></tr><tr><td><b>Gratuitous ARP</b></td><td>묻지 않았는데 “내 IP는 이 MAC이야”라고 알림</td><td>정상 용도: 부팅 시 충돌 검사, 이중화 장비 전환(6장 failover)</td></tr><tr><td><b>ARP 스푸핑</b></td><td>공격자가 “게이트웨이 IP는 <b>내 MAC</b>”이라고 거짓 응답</td><td>피해자의 인터넷 트래픽이 공격자를 거침(중간자 공격) · 게이트웨이 MAC이 낯선 값으로 바뀜</td></tr></tbody></table>
+<div class="flow"><span>피해자 PC</span><i>→</i><span style="border-color:var(--px);background:var(--pxs)">공격자<br><small>게이트웨이인 척</small></span><i>→</i><span>진짜 게이트웨이</span><i>→</i><span>인터넷</span></div>
+<table class="zebra"><thead><tr><th>대응</th><th>방법</th></tr></thead><tbody><tr><td><b>탐지</b></td><td><code>ip neigh</code>에서 게이트웨이 MAC이 평소와 다른지 · 서로 다른 IP가 같은 MAC을 가지는지 · Wireshark 필터 <code>arp.duplicate-address-detected</code></td></tr><tr><td><b>스위치 기능</b></td><td>DAI(Dynamic ARP Inspection) · 포트 보안(포트당 허용 MAC 제한)</td></tr><tr><td><b>정적 ARP</b></td><td>중요 서버에서 게이트웨이 MAC을 고정 (<code>nud permanent</code>)</td></tr><tr><td><b>암호화</b></td><td>HTTPS·SSH를 쓰면 가로채도 내용을 못 읽음 (6계층·7계층)</td></tr></tbody></table>
+<div class="warn"><b>ARP 스푸핑 도구는 자신의 실습 환경에서만</b> 다룹니다. 남의 네트워크에서 실행하면 불법입니다. 이 교재는 7.3 미션에서 정적 ARP로 “잘못된 MAC” 상황만 안전하게 재현합니다.</div>
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">16</div></section>
+<section class="page opener has-why" data-ch="4"><div class="rh"><div class="l"><b>NETWORK L2</b> · 4장</div><div class="r">L2 스위치<span class="pg">17</span></div></div><div class="big">4</div><h1>L2 스위치<br>MAC을 배워 필요한 곳으로만</h1><div class="oscene"><div class="osh">WHY · 현장 장면</div><div class="osb">사무실 스위치에 누군가 남는 케이블 양 끝을 모두 꽂았다. 몇 초 뒤 층 전체의 네트워크가 멈췄다. <b>스위치가 어떻게 동작하는지</b> 알아야 원인과 해결책이 보인다.</div><table class="zebra osx"><thead><tr><th>이 장을 모르면</th><th>생기는 일</th></tr></thead><tbody><tr><td>스위치 동작을 모르면</td><td>플러딩·MAC 테이블 문제를 못 읽음</td></tr><tr><td>VLAN을 모르면</td><td>같은 서브넷인데 안 되는 이유를 모름</td></tr><tr><td>STP를 모르면</td><td>루프 한 번에 네트워크 전체가 멈춤</td></tr></tbody></table></div><div class="oq"><div><span>01</span>스위치는 MAC 주소 테이블을 어떻게 만들고 쓰는가?</div><div><span>02</span>VLAN은 스위치를 어떻게 나누는가?</div><div><span>03</span>루프는 왜 위험하고 STP는 어떻게 막는가?</div></div><div class="kicker">이 장의 구성</div><div class="otoc"><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">4.1</b>L2 스위치의 동작</span><b data-toc="4.1">18</b></div><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">4.2</b>VLAN</span><b data-toc="4.2">20</b></div><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">4.3</b>루프와 STP</span><b data-toc="4.3">21</b></div><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">4.4</b>리눅스 브리지</span><b data-toc="4.4">22</b></div></div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">17</div></section>
+<section class="page" data-sec="4.1" data-title="4.1 L2 스위치의 동작"><div class="rh"><div class="l"><b>NETWORK L2</b> · 4장 · <span class="sec">L2 스위치</span></div><div class="r">4.1 L2 스위치의 동작<span class="pg">18</span></div></div><div class="kicker">4.1 · L2 SWITCH</div><h1>스위치는 MAC 주소를 배워서<br><em>필요한 포트로만</em> 보낸다</h1>
+<div class="why"><b>왜 배워야 하나?</b><p>허브는 받은 신호를 모든 포트로 복사했습니다(L1 교안 3.1). 스위치는 <strong>MAC 주소 테이블</strong>을 만들어 목적지 포트로만 보냅니다. 그래서 여러 쌍이 동시에, 충돌 없이 통신할 수 있습니다.</p></div>
+<div class="dia"><svg viewBox="0 0 640 190" xmlns="http://www.w3.org/2000/svg" style="font-family:'Noto Sans KR',sans-serif"><rect x="230" y="70" width="180" height="46" rx="5" fill="#1e2638"></rect><text x="320" y="92" text-anchor="middle" font-size="12" font-weight="800" fill="#fff">L2 스위치 (br0)</text><text x="320" y="108" text-anchor="middle" font-size="10" fill="#ff9a6b">MAC 주소 테이블</text><rect x="40" y="20" width="130" height="36" rx="4" fill="#fff" stroke="#1c1b19"></rect><text x="105" y="36" text-anchor="middle" font-size="12" font-weight="700">h1</text><text x="105" y="50" text-anchor="middle" font-size="10" fill="#b23c0a" font-family="Consolas,monospace">02:00:00:00:00:11</text><rect x="40" y="140" width="130" height="36" rx="4" fill="#fff" stroke="#1c1b19"></rect><text x="105" y="156" text-anchor="middle" font-size="12" font-weight="700">h2</text><text x="105" y="170" text-anchor="middle" font-size="10" fill="#b23c0a" font-family="Consolas,monospace">02:00:00:00:00:12</text><rect x="470" y="80" width="130" height="36" rx="4" fill="#fff" stroke="#1c1b19"></rect><text x="535" y="96" text-anchor="middle" font-size="12" font-weight="700">h3</text><text x="535" y="110" text-anchor="middle" font-size="10" fill="#b23c0a" font-family="Consolas,monospace">02:00:00:00:00:13</text><line x1="170" y1="38" x2="230" y2="82" stroke="#5b574f" stroke-width="2"></line><line x1="170" y1="158" x2="230" y2="106" stroke="#5b574f" stroke-width="2"></line><line x1="410" y1="93" x2="470" y2="98" stroke="#5b574f" stroke-width="2"></line><text x="190" y="52" font-size="10" fill="#86827b">veth-h1</text><text x="185" y="150" font-size="10" fill="#86827b">veth-h2</text><text x="420" y="88" font-size="10" fill="#86827b">veth-h3</text></svg></div>
+<table class="zebra"><thead><tr><th style="width:20%">동작</th><th style="width:36%">언제</th><th style="width:44%">무엇을</th></tr></thead><tbody><tr><td><b>① 학습</b> (Learning)</td><td>프레임이 들어올 때마다</td><td><b>출발지 MAC</b>과 들어온 포트를 테이블에 기록</td></tr><tr><td><b>② 플러딩</b> (Flooding)</td><td>목적지가 브로드캐스트이거나 테이블에 없을 때</td><td>들어온 포트를 뺀 <b>모든 포트</b>로 복사</td></tr><tr><td><b>③ 포워딩</b> (Forwarding)</td><td>목적지 MAC이 테이블에 있을 때</td><td><b>그 포트 하나로만</b> 보냄</td></tr><tr><td><b>④ 필터링</b> (Filtering)</td><td>목적지가 들어온 포트와 같은 쪽일 때</td><td>보내지 않고 버림</td></tr><tr><td><b>⑤ 에이징</b> (Aging)</td><td>일정 시간(리눅스 브리지 기본 300초) 동안 안 보이면</td><td>테이블에서 지움 · 기기 이동에 대비</td></tr></tbody></table>
+<table class="zebra"><thead><tr><th>MAC 주소 테이블 예</th><th>포트</th><th>종류</th></tr></thead><tbody><tr><td>02:00:00:00:00:11</td><td>veth-h1</td><td>학습됨</td></tr><tr><td>02:00:00:00:00:12</td><td>veth-h2</td><td>학습됨</td></tr><tr><td>02:00:00:00:00:13</td><td>veth-h3</td><td>학습됨</td></tr></tbody></table>
+
+
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">18</div></section><section class="page" data-sec="4.1" data-title="4.1 L2 스위치의 동작" data-cont="1"><div class="rh"><div class="l"><b>NETWORK L2</b> · 4장 · <span class="sec">L2 스위치</span></div><div class="r">4.1 L2 스위치의 동작 (계속)<span class="pg">19</span></div></div><div class="kicker">4.1 · L2 SWITCH</div><h1>스위치는 MAC 주소를 배워서<br><em>필요한 포트로만</em> 보낸다 <small class="cont" style="font-size:.55em;color:var(--muted)">(계속)</small></h1><table class="zebra"><thead><tr><th>구분</th><th>충돌 도메인 (Collision)</th><th>브로드캐스트 도메인 (Broadcast)</th></tr></thead><tbody><tr><td>뜻</td><td>동시에 보내면 신호가 섞이는 범위</td><td>브로드캐스트 프레임이 퍼지는 범위 = <b>같은 네트워크</b></td></tr><tr><td>허브</td><td>포트 전체가 하나</td><td>하나</td></tr><tr><td><b>스위치</b></td><td><b>포트마다 하나씩</b> (전이중이면 사실상 충돌 없음)</td><td><b>하나</b> · 브로드캐스트는 모든 포트로</td></tr><tr><td>라우터 (3계층)</td><td>포트마다</td><td><b>포트마다 나뉨</b> · 브로드캐스트를 넘기지 않음</td></tr></tbody></table><div class="point"><div class="pl">핵심</div><p>스위치는 충돌 도메인을 쪼개지만 <strong>브로드캐스트 도메인은 쪼개지 못합니다.</strong> 브로드캐스트를 나누려면 VLAN(4.2)이나 라우터(3계층)가 필요합니다.</p></div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">19</div></section>
+<section class="page" data-sec="4.2" data-title="4.2 VLAN"><div class="rh"><div class="l"><b>NETWORK L2</b> · 4장 · <span class="sec">L2 스위치</span></div><div class="r">4.2 VLAN<span class="pg">20</span></div></div><div class="kicker">4.2 · VLAN · 802.1Q</div><h1>스위치 한 대를<br><em>여러 개의 네트워크</em>로 나눈다</h1>
+<div class="why"><b>왜 배워야 하나?</b><p>개발팀·영업팀·게스트 Wi-Fi를 같은 스위치에 꽂되, 서로의 브로드캐스트도 안 보이게 나누고 싶을 때 VLAN(Virtual LAN)을 씁니다. 클라우드의 VPC·서브넷 격리도 같은 생각입니다.</p></div>
+<table class="zebra"><thead><tr><th>포트</th><th>VLAN</th><th>같은 VLAN끼리</th><th>다른 VLAN과</th></tr></thead><tbody><tr><td>1 · 2 · 3</td><td><b>10</b> 개발팀</td><td>직접 통신 (2계층)</td><td><b>통신 불가</b> · 라우터(3계층)를 거쳐야 함</td></tr><tr><td>4 · 5</td><td><b>20</b> 영업팀</td><td>직접 통신</td><td>통신 불가</td></tr><tr><td>6</td><td><b>99</b> 게스트</td><td>—</td><td>인터넷만 허용</td></tr></tbody></table>
+<h3>802.1Q 태그 · 프레임에 4바이트를 끼운다</h3><div class="calc">목적지 MAC | 출발지 MAC | <b>[ 0x8100 | 우선순위 3bit | DEI 1bit | VLAN ID 12bit ]</b> | 타입 | 데이터 | FCS<br>VLAN ID 12비트 → 2¹² = 4096개 중 0과 4095를 뺀 <b>1 ~ 4094</b> 사용</div>
+<table class="zebra"><thead><tr><th>포트 종류</th><th>태그</th><th>연결 대상</th></tr></thead><tbody><tr><td><b>Access</b> 포트</td><td>태그 없음 · 스위치가 붙였다 뗌</td><td>PC·프린터 · VLAN 하나에만 속함</td></tr><tr><td><b>Trunk</b> 포트</td><td><b>태그 붙은 채로</b> 여러 VLAN을 실어 나름</td><td>스위치 ↔ 스위치 · 스위치 ↔ 서버(가상화 호스트)</td></tr></tbody></table>
+<div class="note"><strong>VLAN과 IPv4 서브넷은 짝을 이룬다</strong> 보통 VLAN 하나에 서브넷 하나를 줍니다(VLAN 10 = 192.168.10.0/24). 그래서 다른 VLAN = 다른 네트워크 = 게이트웨이 필요, 라는 IPv4 교안의 결론과 똑같아집니다.</div>
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">20</div></section>
+<section class="page" data-sec="4.3" data-title="4.3 루프와 STP"><div class="rh"><div class="l"><b>NETWORK L2</b> · 4장 · <span class="sec">L2 스위치</span></div><div class="r">4.3 루프와 STP<span class="pg">21</span></div></div><div class="kicker">4.3 · LOOP · STP</div><h1>케이블 하나 잘못 꽂으면<br><em>네트워크 전체</em>가 멈춘다</h1>
+<div class="why"><b>왜 배워야 하나?</b><p>스위치 두 대를 케이블 두 가닥으로 이으면 더 튼튼할 것 같지만, 그대로 두면 <strong>브로드캐스트 스톰</strong>으로 몇 초 만에 네트워크 전체가 마비됩니다. 이를 막는 것이 STP입니다.</p></div>
+<div class="flow"><span>브로드캐스트 1개</span><i>→</i><span>스위치 A가 모든 포트로</span><i>→</i><span>스위치 B가 다시 모든 포트로</span><i>→</i><span style="border-color:var(--px);background:var(--pxs)">A로 돌아옴 · 무한 반복</span></div>
+<table class="zebra"><thead><tr><th>루프가 만드는 문제</th><th>증상</th></tr></thead><tbody><tr><td><b>브로드캐스트 스톰</b></td><td>2계층 프레임에는 TTL이 없어 끝없이 돎 · 대역폭·CPU 100%</td></tr><tr><td><b>MAC 플래핑</b></td><td>같은 MAC이 두 포트에서 번갈아 학습됨 · 스위치 로그에 “MAC flapping”</td></tr><tr><td><b>중복 프레임</b></td><td>같은 프레임이 여러 번 도착</td></tr></tbody></table>
+<table class="zebra"><thead><tr><th>STP 요소</th><th>뜻</th></tr></thead><tbody><tr><td><b>STP</b> (802.1D)</td><td>루프가 생기는 포트 하나를 <b>차단(Blocking)</b>해 트리 모양으로 만듦 · 링크가 끊기면 차단 포트를 다시 엶</td></tr><tr><td><b>BPDU</b></td><td>스위치끼리 주고받는 STP 제어 프레임 · Wireshark 필터 <code>stp</code></td></tr><tr><td><b>루트 브리지</b></td><td>우선순위·MAC이 가장 낮은 스위치 · 트리의 기준</td></tr><tr><td><b>RSTP</b> (802.1w)</td><td>STP의 빠른 버전 · 수십 초 → 수 초 만에 전환</td></tr></tbody></table>
+<div class="point"><div class="pl">이중화와 루프</div><p>케이블을 여러 가닥 쓰고 싶다면 STP로 하나를 막거나, <strong>링크 묶기(LACP, 6장)</strong>로 여러 가닥을 한 링크처럼 만들어야 합니다. 링크 묶기는 루프 없이 여러 가닥을 동시에 씁니다.</p></div>
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">21</div></section>
+<section class="page" data-sec="4.4" data-title="4.4 리눅스 브리지"><div class="rh"><div class="l"><b>NETWORK L2</b> · 4장 · <span class="sec">L2 스위치</span></div><div class="r">4.4 리눅스 브리지<span class="pg">22</span></div></div><div class="kicker">4.4 · LINUX BRIDGE</div><h1>리눅스 브리지는<br><em>소프트웨어 L2 스위치</em>다</h1>
+<div class="why"><b>왜 배워야 하나?</b><p>실습에는 실물 스위치가 없습니다. 대신 리눅스 커널의 <strong>브리지(bridge)</strong>가 학습·플러딩·포워딩·에이징·VLAN·STP를 모두 하는 소프트웨어 스위치입니다. Docker의 <code>docker0</code>, KVM·Multipass의 가상 스위치도 같은 원리입니다.</p></div>
+<table class="zebra"><thead><tr><th style="width:22%">실물 네트워크</th><th style="width:44%">리눅스 실습에서</th><th style="width:34%">명령</th></tr></thead><tbody><tr><td>L2 스위치</td><td><b>브리지</b> <code>br0</code></td><td><code>ip link add br0 type bridge</code></td></tr><tr><td>랜선 한 가닥</td><td><b>veth 쌍</b> (한쪽 끝에 넣으면 반대쪽 끝으로 나옴)</td><td><code>ip link add A type veth peer name B</code></td></tr><tr><td>PC · 서버 한 대</td><td><b>네트워크 네임스페이스</b> (자기만의 인터페이스·IP·ARP 테이블)</td><td><code>ip netns add h1</code></td></tr><tr><td>스위치 포트에 꽂기</td><td>veth 한쪽 끝을 브리지에 연결</td><td><code>ip link set veth-h1 master br0</code></td></tr><tr><td>MAC 주소 테이블 보기</td><td>FDB (Forwarding DataBase)</td><td><code>bridge fdb show br br0</code></td></tr><tr><td>케이블 여러 가닥 묶기</td><td><b>bond</b> 인터페이스</td><td><code>ip link add bond0 type bond mode 802.3ad</code></td></tr></tbody></table>
+<div class="tree">한 대의 Multipass VM (myUbuntu1) 안에
+├─ <b>h1</b> (네임스페이스) ─ eth0 ═ veth-h1 ─┐
+├─ <b>h2</b> (네임스페이스) ─ eth0 ═ veth-h2 ─┼─ <b>br0</b> (L2 스위치)
+└─ <b>h3</b> (네임스페이스) ─ eth0 ═ veth-h3 ─┘
+<i>═ 는 veth 쌍 (가상 랜선)</i></div>
+<div class="note"><strong>왜 VM 두 대가 아니라 네임스페이스인가</strong> VM을 여러 대 띄우면 무겁고, Multipass 가상 스위치는 우리가 설정을 바꿀 수 없습니다. 네임스페이스는 VM 한 대 안에서 PC 여러 대와 스위치를 가볍게 만들 수 있어 스위치 동작·VLAN·링크 묶기를 직접 실험할 수 있습니다.</div>
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">22</div></section>
+<section class="page opener has-why" data-ch="5"><div class="rh"><div class="l"><b>NETWORK L2</b> · 5장</div><div class="r">실습 ① 2-VM 프레임 분석<span class="pg">23</span></div></div><div class="big">5</div><h1>실습 ① 2-VM 프레임 분석<br>ARP를 잡고 Wireshark로 연다</h1><div class="oscene"><div class="osh">WHY · 현장 장면</div><div class="osb">myUbuntu1에서 myUbuntu2로 첫 ping을 보내는 순간, 눈에 보이지 않는 ARP가 먼저 오간다. 그 순간을 <b>tcpdump로 잡고 Wireshark로 해부</b>한다.</div><table class="zebra osx"><thead><tr><th>이 장을 모르면</th><th>생기는 일</th></tr></thead><tbody><tr><td>-e 옵션을 모르면</td><td>tcpdump에서 MAC을 못 봄</td></tr><tr><td>pcap 전송을 모르면</td><td>VM 캡처를 Wireshark로 못 엶</td></tr><tr><td>필터를 모르면</td><td>수천 개 프레임 속에서 헤맴</td></tr></tbody></table></div><div class="oq"><div><span>01</span>ARP는 언제, 어떤 순서로 일어나는가?</div><div><span>02</span>인터넷으로 가는 프레임의 목적지 MAC은 누구인가?</div><div><span>03</span>Wireshark에서 Ethernet II와 ARP 필드를 어떻게 읽는가?</div></div><div class="kicker">이 장의 구성</div><div class="otoc"><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">5.1</b>실습 준비와 MAC 확인</span><b data-toc="5.1">24</b></div><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">5.2</b>ARP 관찰</span><b data-toc="5.2">25</b></div><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">5.3</b>게이트웨이로 가는 프레임</span><b data-toc="5.3">26</b></div><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">5.4</b>Wireshark로 프레임 분석</span><b data-toc="5.4">27</b></div></div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">23</div></section>
+<section class="page" data-sec="5.1" data-title="5.1 실습 준비와 MAC 확인"><div class="rh"><div class="l"><b>NETWORK L2</b> · 5장 · <span class="sec">실습 ① 2-VM 프레임 분석</span></div><div class="r">5.1 실습 준비와 MAC 확인<span class="pg">24</span></div></div><div class="kicker">5.1 · LAB SETUP</div><h1>L1 실습의 두 VM으로<br><em>2계층</em>을 들여다본다</h1>
+<div class="why"><b>왜 배워야 하나?</b><p>L1 교안에서 만든 myUbuntu1(Server-A)과 myUbuntu2(Server-B)를 그대로 씁니다. 이번에는 “신호가 흐르는가”가 아니라 <strong>“어떤 MAC에서 어떤 MAC으로 가는가”</strong>를 봅니다.</p></div>
+<div class="lab"><div class="lab-head"><span class="badge">LAB 01</span><h3>두 VM의 MAC · IP · 게이트웨이 기록</h3><span class="t">10분</span></div><div class="lab-body"><ol class="steps"><li><span class="lt">VM 확인 <small>(HOST)</small></span><span class="ls"><code>multipass list</code> · 없으면 <code>multipass launch 24.04 --name myUbuntu1</code> (myUbuntu2도)</span></li><li><span class="lt">MAC과 IP <small>(두 VM)</small></span><span class="ls"><code>ip -br link show eth0</code> · <code>ip -br addr show eth0</code></span></li><li><span class="lt">게이트웨이 <small>(두 VM)</small></span><span class="ls"><code>ip route | grep default</code></span></li><li><span class="lt">도구 설치 <small>(두 VM)</small></span><span class="ls"><code>sudo apt update &amp;&amp; sudo apt install -y tcpdump</code></span></li></ol></div></div>
+<div class="term keep"><div class="th"><span>myUbuntu1</span><span>MAC · IP · 게이트웨이</span></div><div class="tb2"><span class="p">$</span> <span class="c">ip -br link show eth0</span>
+eth0             UP             00:15:5d:01:2a:3b &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt;
+<span class="p">$</span> <span class="c">ip -br addr show eth0</span>
+eth0             UP             172.26.10.11/20 fe80::215:5dff:fe01:2a3b/64
+<span class="p">$</span> <span class="c">ip route | grep default</span>
+default via 172.26.0.1 dev eth0 proto dhcp src 172.26.10.11 metric 100</div></div>
+<table class="zebra"><thead><tr><th>기록표</th><th>myUbuntu1 (A)</th><th>myUbuntu2 (B)</th><th>게이트웨이</th></tr></thead><tbody><tr><td>IPv4</td><td></td><td></td><td></td></tr><tr><td>MAC</td><td></td><td></td><td>(LAB 04에서 확인)</td></tr><tr><td>MAC 앞 3바이트로 본 종류</td><td></td><td></td><td></td></tr></tbody></table>
+<div class="note">값은 환경마다 다릅니다. Windows(Hyper-V)는 MAC이 보통 <code>00:15:5d</code>로 시작하고, macOS(QEMU)는 <code>52:54:00</code>으로 시작합니다. 2.2 표로 두 값이 어떤 종류의 주소인지 판단해 적습니다.</div>
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">24</div></section>
+<section class="page" data-sec="5.2" data-title="5.2 ARP 관찰"><div class="rh"><div class="l"><b>NETWORK L2</b> · 5장 · <span class="sec">실습 ① 2-VM 프레임 분석</span></div><div class="r">5.2 ARP 관찰<span class="pg">25</span></div></div><div class="kicker">5.2 · LAB · ARP</div><h1>ARP 테이블을 비우고<br><em>ARP가 일어나는 순간</em>을 잡는다</h1>
+<div class="lab" style="zoom: 0.87;"><div class="lab-head"><span class="badge">LAB 02</span><h3>A → B 첫 통신에서 ARP 잡기</h3><span class="t">15분</span></div><div class="lab-body"><div class="lwhy"><b>왜 이 실습?</b>ARP는 테이블에 항목이 없을 때만 일어납니다. 그래서 먼저 비우고 관찰합니다.</div><ol class="steps"><li><span class="lt">B에서 캡처 시작</span><span class="ls"><code>sudo tcpdump -e -n -i eth0 arp or icmp</code> · <code>-e</code>는 MAC 주소 표시</span></li><li><span class="lt">A의 ARP 테이블 비우기</span><span class="ls"><code>sudo ip neigh flush dev eth0</code></span></li><li><span class="lt">A → B 통신</span><span class="ls"><code>ping -c 2 &lt;myUbuntu2-IP&gt;</code></span></li><li><span class="lt">A의 ARP 테이블 확인</span><span class="ls"><code>ip neigh show</code> → B의 IP와 MAC이 REACHABLE로 생김</span></li></ol></div></div>
+<div class="term keep" style="zoom: 0.87;"><div class="th"><span>myUbuntu2</span><span>sudo tcpdump -e -n -i eth0 arp or icmp</span></div><div class="tb2">10:31:02.1 00:15:5d:01:2a:3b &gt; ff:ff:ff:ff:ff:ff, ethertype ARP (0x0806), length 42: Request who-has 172.26.10.12 tell 172.26.10.11
+10:31:02.1 00:15:5d:01:2a:3c &gt; 00:15:5d:01:2a:3b, ethertype ARP (0x0806), length 42: Reply 172.26.10.12 is-at 00:15:5d:01:2a:3c
+10:31:02.1 00:15:5d:01:2a:3b &gt; 00:15:5d:01:2a:3c, ethertype IPv4 (0x0800), length 98: 172.26.10.11 &gt; 172.26.10.12: ICMP echo request
+10:31:02.1 00:15:5d:01:2a:3c &gt; 00:15:5d:01:2a:3b, ethertype IPv4 (0x0800), length 98: 172.26.10.12 &gt; 172.26.10.11: ICMP echo reply</div></div>
+<div class="mission" style="zoom: 0.87;"><b>확인 질문</b><h3>캡처를 보고 답한다</h3><div class="wy">① ARP 요청의 목적지 MAC은 무엇이고 왜 그 값인가?<br>② ARP 응답은 브로드캐스트인가 유니캐스트인가?<br>③ ping을 한 번 더 하면 ARP가 다시 보이는가? 보이지 않는다면 이유는?</div></div>
+<div class="lab" style="zoom: 0.87;"><div class="lab-head"><span class="badge">LAB 03</span><h3>ARP 테이블 상태 변화 보기</h3><span class="t">5분</span></div><div class="lab-body"><ol class="steps"><li><span class="lt">1~2분 뒤 다시 보기</span><span class="ls"><code>ip neigh show</code> → REACHABLE이 STALE로 바뀌는지</span></li><li><span class="lt">없는 IP에 ping</span><span class="ls"><code>ping -c 2 &lt;같은 네트워크의 안 쓰는 IP&gt;</code> → <code>ip neigh</code>에 INCOMPLETE → FAILED</span></li></ol></div></div>
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">25</div></section>
+<section class="page" data-sec="5.3" data-title="5.3 게이트웨이로 가는 프레임"><div class="rh"><div class="l"><b>NETWORK L2</b> · 5장 · <span class="sec">실습 ① 2-VM 프레임 분석</span></div><div class="r">5.3 게이트웨이로 가는 프레임<span class="pg">26</span></div></div><div class="kicker">5.3 · LAB · GATEWAY MAC</div><h1>8.8.8.8로 보냈는데<br>목적지 MAC은 <em>게이트웨이</em>다</h1>
+<div class="why" style="zoom: 0.97;"><b>왜 배워야 하나?</b><p>다른 네트워크로 가는 패킷의 목적지 MAC이 무엇인지 직접 확인하면, 2계층(한 구간)과 3계층(끝까지)의 차이가 한 번에 이해됩니다.</p></div>
+<div class="lab" style="zoom: 0.97;"><div class="lab-head"><span class="badge">LAB 04</span><h3>인터넷으로 가는 프레임의 MAC 확인</h3><span class="t">10분</span></div><div class="lab-body"><ol class="steps"><li><span class="lt">A에서 캡처</span><span class="ls"><code>sudo tcpdump -e -n -i eth0 icmp</code></span></li><li><span class="lt">다른 터미널에서</span><span class="ls"><code>ping -c 2 8.8.8.8</code></span></li><li><span class="lt">게이트웨이 MAC 확인</span><span class="ls"><code>ip neigh show</code> · 게이트웨이 IP 줄의 MAC</span></li><li><span class="lt">비교</span><span class="ls">캡처의 목적지 MAC = 게이트웨이 MAC인지 확인</span></li></ol></div></div>
+<div class="term keep" style="zoom: 0.97;"><div class="th"><span>myUbuntu1</span><span>sudo tcpdump -e -n -i eth0 icmp</span></div><div class="tb2">00:15:5d:01:2a:3b &gt; 00:15:5d:01:20:01, ethertype IPv4 (0x0800), length 98: 172.26.10.11 &gt; 8.8.8.8: ICMP echo request
+00:15:5d:01:20:01 &gt; 00:15:5d:01:2a:3b, ethertype IPv4 (0x0800), length 98: 8.8.8.8 &gt; 172.26.10.11: ICMP echo reply
+<span class="p">$</span> <span class="c">ip neigh show</span>
+172.26.0.1 dev eth0 lladdr 00:15:5d:01:20:01 REACHABLE   <span class="d"># 게이트웨이</span>
+172.26.10.12 dev eth0 lladdr 00:15:5d:01:2a:3c STALE</div></div>
+<table class="zebra" style="zoom: 0.97;"><thead><tr><th>필드</th><th>값</th><th>뜻</th></tr></thead><tbody><tr><td>목적지 <b>IP</b></td><td>8.8.8.8</td><td>최종 목적지 (3계층 · 끝까지 그대로)</td></tr><tr><td>목적지 <b>MAC</b></td><td>00:15:5d:01:20:01</td><td><b>게이트웨이</b>의 MAC (2계층 · 이번 한 구간만)</td></tr><tr><td>응답의 출발지 MAC</td><td>00:15:5d:01:20:01</td><td>구글이 아니라 게이트웨이가 마지막 구간을 보냄</td></tr></tbody></table>
+<div class="point" style="zoom: 0.97;"><div class="pl">결론</div><p>같은 네트워크면 <strong>상대의 MAC</strong>으로, 다른 네트워크면 <strong>게이트웨이의 MAC</strong>으로 프레임을 보냅니다. 구글 서버의 MAC은 우리 쪽에서 절대 볼 수 없습니다.</p></div>
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">26</div></section>
+<section class="page" data-sec="5.4" data-title="5.4 Wireshark로 프레임 분석"><div class="rh"><div class="l"><b>NETWORK L2</b> · 5장 · <span class="sec">실습 ① 2-VM 프레임 분석</span></div><div class="r">5.4 Wireshark로 프레임 분석<span class="pg">27</span></div></div><div class="kicker">5.4 · WIRESHARK</div><h1>VM에서 캡처한 파일을<br><em>Wireshark</em>로 연다</h1>
+<div class="why"><b>왜 배워야 하나?</b><p>tcpdump는 한 줄 요약이지만 Wireshark는 프레임의 <strong>필드 하나하나</strong>를 나눠 보여 줍니다. VM 안에서 파일로 저장해 Windows로 가져와 엽니다. 이 방법은 가상 스위치 구조와 상관없이 항상 똑같이 됩니다(L1 교안 4.6).</p></div>
+<div class="lab"><div class="lab-head"><span class="badge">LAB 05</span><h3>pcap 파일로 저장 → Windows로 전송 → Wireshark</h3><span class="t">15분</span></div><div class="lab-body"><ol class="steps"><li><span class="lt">A에서 파일로 캡처</span><span class="ls"><code>sudo tcpdump -i eth0 -w /tmp/l2_arp.pcap arp or icmp</code></span></li><li><span class="lt">다른 터미널에서 트래픽</span><span class="ls"><code>sudo ip neigh flush dev eth0</code> → <code>ping -c 3 &lt;myUbuntu2-IP&gt;</code> → <code>ping -c 3 8.8.8.8</code> → 캡처는 Ctrl+C</span></li><li><span class="lt">Windows로 가져오기 <small>(HOST)</small></span><span class="ls"><code>multipass transfer myUbuntu1:/tmp/l2_arp.pcap .</code></span></li><li><span class="lt">Wireshark로 열기</span><span class="ls">파일 더블클릭 · 또는 Wireshark → File → Open</span></li></ol></div></div>
+<div class="note"><strong>/tmp에 저장하는 이유</strong> Ubuntu의 tcpdump는 보안상 권한을 낮춰 파일을 쓰기 때문에 홈 디렉터리에 <code>-w ~/파일</code>로 쓰면 <code>Permission denied</code>가 날 수 있습니다.</div>
+<table class="zebra"><thead><tr><th style="width:22%">Wireshark 화면</th><th style="width:78%">ARP 요청 프레임에서 보이는 것</th></tr></thead><tbody><tr><td><b>패킷 목록</b></td><td>Source <code>Microsof_01:2a:3b</code> · Destination <code>Broadcast</code> · Protocol <code>ARP</code> · Info <code>Who has 172.26.10.12? Tell 172.26.10.11</code></td></tr><tr><td><b>상세 · Ethernet II</b></td><td>Destination: Broadcast (ff:ff:ff:ff:ff:ff) · Source: Microsof_01:2a:3b (00:15:5d:01:2a:3b) · Type: ARP (0x0806)</td></tr><tr><td><b>상세 · ARP</b></td><td>Opcode: request (1) · Sender MAC/IP · <b>Target MAC 00:00:00:00:00:00</b>(아직 모름) · Target IP</td></tr><tr><td><b>바이트 창</b></td><td>맨 앞 6바이트 ff ff ff ff ff ff = 목적지 MAC · 다음 6바이트 = 출발지 MAC · 08 06 = 타입</td></tr></tbody></table>
+
+
+
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">27</div></section><section class="page" data-sec="5.4" data-title="5.4 Wireshark로 프레임 분석" data-cont="1"><div class="rh"><div class="l"><b>NETWORK L2</b> · 5장 · <span class="sec">실습 ① 2-VM 프레임 분석</span></div><div class="r">5.4 Wireshark로 프레임 분석 (계속)<span class="pg">28</span></div></div><div class="kicker">5.4 · WIRESHARK</div><h1>VM에서 캡처한 파일을<br><em>Wireshark</em>로 연다 <small class="cont" style="font-size:.55em;color:var(--muted)">(계속)</small></h1><table class="zebra"><thead><tr><th>디스플레이 필터</th><th>보여 주는 것</th></tr></thead><tbody><tr><td><code>arp</code></td><td>ARP만</td></tr><tr><td><code>arp.opcode == 1</code> / <code>== 2</code></td><td>요청만 / 응답만</td></tr><tr><td><code>eth.dst == ff:ff:ff:ff:ff:ff</code></td><td>브로드캐스트 프레임</td></tr><tr><td><code>eth.addr == 00:15:5d:01:2a:3b</code></td><td>이 MAC이 출발지나 목적지인 프레임</td></tr><tr><td><code>eth.type == 0x0800</code></td><td>IPv4를 실은 프레임</td></tr><tr><td><code>arp.duplicate-address-detected</code></td><td>IP 충돌·ARP 스푸핑 의심 (3.3)</td></tr><tr><td><code>vlan</code> · <code>stp</code> · <code>lacp</code></td><td>VLAN 태그 · STP BPDU · LACP (6장)</td></tr></tbody></table><table class="zebra"><thead><tr><th>메뉴</th><th>쓰는 곳</th></tr></thead><tbody><tr><td><b>Statistics → Conversations → Ethernet</b></td><td>MAC 쌍별로 몇 프레임·몇 바이트 오갔는지 · 6장 부하 분산 확인에 사용</td></tr><tr><td><b>Statistics → Endpoints → Ethernet</b></td><td>캡처에 나온 MAC 목록</td></tr><tr><td><b>View → Name Resolution → Physical Addresses</b></td><td>켜면 <code>Microsof_</code>처럼 제조사 이름, 끄면 MAC 그대로</td></tr></tbody></table><div class="mission"><b>확인 질문</b><h3>Wireshark에서 찾는다</h3><div class="wy">① ARP 요청과 응답에서 Target MAC이 각각 무엇인가?<br>② 8.8.8.8로 가는 ICMP 프레임의 Ethernet II Destination은 누구인가?<br>③ Conversations → Ethernet 탭에 MAC 쌍이 몇 개 보이는가?</div></div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">28</div></section>
+<section class="page opener has-why" data-ch="6"><div class="rh"><div class="l"><b>NETWORK L2</b> · 6장</div><div class="r">실습 ② 스위치 · VLAN · 링크 묶기<span class="pg">29</span></div></div><div class="big">6</div><h1>실습 ② 스위치 · VLAN · 링크 묶기<br>직접 만들고 나눠 싣는다</h1><div class="oscene"><div class="osh">WHY · 현장 장면</div><div class="osb">서버와 스위치 사이 케이블을 두 가닥으로 늘렸는데, 한 가닥만 쓰이고 있었다. <b>링크를 묶고 트래픽을 나눠 싣는 것</b>, 그리고 한 가닥이 끊겨도 버티는 것을 직접 확인한다.</div><table class="zebra osx"><thead><tr><th>이 장을 모르면</th><th>생기는 일</th></tr></thead><tbody><tr><td>스위치를 직접 못 만들면</td><td>동작을 눈으로 확인할 수 없음</td></tr><tr><td>VLAN을 실습하지 않으면</td><td>격리가 어디서 일어나는지 모름</td></tr><tr><td>링크 묶기를 모르면</td><td>가용성·대역폭을 설계하지 못함</td></tr></tbody></table></div><div class="oq"><div><span>01</span>h1이 h2에게 보낸 프레임을 h3는 어디까지 보는가?</div><div><span>02</span>같은 서브넷인데 VLAN이 다르면 무엇이 실패하는가?</div><div><span>03</span>LACP로 묶은 두 가닥에 트래픽이 어떻게 나뉘고, 끊기면 어떻게 되는가?</div></div><div class="kicker">이 장의 구성</div><div class="otoc"><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">6.1</b>L2 스위치 만들기</span><b data-toc="6.1">30</b></div><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">6.2</b>학습 · 플러딩 · 포워딩</span><b data-toc="6.2">31</b></div><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">6.3</b>VLAN으로 나누기</span><b data-toc="6.3">33</b></div><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">6.4</b>링크 묶기와 L2 로드밸런싱</span><b data-toc="6.4">35</b></div><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">6.5</b>LACP 실습 환경</span><b data-toc="6.5">36</b></div><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">6.6</b>부하 분산 · 장애 조치</span><b data-toc="6.6">39</b></div></div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">29</div></section>
+<section class="page" data-sec="6.1" data-title="6.1 L2 스위치 만들기"><div class="rh"><div class="l"><b>NETWORK L2</b> · 6장 · <span class="sec">실습 ② 스위치 · VLAN · 링크 묶기</span></div><div class="r">6.1 L2 스위치 만들기<span class="pg">30</span></div></div><div class="kicker">6.1 · LAB · BUILD A SWITCH</div><h1>VM 한 대 안에<br><em>스위치와 PC 3대</em>를 만든다</h1>
+<div class="why" style="zoom: 0.89;"><b>왜 배워야 하나?</b><p>4.1에서 배운 학습·플러딩·포워딩을 눈으로 확인합니다. 핵심 관찰은 하나입니다: <strong>h1이 h2에게 보낸 프레임을 h3도 보는가?</strong></p></div>
+<div class="term keep" style="zoom: 0.89;"><div class="th"><span>myUbuntu1</span><span>nano ~/lab_switch.sh · 내용</span></div><div class="tb2">#!/bin/bash
+<span class="d"># lab_switch.sh · PC 3대(h1~h3)와 L2 스위치(br0) 만들기</span>
+set -e
+sudo ip link add br0 type bridge
+sudo ip link set br0 up
+for i in 1 2 3; do
+  sudo ip netns add h$i
+  sudo ip link add veth-h$i type veth peer name eth0 netns h$i
+  sudo ip link set veth-h$i master br0 up
+  sudo ip -n h$i link set eth0 address 02:00:00:00:00:1$i
+  sudo ip -n h$i addr add 10.0.0.1$i/24 dev eth0
+  sudo ip -n h$i link set eth0 up
+  sudo ip -n h$i link set lo up
+done
+echo "완료: h1 10.0.0.11 · h2 10.0.0.12 · h3 10.0.0.13 → br0"</div></div>
+<div class="lab" style="zoom: 0.89;"><div class="lab-head"><span class="badge">LAB 06</span><h3>스위치 만들고 포트 확인</h3><span class="t">10분</span></div><div class="lab-body"><ol class="steps"><li><span class="lt">스크립트 실행</span><span class="ls"><code>bash ~/lab_switch.sh</code></span></li><li><span class="lt">스위치 포트 확인</span><span class="ls"><code>bridge link show</code> → veth-h1~h3가 <code>master br0 state forwarding</code></span></li><li><span class="lt">MAC 테이블 확인 (비어 있음)</span><span class="ls"><code>bridge fdb show br br0 | grep 02:00</code></span></li></ol></div></div>
+<div class="term keep" style="zoom: 0.89;"><div class="th"><span>myUbuntu1</span><span>bridge link show · 실제 출력</span></div><div class="tb2"><span class="p">$</span> <span class="c">bridge link show</span>
+9: veth-h1@if2: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1500 master br0 state forwarding priority 32 cost 2
+10: veth-h2@if2: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1500 master br0 state forwarding priority 32 cost 2
+11: veth-h3@if2: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1500 master br0 state forwarding priority 32 cost 2</div></div>
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">30</div></section>
+<section class="page" data-sec="6.2" data-title="6.2 학습 · 플러딩 · 포워딩 관찰"><div class="rh"><div class="l"><b>NETWORK L2</b> · 6장 · <span class="sec">실습 ② 스위치 · VLAN · 링크 묶기</span></div><div class="r">6.2 학습 · 플러딩 · 포워딩 관찰<span class="pg">31</span></div></div><div class="kicker">6.2 · LAB · SWITCH BEHAVIOR</div><h1>h3는 h1 → h2 통신을<br><em>어디까지</em> 보는가</h1>
+<div class="lab"><div class="lab-head"><span class="badge">LAB 07</span><h3>스위치 동작 관찰</h3><span class="t">15분</span></div><div class="lab-body"><div class="lwhy"><b>왜 이 실습?</b>터미널 3개를 씁니다. h2와 h3에서 동시에 캡처하고 h1에서 h2로 ping 합니다.</div><ol class="steps"><li><span class="lt">터미널 ① h2 캡처</span><span class="ls"><code>sudo ip netns exec h2 tcpdump -e -n -i eth0</code></span></li><li><span class="lt">터미널 ② h3 캡처</span><span class="ls"><code>sudo ip netns exec h3 tcpdump -e -n -i eth0</code></span></li><li><span class="lt">터미널 ③ h1 → h2</span><span class="ls"><code>sudo ip netns exec h1 ping -c 2 10.0.0.12</code></span></li><li><span class="lt">MAC 테이블 다시 보기</span><span class="ls"><code>bridge fdb show br br0 | grep 02:00</code></span></li></ol></div></div>
+<div class="split"><div class="term keep"><div class="th"><span>① h2 · 실제 출력</span><span>모두 보임</span></div><div class="tb2">02:..:11 &gt; ff:ff:ff:ff:ff:ff ARP Request who-has 10.0.0.12
+02:..:12 &gt; 02:..:11 ARP Reply 10.0.0.12 is-at 02:..:12
+02:..:11 &gt; 02:..:12 IPv4 ICMP echo request
+02:..:12 &gt; 02:..:11 IPv4 ICMP echo reply
+(seq 2도 같음)</div></div><div class="term keep"><div class="th"><span>② h3 · 실제 출력</span><span>브로드캐스트만</span></div><div class="tb2">02:..:11 &gt; ff:ff:ff:ff:ff:ff ARP Request who-has 10.0.0.12
+
+(ARP 응답도 ping도 보이지 않음)</div></div></div>
+<div class="term keep"><div class="th"><span>myUbuntu1</span><span>bridge fdb show br br0 · 실제 출력</span></div><div class="tb2"><span class="p">$</span> <span class="c">bridge fdb show br br0 | grep 02:00</span>
+02:00:00:00:00:11 dev veth-h1 master br0   <span class="d"># h1의 ARP 요청을 보고 학습</span>
+02:00:00:00:00:12 dev veth-h2 master br0   <span class="d"># h2의 응답을 보고 학습</span></div></div>
+
+
+
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">31</div></section><section class="page" data-sec="6.2" data-title="6.2 학습 · 플러딩 · 포워딩 관찰" data-cont="1"><div class="rh"><div class="l"><b>NETWORK L2</b> · 6장 · <span class="sec">실습 ② 스위치 · VLAN · 링크 묶기</span></div><div class="r">6.2 학습 · 플러딩 · 포워딩 관찰 (계속)<span class="pg">32</span></div></div><div class="kicker">6.2 · LAB · SWITCH BEHAVIOR</div><h1>h3는 h1 → h2 통신을<br><em>어디까지</em> 보는가 <small class="cont" style="font-size:.55em;color:var(--muted)">(계속)</small></h1><table class="zebra"><thead><tr><th>관찰</th><th>스위치 동작 (4.1)</th></tr></thead><tbody><tr><td>h3도 ARP 요청을 받음</td><td><b>플러딩</b> · 목적지가 브로드캐스트</td></tr><tr><td>h3는 ARP 응답·ping을 못 봄</td><td><b>포워딩</b> · 목적지 MAC(h1, h2)을 이미 알아 그 포트로만</td></tr><tr><td>테이블에 h1·h2가 생김</td><td><b>학습</b> · 들어온 프레임의 출발지 MAC을 기록</td></tr></tbody></table><div class="lab"><div class="lab-head"><span class="badge">LAB 08</span><h3>모르는 목적지는 플러딩 · 에이징</h3><span class="t">10분</span></div><div class="lab-body"><ol class="steps"><li><span class="lt">MAC 테이블만 비우기</span><span class="ls"><code>sudo ip link set br0 type bridge fdb_flush</code> · h1의 ARP 테이블은 그대로</span></li><li><span class="lt">h1 → h2 ping 1번</span><span class="ls">h3 캡처에 <b>ICMP 요청이 한 번 보임</b> · 스위치가 h2 위치를 몰라 플러딩(unknown unicast)</span></li><li><span class="lt">에이징 시간 확인·변경</span><span class="ls"><code>ip -d link show br0 | grep -o 'ageing_time [0-9]*'</code> → 30000(= 300.00초) · <code>sudo ip link set br0 type bridge ageing_time 1000</code>(10초)</span></li><li><span class="lt">10초 기다린 뒤</span><span class="ls"><code>bridge fdb show br br0 | grep 02:00</code> → 학습 항목이 사라짐</span></li></ol></div></div><div class="note">h3 캡처에 <code>33:33:…</code>으로 가는 IPv6 멀티캐스트 프레임이 보일 수 있습니다. 네임스페이스가 IPv6 이웃 탐색을 하기 때문이며 정상입니다. <code>arp or icmp</code> 필터를 붙이면 숨길 수 있습니다.</div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">32</div></section>
+<section class="page" data-sec="6.3" data-title="6.3 VLAN으로 나누기"><div class="rh"><div class="l"><b>NETWORK L2</b> · 6장 · <span class="sec">실습 ② 스위치 · VLAN · 링크 묶기</span></div><div class="r">6.3 VLAN으로 나누기<span class="pg">33</span></div></div><div class="kicker">6.3 · LAB · VLAN</div><h1>같은 스위치 · 같은 서브넷인데<br><em>VLAN이 다르면</em> 통신이 안 된다</h1>
+<div class="lab"><div class="lab-head"><span class="badge">LAB 09</span><h3>h1·h2는 VLAN 10, h3는 VLAN 20</h3><span class="t">15분</span></div><div class="lab-body"><div class="lwhy"><b>왜 이 실습?</b>세 대 모두 10.0.0.0/24인데도 VLAN을 나누면 h3와는 통신이 안 됩니다. 2계층에서 막히기 때문입니다.</div><ol class="steps"><li><span class="lt">VLAN 기능 켜기</span><span class="ls"><code>sudo ip link set br0 type bridge vlan_filtering 1</code></span></li><li><span class="lt">포트에 VLAN 지정</span><span class="ls"><code>sudo bridge vlan add dev veth-h1 vid 10 pvid untagged</code> · h2도 10 · h3는 <code>vid 20</code></span></li><li><span class="lt">기본 VLAN 1 빼기</span><span class="ls"><code>for i in 1 2 3; do sudo bridge vlan del dev veth-h$i vid 1; done</code></span></li><li><span class="lt">확인</span><span class="ls"><code>bridge vlan show</code></span></li><li><span class="lt">통신 시험</span><span class="ls">h1 → h2: <code>sudo ip netns exec h1 ping -c 2 10.0.0.12</code> (성공) · h1 → h3: <code>… 10.0.0.13</code> (실패)</span></li><li><span class="lt">h1의 ARP 테이블</span><span class="ls"><code>sudo ip -n h1 neigh</code> → 10.0.0.13이 FAILED</span></li></ol></div></div>
+<div class="term keep"><div class="th"><span>myUbuntu1</span><span>bridge vlan show</span></div><div class="tb2"><span class="p">$</span> <span class="c">bridge vlan show</span>
+port              vlan-id
+br0               1 PVID Egress Untagged
+veth-h1           10 PVID Egress Untagged
+veth-h2           10 PVID Egress Untagged
+veth-h3           20 PVID Egress Untagged
+<span class="p">$</span> <span class="c">sudo ip -n h1 neigh</span>
+10.0.0.12 dev eth0 lladdr 02:00:00:00:00:12 REACHABLE
+10.0.0.13 dev eth0 FAILED   <span class="d"># ARP 요청이 VLAN 20으로 가지 않음</span></div></div>
+
+
+
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">33</div></section><section class="page" data-sec="6.3" data-title="6.3 VLAN으로 나누기" data-cont="1"><div class="rh"><div class="l"><b>NETWORK L2</b> · 6장 · <span class="sec">실습 ② 스위치 · VLAN · 링크 묶기</span></div><div class="r">6.3 VLAN으로 나누기 (계속)<span class="pg">34</span></div></div><div class="kicker">6.3 · LAB · VLAN</div><h1>같은 스위치 · 같은 서브넷인데<br><em>VLAN이 다르면</em> 통신이 안 된다 <small class="cont" style="font-size:.55em;color:var(--muted)">(계속)</small></h1><table class="zebra"><thead><tr><th>용어</th><th>뜻</th></tr></thead><tbody><tr><td><code>vid 10</code></td><td>이 포트가 속한 VLAN 번호</td></tr><tr><td><code>pvid</code></td><td>태그 없이 들어온 프레임을 이 VLAN으로 취급 (Access 포트)</td></tr><tr><td><code>untagged</code></td><td>내보낼 때 태그를 떼고 보냄 (PC는 태그를 모름)</td></tr></tbody></table><div class="point"><div class="pl">결론</div><p>h1과 h3는 IPv4로는 같은 네트워크(10.0.0.0/24)지만 <strong>2계층이 끊겨 있어 ARP부터 실패</strong>합니다. 그래서 실무에서는 VLAN마다 서브넷을 따로 주고, VLAN 사이는 라우터로 잇습니다.</p></div><div class="term keep"><div class="th"><span>myUbuntu1</span><span>실습 정리 · 다음 실습 전에 꼭</span></div><div class="tb2"><span class="p">$</span> <span class="c">sudo ip -all netns delete</span>   <span class="d"># h1~h3 삭제 (veth도 함께 사라짐)</span>
+<span class="p">$</span> <span class="c">sudo ip link del br0</span></div></div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">34</div></section>
+<section class="page" data-sec="6.4" data-title="6.4 링크 묶기와 L2 로드밸런싱"><div class="rh"><div class="l"><b>NETWORK L2</b> · 6장 · <span class="sec">실습 ② 스위치 · VLAN · 링크 묶기</span></div><div class="r">6.4 링크 묶기와 L2 로드밸런싱<span class="pg">35</span></div></div><div class="kicker">6.4 · LINK AGGREGATION</div><h1>케이블 여러 가닥을<br><em>한 링크처럼</em> 묶어 나눠 싣는다</h1>
+<div class="why"><b>왜 배워야 하나?</b><p>서버와 스위치 사이 케이블 한 가닥이 끊기면 서비스가 멈추고, 한 가닥의 속도가 곧 서버의 한계가 됩니다. 여러 가닥을 묶으면 <strong>장애에 버티고(이중화), 트래픽을 나눠 싣습니다(로드밸런싱)</strong>. STP처럼 한 가닥을 막지 않고 모두 씁니다(4.3).</p></div>
+<table class="zebra"><thead><tr><th style="width:16%">리눅스 bonding 모드</th><th style="width:20%">이름</th><th style="width:40%">동작</th><th style="width:24%">스위치 설정</th></tr></thead><tbody><tr><td>0</td><td>balance-rr</td><td>프레임을 링크에 번갈아 · 순서가 뒤바뀔 수 있음</td><td>고정 묶음 필요</td></tr><tr><td>1</td><td><b>active-backup</b></td><td>한 가닥만 쓰고 끊기면 다른 가닥으로</td><td>필요 없음</td></tr><tr><td>2</td><td>balance-xor</td><td>해시로 링크 선택</td><td>고정 묶음 필요</td></tr><tr><td>4</td><td><b>802.3ad (LACP)</b></td><td>양쪽이 LACP로 협상해 묶고 해시로 분산</td><td><b>LACP 필요</b> · 실무 표준</td></tr><tr><td>5 · 6</td><td>balance-tlb · alb</td><td>송신(·수신)을 부하에 맞게 분산</td><td>필요 없음</td></tr></tbody></table>
+<table class="zebra"><thead><tr><th>해시 정책 (xmit_hash_policy)</th><th>무엇으로 링크를 고르나</th><th>특징</th></tr></thead><tbody><tr><td><b>layer2</b></td><td>출발지·목적지 <b>MAC</b></td><td>같은 MAC 쌍은 항상 같은 링크 · 이번 실습</td></tr><tr><td>layer2+3</td><td>MAC + IP</td><td>라우터 뒤 여러 서버로 갈 때 더 고르게</td></tr><tr><td>layer3+4</td><td>IP + 포트</td><td>연결(flow)마다 분산 · 가장 고르게</td></tr></tbody></table>
+<div class="warn"><b>흔한 오해</b> “1Gbps 두 가닥을 묶으면 파일 하나를 2Gbps로 받는다.” → 아닙니다. 해시는 <b>같은 흐름을 항상 같은 링크</b>로 보냅니다(순서가 뒤섞이지 않게). 여러 상대·여러 흐름이 모일 때 전체 합이 늘어납니다.</div>
+<table class="zebra"><thead><tr><th>비교</th><th>L2 링크 묶기 (LACP)</th><th>L4 / L7 로드밸런서</th></tr></thead><tbody><tr><td>나누는 대상</td><td>케이블(링크) 여러 가닥</td><td>서버 여러 대</td></tr><tr><td>보는 정보</td><td>MAC (·IP·포트 해시)</td><td>IP·포트 / HTTP 주소·쿠키</td></tr><tr><td>목적</td><td>링크 이중화 + 대역폭 합치기</td><td>서버 이중화 + 요청 분산</td></tr><tr><td>위치</td><td>서버 ↔ 스위치 사이</td><td>서버들 앞</td></tr></tbody></table>
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">35</div></section>
+<section class="page" data-sec="6.5" data-title="6.5 LACP 실습 환경 만들기"><div class="rh"><div class="l"><b>NETWORK L2</b> · 6장 · <span class="sec">실습 ② 스위치 · VLAN · 링크 묶기</span></div><div class="r">6.5 LACP 실습 환경 만들기<span class="pg">36</span></div></div><div class="kicker">6.5 · LAB · LACP TOPOLOGY</div><h1>서버와 스위치를<br><em>LACP 두 가닥</em>으로 잇는다</h1>
+<div class="dia"><svg viewBox="0 0 640 210" xmlns="http://www.w3.org/2000/svg" style="font-family:'Noto Sans KR',sans-serif"><rect x="20" y="70" width="150" height="70" rx="5" fill="#fff" stroke="#1c1b19"></rect><text x="95" y="92" text-anchor="middle" font-size="12" font-weight="800">srv (서버)</text><text x="95" y="110" text-anchor="middle" font-size="10" font-family="Consolas,monospace" fill="#b23c0a">bond0 10.10.0.1</text><text x="95" y="126" text-anchor="middle" font-size="10" fill="#5b574f">s1 · s2</text><rect x="250" y="55" width="150" height="100" rx="5" fill="#1e2638"></rect><text x="325" y="80" text-anchor="middle" font-size="12" font-weight="800" fill="#fff">sw (L2 스위치)</text><text x="325" y="98" text-anchor="middle" font-size="10" fill="#ff9a6b" font-family="Consolas,monospace">bond0 (p1 · p2)</text><text x="325" y="116" text-anchor="middle" font-size="10" fill="#ff9a6b" font-family="Consolas,monospace">br0</text><text x="325" y="134" text-anchor="middle" font-size="10" fill="#b7c0d3">port1 ~ port4</text><line x1="170" y1="92" x2="250" y2="92" stroke="#b23c0a" stroke-width="3"></line><line x1="170" y1="118" x2="250" y2="118" stroke="#b23c0a" stroke-width="3"></line><text x="210" y="86" text-anchor="middle" font-size="10" fill="#b23c0a">s1–p1</text><text x="210" y="134" text-anchor="middle" font-size="10" fill="#b23c0a">s2–p2</text><ellipse cx="210" cy="105" rx="18" ry="26" fill="none" stroke="#b23c0a" stroke-dasharray="3 3"></ellipse><text x="210" y="170" text-anchor="middle" font-size="10.5" font-weight="700" fill="#b23c0a">LACP로 묶은 2가닥</text><rect x="480" y="20" width="140" height="34" rx="4" fill="#fff" stroke="#1c1b19"></rect><text x="550" y="35" text-anchor="middle" font-size="11" font-weight="700">c1</text><text x="550" y="48" text-anchor="middle" font-size="9.5" fill="#5b574f" font-family="Consolas,monospace">10.10.0.11 · …:11</text><line x1="400" y1="105" x2="480" y2="37" stroke="#5b574f" stroke-width="1.5"></line><rect x="480" y="66" width="140" height="34" rx="4" fill="#fff" stroke="#1c1b19"></rect><text x="550" y="81" text-anchor="middle" font-size="11" font-weight="700">c2</text><text x="550" y="94" text-anchor="middle" font-size="9.5" fill="#5b574f" font-family="Consolas,monospace">10.10.0.12 · …:12</text><line x1="400" y1="105" x2="480" y2="83" stroke="#5b574f" stroke-width="1.5"></line><rect x="480" y="112" width="140" height="34" rx="4" fill="#fff" stroke="#1c1b19"></rect><text x="550" y="127" text-anchor="middle" font-size="11" font-weight="700">c3</text><text x="550" y="140" text-anchor="middle" font-size="9.5" fill="#5b574f" font-family="Consolas,monospace">10.10.0.13 · …:13</text><line x1="400" y1="105" x2="480" y2="129" stroke="#5b574f" stroke-width="1.5"></line><rect x="480" y="158" width="140" height="34" rx="4" fill="#fff" stroke="#1c1b19"></rect><text x="550" y="173" text-anchor="middle" font-size="11" font-weight="700">c4</text><text x="550" y="186" text-anchor="middle" font-size="9.5" fill="#5b574f" font-family="Consolas,monospace">10.10.0.14 · …:14</text><line x1="400" y1="105" x2="480" y2="175" stroke="#5b574f" stroke-width="1.5"></line></svg></div>
+<div class="term keep"><div class="th"><span>myUbuntu1</span><span>nano ~/lab_lacp.sh · 내용</span></div><div class="tb2"><span class="ln">#!/bin/bash</span>
+<span class="ln"><span class="d"># lab_lacp.sh · 서버(srv) ─ 2가닥 LACP ─ L2 스위치(sw) ─ 클라이언트 c1~c4</span></span>
+<span class="ln">set -e</span>
+<span class="ln">sudo modprobe bonding</span>
+<span class="ln">for n in sw srv c1 c2 c3 c4; do sudo ip netns add $n; done</span>
+<span class="ln"><span class="d"># 스위치 안의 L2 스위치</span></span>
+<span class="ln">sudo ip -n sw link add br0 type bridge</span>
+<span class="ln"><span class="d"># 서버 ↔ 스위치 케이블 2가닥</span></span>
+<span class="ln">sudo ip link add s1 netns srv type veth peer name p1 netns sw</span>
+<span class="ln">sudo ip link add s2 netns srv type veth peer name p2 netns sw</span>
+<span class="ln"><span class="d"># 양쪽 끝을 LACP로 묶기</span></span>
+<span class="ln">for ns in srv sw; do</span>
+<span class="ln">  sudo ip -n $ns link add bond0 type bond mode 802.3ad lacp_rate fast \</span>
+<span class="ln">       xmit_hash_policy layer2 miimon 100</span>
+<span class="ln">done</span>
+<span class="ln">sudo ip -n srv link set s1 master bond0; sudo ip -n srv link set s2 master bond0</span>
+<span class="ln">sudo ip -n sw  link set p1 master bond0; sudo ip -n sw  link set p2 master bond0</span>
+<span class="ln">sudo ip -n sw  link set bond0 master br0</span>
+<span class="ln"><span class="d"># 클라이언트 4대를 스위치 포트에</span></span>
+<span class="ln">for i in 1 2 3 4; do</span>
+<span class="ln">  sudo ip link add eth0 netns c$i type veth peer name port$i netns sw</span>
+<span class="ln">  sudo ip -n c$i link set eth0 address 02:00:00:00:00:1$i</span>
+<span class="ln">  sudo ip -n c$i addr add 10.10.0.1$i/24 dev eth0</span>
+<span class="ln">  sudo ip -n c$i link set eth0 up</span>
+<span class="ln">  sudo ip -n sw link set port$i master br0 up</span>
+<span class="ln">done</span></div></div>
+
+
+
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">36</div></section><section class="page" data-sec="6.5" data-title="6.5 LACP 실습 환경 만들기" data-cont="1"><div class="rh"><div class="l"><b>NETWORK L2</b> · 6장 · <span class="sec">실습 ② 스위치 · VLAN · 링크 묶기</span></div><div class="r">6.5 LACP 실습 환경 만들기 (계속)<span class="pg">37</span></div></div><div class="kicker">6.5 · LAB · LACP TOPOLOGY</div><h1>서버와 스위치를<br><em>LACP 두 가닥</em>으로 잇는다 <small class="cont" style="font-size:.55em;color:var(--muted)">(계속)</small></h1><div class="term keep"><div class="th"><span>myUbuntu1</span><span>nano ~/lab_lacp.sh · 내용</span></div><div class="tb2"><span class="ln"><span class="d"># 서버 주소 · 링크 올리기</span></span>
+<span class="ln">sudo ip -n srv link set bond0 address 02:00:00:00:00:01</span>
+<span class="ln">sudo ip -n srv addr add 10.10.0.1/24 dev bond0</span>
+<span class="ln">for l in s1 s2 bond0; do sudo ip -n srv link set $l up; done</span>
+<span class="ln">for l in p1 p2 bond0 br0; do sudo ip -n sw link set $l up; done</span>
+<span class="ln">echo "완료: srv 10.10.0.1 (bond0 = s1+s2) · c1~c4 10.10.0.11~14"</span>
+</div></div><div class="lab"><div class="lab-head"><span class="badge">LAB 10</span><h3>토폴로지 만들고 LACP 협상 확인</h3><span class="t">15분</span></div><div class="lab-body"><ol class="steps"><li><span class="lt">실행</span><span class="ls"><code>bash ~/lab_lacp.sh</code> · <code>modprobe</code>가 실패하면 <code>sudo apt install -y linux-modules-extra-$(uname -r)</code></span></li><li><span class="lt">서버 쪽 bond 상태</span><span class="ls"><code>sudo ip netns exec srv cat /proc/net/bonding/bond0</code></span></li><li><span class="lt">확인할 것</span><span class="ls">Bonding Mode 802.3ad · 두 slave 모두 MII Status up · <b>Aggregator ID가 같음</b> · Partner Mac Address가 00:00:00:00:00:00이 아님</span></li><li><span class="lt">통신 확인</span><span class="ls"><code>sudo ip netns exec srv ping -c 2 10.10.0.11</code></span></li></ol></div></div><div class="term keep"><div class="th"><span>srv</span><span>cat /proc/net/bonding/bond0 · 주요 부분</span></div><div class="tb2"><span class="ln">Bonding Mode: IEEE 802.3ad Dynamic link aggregation</span>
+<span class="ln">Transmit Hash Policy: layer2 (0)</span>
+<span class="ln">MII Status: up</span>
+<span class="ln">802.3ad info</span>
+<span class="ln">LACP active: on</span>
+<span class="ln">LACP rate: fast</span>
+<span class="ln"><span class="d"># 스위치(sw) bond0의 MAC · 협상 성공</span></span>
+<span class="ln">        Partner Mac Address: 6a:1f:..:..</span>
+<span class="ln">Slave Interface: s1</span>
+<span class="ln">MII Status: up</span>
+<span class="ln">Speed: 10000 Mbps</span></div></div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">37</div></section><section class="page" data-sec="6.5" data-title="6.5 LACP 실습 환경 만들기" data-cont="1"><div class="rh"><div class="l"><b>NETWORK L2</b> · 6장 · <span class="sec">실습 ② 스위치 · VLAN · 링크 묶기</span></div><div class="r">6.5 LACP 실습 환경 만들기 (계속)<span class="pg">38</span></div></div><div class="kicker">6.5 · LAB · LACP TOPOLOGY</div><h1>서버와 스위치를<br><em>LACP 두 가닥</em>으로 잇는다 <small class="cont" style="font-size:.55em;color:var(--muted)">(계속)</small></h1><div class="term keep"><div class="th"><span>srv</span><span>cat /proc/net/bonding/bond0 · 주요 부분</span></div><div class="tb2"><span class="ln">Aggregator ID: 1</span>
+<span class="ln">Slave Interface: s2</span>
+<span class="ln">MII Status: up</span>
+<span class="ln">Aggregator ID: 1   <span class="d"># s1과 같으면 한 묶음</span></span>
+</div></div><div class="note"><strong>LACP 협상이 안 될 때</strong> Partner Mac Address가 0이거나 Aggregator ID가 서로 다르면, 스크립트의 <code>mode 802.3ad lacp_rate fast</code>를 양쪽 모두 <code>mode balance-xor</code>로 바꿔 다시 만듭니다(고정 묶음). 분산 원리(해시)는 같습니다. 다시 만들기 전 정리는 6.3 마지막 명령과 같습니다.</div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">38</div></section>
+<section class="page" data-sec="6.6" data-title="6.6 부하 분산과 장애 조치 확인"><div class="rh"><div class="l"><b>NETWORK L2</b> · 6장 · <span class="sec">실습 ② 스위치 · VLAN · 링크 묶기</span></div><div class="r">6.6 부하 분산과 장애 조치 확인<span class="pg">39</span></div></div><div class="kicker">6.6 · LAB · LOAD BALANCING · FAILOVER</div><h1>트래픽이 두 가닥에<br><em>나뉘는지</em>, 끊겨도 <em>버티는지</em></h1>
+<div class="lab"><div class="lab-head"><span class="badge">LAB 11</span><h3>클라이언트 4대로 부하 분산 확인</h3><span class="t">15분</span></div><div class="lab-body"><div class="lwhy"><b>왜 이 실습?</b>layer2 해시는 MAC 쌍으로 링크를 고릅니다. 상대가 여러 대면 두 가닥에 나뉘어 실립니다.</div><ol class="steps"><li><span class="lt">전 카운터</span><span class="ls"><code>sudo ip -n srv -s link show s1</code> · <code>s2</code> → TX packets 기록</span></li><li><span class="lt">4대에게 20번씩</span><span class="ls"><code>for i in 1 2 3 4; do sudo ip netns exec srv ping -q -c 20 -i 0.2 10.10.0.1$i; done</code></span></li><li><span class="lt">후 카운터</span><span class="ls">같은 명령 → s1, s2의 TX 증가량 비교</span></li><li><span class="lt">누가 어느 가닥인지</span><span class="ls">클라이언트 한 대씩 ping 하며 어느 slave의 TX가 느는지 표에 기록</span></li></ol></div></div>
+<table class="zebra"><thead><tr><th>클라이언트</th><th>MAC</th><th>실린 가닥 (예시 결과)</th><th>내 결과</th></tr></thead><tbody><tr><td>c1</td><td>…:11</td><td>s1</td><td></td></tr><tr><td>c2</td><td>…:12</td><td>s2</td><td></td></tr><tr><td>c3</td><td>…:13</td><td>s1</td><td></td></tr><tr><td>c4</td><td>…:14</td><td>s2</td><td></td></tr></tbody></table>
+<div class="note">예시 결과는 layer2 해시(MAC 끝자리 XOR)로 계산한 값이며, 커널 버전에 따라 달라질 수 있습니다. 중요한 것은 <b>같은 클라이언트는 항상 같은 가닥</b>, <b>여러 클라이언트는 두 가닥에 나뉜다</b>는 점입니다.</div>
+
+
+
+
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">39</div></section><section class="page" data-sec="6.6" data-title="6.6 부하 분산과 장애 조치 확인" data-cont="1"><div class="rh"><div class="l"><b>NETWORK L2</b> · 6장 · <span class="sec">실습 ② 스위치 · VLAN · 링크 묶기</span></div><div class="r">6.6 부하 분산과 장애 조치 확인 (계속)<span class="pg">40</span></div></div><div class="kicker">6.6 · LAB · LOAD BALANCING · FAILOVER</div><h1>트래픽이 두 가닥에<br><em>나뉘는지</em>, 끊겨도 <em>버티는지</em> <small class="cont" style="font-size:.55em;color:var(--muted)">(계속)</small></h1><div class="lab"><div class="lab-head"><span class="badge">LAB 12</span><h3>Wireshark로 분산과 LACP 확인</h3><span class="t">15분</span></div><div class="lab-body"><ol class="steps"><li><span class="lt">두 가닥을 동시에 캡처</span><span class="ls"><code>sudo ip netns exec srv tcpdump -i s1 -w /tmp/s1.pcap</code> · 다른 터미널에서 s2 → <code>/tmp/s2.pcap</code></span></li><li><span class="lt">트래픽 발생 후 Ctrl+C</span><span class="ls">LAB 11의 for 명령 다시 실행</span></li><li><span class="lt">Windows로 전송 <small>(HOST)</small></span><span class="ls"><code>multipass transfer myUbuntu1:/tmp/s1.pcap .</code> · s2도</span></li><li><span class="lt">Statistics → Conversations → Ethernet</span><span class="ls">s1.pcap과 s2.pcap에 <b>어떤 클라이언트 MAC</b>이 나오는지 비교</span></li><li><span class="lt">필터 <code>lacp</code></span><span class="ls">1초마다 오가는 LACPDU · Actor/Partner의 System ID, Key, State(Aggregation · Synchronization · Collecting · Distributing)</span></li></ol></div></div><div class="lab"><div class="lab-head"><span class="badge">LAB 13</span><h3>한 가닥을 끊어도 통신이 계속되는가 (Failover)</h3><span class="t">10분</span></div><div class="lab-body"><ol class="steps"><li><span class="lt">계속 ping</span><span class="ls"><code>sudo ip netns exec srv ping 10.10.0.12</code> (c2 · s2에 실린 상대)</span></li><li><span class="lt">다른 터미널에서 s2 끊기</span><span class="ls"><code>sudo ip -n srv link set s2 down</code></span></li><li><span class="lt">관찰</span><span class="ls">ping이 몇 개 빠진 뒤 이어지는지 · <code>cat /proc/net/bonding/bond0</code>에서 s2 MII Status down</span></li><li><span class="lt">복구</span><span class="ls"><code>sudo ip -n srv link set s2 up</code> → 다시 두 가닥으로 분산</span></li></ol></div></div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">40</div></section><section class="page" data-sec="6.6" data-title="6.6 부하 분산과 장애 조치 확인" data-cont="1"><div class="rh"><div class="l"><b>NETWORK L2</b> · 6장 · <span class="sec">실습 ② 스위치 · VLAN · 링크 묶기</span></div><div class="r">6.6 부하 분산과 장애 조치 확인 (계속)<span class="pg">41</span></div></div><div class="kicker">6.6 · LAB · LOAD BALANCING · FAILOVER</div><h1>트래픽이 두 가닥에<br><em>나뉘는지</em>, 끊겨도 <em>버티는지</em> <small class="cont" style="font-size:.55em;color:var(--muted)">(계속)</small></h1><table class="zebra"><thead><tr><th>관찰 기록</th><th>값</th></tr></thead><tbody><tr><td>끊기 전 c2가 실린 가닥</td><td></td></tr><tr><td>끊는 동안 빠진 ping 개수</td><td></td></tr><tr><td>끊은 뒤 c2가 실린 가닥</td><td></td></tr><tr><td>복구 후 LACP 상태 (Aggregator ID)</td><td></td></tr></tbody></table><div class="term keep"><div class="th"><span>myUbuntu1</span><span>실습 정리</span></div><div class="tb2"><span class="p">$</span> <span class="c">sudo ip -all netns delete</span></div></div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">41</div></section>
+<section class="page opener has-why" data-ch="7"><div class="rh"><div class="l"><b>NETWORK L2</b> · 7장</div><div class="r">장애 대응과 정리<span class="pg">42</span></div></div><div class="big">7</div><h1>장애 대응과 정리<br>ARP · 스위치 · VLAN을 의심한다</h1><div class="oscene"><div class="osh">WHY · 현장 장면</div><div class="osb">링크도 살아 있고 IP 설정도 맞는데 특정 서버와만 통신이 안 된다. <b>상대 MAC을 알아냈는가, 스위치가 보내는가, 같은 VLAN인가</b> — 2계층의 세 질문으로 원인을 좁힌다.</div><table class="zebra osx"><thead><tr><th>이 장을 모르면</th><th>생기는 일</th></tr></thead><tbody><tr><td>장애 유형을 모르면</td><td>증상만 보고 엉뚱한 곳을 고침</td></tr><tr><td>증거 순서가 없으면</td><td>ARP·VLAN 문제를 IP로 덮음</td></tr><tr><td>정리가 없으면</td><td>3계층으로 넘어갈 기초가 흔들림</td></tr></tbody></table></div><div class="oq"><div><span>01</span>현장에서 흔한 2계층 장애는 무엇이고 어떻게 구별하는가?</div><div><span>02</span>장애를 직접 주입하고 증거로 찾아낼 수 있는가?</div><div><span>03</span>2계층의 핵심 개념을 한 장으로 설명할 수 있는가?</div></div><div class="kicker">이 장의 구성</div><div class="otoc"><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">7.1</b>2계층 장애 유형</span><b data-toc="7.1">43</b></div><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">7.2</b>트러블슈팅 경우의 수</span><b data-toc="7.2">44</b></div><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">7.3</b>Blue Team 미션</span><b data-toc="7.3">46</b></div><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">7.4</b>한 장 정리</span><b data-toc="7.4">48</b></div><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">7.5</b>이해도 평가</span><b data-toc="7.5">49</b></div></div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">42</div></section>
+<section class="page" data-sec="7.1" data-title="7.1 2계층 장애 유형"><div class="rh"><div class="l"><b>NETWORK L2</b> · 7장 · <span class="sec">장애 대응과 정리</span></div><div class="r">7.1 2계층 장애 유형<span class="pg">43</span></div></div><div class="kicker">7.1 · L2 TROUBLESHOOTING</div><h1>현장에서 만나는<br><em>2계층 장애</em>와 확인 방법</h1>
+<div class="why"><b>왜 배워야 하나?</b><p>링크(1계층)는 살아 있는데 통신이 안 된다면 다음은 2계층입니다. <strong>상대 MAC을 알아냈는가 → 스위치가 제대로 보내는가 → 같은 VLAN인가</strong> 순서로 봅니다.</p></div>
+<div class="flow"><span>L1 링크 정상?</span><i>→</i><span>ARP 성공?<br><small>ip neigh</small></span><i>→</i><span>MAC 테이블?<br><small>bridge fdb</small></span><i>→</i><span>VLAN 같은가?</span><i>→</i><span>그다음 IP (3계층)</span></div>
+<table class="zebra"><thead><tr><th style="width:18%">장애</th><th style="width:22%">증상</th><th style="width:36%">확인</th><th style="width:24%">조치</th></tr></thead><tbody><tr><td><b>ARP 실패</b></td><td>같은 네트워크인데 ping 불가</td><td><code>ip neigh</code> FAILED · tcpdump에 ARP 요청만 있고 응답 없음</td><td>상대 전원·링크·VLAN 확인</td></tr><tr><td><b>IP 충돌</b></td><td>됐다 안 됐다 반복</td><td><code>ip neigh</code>의 MAC이 계속 바뀜 · Wireshark <code>arp.duplicate-address-detected</code></td><td>중복 IP 찾아 변경</td></tr><tr><td><b>잘못된 ARP 항목</b></td><td>특정 상대와만 불통</td><td><code>ip neigh</code>의 MAC이 실제 상대 MAC과 다름</td><td><code>ip neigh flush</code> · 스푸핑 의심 시 조사</td></tr><tr><td><b>VLAN 불일치</b></td><td>같은 서브넷인데 불통</td><td><code>bridge vlan show</code> · 스위치 포트 VLAN</td><td>포트 VLAN 수정</td></tr><tr><td><b>루프 · 브로드캐스트 스톰</b></td><td>네트워크 전체가 느려지고 멈춤</td><td>브로드캐스트 급증 · MAC 플래핑 로그</td><td>루프 케이블 제거 · STP 켜기</td></tr><tr><td><b>MTU 불일치</b></td><td>작은 ping은 되는데 큰 전송이 멈춤</td><td><code>ping -M do -s 1472 상대</code> 실패</td><td>양쪽 MTU 통일</td></tr><tr><td><b>bond 한 가닥 장애</b></td><td>속도 저하 · 이중화 상실</td><td><code>/proc/net/bonding/bond0</code> MII down</td><td>케이블·포트 교체</td></tr><tr><td><b>LACP 협상 실패</b></td><td>묶음이 한 가닥처럼 동작</td><td>Partner MAC 0 · Aggregator ID 다름</td><td>양쪽 모드·LACP 설정 통일</td></tr></tbody></table>
+<div class="note"><strong>MTU 시험 명령</strong> <code>-M do</code>는 “쪼개지 말 것”, <code>-s 1472</code>는 데이터 크기입니다. 1472 + ICMP 헤더 8 + IP 헤더 20 = 1500(MTU)이므로, 이게 실패하면 경로 어딘가의 MTU가 1500보다 작다는 뜻입니다.</div>
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">43</div></section>
+<section class="page" data-sec="7.2" data-title="7.2 트러블슈팅 경우의 수"><div class="rh"><div class="l"><b>NETWORK L2</b> · 7장 · <span class="sec">장애 대응과 정리</span></div><div class="r">7.2 트러블슈팅 경우의 수<span class="pg">44</span></div></div><div class="kicker">7.2 · CASE MATRIX</div><h1>증상 하나에 원인은 여러 개<br><em>관찰 조합</em>으로 좁힌다</h1>
+<div class="why"><b>왜 배워야 하나?</b><p>“ping이 안 돼요”라는 같은 증상도, <strong>ARP 테이블 상태</strong>와 <strong>양쪽에서 무엇이 캡처되는지</strong>를 조합하면 원인이 하나로 좁혀집니다. A와 B 양쪽에서 <code>tcpdump -e -n arp or icmp</code>를 켜 두고 아래 표를 따라갑니다.</p></div>
+<h3>경우 ① 같은 네트워크의 상대 B에게 ping 실패</h3>
+<table class="zebra"><thead><tr><th style="width:4%">#</th><th style="width:20%">A의 ip neigh (B 항목)</th><th style="width:14%">B에서 ARP 요청이 보이나</th><th style="width:16%">A에서 ARP 응답이 보이나</th><th style="width:18%">결론</th><th style="width:28%">원인 후보</th></tr></thead><tbody><tr><td>1</td><td>없음 → INCOMPLETE → <b>FAILED</b></td><td><b>✕</b></td><td>✕</td><td>요청이 B까지 못 감</td><td>A·B 링크 DOWN · 스위치 포트 분리 · <b>VLAN 다름</b> · 케이블(L1)</td></tr><tr><td>2</td><td><b>FAILED</b></td><td>○</td><td>✕ (B가 응답 안 보냄)</td><td>B가 자기 IP가 아니라고 판단</td><td>B의 IP가 다름(주소 오타) · B에 그 IP가 없음</td></tr><tr><td>3</td><td><b>FAILED</b></td><td>○</td><td>✕ (B는 응답을 보냄)</td><td>돌아오는 길이 끊김</td><td>스위치 반대 방향 VLAN·포트 설정 · 한쪽만 된 bond</td></tr><tr><td>4</td><td>REACHABLE · <b>MAC이 B의 실제 MAC과 다름</b></td><td>—</td><td>다른 MAC이 응답</td><td>엉뚱한 기기에게 보내는 중</td><td><b>IP 충돌</b> · ARP 스푸핑 · 잘못된 정적 항목</td></tr><tr><td>5</td><td>REACHABLE · <b>MAC이 계속 바뀜</b></td><td>—</td><td>두 MAC이 번갈아 응답</td><td>두 기기가 같은 IP</td><td><b>IP 충돌</b> (Wireshark <code>arp.duplicate-address-detected</code>)</td></tr><tr><td>6</td><td>REACHABLE · MAC 맞음</td><td>ICMP 요청 도착</td><td>ICMP 응답 없음</td><td><b>2계층은 정상</b></td><td>3계층 이상 · B 방화벽의 ICMP 차단 · 서브넷 마스크 불일치</td></tr></tbody></table>
+<div class="point"><div class="pl">읽는 법</div><p><strong>“어디까지 보였는가”가 끊긴 지점</strong>입니다. B에 요청이 안 보이면 A → B 방향이, A에 응답이 안 보이면 B → A 방향이 끊긴 것입니다. 6번처럼 ARP가 정상이면 2계층은 통과했으니 3계층으로 넘어갑니다.</p></div>
+
+
+
+
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">44</div></section><section class="page" data-sec="7.2" data-title="7.2 트러블슈팅 경우의 수" data-cont="1"><div class="rh"><div class="l"><b>NETWORK L2</b> · 7장 · <span class="sec">장애 대응과 정리</span></div><div class="r">7.2 트러블슈팅 경우의 수 (계속)<span class="pg">45</span></div></div><div class="kicker">7.2 · CASE MATRIX</div><h1>증상 하나에 원인은 여러 개<br><em>관찰 조합</em>으로 좁힌다 <small class="cont" style="font-size:.55em;color:var(--muted)">(계속)</small></h1><h3>경우 ② 같은 네트워크는 되는데 인터넷(다른 네트워크)만 안 됨</h3><table class="zebra"><thead><tr><th style="width:4%">#</th><th style="width:40%">관찰</th><th style="width:24%">결론</th><th style="width:32%">원인 후보</th></tr></thead><tbody><tr><td>1</td><td><code>ip route</code>에 <code>default via</code> 줄이 없음</td><td>게이트웨이를 모름</td><td>3계층 설정 (DHCP 실패 · 수동 설정 누락)</td></tr><tr><td>2</td><td>게이트웨이 IP의 <code>ip neigh</code>가 <b>FAILED</b></td><td>게이트웨이와 2계층 단절</td><td>게이트웨이 장비 꺼짐 · VLAN · 링크</td></tr><tr><td>3</td><td>tcpdump에 <b>who-has 8.8.8.8</b>이 보임</td><td>외부 주소를 같은 네트워크로 착각</td><td><b>서브넷 마스크가 너무 큼</b> (IPv4 교안 3.3의 판단이 틀어짐)</td></tr><tr><td>4</td><td>목적지 MAC = 게이트웨이 · 요청은 나가는데 응답 없음</td><td>2계층 정상 · 게이트웨이 너머 문제</td><td>라우팅 · NAT · 방화벽 (3계층 이상)</td></tr></tbody></table><h3>경우 ③ 됐다 안 됐다 · 느림</h3><table class="zebra"><thead><tr><th style="width:4%">#</th><th style="width:40%">관찰</th><th style="width:24%">결론</th><th style="width:32%">원인 후보</th></tr></thead><tbody><tr><td>1</td><td><code>ip neigh</code>의 MAC이 시간마다 바뀜</td><td>ARP가 흔들림</td><td>IP 충돌 · ARP 스푸핑</td></tr><tr><td>2</td><td>네트워크 전체가 느리고 브로드캐스트 프레임이 폭증</td><td>브로드캐스트 스톰</td><td><b>루프</b> (케이블 양 끝이 같은 스위치) · STP 꺼짐</td></tr><tr><td>3</td><td>작은 ping은 되는데 큰 파일·웹 페이지가 멈춤</td><td>큰 프레임만 버려짐</td><td><b>MTU 불일치</b> · <code>ping -M do -s 1472</code>로 확인</td></tr><tr><td>4</td><td>bond 사용 · 특정 상대만 느림</td><td>한 가닥만 문제</td><td>그 가닥의 crc 오류 · <code>ip -s link show s1</code>과 <code>s2</code> 비교</td></tr><tr><td>5</td><td>Wi-Fi 기기가 많을 때만 느림</td><td>매체 경쟁</td><td>CSMA/CA 대기 증가 · 5GHz·채널 분산 (L1 교안 2.4)</td></tr></tbody></table><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">45</div></section>
+<section class="page" data-sec="7.3" data-title="7.3 Blue Team 미션"><div class="rh"><div class="l"><b>NETWORK L2</b> · 7장 · <span class="sec">장애 대응과 정리</span></div><div class="r">7.3 Blue Team 미션<span class="pg">46</span></div></div><div class="kicker">7.3 · BLUE TEAM MISSION</div><h1>2인 1조<br><em>2계층 장애 조사관</em></h1>
+<div class="mission"><b>MISSION L2-BT-01</b><h3>A 역할: 장애 주입 / B 역할: 탐지·복구 · 완료 후 역할 교대</h3><div class="wy">6.1의 스위치 환경(h1~h3, br0)을 다시 만든 뒤 진행합니다. 조사자는 장애 주입 명령을 보지 않습니다.</div></div>
+<table class="zebra"><thead><tr><th style="width:8%">번호</th><th style="width:58%">장애 주입 (A만 실행)</th><th style="width:34%">재현되는 상황</th></tr></thead><tbody><tr><td>①</td><td><code>sudo ip -n h1 neigh replace 10.0.0.12 lladdr 02:00:00:00:00:99 nud permanent</code></td><td>잘못된 ARP 항목 (스푸핑과 같은 증상)</td></tr><tr><td>②</td><td><code>sudo ip link set br0 type bridge vlan_filtering 1</code> · <code>sudo bridge vlan add dev veth-h2 vid 30 pvid untagged</code> · <code>sudo bridge vlan del dev veth-h2 vid 1</code></td><td>VLAN 불일치</td></tr><tr><td>③</td><td><code>sudo ip link set veth-h2 nomaster</code></td><td>스위치 포트에서 케이블이 빠진 것과 비슷</td></tr><tr><td>④</td><td><code>sudo ip -n h2 addr add 10.0.0.11/24 dev eth0</code></td><td>h1과 IP 충돌</td></tr></tbody></table>
+<table class="zebra"><thead><tr><th style="width:9%">단계</th><th>규칙</th></tr></thead><tbody><tr><td>1</td><td>조사자는 IPv4 주소를 바꾸면 안 된다 (④의 원인 제거는 예외).</td></tr><tr><td>2</td><td><code>ip link</code> → <code>ip neigh</code> → <code>tcpdump -e</code> → <code>bridge fdb</code> · <code>bridge vlan</code> 순으로 증거를 모은다.</td></tr><tr><td>3</td><td>원인을 말로 설명하고 근거 3개를 제출한다.</td></tr><tr><td>4</td><td>복구 후 h1 → h2 통신과 ARP 테이블을 재검증한다.</td></tr></tbody></table>
+
+
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">46</div></section><section class="page" data-sec="7.3" data-title="7.3 Blue Team 미션" data-cont="1"><div class="rh"><div class="l"><b>NETWORK L2</b> · 7장 · <span class="sec">장애 대응과 정리</span></div><div class="r">7.3 Blue Team 미션 (계속)<span class="pg">47</span></div></div><div class="kicker">7.3 · BLUE TEAM MISSION</div><h1>2인 1조<br><em>2계층 장애 조사관</em> <small class="cont" style="font-size:.55em;color:var(--muted)">(계속)</small></h1><div class="lab"><div class="lab-head"><span class="badge">INCIDENT REPORT</span><h3>장애 보고서</h3></div><div class="lab-body"><table class="zebra"><thead><tr><th>항목</th><th>기록</th><th>항목</th><th>기록</th></tr></thead><tbody><tr><td>증상</td><td></td><td>주입 번호 추정</td><td></td></tr><tr><td>ip neigh</td><td></td><td>tcpdump -e</td><td></td></tr><tr><td>bridge fdb</td><td></td><td>bridge vlan</td><td></td></tr><tr><td>판정</td><td></td><td>근거 1</td><td></td></tr><tr><td>근거 2</td><td></td><td>근거 3</td><td></td></tr><tr><td>조치</td><td></td><td>복구 확인</td><td></td></tr></tbody></table></div></div><div class="note"><strong>복구 힌트</strong> ① <code>sudo ip -n h1 neigh del 10.0.0.12 dev eth0</code> · ② <code>sudo bridge vlan add dev veth-h2 vid 1 pvid untagged</code> · <code>sudo bridge vlan del dev veth-h2 vid 30</code> · ③ <code>sudo ip link set veth-h2 master br0</code> · ④ <code>sudo ip -n h2 addr del 10.0.0.11/24 dev eth0</code></div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">47</div></section>
+<section class="page" data-sec="7.4" data-title="7.4 한 장 정리"><div class="rh"><div class="l"><b>NETWORK L2</b> · 7장 · <span class="sec">장애 대응과 정리</span></div><div class="r">7.4 한 장 정리<span class="pg">48</span></div></div><div class="kicker">7.4 · SUMMARY</div><h1>데이터링크 계층 한 장 정리</h1>
+<table class="zebra"><thead><tr><th style="width:20%">개념</th><th style="width:50%">한 문장</th><th style="width:30%">확인 방법</th></tr></thead><tbody><tr><td><b>2계층</b></td><td>같은 네트워크 안의 바로 옆 장비까지 프레임을 배달</td><td>—</td></tr><tr><td><b>프레임</b></td><td>목적지 MAC · 출발지 MAC · 타입 · 데이터(≤1500) · FCS</td><td>Wireshark Ethernet II</td></tr><tr><td><b>MAC 주소</b></td><td>48비트 · 앞 3바이트 OUI · 첫 바이트 끝 두 비트로 종류 판단</td><td><code>ip link</code></td></tr><tr><td><b>브로드캐스트</b></td><td><code>ff:ff:ff:ff:ff:ff</code> · 같은 네트워크 전체</td><td><code>eth.dst == ff:ff:ff:ff:ff:ff</code></td></tr><tr><td><b>ARP</b></td><td>IP로 MAC을 알아냄 · 요청은 브로드캐스트, 응답은 유니캐스트</td><td><code>ip neigh</code> · <code>tcpdump -e arp</code></td></tr><tr><td><b>게이트웨이 MAC</b></td><td>다른 네트워크로 갈 때 목적지 MAC은 게이트웨이</td><td><code>tcpdump -e</code> + <code>ip neigh</code></td></tr><tr><td><b>L2 스위치</b></td><td>학습 · 플러딩 · 포워딩 · 필터링 · 에이징</td><td><code>bridge fdb show</code></td></tr><tr><td><b>VLAN</b></td><td>스위치 하나를 여러 브로드캐스트 도메인으로 · 태그 4바이트</td><td><code>bridge vlan show</code></td></tr><tr><td><b>STP</b></td><td>루프를 막으려고 포트 하나를 차단</td><td>Wireshark <code>stp</code></td></tr><tr><td><b>링크 묶기 · LACP</b></td><td>여러 가닥을 한 링크로 · 해시로 분산 · 한 흐름은 한 가닥</td><td><code>/proc/net/bonding/bond0</code> · <code>lacp</code></td></tr></tbody></table>
+<div class="point"><div class="pl">진단 순서</div><p>L1 링크(<code>ip link</code>) → ARP(<code>ip neigh</code>) → 프레임 흐름(<code>tcpdump -e</code>) → 스위치(<code>bridge fdb</code> · <code>bridge vlan</code>) → 그다음에야 IP 라우팅(3계층)을 본다.</p></div>
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">48</div></section>
+<section class="page" data-sec="7.5" data-title="7.5 이해도 평가"><div class="rh"><div class="l"><b>NETWORK L2</b> · 7장 · <span class="sec">장애 대응과 정리</span></div><div class="r">7.5 이해도 평가<span class="pg">49</span></div></div><div class="kicker">7.5 · ASSESSMENT</div><h1>이해도 평가<br><em>명령을 외웠는지가 아니다</em></h1>
+<div class="qa"><div class="ql">문제 · 15문항</div><ol><li>2계층과 3계층의 주소와 전달 범위를 비교하라.</li><li>이더넷 프레임의 필드 다섯 가지를 순서대로 적어라.</li><li>EtherType 0x0806과 0x0800은 각각 무엇인가?</li><li>MAC 주소 52:54:00:12:34:56은 제조사가 부여한 주소인가?</li><li>ARP 요청과 응답의 목적지 MAC은 각각 무엇인가?</li><li>8.8.8.8로 가는 프레임의 목적지 MAC은 누구의 것인가?</li><li><code>ip neigh</code>에 게이트웨이가 FAILED로 보인다. 무엇부터 의심하나?</li><li>스위치의 학습·플러딩·포워딩을 한 문장씩 설명하라.</li><li>LAB 07에서 h3가 ARP 요청만 보고 ping은 못 본 이유는?</li><li>스위치는 충돌 도메인과 브로드캐스트 도메인 중 무엇을 나누는가?</li><li>같은 10.0.0.0/24인데 VLAN이 다르면 통신되는가? 이유는?</li><li>루프가 생기면 왜 네트워크 전체가 멈추나? 막는 기술은?</li><li>1Gbps 두 가닥을 LACP로 묶었다. 파일 하나를 2Gbps로 받을 수 있나?</li><li>LAB 13에서 한 가닥을 끊어도 ping이 이어진 이유는?</li><li>LACP 협상이 됐는지 무엇으로 확인하나?</li></ol></div>
+
+
+
+
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">49</div></section><section class="page" data-sec="7.5" data-title="7.5 이해도 평가" data-cont="1" data-brk="1"><div class="rh"><div class="l"><b>NETWORK L2</b> · 7장 · <span class="sec">장애 대응과 정리</span></div><div class="r">7.5 이해도 평가 (계속)<span class="pg">50</span></div></div><div class="kicker">7.5 · ASSESSMENT</div><h1>이해도 평가<br><em>명령을 외웠는지가 아니다</em> <small class="cont" style="font-size:.55em;color:var(--muted)">(계속)</small></h1><div class="ans"><div class="al">정답 · 해설</div><b>Q1</b> 2계층 MAC · 같은 네트워크 안의 한 구간 / 3계층 IP · 출발지에서 최종 목적지까지.<br><b>Q2</b> 목적지 MAC · 출발지 MAC · 타입 · 데이터 · FCS.<br><b>Q3</b> ARP / IPv4.<br><b>Q4</b> 아니다. 첫 바이트 0x52의 U/L 비트가 1 → 로컬에서 만든 주소(QEMU/KVM VM에서 흔함).<br><b>Q5</b> 요청 ff:ff:ff:ff:ff:ff(브로드캐스트) / 응답 요청한 쪽의 MAC(유니캐스트).<br><b>Q6</b> 게이트웨이의 MAC. 다른 네트워크로 갈 때 2계층은 다음 구간(게이트웨이)까지만 보낸다.<br><b>Q7</b> 게이트웨이와의 2계층 연결 · 링크, VLAN, 게이트웨이 장비 상태.<br><b>Q8</b> 학습: 출발지 MAC과 포트 기록 · 플러딩: 모르는 목적지·브로드캐스트는 모든 포트로 · 포워딩: 아는 목적지는 그 포트로만.<br><b>Q9</b> ARP 요청은 브로드캐스트라 플러딩되지만, 이후 프레임은 스위치가 목적지 포트를 알아 h2로만 보냈다.<br><b>Q10</b> 충돌 도메인. 브로드캐스트 도메인은 VLAN이나 라우터로 나눈다.<br><b>Q11</b> 안 된다. 2계층이 분리돼 ARP 브로드캐스트가 닿지 않는다.<br><b>Q12</b> 2계층 프레임에는 TTL이 없어 브로드캐스트가 끝없이 돈다 → 브로드캐스트 스톰 · STP.<br><b>Q13</b> 일반적으로 아니다. 해시 때문에 한 흐름은 한 가닥으로만 간다. 여러 흐름의 합이 늘어난다.<br><b>Q14</b> bond가 링크 장애를 감지(MII)하고 남은 가닥으로 트래픽을 옮겼다(Failover).<br><b>Q15</b> <code>/proc/net/bonding/bond0</code>의 Partner Mac Address(0이 아님)와 두 slave의 같은 Aggregator ID · Wireshark <code>lacp</code>.</div><h3>다음: 제3계층 (네트워크)</h3><div class="flow"><span>게이트웨이 MAC</span><i>→</i><span>라우팅 테이블</span><i>→</i><span>ip route</span><i>→</i><span>TTL · traceroute</span><i>→</i><span>VLAN 간 라우팅</span></div><div class="mission"><b>마지막 질문</b><h3>“게이트웨이는 받은 패킷을 어느 쪽으로 보낼지 어떻게 정할까?”</h3><div class="wy">이 질문에서 3계층이 시작됩니다. IPv4 교안의 주소·CIDR 지식이 여기서 다시 쓰입니다.</div></div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">50</div></section>
+<script>
+document.querySelectorAll(".say").forEach(function(box){
+ const sc=box.querySelector(".sc"),sl=box.querySelector(".sl"); if(!sc||!sl)return;
+ const b=document.createElement("button"); b.className="copybtn"; b.textContent="복사"; b.type="button";
+ b.onclick=function(){navigator.clipboard.writeText(sc.innerText).then(function(){b.textContent="복사됨";setTimeout(function(){b.textContent="복사"},1200)})}; sl.appendChild(b);
+});
+</script></body></html>

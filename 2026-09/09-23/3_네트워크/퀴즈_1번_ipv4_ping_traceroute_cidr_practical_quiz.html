@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>IPv4 · CIDR · ping · traceroute 실습형 이해도 평가</title>
+<style>
+:root{--bg:#eceae5;--paper:#fff;--ink:#222;--muted:#666;--line:#ddd;--accent:#b23c0a;--ok:#147a3b;--bad:#b42318;--soft:#f7f6f3}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);font-family:Arial,"Malgun Gothic",sans-serif;color:var(--ink);line-height:1.6}
+.wrap{max-width:980px;margin:18px auto;padding:0 14px 70px}
+.cover,.card,.result{background:#fff;border:1px solid var(--line);box-shadow:0 2px 12px #0001}
+.cover{padding:34px 38px;margin-bottom:16px;border-top:7px solid var(--accent)}.cover h1{margin:0 0 9px;font-size:31px}.cover p{color:var(--muted)}
+.stats{display:flex;gap:8px;flex-wrap:wrap;margin-top:17px}.stats span{border:1px solid #ccc;background:var(--soft);padding:5px 10px;border-radius:18px;font-size:13px;font-weight:700}
+.toolbar{position:sticky;top:0;z-index:4;background:#eceae5e8;backdrop-filter:blur(5px);padding:9px 0;display:flex;gap:7px;flex-wrap:wrap}
+button{border:1px solid #bbb;background:#fff;padding:9px 14px;border-radius:5px;cursor:pointer}.toolbar button.on{color:var(--accent);border-color:var(--accent);font-weight:800}
+.card{padding:23px 28px;margin:13px 0}.meta{font-size:12px;font-weight:800;color:var(--accent);letter-spacing:.06em;margin-bottom:8px}
+.card h2{font-size:20px;line-height:1.55;white-space:pre-line;margin:0 0 14px}.opt{display:block;border:1px solid #ddd;border-radius:6px;padding:10px 12px;margin:8px 0;cursor:pointer}
+.opt:hover{background:#faf9f7}.opt input{margin-right:8px}.card.done .correct{background:#f0f8f3;border-color:#8bc7a0}.card.done .wrong{background:#fff2f1;border-color:#e5a39f}
+.feedback{display:none;margin-top:10px;font-weight:800;font-size:14px}
+.feedback.show{display:block}
+.feedback.ok{color:var(--ok)}
+.feedback.bad{color:var(--bad)}
+.solvebtn{margin-top:10px;border:1px solid #bbb;background:#fff;padding:7px 12px;border-radius:5px;cursor:pointer;font-size:13px;font-weight:700}
+.ex{display:none;margin-top:10px;background:var(--soft);padding:10px 12px;border-left:4px solid var(--accent);font-size:14px}
+.ex.show{display:block}
+.actions{display:flex;justify-content:center;margin:25px 0}.submit{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:800;font-size:16px;padding:12px 22px}
+.result{display:none;padding:27px;margin:18px 0}.result.show{display:block}.score{font-size:35px;font-weight:900;color:var(--accent)}
+.break{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:14px}.break div{background:var(--soft);border:1px solid #ddd;text-align:center;padding:11px}.break b{display:block;font-size:20px}
+@media(max-width:650px){.cover,.card{padding:21px 17px}.cover h1{font-size:24px}.card h2{font-size:18px}.break{grid-template-columns:1fr 1fr}}
+@media print{body{background:#fff}.toolbar,.actions{display:none}.cover,.card,.result{box-shadow:none;break-inside:avoid}}
+</style>
+</head>
+<body><div class="wrap">
+<section class="cover">
+<h1>IPv4 · CIDR · ping · traceroute<br>실습형 이해도 평가</h1>
+<p>주소 계산, 명령 결과 해석, 같은 네트워크 판정, 장애진단 순서를 평가합니다.</p>
+<div class="stats"><span>총 32문항</span><span>IPv4 8</span><span>CIDR 8</span><span>ping 8</span><span>traceroute 8</span></div>
+</section>
+<div class="toolbar">
+<button class="on" onclick="f('ALL',this)">전체</button><button onclick="f('IPv4',this)">IPv4</button><button onclick="f('CIDR',this)">CIDR</button><button onclick="f('ping',this)">ping</button><button onclick="f('traceroute',this)">traceroute</button>
+</div>
+<div id="quiz"></div>
+<div class="actions"><button class="submit" onclick="grade()">채점하기</button></div>
+<section id="result" class="result"><div id="score" class="score"></div><p id="msg"></p><div id="break" class="break"></div></section>
+</div>
+<script>
+const qs=[{"cat": "IPv4", "q": "`ip addr show eth0`에서 `inet 192.168.10.25/24`가 보인다. 이 장치의 IPv4 주소는?", "opts": ["192.168.10.0", "192.168.10.1", "192.168.10.25", "255.255.255.0"], "a": 2, "ex": "`inet` 뒤의 192.168.10.25가 IPv4 주소이고 /24는 프리픽스입니다."}, {"cat": "IPv4", "q": "다음 중 RFC 1918 사설 IPv4 주소는?", "opts": ["8.8.8.8", "172.20.10.5", "142.250.207.100", "127.0.0.1"], "a": 1, "ex": "172.16.0.0~172.31.255.255는 사설 IPv4 범위입니다."}, {"cat": "IPv4", "q": "다음 출력에서 기본 게이트웨이는?\n`default via 172.26.208.1 dev eth0`", "opts": ["172.26.208.0", "172.26.208.1", "172.26.208.255", "eth0"], "a": 1, "ex": "`default via` 다음 주소가 기본 게이트웨이입니다."}, {"cat": "IPv4", "q": "`hostname -I`는 192.168.1.23, 외부 IP 확인 결과는 203.0.113.42였다. 가장 적절한 설명은?", "opts": ["둘은 항상 같아야 한다", "내부 주소와 외부에서 보이는 주소는 NAT 등으로 다를 수 있다", "203.0.113.42는 서브넷 마스크다", "192.168.1.23은 loopback이다"], "a": 1, "ex": "사설 IP 환경에서는 NAT 등에 의해 외부에서 보이는 주소가 다를 수 있습니다."}, {"cat": "IPv4", "q": "`192.168.10.25`는 몇 개의 옥텟으로 구성되는가?", "opts": ["2", "4", "8", "32"], "a": 1, "ex": "IPv4는 32비트이고 8비트 옥텟 4개로 표시합니다."}, {"cat": "IPv4", "q": "두 Multipass VM이 각각 192.168.64.2/24와 192.168.64.3/24이다. 가장 적절한 설명은?", "opts": ["공인 IP를 거쳐 통신한다", "같은 /24 네트워크라 직접 통신할 수 있다", "서로 다른 네트워크다", "IP 충돌이다"], "a": 1, "ex": "두 주소는 192.168.64.0/24에 속합니다."}, {"cat": "IPv4", "q": "127.0.0.1의 용도로 가장 적절한 것은?", "opts": ["기본 게이트웨이", "loopback 테스트", "브로드캐스트", "공인 DNS"], "a": 1, "ex": "127.0.0.1은 자기 자신의 TCP/IP 스택을 테스트하는 대표적인 loopback 주소입니다."}, {"cat": "IPv4", "q": "다음 중 IP와 CIDR를 함께 쓴 형식은?", "opts": ["192.168.1.10:24", "192.168.1.10/24", "192.168.1.10-24", "192.168.1.10.24"], "a": 1, "ex": "CIDR 프리픽스는 `/숫자`로 씁니다."}, {"cat": "CIDR", "q": "/26 네트워크 하나의 전체 IPv4 주소 수는?", "opts": ["26", "32", "62", "64"], "a": 3, "ex": "32-26=6비트, 2^6=64개입니다."}, {"cat": "CIDR", "q": "192.168.10.25/26의 네트워크 주소는?", "opts": ["192.168.10.0", "192.168.10.25", "192.168.10.63", "192.168.10.64"], "a": 0, "ex": "/26은 64개씩 끊기고 25는 0~63 구간입니다."}, {"cat": "CIDR", "q": "192.168.10.25/26의 브로드캐스트 주소는?", "opts": ["192.168.10.1", "192.168.10.62", "192.168.10.63", "192.168.10.64"], "a": 2, "ex": "0~63 블록의 마지막 주소 .63이 브로드캐스트입니다."}, {"cat": "CIDR", "q": "192.168.10.100/26의 사용 가능한 호스트 범위는?", "opts": [".1~.62", ".64~.127", ".65~.126", ".129~.190"], "a": 2, "ex": "100은 64~127 블록에 있고 네트워크 .64와 브로드캐스트 .127을 제외하면 .65~.126입니다."}, {"cat": "CIDR", "q": "192.168.10.0/24를 /27로 나누면 몇 개의 서브넷이 생기는가?", "opts": ["2", "4", "8", "16"], "a": 2, "ex": "/24에서 /27로 네트워크 비트가 3개 늘어 2^3=8개가 됩니다."}, {"cat": "CIDR", "q": "192.168.10.20/26에서 192.168.10.50/26으로 보낼 때는?", "opts": ["게이트웨이로 보낸다", "같은 네트워크라 직접 보낸다", "DNS로 보낸다", "브로드캐스트로만 보낸다"], "a": 1, "ex": "20과 50은 모두 0~63 구간입니다."}, {"cat": "CIDR", "q": "192.168.10.20/26에서 192.168.10.70/26으로 보낼 때는?", "opts": ["직접 보낸다", "다른 네트워크라 게이트웨이로 보낸다", "loopback으로 보낸다", "MAC 주소가 같으므로 보낸다"], "a": 1, "ex": "20은 0~63, 70은 64~127로 서로 다른 /26 서브넷입니다."}, {"cat": "CIDR", "q": "192.168.1.140/26에서 게이트웨이를 첫 번째 사용 가능 주소로 정한다면?", "opts": ["192.168.1.127", "192.168.1.128", "192.168.1.129", "192.168.1.191"], "a": 2, "ex": "140은 128~191 블록이며 .128 다음의 .129가 첫 사용 가능 주소입니다."}, {"cat": "ping", "q": "Linux에서 8.8.8.8에 ping을 정확히 4번 보내는 명령은?", "opts": ["ping -n 4 8.8.8.8", "ping -c 4 8.8.8.8", "ping -t 4 8.8.8.8", "ping /4 8.8.8.8"], "a": 1, "ex": "Linux ping의 `-c`는 전송 횟수를 지정합니다."}, {"cat": "ping", "q": "`4 packets transmitted, 4 received, 0% packet loss`의 의미는?", "opts": ["전부 손실", "1개 손실", "4개 모두 응답", "라우터가 4개"], "a": 2, "ex": "보낸 4개 요청 모두 응답을 받았습니다."}, {"cat": "ping", "q": "ping 결과의 `time=23.4 ms`는?", "opts": ["왕복 시간 RTT", "TTL 초기값", "포트 번호", "패킷 개수"], "a": 0, "ex": "time은 Echo Request와 Reply의 왕복 시간입니다."}, {"cat": "ping", "q": "`ping 8.8.8.8`은 성공하지만 `ping google.com`은 실패한다. 우선 점검할 항목은?", "opts": ["DNS 이름 해석", "CPU 온도", "CIDR을 /32로 변경", "공인 IP 구매"], "a": 0, "ex": "IP로는 통신되는데 이름으로 실패하면 DNS 문제를 우선 의심할 수 있습니다."}, {"cat": "ping", "q": "127.0.0.1 ping은 성공하지만 기본 게이트웨이 ping은 실패했다. 가장 적절한 판단은?", "opts": ["로컬 TCP/IP는 동작하지만 로컬 네트워크 구간을 점검해야 한다", "인터넷은 정상이다", "DNS만 문제다", "IPv6만 문제다"], "a": 0, "ex": "loopback은 정상이나 게이트웨이까지 닿지 않으므로 링크, 인터페이스, IP 설정, 방화벽 등을 확인합니다."}, {"cat": "ping", "q": "ping 결과의 ttl=119에 대한 설명으로 가장 적절한 것은?", "opts": ["라우터가 정확히 119개다", "인터넷 속도가 119Mbps다", "수신 패킷에 남은 TTL 값이다", "무조건 장애다"], "a": 2, "ex": "TTL은 경로의 라우터를 지나며 감소한 결과입니다."}, {"cat": "ping", "q": "ping이 실패했는데 웹 서비스는 정상 접속된다. 가능한 원인은?", "opts": ["ICMP Echo가 방화벽에서 차단됨", "IP 주소가 없다", "NIC가 존재하지 않는다", "서버가 반드시 꺼져 있다"], "a": 0, "ex": "ICMP를 차단하면서 TCP/HTTPS는 허용하는 정책이 가능합니다."}, {"cat": "ping", "q": "네트워크 장애 진단에서 가장 먼저 가까운 범위부터 확인하는 순서로 적절한 것은?", "opts": ["외부 IP → 게이트웨이 → loopback", "loopback → 내/로컬 구간 → 게이트웨이 → 외부 IP", "traceroute → 포맷 → 재부팅", "DNS → 공인 IP 구매"], "a": 1, "ex": "가까운 범위부터 넓혀 가면 장애 구간을 빠르게 좁힐 수 있습니다."}, {"cat": "traceroute", "q": "traceroute의 주된 목적은?", "opts": ["파일 크기 확인", "목적지까지의 경로 관찰", "열린 포트만 확인", "CPU 사용률 확인"], "a": 1, "ex": "traceroute는 목적지까지 관찰되는 중간 홉을 확인합니다."}, {"cat": "traceroute", "q": "TTL=1인 probe가 첫 라우터에 도착하면 일반적으로 어떤 일이 일어나는가?", "opts": ["TTL이 0이 되어 폐기되고 Time Exceeded 응답을 받을 수 있다", "DNS가 실행된다", "NAT가 꺼진다", "브로드캐스트로 변한다"], "a": 0, "ex": "라우터를 지날 때 TTL이 감소하고 0이 되면 보통 ICMP Time Exceeded가 반환됩니다."}, {"cat": "traceroute", "q": "결과 중 한 홉이 `* * *`이지만 다음 홉과 목적지가 정상적으로 보인다. 가장 적절한 해석은?", "opts": ["그 홉에서 반드시 연결이 끊겼다", "그 장비가 traceroute용 응답을 하지 않았을 수 있다", "목적지가 사설 IP다", "CIDR가 항상 틀렸다"], "a": 1, "ex": "중간 장비가 응답을 제한해도 패킷 포워딩은 계속될 수 있습니다."}, {"cat": "traceroute", "q": "`traceroute -n 8.8.8.8`의 `-n`은?", "opts": ["NAT 비활성화", "DNS 이름 조회 없이 숫자 IP로 표시", "네트워크 생성", "최대 8홉"], "a": 1, "ex": "`-n`은 이름 해석 없이 숫자 주소로 표시합니다."}, {"cat": "traceroute", "q": "같은 서브넷의 VM으로 traceroute했더니 첫 줄에 목적지 VM이 바로 나왔다. 가장 적절한 설명은?", "opts": ["라우터 1대를 통과했다", "중간 라우터 없이 직접 도달한 상황일 수 있다", "공인 인터넷을 거쳤다", "NAT가 두 번 됐다"], "a": 1, "ex": "같은 서브넷이면 라우터를 경유하지 않고 직접 전달될 수 있습니다."}, {"cat": "traceroute", "q": "traceroute에서 처음 공인 IP처럼 보이는 주소가 등장했다. 올바른 판단은?", "opts": ["정확히 인터넷 시작점이다", "반드시 IX다", "공인 주소가 보인 홉이라는 것만 확실하고 경계 판단에는 추가 정보가 필요하다", "그 지점부터 DNS가 시작된다"], "a": 2, "ex": "사설/공인 주소만으로 ISP 내부와 인터넷의 정확한 경계를 확정할 수 없습니다."}, {"cat": "traceroute", "q": "Multipass VM에서 8.8.8.8로 traceroute할 때 첫 번째로 확인할 대상은?", "opts": ["VM의 기본 게이트웨이", "구글 서버", "브로드캐스트 주소", "DNS 캐시"], "a": 0, "ex": "외부 목적지는 라우팅 테이블에 따라 우선 기본 게이트웨이로 전달됩니다."}, {"cat": "traceroute", "q": "실전 장애진단 순서로 가장 적절한 것은?", "opts": ["traceroute → 재부팅 → IP 변경", "ip addr/ip route → 게이트웨이 ping → 외부 IP ping → traceroute", "CIDR 삭제 → DNS 변경", "공인 IP 확인만 한다"], "a": 1, "ex": "내 인터페이스와 라우팅부터 확인한 뒤 가까운 구간에서 외부 경로로 확장합니다."}], root=document.getElementById('quiz');
+const esc=s=>s.replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+qs.forEach((q,i)=>{
+ const x=document.createElement('section');x.className='card';x.dataset.cat=q.cat;x.dataset.i=i;
+ x.innerHTML=`<div class="meta">${q.cat} · Q${String(i+1).padStart(2,'0')}</div><h2>${esc(q.q)}</h2>
+ <div>${q.opts.map((o,j)=>`<label class="opt"><input type="radio" name="q${i}" value="${j}" onchange="checkOne(${i},${j})"> ${esc(o)}</label>`).join('')}</div>
+ <div class="feedback" id="fb${i}"></div>
+ <button class="solvebtn" id="sb${i}" onclick="toggleExplain(${i})">풀이 보기</button>
+ <div class="ex" id="ex${i}"><b>정답 해설</b> · ${esc(q.ex)}</div>`;root.appendChild(x);
+});
+
+function checkOne(i,j){
+ const q=qs[i],card=document.querySelector(`.card[data-i="${i}"]`),fb=document.getElementById(`fb${i}`);
+ card.classList.add('done');
+ card.querySelectorAll('.opt').forEach((el,k)=>{
+   el.classList.remove('correct','wrong');
+   if(k===q.a) el.classList.add('correct');
+   if(k===j && j!==q.a) el.classList.add('wrong');
+ });
+ if(j===q.a){
+   fb.textContent='정답입니다.';
+   fb.className='feedback show ok';
+ }else{
+   fb.textContent=`오답입니다. 정답은 ${q.a+1}번입니다.`;
+   fb.className='feedback show bad';
+ }
+}
+function toggleExplain(i){
+ const ex=document.getElementById(`ex${i}`),btn=document.getElementById(`sb${i}`);
+ const open=ex.classList.toggle('show');
+ btn.textContent=open?'풀이 닫기':'풀이 보기';
+}
+
+function f(cat,b){document.querySelectorAll('.toolbar button').forEach(x=>x.classList.remove('on'));b.classList.add('on');document.querySelectorAll('.card').forEach(x=>x.style.display=(cat==='ALL'||x.dataset.cat===cat)?'block':'none')}
+function grade(){
+ let correct=0;const c={IPv4:[0,0],CIDR:[0,0],ping:[0,0],traceroute:[0,0]};
+ qs.forEach((q,i)=>{
+   const p=document.querySelector(`input[name="q${i}"]:checked`);
+   c[q.cat][1]++;
+   if(p){
+     checkOne(i,+p.value);
+     if(+p.value===q.a){correct++;c[q.cat][0]++;}
+   }else{
+     const fb=document.getElementById(`fb${i}`);
+     fb.textContent='미응답입니다.';
+     fb.className='feedback show bad';
+   }
+ });
+ const pct=Math.round(correct/qs.length*100);
+ document.getElementById('score').textContent=`${correct} / ${qs.length} · ${pct}점`;
+ document.getElementById('msg').textContent=pct>=90?'실습형 판단까지 매우 잘 이해했습니다.':pct>=75?'전반적으로 잘 이해했습니다. 틀린 문항의 계산과 명령 결과를 다시 확인하세요.':pct>=60?'핵심 흐름은 잡혔습니다. CIDR 계산과 진단 순서를 조금 더 연습하세요.':'IPv4 주소 구조부터 단계적으로 다시 실습하는 것이 좋습니다.';
+ document.getElementById('break').innerHTML=Object.entries(c).map(([k,v])=>`<div>${k}<b>${v[0]}/${v[1]}</b></div>`).join('');
+ const r=document.getElementById('result');r.classList.add('show');r.scrollIntoView({behavior:'smooth'});
+}
+</script></body></html>

@@ -1,0 +1,1019 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GPT API 기반 Linux Network Agent</title>
+<style>
+:root {
+ --bg:#0b1020; --panel:#121a2f; --panel2:#18233e; --code:#07101f;
+ --text:#eef3ff; --muted:#aab7d2; --line:#2b3b63; --accent:#67e8f9;
+ --purple:#c4b5fd; --green:#86efac; --yellow:#fde68a; --red:#fca5a5;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:linear-gradient(180deg,#08101f,#0d1427 45%,#0a1020);
+color:var(--text);font-family:"Segoe UI","Noto Sans KR",Arial,sans-serif;line-height:1.72}
+header{padding:58px 22px 38px;border-bottom:1px solid var(--line);
+background:radial-gradient(circle at 12% 0%,rgba(103,232,249,.18),transparent 34%),
+radial-gradient(circle at 88% 0%,rgba(196,181,253,.16),transparent 38%)}
+.wrap{max-width:1160px;margin:auto}
+h1{font-size:clamp(32px,5vw,56px);line-height:1.12;margin:0 0 14px}
+h2{font-size:30px;margin:0 0 16px}
+h3{font-size:22px;margin:26px 0 10px}
+h4{font-size:18px;margin:20px 0 8px;color:#dae6ff}
+p{margin:8px 0 14px}
+.lead{font-size:19px;color:#d7e4ff;max-width:950px}
+.kicker{color:var(--accent);font-weight:800;letter-spacing:.04em}
+.badge{display:inline-block;padding:6px 10px;margin:3px 5px 3px 0;border:1px solid var(--line);
+border-radius:999px;background:#0e1730;color:var(--muted)}
+main{padding:28px 18px 76px}
+section{background:rgba(18,26,47,.96);border:1px solid var(--line);border-radius:18px;
+padding:28px;margin:20px auto;box-shadow:0 14px 40px rgba(0,0,0,.16)}
+pre{background:var(--code);border:1px solid #21325a;border-radius:12px;padding:17px;overflow:auto;color:#eaf1ff}
+code{font-family:Consolas,Menlo,monospace}
+.cmd{color:#baf7cb}
+.note,.why,.tip,.warn,.danger{border-radius:12px;padding:15px 17px;margin:14px 0;border:1px solid}
+.note{background:rgba(103,232,249,.08);border-color:rgba(103,232,249,.35)}
+.why{background:rgba(196,181,253,.09);border-color:rgba(196,181,253,.4)}
+.tip{background:rgba(134,239,172,.08);border-color:rgba(134,239,172,.35)}
+.warn{background:rgba(253,230,138,.08);border-color:rgba(253,230,138,.35)}
+.danger{background:rgba(252,165,165,.07);border-color:rgba(252,165,165,.35)}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+.card{background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:16px}
+.flow{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:center;margin:20px 0}
+.node{min-width:150px;text-align:center;padding:14px 16px;background:#101a33;border:1px solid var(--line);border-radius:12px}
+.arrow{font-size:24px;color:var(--accent)}
+.step{display:inline-grid;place-items:center;width:36px;height:36px;border-radius:50%;
+background:var(--accent);color:#04212a;font-weight:800;margin-right:8px}
+table{width:100%;border-collapse:collapse;margin:14px 0}
+th,td{padding:12px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{color:var(--accent);background:rgba(103,232,249,.04)}
+.toc{columns:2;column-gap:30px}
+.toc a{display:block;color:var(--accent);text-decoration:none;padding:4px 0}
+.small{font-size:14px;color:var(--muted)}
+strong{color:white}
+footer{text-align:center;color:var(--muted);padding:18px}
+@media(max-width:820px){.grid,.grid2{grid-template-columns:1fr}.flow{flex-direction:column}.arrow{transform:rotate(90deg)}.toc{columns:1}section{padding:20px}}
+</style>
+</head>
+<body>
+<header>
+<div class="wrap">
+<div class="kicker">OPENAI AGENTS SDK · GPT API · MULTIPASS</div>
+<h1>GPT API 기반<br>Linux Network Diagnostic Agent</h1>
+<p class="lead">
+이번 버전에서는 Python 코드가 진단 순서를 고정하지 않습니다.
+사용자가 자연어로 문제를 입력하면 <b>GPT가 문제를 해석하고</b>,
+필요한 <b>Tool(ping / ss / pgrep / curl)</b>을 선택해서 실행하고,
+도구 결과를 다시 읽은 뒤 다음 도구를 쓸지 또는 답변할지를 판단합니다.
+</p>
+<span class="badge">Server VM: ubuntu</span>
+<span class="badge">Client VM: ubuntu1</span>
+<span class="badge">TCP 8000</span>
+<span class="badge">OPENAI_API_KEY</span>
+</div>
+</header>
+
+<main class="wrap">
+
+<section>
+<h2>먼저: 왜 이것은 에이전트인가?</h2>
+
+<div class="grid2">
+<div class="card">
+<h3>이전 버전: 자동화</h3>
+<pre><code>if ping 실패:
+    종료
+
+if port 없음:
+    process 확인
+
+if port 있음:
+    curl 확인</code></pre>
+<p>판단 규칙을 사람이 Python의 <code>if</code>문으로 모두 작성합니다.</p>
+</div>
+
+<div class="card">
+<h3>이번 버전: GPT Agent</h3>
+<pre><code>사용자:
+"ubuntu 웹 접속이 안돼"
+
+        ↓
+       GPT
+        ↓
+"먼저 ping을 보자"
+        ↓
+ ping_test Tool
+        ↓
+ 결과를 GPT에게 반환
+        ↓
+"ping은 성공했다.
+ 그러면 8000 포트를 보자"
+        ↓
+ check_port_8000 Tool
+        ↓
+       ...</code></pre>
+<p><strong>다음 행동을 GPT가 선택합니다.</strong></p>
+</div>
+</div>
+
+<div class="why">
+<strong>Agent의 핵심 구성</strong><br>
+① <b>Model</b> = 판단하는 두뇌<br>
+② <b>Instructions</b> = 역할과 행동 원칙<br>
+③ <b>Tools</b> = 실제 세상을 확인하거나 행동하는 함수<br>
+④ <b>Runner</b> = GPT ↔ Tool ↔ GPT 루프를 실행
+</div>
+</section>
+
+<section>
+<h2>전체 동작 구조</h2>
+<div class="flow">
+<div class="node">사용자 자연어 질문</div><div class="arrow">→</div>
+<div class="node"><b>GPT Agent</b><br>무엇을 확인할지 판단</div><div class="arrow">→</div>
+<div class="node">Tool 선택</div><div class="arrow">→</div>
+<div class="node">Multipass VM에서<br>Linux 명령 실행</div><div class="arrow">→</div>
+<div class="node">명령 결과</div><div class="arrow">→</div>
+<div class="node"><b>GPT 재판단</b></div>
+</div>
+
+<pre><code>GPT가 사용할 수 있는 도구
+
+ping_test()
+check_port_8000()
+check_http_process()
+http_test()</code></pre>
+
+<div class="note">
+중요: GPT가 Linux 명령을 아무 것이나 직접 실행하게 만들지 않습니다.
+이번 예제에서는 미리 만든 안전한 4개의 함수만 Tool로 제공합니다.
+</div>
+</section>
+
+<section>
+<h2>목차</h2>
+<div class="toc">
+<a href="#s1">1. VM 환경 확인</a>
+<a href="#s2">2. 테스트 HTTP 서버</a>
+<a href="#s3">3. Agents SDK 설치</a>
+<a href="#s4">4. API Key 설정</a>
+<a href="#s5">5. import 문법</a>
+<a href="#s6">6. run_vm 함수</a>
+<a href="#s7">7. @function_tool</a>
+<a href="#s8">8. ping Tool</a>
+<a href="#s9">9. Port Tool</a>
+<a href="#s10">10. Process Tool</a>
+<a href="#s11">11. HTTP Tool</a>
+<a href="#s12">12. Agent 객체</a>
+<a href="#s13">13. instructions</a>
+<a href="#s14">14. Runner.run</a>
+<a href="#s15">15. asyncio 문법</a>
+<a href="#s16">16. 전체 코드</a>
+<a href="#s17">17. 실행 실습</a>
+<a href="#s18">18. GPT가 도구를 고르는 과정</a>
+<a href="#s19">19. 장애 시나리오</a>
+<a href="#s20">20. 핵심 문법 정리</a>
+</div>
+</section>
+
+<section id="s1">
+<h2><span class="step">1</span>VM 환경 확인</h2>
+<p>Windows PowerShell:</p>
+<pre><code class="cmd">multipass list</code></pre>
+
+<p>이 예제에서 사용하는 이름은 정확히 다음과 같습니다.</p>
+<table>
+<tr><th>이름</th><th>역할</th></tr>
+<tr><td><code>ubuntu</code></td><td>서버</td></tr>
+<tr><td><code>ubuntu1</code></td><td>클라이언트</td></tr>
+<tr><td><code>ubuntu2</code></td><td>이번 최소 예제에서는 사용하지 않음</td></tr>
+</table>
+
+<h3>두 VM이 Running이 아니라면</h3>
+<pre><code class="cmd">multipass start ubuntu
+multipass start ubuntu1</code></pre>
+</section>
+
+<section id="s2">
+<h2><span class="step">2</span>ubuntu에 테스트 HTTP 서버 실행</h2>
+<pre><code class="cmd">multipass shell ubuntu</code></pre>
+
+<p>ubuntu 안에서:</p>
+<pre><code class="cmd">python3 -m http.server 8000 --bind 0.0.0.0</code></pre>
+
+<div class="why">
+<strong>왜 필요한가?</strong><br>
+Agent가 실제로 진단할 대상이 필요합니다. Python 기본 HTTP 서버를
+TCP 8000번 포트에 실행해서 정상/비정상 상황을 쉽게 만들 수 있습니다.
+</div>
+
+<table>
+<tr><th>부분</th><th>의미</th></tr>
+<tr><td><code>python3</code></td><td>Python 3 실행</td></tr>
+<tr><td><code>-m</code></td><td>Python module 실행</td></tr>
+<tr><td><code>http.server</code></td><td>간단한 HTTP 서버 모듈</td></tr>
+<tr><td><code>8000</code></td><td>TCP 8000 포트</td></tr>
+<tr><td><code>--bind 0.0.0.0</code></td><td>모든 인터페이스에서 연결을 받음</td></tr>
+</table>
+</section>
+
+<section id="s3">
+<h2><span class="step">3</span>OpenAI Agents SDK 설치</h2>
+
+<p>Windows PowerShell에서:</p>
+<pre><code class="cmd">python -m pip install openai-agents</code></pre>
+
+<div class="note">
+<code>openai-agents</code>는 OpenAI의 Python Agents SDK 패키지입니다.
+설치 후 Python에서는 패키지 이름이 <code>agents</code>로 import됩니다.
+</div>
+
+<h3>설치 확인</h3>
+<pre><code class="cmd">python -c "from agents import Agent, Runner, function_tool; print('Agents SDK OK')"</code></pre>
+
+<p>정상이라면:</p>
+<pre><code>Agents SDK OK</code></pre>
+</section>
+
+<section id="s4">
+<h2><span class="step">4</span>OPENAI_API_KEY 설정</h2>
+
+<div class="danger">
+<strong>API Key를 Python 코드에 직접 적지 않습니다.</strong><br>
+예: <code>api_key="sk-..."</code> 형태로 소스에 저장하지 않습니다.
+</div>
+
+<h3>현재 PowerShell 창에서만 설정</h3>
+<pre><code class="cmd">$env:OPENAI_API_KEY="여기에_본인의_API_KEY"</code></pre>
+
+<h3>설정 확인</h3>
+<pre><code class="cmd">if ($env:OPENAI_API_KEY) { "API KEY 설정됨" } else { "API KEY 없음" }</code></pre>
+
+<div class="why">
+<strong>왜 환경변수를 사용하는가?</strong><br>
+Agents SDK는 <code>OPENAI_API_KEY</code> 환경변수를 사용할 수 있습니다.
+소스코드와 비밀키를 분리하면 GitHub 등에 코드를 올릴 때 키가 같이 노출될 위험을 줄일 수 있습니다.
+</div>
+
+<div class="warn">
+화면 공유 중이라면 API Key 전체를 출력하는 명령은 사용하지 않는 것이 좋습니다.
+</div>
+</section>
+
+<section id="s5">
+<h2><span class="step">5</span>첫 번째 Python 문법: import</h2>
+
+<pre><code>import asyncio
+import json
+import subprocess
+
+from agents import Agent, Runner, function_tool</code></pre>
+
+<table>
+<tr><th>코드</th><th>역할</th></tr>
+<tr><td><code>asyncio</code></td><td>비동기 Agent 실행</td></tr>
+<tr><td><code>json</code></td><td>Tool 결과를 구조화된 문자열로 반환</td></tr>
+<tr><td><code>subprocess</code></td><td>Windows에서 multipass 명령 실행</td></tr>
+<tr><td><code>Agent</code></td><td>GPT Agent 정의</td></tr>
+<tr><td><code>Runner</code></td><td>Agent 실행 루프 담당</td></tr>
+<tr><td><code>function_tool</code></td><td>Python 함수를 GPT가 사용할 Tool로 등록</td></tr>
+</table>
+</section>
+
+<section id="s6">
+<h2><span class="step">6</span>run_vm(): Python에서 Multipass 실행</h2>
+
+<pre><code>def run_vm(vm_name: str, command: list[str]) -&gt; dict:
+
+    full_command = [
+        &quot;multipass&quot;,
+        &quot;exec&quot;,
+        vm_name,
+        &quot;--&quot;,
+    ] + command
+
+    result = subprocess.run(
+        full_command,
+        capture_output=True,
+        text=True,
+        timeout=10,
+    )</code></pre>
+
+<h3><code>vm_name: str</code></h3>
+<p><code>vm_name</code>에 문자열을 받겠다는 타입 힌트입니다.</p>
+
+<h3><code>command: list[str]</code></h3>
+<p>문자열 여러 개가 들어 있는 리스트를 받는다는 뜻입니다.</p>
+
+<h3>예</h3>
+<pre><code>run_vm(
+    "ubuntu1",
+    ["ping", "-c", "2", "172.21.128.10"]
+)</code></pre>
+
+<p>실제로 실행되는 명령:</p>
+<pre><code class="cmd">multipass exec ubuntu1 -- ping -c 2 172.21.128.10</code></pre>
+
+<h3><code>capture_output=True</code></h3>
+<p>명령 출력 결과를 Python이 받아옵니다.</p>
+
+<h3><code>text=True</code></h3>
+<p>stdout/stderr를 문자열로 받습니다.</p>
+
+<h3><code>timeout=10</code></h3>
+<p>명령이 멈춰 있더라도 최대 10초 후 종료할 수 있게 합니다.</p>
+</section>
+
+<section id="s7">
+<h2><span class="step">7</span><code>@function_tool</code> — 여기서부터 Agent Tool</h2>
+
+<pre><code>@function_tool
+def ping_test() -> str:
+    """
+    ubuntu1에서 ubuntu로 ping을 보내
+    기본 네트워크 연결을 확인한다.
+    """
+    ...</code></pre>
+
+<div class="why">
+<strong>이 한 줄이 매우 중요합니다.</strong><br>
+일반 Python 함수 앞에 <code>@function_tool</code>을 붙이면
+Agents SDK가 이 함수를 GPT가 호출할 수 있는 Tool로 등록합니다.
+</div>
+
+<h3><code>@</code>는?</h3>
+<p>Python의 <b>Decorator</b> 문법입니다. 기존 함수에 추가 기능을 붙입니다.</p>
+
+<h3><code>-&gt; str</code>는?</h3>
+<p>이 함수가 문자열을 반환한다는 타입 힌트입니다.</p>
+
+<h3>Docstring이 왜 중요한가?</h3>
+<pre><code>"""
+ubuntu1에서 ubuntu로 ping을 보내
+기본 네트워크 연결을 확인한다.
+"""</code></pre>
+
+<p>
+GPT는 Tool의 이름과 설명을 보고 <b>언제 이 Tool을 사용할지 판단</b>합니다.
+따라서 Tool 설명은 에이전트 설계의 일부입니다.
+</p>
+</section>
+
+<section id="s8">
+<h2><span class="step">8</span>Tool 1 — ping_test()</h2>
+
+<pre><code>@function_tool
+def ping_test() -&gt; str:
+    &quot;&quot;&quot;
+    ubuntu1에서 ubuntu로 ICMP ping을 보내
+    기본 IP 네트워크 연결이 가능한지 확인한다.
+    네트워크 연결 여부를 먼저 확인해야 할 때 사용한다.
+    &quot;&quot;&quot;
+
+    server_ip = get_server_ip()
+
+    result = run_vm(
+        CLIENT_VM,
+        [&quot;ping&quot;, &quot;-c&quot;, &quot;2&quot;, &quot;-W&quot;, &quot;2&quot;, server_ip],
+    )
+
+    return json.dumps(
+        result,
+        ensure_ascii=False,
+    )</code></pre>
+
+<div class="why">
+사용자가 “ubuntu 접속이 아예 안 돼”라고 말하면 GPT는 이 Tool의 설명을 보고
+기본 연결 확인에 적합하다고 판단할 수 있습니다.
+</div>
+
+<h3><code>json.dumps()</code></h3>
+<p>Python 딕셔너리를 JSON 문자열로 변환합니다.</p>
+
+<pre><code>{"returncode": 0, "stdout": "...", "stderr": ""}</code></pre>
+
+<p>이 문자열이 <b>Tool 결과로 다시 GPT에게 전달</b>됩니다.</p>
+</section>
+
+<section id="s9">
+<h2><span class="step">9</span>Tool 2 — check_port_8000()</h2>
+
+<pre><code>@function_tool
+def check_port_8000() -&gt; str:
+    &quot;&quot;&quot;
+    ubuntu에서 TCP 8000번 포트가 LISTEN 상태인지 확인한다.
+    ping은 되지만 웹 서비스 접속이 안 될 때 사용한다.
+    &quot;&quot;&quot;
+
+    result = run_vm(
+        SERVER_VM,
+        [&quot;ss&quot;, &quot;-lnt&quot;],
+    )
+
+    result[&quot;listen_8000&quot;] = &quot;:8000&quot; in result[&quot;stdout&quot;]
+
+    return json.dumps(result, ensure_ascii=False)</code></pre>
+
+<h3>실제 Linux 명령</h3>
+<pre><code class="cmd">ss -lnt</code></pre>
+
+<table>
+<tr><th>옵션</th><th>의미</th></tr>
+<tr><td><code>-l</code></td><td>LISTEN</td></tr>
+<tr><td><code>-n</code></td><td>포트를 숫자로 표시</td></tr>
+<tr><td><code>-t</code></td><td>TCP</td></tr>
+</table>
+
+<h3><code>in</code> 문법</h3>
+<pre><code>":8000" in result["stdout"]</code></pre>
+<p>출력 문자열 안에 <code>:8000</code>이 있는지 확인하고 True/False를 만듭니다.</p>
+</section>
+
+<section id="s10">
+<h2><span class="step">10</span>Tool 3 — check_http_process()</h2>
+
+<pre><code>@function_tool
+def check_http_process() -&gt; str:
+    &quot;&quot;&quot;
+    ubuntu에서 Python http.server 프로세스가 실행 중인지 확인한다.
+    8000번 포트가 열리지 않았을 때 서버 실행 여부 확인에 사용한다.
+    &quot;&quot;&quot;
+
+    result = run_vm(
+        SERVER_VM,
+        [&quot;pgrep&quot;, &quot;-af&quot;, &quot;python3 -m http.server&quot;],
+    )
+
+    result[&quot;process_found&quot;] = result[&quot;returncode&quot;] == 0
+
+    return json.dumps(result, ensure_ascii=False)</code></pre>
+
+<h3>실제 Linux 명령</h3>
+<pre><code class="cmd">pgrep -af "python3 -m http.server"</code></pre>
+
+<p>이 Tool이 있으므로 GPT는:</p>
+<pre><code>8000 LISTEN 없음
+        ↓
+"서버 프로그램 자체가 꺼졌는지 확인해 볼까?"
+        ↓
+check_http_process()</code></pre>
+<p>처럼 추가 도구 호출을 선택할 수 있습니다.</p>
+</section>
+
+<section id="s11">
+<h2><span class="step">11</span>Tool 4 — http_test()</h2>
+
+<pre><code>@function_tool
+def http_test() -&gt; str:
+    &quot;&quot;&quot;
+    ubuntu1에서 ubuntu:8000으로 실제 HTTP 요청을 보내
+    응용 서비스가 정상 응답하는지 확인한다.
+    &quot;&quot;&quot;
+
+    server_ip = get_server_ip()
+    url = f&quot;http://{server_ip}:{PORT}&quot;
+
+    result = run_vm(
+        CLIENT_VM,
+        [
+            &quot;curl&quot;,
+            &quot;-sS&quot;,
+            &quot;-o&quot;,
+            &quot;/dev/null&quot;,
+            &quot;-w&quot;,
+            &quot;HTTP_CODE=%{http_code}&quot;,
+            &quot;--connect-timeout&quot;,
+            &quot;3&quot;,
+            url,
+        ],
+    )
+
+    return json.dumps(result, ensure_ascii=False)</code></pre>
+
+<div class="why">
+포트가 열려 있다는 것과 HTTP 서비스가 정상이라는 것은 같은 말이 아닙니다.
+따라서 GPT가 필요하다고 판단하면 실제 HTTP 요청까지 수행할 수 있습니다.
+</div>
+</section>
+
+<section id="s12">
+<h2><span class="step">12</span>진짜 Agent 만들기</h2>
+
+<pre><code>network_agent = Agent(
+    name=&quot;Linux Network Diagnostic Agent&quot;,
+
+    instructions=&quot;...&quot;,
+
+    tools=[
+        ping_test,
+        check_port_8000,
+        check_http_process,
+        http_test,
+    ],
+)</code></pre>
+
+<h3><code>Agent(...)</code></h3>
+<p>GPT 기반 에이전트 객체를 만듭니다.</p>
+
+<h3><code>name</code></h3>
+<p>Agent의 이름입니다.</p>
+
+<h3><code>tools=[...]</code></h3>
+<p>GPT에게 사용 권한을 주는 Tool 목록입니다.</p>
+
+<div class="note">
+여기에 등록하지 않은 Python 함수는 GPT가 Tool로 직접 호출할 수 없습니다.
+</div>
+</section>
+
+<section id="s13">
+<h2><span class="step">13</span>instructions — Agent의 행동 원칙</h2>
+
+<pre><code>instructions="""
+너는 Multipass 기반 Linux 네트워크 진단 에이전트다.
+
+환경:
+- 서버 VM: ubuntu
+- 클라이언트 VM: ubuntu1
+- 테스트 서비스: TCP 8000
+
+사용자의 자연어 문제를 읽고
+필요한 도구를 스스로 선택해서 사용하라.
+
+도구 결과를 확인하지 않고
+성공/실패를 추측하지 마라.
+...
+"""</code></pre>
+
+<div class="why">
+<strong>instructions는 일반 Python if문과 다릅니다.</strong><br>
+“ping 다음에는 무조건 port”를 코드로 강제하는 것이 아니라,
+GPT에게 진단 원칙과 환경을 설명합니다.
+실제 어떤 Tool을 호출할지는 사용자 질문과 이전 Tool 결과에 따라 모델이 판단합니다.
+</div>
+</section>
+
+<section id="s14">
+<h2><span class="step">14</span><code>Runner.run()</code> — Agent Loop 시작</h2>
+
+<pre><code>result = await Runner.run(
+    network_agent,
+    question,
+)</code></pre>
+
+<p>이 한 줄 뒤에서 개념적으로 다음 과정이 진행됩니다.</p>
+
+<pre><code>1. question을 GPT에게 보냄
+2. GPT가 Tool 필요 여부 판단
+3. GPT가 Tool 호출
+4. Agents SDK가 Python 함수를 실행
+5. 함수 결과를 GPT에게 다시 전달
+6. GPT가 또 Tool이 필요한지 판단
+7. 충분하면 최종 답변 생성</code></pre>
+
+<p>최종 답변:</p>
+<pre><code>print(result.final_output)</code></pre>
+</section>
+
+<section id="s15">
+<h2><span class="step">15</span><code>async / await / asyncio</code> 이해</h2>
+
+<pre><code>async def main() -> None:
+    result = await Runner.run(...)</code></pre>
+
+<h3><code>async def</code></h3>
+<p>비동기 함수를 정의합니다.</p>
+
+<h3><code>await</code></h3>
+<p>비동기 작업이 완료될 때까지 기다리고 결과를 받습니다.</p>
+
+<h3>프로그램 시작</h3>
+<pre><code>if __name__ == "__main__":
+    asyncio.run(main())</code></pre>
+
+<p><code>asyncio.run()</code>이 비동기 <code>main()</code>을 실제로 실행합니다.</p>
+</section>
+
+<section id="s16">
+<h2><span class="step">16</span>전체 코드</h2>
+<pre><code>import asyncio
+import json
+import subprocess
+
+from agents import Agent, Runner, function_tool
+
+
+# ---------------------------------------------------------
+# 1. 실습 환경 설정
+# ---------------------------------------------------------
+
+SERVER_VM = &quot;ubuntu&quot;
+CLIENT_VM = &quot;ubuntu1&quot;
+PORT = 8000
+
+
+# ---------------------------------------------------------
+# 2. Multipass VM에서 Linux 명령을 실행하는 공통 함수
+# ---------------------------------------------------------
+
+def run_vm(vm_name: str, command: list[str]) -&gt; dict:
+    &quot;&quot;&quot;
+    Windows에서 multipass exec를 사용해
+    지정한 VM 내부의 Linux 명령을 실행한다.
+    &quot;&quot;&quot;
+
+    full_command = [
+        &quot;multipass&quot;,
+        &quot;exec&quot;,
+        vm_name,
+        &quot;--&quot;,
+    ] + command
+
+    try:
+        result = subprocess.run(
+            full_command,
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+
+        return {
+            &quot;vm&quot;: vm_name,
+            &quot;command&quot;: &quot; &quot;.join(command),
+            &quot;returncode&quot;: result.returncode,
+            &quot;stdout&quot;: result.stdout.strip(),
+            &quot;stderr&quot;: result.stderr.strip(),
+        }
+
+    except subprocess.TimeoutExpired:
+        return {
+            &quot;vm&quot;: vm_name,
+            &quot;command&quot;: &quot; &quot;.join(command),
+            &quot;returncode&quot;: -1,
+            &quot;stdout&quot;: &quot;&quot;,
+            &quot;stderr&quot;: &quot;명령 실행 시간이 10초를 초과했습니다.&quot;,
+        }
+
+
+# ---------------------------------------------------------
+# 3. 내부 보조 함수: ubuntu의 IP 주소 확인
+#    GPT에게 직접 공개하는 도구는 아니다.
+# ---------------------------------------------------------
+
+def get_server_ip() -&gt; str:
+    result = run_vm(
+        SERVER_VM,
+        [&quot;hostname&quot;, &quot;-I&quot;],
+    )
+
+    if result[&quot;returncode&quot;] != 0:
+        return &quot;&quot;
+
+    addresses = result[&quot;stdout&quot;].split()
+
+    if not addresses:
+        return &quot;&quot;
+
+    return addresses[0]
+
+
+# ---------------------------------------------------------
+# 4. GPT가 선택해서 사용할 Tool 1: ping
+# ---------------------------------------------------------
+
+@function_tool
+def ping_test() -&gt; str:
+    &quot;&quot;&quot;
+    ubuntu1에서 ubuntu로 ICMP ping을 보내
+    기본 IP 네트워크 연결이 가능한지 확인한다.
+    네트워크 연결 여부를 먼저 확인해야 할 때 사용한다.
+    &quot;&quot;&quot;
+
+    server_ip = get_server_ip()
+
+    if not server_ip:
+        return json.dumps(
+            {&quot;error&quot;: &quot;ubuntu의 IP 주소를 확인하지 못했습니다.&quot;},
+            ensure_ascii=False,
+        )
+
+    result = run_vm(
+        CLIENT_VM,
+        [&quot;ping&quot;, &quot;-c&quot;, &quot;2&quot;, &quot;-W&quot;, &quot;2&quot;, server_ip],
+    )
+
+    result[&quot;server_ip&quot;] = server_ip
+
+    return json.dumps(
+        result,
+        ensure_ascii=False,
+    )
+
+
+# ---------------------------------------------------------
+# 5. GPT가 선택해서 사용할 Tool 2: 8000 포트
+# ---------------------------------------------------------
+
+@function_tool
+def check_port_8000() -&gt; str:
+    &quot;&quot;&quot;
+    ubuntu에서 TCP 8000번 포트가 LISTEN 상태인지 확인한다.
+    ping은 되지만 웹 서비스 접속이 안 될 때 사용한다.
+    &quot;&quot;&quot;
+
+    result = run_vm(
+        SERVER_VM,
+        [&quot;ss&quot;, &quot;-lnt&quot;],
+    )
+
+    result[&quot;port&quot;] = PORT
+    result[&quot;listen_8000&quot;] = f&quot;:{PORT}&quot; in result[&quot;stdout&quot;]
+
+    return json.dumps(
+        result,
+        ensure_ascii=False,
+    )
+
+
+# ---------------------------------------------------------
+# 6. GPT가 선택해서 사용할 Tool 3: HTTP 서버 프로세스
+# ---------------------------------------------------------
+
+@function_tool
+def check_http_process() -&gt; str:
+    &quot;&quot;&quot;
+    ubuntu에서 Python http.server 프로세스가 실행 중인지 확인한다.
+    8000번 포트가 열리지 않았을 때 서버 프로그램 실행 여부를 확인하는 데 사용한다.
+    &quot;&quot;&quot;
+
+    result = run_vm(
+        SERVER_VM,
+        [&quot;pgrep&quot;, &quot;-af&quot;, &quot;python3 -m http.server&quot;],
+    )
+
+    result[&quot;process_found&quot;] = result[&quot;returncode&quot;] == 0
+
+    return json.dumps(
+        result,
+        ensure_ascii=False,
+    )
+
+
+# ---------------------------------------------------------
+# 7. GPT가 선택해서 사용할 Tool 4: 실제 HTTP 요청
+# ---------------------------------------------------------
+
+@function_tool
+def http_test() -&gt; str:
+    &quot;&quot;&quot;
+    ubuntu1에서 ubuntu의 TCP 8000번 HTTP 서버로 실제 요청을 보내
+    응용 서비스가 정상 응답하는지 확인한다.
+    &quot;&quot;&quot;
+
+    server_ip = get_server_ip()
+
+    if not server_ip:
+        return json.dumps(
+            {&quot;error&quot;: &quot;ubuntu의 IP 주소를 확인하지 못했습니다.&quot;},
+            ensure_ascii=False,
+        )
+
+    url = f&quot;http://{server_ip}:{PORT}&quot;
+
+    result = run_vm(
+        CLIENT_VM,
+        [
+            &quot;curl&quot;,
+            &quot;-sS&quot;,
+            &quot;-o&quot;,
+            &quot;/dev/null&quot;,
+            &quot;-w&quot;,
+            &quot;HTTP_CODE=%{http_code}&quot;,
+            &quot;--connect-timeout&quot;,
+            &quot;3&quot;,
+            url,
+        ],
+    )
+
+    result[&quot;url&quot;] = url
+
+    return json.dumps(
+        result,
+        ensure_ascii=False,
+    )
+
+
+# ---------------------------------------------------------
+# 8. GPT Agent 만들기
+# ---------------------------------------------------------
+
+network_agent = Agent(
+    name=&quot;Linux Network Diagnostic Agent&quot;,
+
+    instructions=&quot;&quot;&quot;
+너는 Multipass 기반 Linux 네트워크 진단 에이전트다.
+
+환경:
+- 서버 VM: ubuntu
+- 클라이언트 VM: ubuntu1
+- 테스트 서비스: TCP 8000번 Python HTTP 서버
+
+사용자의 자연어 문제를 읽고 필요한 도구를 스스로 선택해서 사용하라.
+
+도구의 실제 결과를 확인하지 않고 성공/실패를 추측하지 마라.
+
+일반적인 진단 원칙:
+1. 기본 통신 자체가 의심되면 ping_test를 사용한다.
+2. ping은 되지만 8000 접속이 안 되면 check_port_8000을 고려한다.
+3. 8000 포트가 열려 있지 않다면 check_http_process로 서버 실행 여부를 확인한다.
+4. 포트가 열려 있는데 실제 서비스 상태를 확인해야 하면 http_test를 사용한다.
+5. 이미 충분한 정보가 있으면 불필요한 도구는 호출하지 않는다.
+6. 최종 답변은 한국어로 작성한다.
+7. 실행한 도구 결과를 근거로 원인과 다음 확인 방법을 짧고 명확하게 설명한다.
+&quot;&quot;&quot;,
+
+    tools=[
+        ping_test,
+        check_port_8000,
+        check_http_process,
+        http_test,
+    ],
+)
+
+
+# ---------------------------------------------------------
+# 9. 프로그램 시작
+# ---------------------------------------------------------
+
+async def main() -&gt; None:
+    print(&quot;=&quot; * 65)
+    print(&quot; GPT Linux Network Diagnostic Agent&quot;)
+    print(&quot;=&quot; * 65)
+
+    question = input(&quot;\n문제를 입력하세요 &gt; &quot;)
+
+    result = await Runner.run(
+        network_agent,
+        question,
+    )
+
+    print(&quot;\n[GPT Agent 최종 답변]&quot;)
+    print(result.final_output)
+
+
+if __name__ == &quot;__main__&quot;:
+    asyncio.run(main())
+</code></pre>
+</section>
+
+<section id="s17">
+<h2><span class="step">17</span>실행 실습</h2>
+
+<h3>1. ubuntu 서버 실행</h3>
+<pre><code class="cmd">multipass shell ubuntu</code></pre>
+<pre><code class="cmd">python3 -m http.server 8000 --bind 0.0.0.0</code></pre>
+
+<h3>2. Windows PowerShell에서 API Key 확인</h3>
+<pre><code class="cmd">if ($env:OPENAI_API_KEY) { "KEY OK" } else { "KEY 없음" }</code></pre>
+
+<h3>3. Agent 실행</h3>
+<pre><code class="cmd">python gpt_network_agent.py</code></pre>
+
+<h3>4. 자연어로 질문</h3>
+<pre><code>문제를 입력하세요 > ubuntu1에서 ubuntu 웹서버 접속이 안 되는지 점검해줘</code></pre>
+
+<div class="tip">
+질문에 “ping부터 하고 port를 보고 process를 봐”라고 순서를 써주지 마세요.
+그래야 GPT가 Tool을 선택하는 에이전트 동작을 확인하기 좋습니다.
+</div>
+</section>
+
+<section id="s18">
+<h2><span class="step">18</span>실제로 무엇이 Agent 판단인가?</h2>
+
+<p>예를 들어 질문:</p>
+<pre><code>ubuntu 웹서버가 안 되는 것 같아. 확인해줘.</code></pre>
+
+<p>가능한 흐름:</p>
+<pre><code>GPT
+ │
+ ├─ "기본 연결부터 확인해야겠다"
+ │
+ └─ ping_test()
+       │
+       └─ returncode = 0
+             │
+             ▼
+            GPT
+             │
+             ├─ "ping은 된다."
+             └─ check_port_8000()
+                    │
+                    └─ listen_8000 = false
+                              │
+                              ▼
+                             GPT
+                              │
+                              └─ check_http_process()
+                                     │
+                                     └─ process_found = false
+                                               │
+                                               ▼
+                                              GPT
+                                               │
+                                               └─ 최종 답변
+                                                  "기본 네트워크는 정상이고,
+                                                   HTTP 서버가 실행되지 않았습니다."</code></pre>
+
+<div class="why">
+Python 코드에 <code>if ping 성공하면 port 실행</code>이라는 분기 코드는 없습니다.
+GPT가 도구 설명, instructions, 이전 도구 결과를 바탕으로 다음 행동을 선택합니다.
+이 점이 이번 예제의 핵심입니다.
+</div>
+</section>
+
+<section id="s19">
+<h2><span class="step">19</span>장애 시나리오 3개</h2>
+
+<h3>시나리오 A — 정상</h3>
+<p>ubuntu:</p>
+<pre><code class="cmd">python3 -m http.server 8000 --bind 0.0.0.0</code></pre>
+
+<p>Agent 질문:</p>
+<pre><code>ubuntu의 웹 서비스가 정상인지 확인해줘.</code></pre>
+
+<hr>
+
+<h3>시나리오 B — 서버 프로세스 종료</h3>
+<p>ubuntu 서버 화면에서:</p>
+<pre><code class="cmd">Ctrl + C</code></pre>
+
+<p>Agent 질문:</p>
+<pre><code>ubuntu1에서 ubuntu 웹에 접속이 안 돼. 원인을 찾아줘.</code></pre>
+
+<hr>
+
+<h3>시나리오 C — 서버를 9000으로 잘못 실행</h3>
+<p>ubuntu:</p>
+<pre><code class="cmd">python3 -m http.server 9000 --bind 0.0.0.0</code></pre>
+
+<p>Agent 질문:</p>
+<pre><code>서버 프로세스는 켰는데 8000 접속이 안 돼. 확인해줘.</code></pre>
+
+<div class="note">
+같은 Agent 코드라도 자연어 질문과 실제 시스템 상태에 따라 GPT가 선택하는 Tool 흐름이 달라질 수 있습니다.
+</div>
+</section>
+
+<section id="s20">
+<h2><span class="step">20</span>이번 예제의 핵심 문법</h2>
+<table>
+<tr><th>문법</th><th>의미</th></tr>
+<tr><td><code>from agents import Agent, Runner, function_tool</code></td><td>Agents SDK 핵심 구성 가져오기</td></tr>
+<tr><td><code>@function_tool</code></td><td>일반 Python 함수를 GPT Tool로 등록</td></tr>
+<tr><td><code>Agent(...)</code></td><td>Agent 정의</td></tr>
+<tr><td><code>instructions=</code></td><td>Agent 역할과 행동 원칙</td></tr>
+<tr><td><code>tools=[...]</code></td><td>GPT가 사용할 수 있는 도구 목록</td></tr>
+<tr><td><code>Runner.run()</code></td><td>Agent 실행 및 Tool 호출 루프</td></tr>
+<tr><td><code>result.final_output</code></td><td>Agent의 최종 자연어 답변</td></tr>
+<tr><td><code>async def</code></td><td>비동기 함수 정의</td></tr>
+<tr><td><code>await</code></td><td>비동기 결과 대기</td></tr>
+<tr><td><code>json.dumps()</code></td><td>Tool 결과를 GPT가 읽기 좋은 문자열로 변환</td></tr>
+<tr><td><code>subprocess.run()</code></td><td>Multipass/Linux 명령 실행</td></tr>
+</table>
+</section>
+
+<section>
+<h2>최종 정리</h2>
+
+<div class="grid">
+<div class="card">
+<h3>Python</h3>
+<p>도구를 만든다.</p>
+<pre><code>ping_test()
+check_port_8000()
+...</code></pre>
+</div>
+
+<div class="card">
+<h3>GPT</h3>
+<p>어떤 도구가 필요한지 판단한다.</p>
+</div>
+
+<div class="card">
+<h3>Agents SDK</h3>
+<p>GPT ↔ Tool 실행 ↔ 결과 반환 루프를 연결한다.</p>
+</div>
+</div>
+
+<div class="tip">
+다음 단계에서는 <b>ubuntu2 추가</b> → <b>tcpdump Tool</b> → <b>HTML 진단 보고서 Tool</b> → <b>전문 Agent 여러 개로 분리</b> 순서로 확장하면 됩니다.
+</div>
+</section>
+
+</main>
+<footer>GPT API 기반 Linux Network Diagnostic Agent · OpenAI Agents SDK</footer>
+</body>
+</html>

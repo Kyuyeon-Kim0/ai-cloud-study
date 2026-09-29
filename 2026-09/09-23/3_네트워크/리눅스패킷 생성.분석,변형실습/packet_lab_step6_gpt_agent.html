@@ -1,0 +1,743 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Linux Packet Lab - Part 6 | GPT API 네트워크·패킷 분석 Agent</title>
+<style>
+:root{
+  --bg:#0b1020;--panel:#121a2f;--panel2:#18233e;--text:#eef3ff;
+  --muted:#a9b5d1;--line:#2a3b63;--accent:#67e8f9;--accent2:#a78bfa;
+  --ok:#86efac;--warn:#fde68a;--danger:#fca5a5;--code:#07101f;
+}
+*{box-sizing:border-box} html{scroll-behavior:smooth}
+body{margin:0;background:linear-gradient(180deg,#08101f,#0d1427 46%,#0b1020);color:var(--text);font-family:"Segoe UI","Noto Sans KR",Arial,sans-serif;line-height:1.8}
+header{padding:56px 22px 36px;border-bottom:1px solid var(--line);background:radial-gradient(circle at 15% 0%,rgba(103,232,249,.18),transparent 34%),radial-gradient(circle at 85% 0%,rgba(167,139,250,.15),transparent 36%)}
+.wrap{max-width:1190px;margin:auto} h1{font-size:clamp(32px,5vw,56px);line-height:1.12;margin:0 0 14px}
+h2{font-size:30px;margin:0 0 16px} h3{font-size:22px;margin:28px 0 10px} h4{font-size:18px;margin:20px 0 8px;color:#dce7ff}
+p{margin:8px 0 14px}.lead{font-size:19px;color:#d8e4ff;max-width:1000px}.kicker{color:var(--accent);font-weight:800;letter-spacing:.04em}
+.badge{display:inline-block;padding:6px 10px;margin:3px 5px 3px 0;border:1px solid var(--line);border-radius:999px;background:#0e1730;color:var(--muted)}
+main{padding:28px 18px 76px} section{background:rgba(18,26,47,.96);border:1px solid var(--line);border-radius:18px;padding:28px;margin:20px auto;box-shadow:0 14px 40px rgba(0,0,0,.16)}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+.card{background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:16px}
+.step{display:inline-grid;place-items:center;width:36px;height:36px;border-radius:50%;background:var(--accent);color:#04212a;font-weight:800;margin-right:8px}
+pre{background:var(--code);border:1px solid #203157;border-radius:12px;padding:17px;overflow:auto;color:#e8f0ff} code{font-family:Consolas,Menlo,monospace}.cmd{color:#b9f6ca}
+.note,.why,.tip,.warn,.danger{border-radius:12px;padding:15px 17px;margin:14px 0;border:1px solid}
+.note{background:rgba(103,232,249,.08);border-color:rgba(103,232,249,.35)}.why{background:rgba(167,139,250,.09);border-color:rgba(167,139,250,.4)}
+.tip{background:rgba(134,239,172,.08);border-color:rgba(134,239,172,.35)}.warn{background:rgba(253,230,138,.08);border-color:rgba(253,230,138,.35)}
+.danger{background:rgba(252,165,165,.07);border-color:rgba(252,165,165,.35)}
+table{width:100%;border-collapse:collapse;margin:14px 0} th,td{padding:12px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{color:var(--accent);background:rgba(103,232,249,.04)}
+.flow{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:center;margin:20px 0}.node{min-width:150px;text-align:center;padding:14px 16px;background:#101a33;border:1px solid var(--line);border-radius:12px}
+.arrow{font-size:24px;color:var(--accent)}.toc{columns:2;column-gap:30px}.toc a{display:block;color:var(--accent);text-decoration:none;padding:4px 0}
+.quiz{background:#0e1730;border:1px solid var(--line);border-radius:12px;padding:16px;margin:12px 0}
+button{background:#18294b;color:white;border:1px solid #3c568b;border-radius:9px;padding:8px 11px;cursor:pointer}.answer{display:none;margin-top:10px;padding-top:10px;border-top:1px dashed var(--line);color:#dce8ff}
+.small{font-size:14px;color:var(--muted)}hr{border:0;border-top:1px solid var(--line);margin:28px 0}kbd{background:#222c46;border:1px solid #4a5b82;border-bottom-width:3px;padding:2px 7px;border-radius:6px}
+footer{text-align:center;color:var(--muted);padding:18px}
+@media(max-width:820px){.grid,.grid2{grid-template-columns:1fr}.flow{flex-direction:column}.arrow{transform:rotate(90deg)}.toc{columns:1}section{padding:20px}}
+</style>
+<script>function toggle(id){const e=document.getElementById(id);e.style.display=(e.style.display==="block")?"none":"block";}</script>
+</head>
+<body>
+<header><div class="wrap">
+<div class="kicker">LINUX PACKET LAB · PART 6</div>
+<h1>GPT API로 Linux 네트워크·패킷<br>진단 Agent 만들기</h1>
+<p class="lead">Part 1~5에서 직접 사용한 ping, ss, pgrep, curl, tcpdump를 이번에는 GPT가 필요할 때 선택해서 실행할 수 있는 <b>Tool</b>로 만듭니다. 사용자가 자연어로 문제를 입력하면 GPT가 상황을 해석하고, 필요한 Tool의 결과를 받아 다시 판단한 뒤 최종 진단을 설명합니다.</p>
+<span class="badge">OpenAI Agents SDK</span><span class="badge">GPT API</span><span class="badge">Tool Calling</span><span class="badge">Multipass</span>
+</div></header>
+
+<main class="wrap">
+
+<section>
+<h2>Part 6의 목표</h2>
+<div class="why"><b>왜 마지막에 Agent를 붙이는가?</b><br>
+Agent부터 만들면 GPT가 실행한 ping, ss, tcpdump 결과가 무엇을 의미하는지 확인하기 어렵습니다.
+Part 1~5에서 사람이 직접 명령과 패킷을 확인한 뒤 Agent를 붙이면,
+GPT가 어떤 Tool을 왜 선택했는지와 해석이 맞는지 직접 검증할 수 있습니다.</div>
+</section>
+
+<section>
+<h2>자동화와 Agent의 차이</h2>
+<div class="grid2">
+<div class="card"><h3>고정 자동화</h3><pre><code>ping
+↓
+ss
+↓
+pgrep
+↓
+curl</code></pre><p>항상 같은 순서. 다음 행동을 코드가 미리 결정.</p></div>
+<div class="card"><h3>GPT Agent</h3><pre><code>자연어 질문
+↓
+GPT 판단
+↓
+필요한 Tool 선택
+↓
+실제 결과
+↓
+GPT 재판단
+↓
+최종 답변</code></pre><p>다음 행동 선택에 LLM의 판단이 들어감.</p></div>
+</div>
+<div class="note">이번 Agent는 임의 Shell을 실행하지 않습니다. 우리가 미리 등록한 5개 Tool만 사용할 수 있게 제한합니다.</div>
+</section>
+
+<section>
+<h2>Agent의 4개 구성요소</h2>
+<table>
+<tr><th>구성</th><th>역할</th><th>이번 Part</th></tr>
+<tr><td>Model</td><td>질문과 Tool 결과를 해석하고 다음 행동 판단</td><td>OpenAI 모델</td></tr>
+<tr><td>Instructions</td><td>역할과 행동 원칙</td><td>네트워크/pcap 진단 원칙</td></tr>
+<tr><td>Tools</td><td>실제 환경을 확인하는 기능</td><td>ping, ss, pgrep, curl, tcpdump</td></tr>
+<tr><td>Runner</td><td>Model ↔ Tool ↔ Model 실행 흐름</td><td>Runner.run_sync()</td></tr>
+</table>
+</section>
+
+<section>
+<h2>전체 구조</h2>
+<pre><code>사용자 질문
+   ↓
+GPT Agent
+   ├─ ping_test()
+   ├─ check_listen_8000()
+   ├─ check_http_process()
+   ├─ http_test()
+   └─ inspect_saved_pcap()
+          ↓
+      Multipass VM
+          ↓
+ 실제 Linux 결과
+          ↓
+      GPT 재판단
+          ↓
+      최종 진단</code></pre>
+</section>
+
+<section>
+<h2>목차</h2>
+<div class="toc">
+<a href="#s1">1. 준비 확인</a><a href="#s2">2. 가상환경</a><a href="#s3">3. Agents SDK 설치</a>
+<a href="#s4">4. API Key</a><a href="#s5">5. import 문법</a><a href="#s6">6. run_vm()</a>
+<a href="#s7">7. @tool</a><a href="#s8">8. ping Tool</a><a href="#s9">9. LISTEN Tool</a>
+<a href="#s10">10. Process/HTTP Tool</a><a href="#s11">11. pcap Tool</a><a href="#s12">12. Agent 정의</a>
+<a href="#s13">13. Instructions</a><a href="#s14">14. Runner</a><a href="#s15">15. 전체 코드</a>
+<a href="#s16">16. 실행</a><a href="#s17">17. 장애 시나리오</a><a href="#s18">18. pcap 질문</a>
+<a href="#s19">19. Tool 설계 원칙</a><a href="#s20">20. 오류 확인</a><a href="#s21">21. 이해도 확인</a>
+</div>
+</section>
+
+<section id="s1">
+<h2><span class="step">1</span>실행 위치와 Linux 명령 준비</h2>
+<p>Agent Python은 <b>Windows 호스트</b>에서 실행합니다. Python이 <code>multipass exec</code>로 ubuntu와 ubuntu1의 Linux 명령을 실행합니다.</p>
+<h3>Windows PowerShell</h3><pre><code class="cmd">multipass list</code></pre>
+<h3>명령 존재 확인</h3>
+<pre><code class="cmd">multipass exec ubuntu -- which ss
+multipass exec ubuntu -- which pgrep
+multipass exec ubuntu -- which tcpdump
+multipass exec ubuntu1 -- which ping
+multipass exec ubuntu1 -- which curl</code></pre>
+<div class="why"><b>왜 which?</b><br>Tool이 호출될 때 “명령 없음”으로 실패하지 않도록 필요한 프로그램이 설치되어 있는지 먼저 확인합니다.</div>
+</section>
+
+<section id="s2">
+<h2><span class="step">2</span>Part 6 폴더와 가상환경</h2>
+<pre><code class="cmd">mkdir part6_agent
+cd part6_agent
+python -m venv .venv
+.venv\Scripts\Activate.ps1</code></pre>
+<div class="why"><b>왜 가상환경?</b><br>이 프로젝트의 Python 패키지를 다른 프로젝트와 분리하기 위해서입니다.</div>
+</section>
+
+<section id="s3">
+<h2><span class="step">3</span>Agents SDK 설치</h2>
+<pre><code class="cmd">python -m pip install --upgrade pip
+python -m pip install openai-agents</code></pre>
+<h3>설치 확인</h3>
+<pre><code class="cmd">python -c "from agents import Agent, Runner; from agents.decorators import tool; print('Agents SDK OK')"</code></pre>
+<div class="note">현재 공식 SDK 문법 기준으로 일반 Python 함수에 <code>@tool</code>을 붙여 Function Tool로 사용할 수 있습니다.</div>
+</section>
+
+<section id="s4">
+<h2><span class="step">4</span>OPENAI_API_KEY</h2>
+<pre><code class="cmd">$env:OPENAI_API_KEY="본인의_API_KEY"</code></pre>
+<h3>존재 여부만 확인</h3>
+<pre><code class="cmd">if ($env:OPENAI_API_KEY) { "API KEY 설정됨" } else { "API KEY 없음" }</code></pre>
+<div class="danger">API Key를 Python 소스 안에 직접 적지 않습니다.</div>
+<div class="note">ChatGPT 구독과 API Platform 사용량은 별도 결제 체계입니다. API 사용을 위해 API 쪽 결제/크레딧 설정이 별도로 필요할 수 있습니다.</div>
+</section>
+
+<section id="s5">
+<h2><span class="step">5</span>import 문법</h2>
+<pre><code>import json
+import subprocess
+from typing import Literal
+
+from agents import Agent, Runner
+from agents.decorators import tool</code></pre>
+<table>
+<tr><th>이름</th><th>역할</th></tr>
+<tr><td>json</td><td>Tool 결과를 구조화된 문자열로 반환</td></tr>
+<tr><td>subprocess</td><td>multipass 명령 실행</td></tr>
+<tr><td>Literal</td><td>허용 입력값 제한</td></tr>
+<tr><td>Agent</td><td>Agent 정의</td></tr>
+<tr><td>Runner</td><td>Agent 실행</td></tr>
+<tr><td>tool</td><td>Python 함수를 Tool로 등록</td></tr>
+</table>
+</section>
+
+<section id="s6">
+<h2><span class="step">6</span>run_vm() 공통 함수</h2>
+<pre><code>def run_vm(vm_name: str, command: list[str]) -&gt; dict:
+    ...
+    result = subprocess.run(
+        full_command,
+        capture_output=True,
+        text=True,
+        timeout=10,
+    )</code></pre>
+<div class="why"><b>왜 공통 함수?</b><br>모든 Tool의 Multipass 실행, stdout/stderr, timeout 처리를 한 곳에서 관리하기 위해서입니다.</div>
+<table>
+<tr><th>옵션</th><th>의미</th></tr>
+<tr><td>capture_output=True</td><td>stdout/stderr를 Python이 받음</td></tr>
+<tr><td>text=True</td><td>문자열로 받음</td></tr>
+<tr><td>timeout=10</td><td>10초 이상 멈추는 명령 중단 가능</td></tr>
+</table>
+</section>
+
+<section id="s7">
+<h2><span class="step">7</span>@tool</h2>
+<pre><code>@tool
+def ping_test() -&gt; str:
+    """
+    기본 IP 연결을 확인한다.
+    """
+    ...</code></pre>
+<p><code>@</code>는 Decorator 문법입니다. 일반 함수를 Agent가 호출할 수 있는 Tool로 등록합니다.</p>
+<div class="why"><b>왜 docstring이 중요?</b><br>GPT가 Tool의 목적과 사용 시점을 판단하는 설명으로 사용하기 때문입니다.</div>
+</section>
+
+<section id="s8">
+<h2><span class="step">8</span>ping_test()</h2>
+<pre><code>["ping", "-c", "2", "-W", "2", server_ip]</code></pre>
+<table>
+<tr><th>옵션</th><th>의미</th></tr>
+<tr><td>-c 2</td><td>2번만 요청</td></tr>
+<tr><td>-W 2</td><td>응답 대기 시간 제한</td></tr>
+</table>
+<div class="why"><b>왜 먼저 ping?</b><br>서비스 문제를 보기 전에 ubuntu1 → ubuntu의 기본 IP 통신이 가능한지 확인할 수 있기 때문입니다.</div>
+</section>
+
+<section id="s9">
+<h2><span class="step">9</span>check_listen_8000()</h2>
+<pre><code>["ss", "-lnt"]</code></pre>
+<table>
+<tr><th>옵션</th><th>의미</th></tr>
+<tr><td>-l</td><td>LISTEN Socket</td></tr>
+<tr><td>-n</td><td>숫자로 표시</td></tr>
+<tr><td>-t</td><td>TCP만</td></tr>
+</table>
+<div class="why"><b>왜 ping 다음에 필요?</b><br>IP 통신이 된다는 것과 TCP 8000 서비스가 열려 있다는 것은 다른 문제이기 때문입니다.</div>
+</section>
+
+<section id="s10">
+<h2><span class="step">10</span>Process Tool과 HTTP Tool</h2>
+<h3>Process</h3><pre><code>pgrep -af "python3 -m http.server"</code></pre>
+<table><tr><th>옵션</th><th>의미</th></tr><tr><td>-a</td><td>전체 명령행 표시</td></tr><tr><td>-f</td><td>전체 command line 검색</td></tr></table>
+<h3>HTTP</h3><pre><code>curl -sS -o /dev/null -w "HTTP_CODE=%{http_code}" --connect-timeout 3 URL</code></pre>
+<table>
+<tr><th>옵션</th><th>의미</th></tr>
+<tr><td>-sS</td><td>진행 출력은 줄이고 오류는 표시</td></tr>
+<tr><td>-o /dev/null</td><td>본문 버림</td></tr>
+<tr><td>-w</td><td>상태 코드 같은 원하는 값 출력</td></tr>
+<tr><td>--connect-timeout 3</td><td>연결 대기 제한</td></tr>
+</table>
+</section>
+
+<section id="s11">
+<h2><span class="step">11</span>inspect_saved_pcap()</h2>
+<pre><code>capture: Literal["part4_tcp", "part5_compare"]</code></pre>
+<div class="why"><b>왜 Literal?</b><br>Agent가 임의 경로를 읽는 대신 미리 허용된 두 pcap만 선택할 수 있도록 제한합니다.</div>
+<pre><code>tcpdump -nn -vvv -X -c 12 -r [pcap]</code></pre>
+<table>
+<tr><th>옵션</th><th>의미</th></tr>
+<tr><td>-nn</td><td>IP/Port 숫자 유지</td></tr>
+<tr><td>-vvv</td><td>자세한 Header 정보</td></tr>
+<tr><td>-X</td><td>Hex + ASCII</td></tr>
+<tr><td>-c 12</td><td>최대 12개만</td></tr>
+<tr><td>-r</td><td>저장 pcap 읽기</td></tr>
+</table>
+<div class="why"><b>왜 결과 길이를 제한?</b><br>pcap 전체를 모델에 넘기면 토큰 사용량과 비용이 불필요하게 커질 수 있기 때문입니다.</div>
+</section>
+
+<section id="s12">
+<h2><span class="step">12</span>Agent 정의</h2>
+<pre><code>network_agent = Agent(
+    name="Linux Network &amp; Packet Diagnostic Agent",
+    instructions="...",
+    tools=[
+        ping_test,
+        check_listen_8000,
+        check_http_process,
+        http_test,
+        inspect_saved_pcap,
+    ],
+)</code></pre>
+<div class="note">tools 목록에 등록하지 않은 임의 로컬 함수를 GPT가 직접 실행할 수 있게 만들지 않았습니다.</div>
+</section>
+
+<section id="s13">
+<h2><span class="step">13</span>Instructions</h2>
+<p>Instructions는 고정 if문이 아니라 Agent의 역할과 판단 원칙입니다.</p>
+<pre><code>Tool 실제 결과 없이 추측하지 않는다.
+이미 충분한 정보가 있으면 반복 호출하지 않는다.
+확인된 사실과 판단을 구분한다.
+등록된 Tool만 사용한다.</code></pre>
+<div class="note">질문과 시스템 상태에 따라 Tool 순서는 달라질 수 있습니다.</div>
+</section>
+
+<section id="s14">
+<h2><span class="step">14</span>Runner.run_sync()</h2>
+<pre><code>result = Runner.run_sync(
+    network_agent,
+    question,
+)</code></pre>
+<p>동기 방식이라 async/await 없이 읽기 쉽습니다.</p>
+<pre><code>질문 → Model → Tool → 실제 결과 → Model 재판단 → final_output</code></pre>
+<h3>사용량 확인</h3>
+<pre><code>usage = result.context_wrapper.usage</code></pre>
+<div class="why"><b>왜 사용량을 봄?</b><br>Agent는 Tool 호출 전후로 모델을 여러 번 호출할 수 있어 요청 수와 토큰 사용량을 확인하는 것이 좋습니다.</div>
+</section>
+
+<section id="s15">
+<h2><span class="step">15</span>전체 실행 코드</h2>
+<pre><code>import json
+import subprocess
+from typing import Literal
+
+from agents import Agent, Runner
+from agents.decorators import tool
+
+
+# =========================================================
+# 1. 현재 환경 설정
+# =========================================================
+
+SERVER_VM = &quot;ubuntu&quot;
+CLIENT_VM = &quot;ubuntu1&quot;
+SERVER_PORT = 8000
+
+PCAP_FILES = {
+    &quot;part4_tcp&quot;: &quot;/home/ubuntu/part4_tcp.pcap&quot;,
+    &quot;part5_compare&quot;: &quot;/home/ubuntu/part5_compare.pcap&quot;,
+}
+
+
+# =========================================================
+# 2. Multipass VM 안에서 Linux 명령을 실행하는 공통 함수
+# =========================================================
+
+def run_vm(vm_name: str, command: list[str]) -&gt; dict:
+    &quot;&quot;&quot;
+    Windows 호스트에서 multipass exec를 이용해
+    지정한 VM 안의 Linux 명령을 실행하고 결과를 dict로 반환한다.
+    &quot;&quot;&quot;
+
+    full_command = [
+        &quot;multipass&quot;,
+        &quot;exec&quot;,
+        vm_name,
+        &quot;--&quot;,
+    ] + command
+
+    try:
+        result = subprocess.run(
+            full_command,
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+
+        return {
+            &quot;vm&quot;: vm_name,
+            &quot;command&quot;: &quot; &quot;.join(command),
+            &quot;returncode&quot;: result.returncode,
+            &quot;stdout&quot;: result.stdout.strip(),
+            &quot;stderr&quot;: result.stderr.strip(),
+        }
+
+    except subprocess.TimeoutExpired:
+        return {
+            &quot;vm&quot;: vm_name,
+            &quot;command&quot;: &quot; &quot;.join(command),
+            &quot;returncode&quot;: -1,
+            &quot;stdout&quot;: &quot;&quot;,
+            &quot;stderr&quot;: &quot;명령 실행 시간이 10초를 초과했습니다.&quot;,
+        }
+
+
+# =========================================================
+# 3. ubuntu의 IP를 확인하는 내부 보조 함수
+# =========================================================
+
+def get_server_ip() -&gt; str:
+    result = run_vm(
+        SERVER_VM,
+        [&quot;hostname&quot;, &quot;-I&quot;],
+    )
+
+    if result[&quot;returncode&quot;] != 0:
+        return &quot;&quot;
+
+    addresses = result[&quot;stdout&quot;].split()
+
+    if len(addresses) == 0:
+        return &quot;&quot;
+
+    return addresses[0]
+
+
+# =========================================================
+# 4. Tool 1 - 기본 IP 연결 확인
+# =========================================================
+
+@tool
+def ping_test() -&gt; str:
+    &quot;&quot;&quot;
+    ubuntu1에서 ubuntu로 ICMP ping을 보내 기본 IP 연결을 확인한다.
+    서버까지 기본 네트워크 통신이 되는지 확인해야 할 때 사용한다.
+    &quot;&quot;&quot;
+
+    server_ip = get_server_ip()
+
+    if not server_ip:
+        return json.dumps(
+            {
+                &quot;ok&quot;: False,
+                &quot;error&quot;: &quot;ubuntu의 IP 주소를 확인하지 못했습니다.&quot;,
+            },
+            ensure_ascii=False,
+        )
+
+    result = run_vm(
+        CLIENT_VM,
+        [&quot;ping&quot;, &quot;-c&quot;, &quot;2&quot;, &quot;-W&quot;, &quot;2&quot;, server_ip],
+    )
+
+    result[&quot;server_ip&quot;] = server_ip
+    result[&quot;ping_ok&quot;] = result[&quot;returncode&quot;] == 0
+
+    return json.dumps(
+        result,
+        ensure_ascii=False,
+    )
+
+
+# =========================================================
+# 5. Tool 2 - TCP 8000 LISTEN 상태 확인
+# =========================================================
+
+@tool
+def check_listen_8000() -&gt; str:
+    &quot;&quot;&quot;
+    ubuntu에서 TCP 8000번 포트가 LISTEN 상태인지 확인한다.
+    ping은 되지만 웹 서비스 연결이 안 되거나 서버 포트를 점검해야 할 때 사용한다.
+    &quot;&quot;&quot;
+
+    result = run_vm(
+        SERVER_VM,
+        [&quot;ss&quot;, &quot;-lnt&quot;],
+    )
+
+    result[&quot;port&quot;] = SERVER_PORT
+    result[&quot;listen&quot;] = f&quot;:{SERVER_PORT}&quot; in result[&quot;stdout&quot;]
+
+    return json.dumps(
+        result,
+        ensure_ascii=False,
+    )
+
+
+# =========================================================
+# 6. Tool 3 - Python HTTP 서버 프로세스 확인
+# =========================================================
+
+@tool
+def check_http_process() -&gt; str:
+    &quot;&quot;&quot;
+    ubuntu에서 Python http.server 프로세스가 실행 중인지 확인한다.
+    8000번 LISTEN이 없을 때 서버 프로그램 자체가 실행 중인지 확인하는 데 사용한다.
+    &quot;&quot;&quot;
+
+    result = run_vm(
+        SERVER_VM,
+        [&quot;pgrep&quot;, &quot;-af&quot;, &quot;python3 -m http.server&quot;],
+    )
+
+    result[&quot;process_found&quot;] = result[&quot;returncode&quot;] == 0
+
+    return json.dumps(
+        result,
+        ensure_ascii=False,
+    )
+
+
+# =========================================================
+# 7. Tool 4 - 실제 HTTP 요청 확인
+# =========================================================
+
+@tool
+def http_test() -&gt; str:
+    &quot;&quot;&quot;
+    ubuntu1에서 ubuntu의 TCP 8000번 HTTP 서버로 실제 요청을 보낸다.
+    IP 연결과 LISTEN이 정상인 뒤 응용 서비스가 실제로 응답하는지 확인할 때 사용한다.
+    &quot;&quot;&quot;
+
+    server_ip = get_server_ip()
+
+    if not server_ip:
+        return json.dumps(
+            {
+                &quot;ok&quot;: False,
+                &quot;error&quot;: &quot;ubuntu의 IP 주소를 확인하지 못했습니다.&quot;,
+            },
+            ensure_ascii=False,
+        )
+
+    url = f&quot;http://{server_ip}:{SERVER_PORT}/&quot;
+
+    result = run_vm(
+        CLIENT_VM,
+        [
+            &quot;curl&quot;,
+            &quot;-sS&quot;,
+            &quot;-o&quot;,
+            &quot;/dev/null&quot;,
+            &quot;-w&quot;,
+            &quot;HTTP_CODE=%{http_code}&quot;,
+            &quot;--connect-timeout&quot;,
+            &quot;3&quot;,
+            url,
+        ],
+    )
+
+    result[&quot;url&quot;] = url
+    result[&quot;http_ok&quot;] = (
+        result[&quot;returncode&quot;] == 0
+        and &quot;HTTP_CODE=200&quot; in result[&quot;stdout&quot;]
+    )
+
+    return json.dumps(
+        result,
+        ensure_ascii=False,
+    )
+
+
+# =========================================================
+# 8. Tool 5 - 저장된 pcap 간단 분석
+# =========================================================
+
+@tool
+def inspect_saved_pcap(
+    capture: Literal[&quot;part4_tcp&quot;, &quot;part5_compare&quot;],
+) -&gt; str:
+    &quot;&quot;&quot;
+    ubuntu에 저장된 pcap을 tcpdump로 읽어 요약한다.
+
+    Args:
+        capture:
+            part4_tcp - Part 4의 TCP Handshake pcap
+            part5_compare - Part 5의 원본/수정 UDP 비교 pcap
+    &quot;&quot;&quot;
+
+    path = PCAP_FILES[capture]
+
+    result = run_vm(
+        SERVER_VM,
+        [
+            &quot;tcpdump&quot;,
+            &quot;-nn&quot;,
+            &quot;-vvv&quot;,
+            &quot;-X&quot;,
+            &quot;-c&quot;,
+            &quot;12&quot;,
+            &quot;-r&quot;,
+            path,
+        ],
+    )
+
+    max_chars = 7000
+
+    if len(result[&quot;stdout&quot;]) &gt; max_chars:
+        result[&quot;stdout&quot;] = (
+            result[&quot;stdout&quot;][:max_chars]
+            + &quot;\n... 출력이 길어 이후 내용은 생략 ...&quot;
+        )
+
+    result[&quot;capture&quot;] = capture
+    result[&quot;path&quot;] = path
+
+    return json.dumps(
+        result,
+        ensure_ascii=False,
+    )
+
+
+# =========================================================
+# 9. GPT Agent 정의
+# =========================================================
+
+network_agent = Agent(
+    name=&quot;Linux Network &amp; Packet Diagnostic Agent&quot;,
+
+    instructions=&quot;&quot;&quot;
+너는 ubuntu / ubuntu1 Multipass 환경을 점검하는 Linux 네트워크 및 패킷 분석 에이전트다.
+
+환경:
+- 서버 VM: ubuntu
+- 클라이언트 VM: ubuntu1
+- 테스트 HTTP 서비스: TCP 8000
+- Part 4 TCP pcap: part4_tcp
+- Part 5 원본/수정 비교 pcap: part5_compare
+
+중요 원칙:
+1. 사용자의 자연어 질문을 먼저 해석한다.
+2. 필요한 경우에만 제공된 Tool을 선택해서 사용한다.
+3. Tool의 실제 결과를 확인하지 않고 시스템 상태를 추측하지 않는다.
+4. 이미 충분한 정보가 있으면 불필요한 Tool을 반복 호출하지 않는다.
+5. 네트워크 장애 질문에서는 IP 연결, LISTEN 포트, 프로세스, 실제 HTTP 요청의 관계를 구분해서 설명한다.
+6. pcap 질문에서는 tcpdump 결과를 근거로 Flags, Port, Length, Payload 등 확인 가능한 내용을 설명한다.
+7. Tool 결과에 없는 사실은 확인된 사실처럼 말하지 않는다.
+8. 임의의 Shell 명령을 만들어 실행할 수 있다고 주장하지 않는다. 사용할 수 있는 것은 등록된 Tool뿐이다.
+9. 최종 답변은 한국어로 작성하고, &#x27;확인된 사실 → 판단 → 다음 확인/조치&#x27; 순서로 간결하게 정리한다.
+&quot;&quot;&quot;,
+
+    tools=[
+        ping_test,
+        check_listen_8000,
+        check_http_process,
+        http_test,
+        inspect_saved_pcap,
+    ],
+)
+
+
+# =========================================================
+# 10. 프로그램 시작
+# =========================================================
+
+def main() -&gt; None:
+    print(&quot;=&quot; * 68)
+    print(&quot; GPT Linux Network &amp; Packet Diagnostic Agent&quot;)
+    print(&quot;=&quot; * 68)
+
+    question = input(&quot;\n문제를 자연어로 입력하세요 &gt; &quot;).strip()
+
+    if not question:
+        print(&quot;질문이 비어 있습니다.&quot;)
+        return
+
+    result = Runner.run_sync(
+        network_agent,
+        question,
+    )
+
+    print(&quot;\n[Agent 최종 답변]&quot;)
+    print(result.final_output)
+
+    usage = result.context_wrapper.usage
+
+    print(&quot;\n[API 사용량]&quot;)
+    print(&quot;요청 수:&quot;, usage.requests)
+    print(&quot;입력 토큰:&quot;, usage.input_tokens)
+    print(&quot;출력 토큰:&quot;, usage.output_tokens)
+    print(&quot;전체 토큰:&quot;, usage.total_tokens)
+
+
+if __name__ == &quot;__main__&quot;:
+    main()
+</code></pre>
+</section>
+
+<section id="s16">
+<h2><span class="step">16</span>실행</h2>
+<pre><code class="cmd">.venv\Scripts\Activate.ps1
+python linux_packet_lab_part6_agent.py</code></pre>
+<p>예:</p><pre><code>문제를 자연어로 입력하세요 &gt; ubuntu 웹서비스가 실제로 정상인지 점검해줘.</code></pre>
+<div class="tip">“ping부터 하고 ss하고 curl해줘”처럼 순서를 직접 지정하지 않으면 Agent의 Tool 선택을 더 잘 확인할 수 있습니다.</div>
+</section>
+
+<section id="s17">
+<h2><span class="step">17</span>장애 시나리오</h2>
+<h3>A. 정상</h3><pre><code class="cmd">multipass exec ubuntu -- python3 -m http.server 8000 --bind 0.0.0.0</code></pre>
+<p>질문: <code>ubuntu 웹서비스가 정상인지 점검해줘.</code></p>
+<h3>B. 서버 종료</h3><p>질문: <code>ubuntu1에서 ubuntu 웹 접속이 안 돼. 원인을 확인해줘.</code></p>
+<h3>C. 9000으로 잘못 실행</h3><pre><code class="cmd">multipass exec ubuntu -- python3 -m http.server 9000 --bind 0.0.0.0</code></pre>
+<p>질문: <code>서버는 켰는데 8000 접속이 안 돼.</code></p>
+</section>
+
+<section id="s18">
+<h2><span class="step">18</span>pcap 질문</h2>
+<pre><code>Part4 TCP 캡처에서 3-way handshake가 보이는지 확인해줘.</code></pre>
+<pre><code>Part5 pcap에서 원본과 수정본의 UDP Length와 Payload 차이를 확인해줘.</code></pre>
+<div class="warn">pcap 파일이 예상 경로에 없으면 분석할 수 없습니다. Tool 오류 결과를 확인된 분석처럼 말하면 안 됩니다.</div>
+</section>
+
+<section id="s19">
+<h2><span class="step">19</span>실무적인 Tool 설계 원칙</h2>
+<ul>
+<li>임의 Shell Tool 대신 좁은 Tool을 만든다.</li>
+<li>subprocess에 명령/인수를 리스트로 전달하고 shell=True를 피한다.</li>
+<li>Literal 같은 방식으로 입력 범위를 제한한다.</li>
+<li>timeout을 둔다.</li>
+<li>returncode/stdout/stderr를 남긴다.</li>
+<li>비밀키는 환경변수로 관리한다.</li>
+<li>pcap 결과는 필요한 범위만 모델에 전달한다.</li>
+</ul>
+</section>
+
+<section id="s20">
+<h2><span class="step">20</span>오류 확인 순서</h2>
+<h3>agents 모듈 없음</h3><pre><code class="cmd">.venv\Scripts\Activate.ps1
+python -m pip install openai-agents</code></pre>
+<h3>API Key 없음</h3><pre><code class="cmd">if ($env:OPENAI_API_KEY) { "KEY 있음" } else { "KEY 없음" }</code></pre>
+<h3>Multipass 문제</h3><pre><code class="cmd">multipass list
+multipass exec ubuntu -- hostname
+multipass exec ubuntu1 -- hostname</code></pre>
+<h3>pcap 없음</h3><pre><code class="cmd">multipass exec ubuntu -- ls -lh /home/ubuntu/part4_tcp.pcap
+multipass exec ubuntu -- ls -lh /home/ubuntu/part5_compare.pcap</code></pre>
+<div class="why"><b>왜 순서가 중요?</b><br>Python 환경 → API → Multipass → Linux 명령 → 서비스/pcap 순서로 분리하면 어느 층에서 실패했는지 빠르게 좁힐 수 있습니다.</div>
+</section>
+
+<section id="s21">
+<h2><span class="step">21</span>이해도 확인</h2>
+<div class="quiz"><b>Q1. 이번 코드가 단순 자동화와 다른 핵심은?</b><br><button onclick="toggle('a1')">정답/해설</button><div id="a1" class="answer">질문과 Tool 결과를 GPT가 해석해 필요한 Tool과 다음 행동을 선택한다는 점입니다.</div></div>
+<div class="quiz"><b>Q2. @tool의 역할은?</b><br><button onclick="toggle('a2')">정답/해설</button><div id="a2" class="answer">일반 Python 함수를 Agent가 호출할 수 있는 Function Tool로 등록합니다.</div></div>
+<div class="quiz"><b>Q3. 왜 docstring이 중요한가?</b><br><button onclick="toggle('a3')">정답/해설</button><div id="a3" class="answer">GPT가 Tool의 목적과 사용 시점을 판단하는 설명으로 활용되기 때문입니다.</div></div>
+<div class="quiz"><b>Q4. 왜 Literal을 사용했는가?</b><br><button onclick="toggle('a4')">정답/해설</button><div id="a4" class="answer">pcap Tool이 허용된 이름만 받도록 입력 범위를 제한하기 위해서입니다.</div></div>
+<div class="quiz"><b>Q5. Runner.run_sync()는 무엇을 하는가?</b><br><button onclick="toggle('a5')">정답/해설</button><div id="a5" class="answer">Model 호출, Tool 호출, Tool 결과 반환, 다음 판단 루프를 실행하고 최종 결과를 반환합니다.</div></div>
+<div class="quiz"><b>Q6. ChatGPT 구독과 API 결제는 같은가?</b><br><button onclick="toggle('a6')">정답/해설</button><div id="a6" class="answer">아닙니다. ChatGPT와 API Platform은 별도 결제 체계입니다.</div></div>
+</section>
+
+<section>
+<h2>Part 6 최종 구조</h2>
+<pre><code>Linux Network / Packet 이해
+        ↓
+작은 Python Tool로 분리
+        ↓
+GPT Agent에 Tool 등록
+        ↓
+자연어 질문
+        ↓
+GPT가 Tool 선택
+        ↓
+Multipass/Linux 실제 결과
+        ↓
+GPT 재판단
+        ↓
+확인된 사실 기반 진단</code></pre>
+<div class="tip">Part 6까지 완료하면 Linux Network + Packet Analysis + Python + GPT Tool Calling이 하나의 작은 Agent 프로젝트로 연결됩니다.</div>
+</section>
+
+</main>
+<footer>Linux Packet Lab · PART 6 · GPT Network & Packet Agent</footer>
+</body>
+</html>
