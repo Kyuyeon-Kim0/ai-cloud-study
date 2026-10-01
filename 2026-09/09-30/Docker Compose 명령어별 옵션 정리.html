@@ -1,0 +1,2065 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Docker Compose 명령어 & 옵션 탭 정리</title>
+<style>
+:root {
+  --bg:#f6f8fb;
+  --card:#ffffff;
+  --text:#172033;
+  --muted:#6b7280;
+  --line:#e5e7eb;
+  --accent:#1666d8;
+  --accent-soft:#eaf2ff;
+  --code:#101827;
+  --code-text:#edf4ff;
+  --green:#16803c;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:Inter, Pretendard, "Noto Sans KR", "Segoe UI", sans-serif;
+  line-height:1.6;
+}
+header{
+  background:linear-gradient(135deg,#ffffff 0%,#eef5ff 100%);
+  border-bottom:1px solid var(--line);
+}
+.hero{
+  max-width:1180px;
+  margin:auto;
+  padding:42px 24px 30px;
+}
+.badge{
+  display:inline-block;padding:6px 10px;border-radius:999px;
+  background:var(--accent-soft);color:var(--accent);font-weight:800;font-size:13px
+}
+h1{font-size:34px;line-height:1.25;margin:14px 0 10px}
+.hero p{margin:0;color:var(--muted);max-width:850px}
+.summary{
+  margin-top:22px;display:grid;grid-template-columns:repeat(3,1fr);gap:12px
+}
+.summary div{
+  background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px 16px
+}
+.summary strong{display:block;font-size:20px;color:var(--accent)}
+.summary span{font-size:13px;color:var(--muted)}
+main{max-width:1180px;margin:24px auto 60px;padding:0 24px}
+.notice{
+  background:#fff9e8;border:1px solid #f3dfa1;border-radius:14px;
+  padding:14px 16px;margin-bottom:18px;color:#725514
+}
+.tab-shell{
+  position:sticky;top:0;z-index:20;background:rgba(246,248,251,.96);
+  backdrop-filter:blur(9px);padding:10px 0 12px
+}
+.tabs{
+  display:flex;gap:8px;overflow-x:auto;padding:4px 2px 10px;
+  scrollbar-width:thin
+}
+.tab{
+  flex:0 0 auto;border:1px solid var(--line);background:#fff;color:#475569;
+  border-radius:10px;padding:9px 13px;font-size:14px;font-weight:800;cursor:pointer;
+  transition:.15s ease
+}
+.tab:hover{border-color:#9bbef0;color:var(--accent)}
+.tab.active{background:var(--accent);color:white;border-color:var(--accent)}
+.search-row{display:flex;gap:10px;margin-bottom:4px}
+.search-row input{
+  width:100%;border:1px solid var(--line);border-radius:12px;padding:11px 14px;
+  background:white;font-size:15px;outline:none
+}
+.search-row input:focus{border-color:#7aa9e8;box-shadow:0 0 0 3px #e8f1ff}
+.panel{
+  display:none;background:var(--card);border:1px solid var(--line);border-radius:18px;
+  padding:28px;box-shadow:0 8px 26px rgba(20,35,60,.05)
+}
+.panel.active{display:block}
+.command-head{display:grid;grid-template-columns:1.25fr .75fr;gap:22px;align-items:start}
+.eyebrow{font-size:12px;letter-spacing:.12em;font-weight:900;color:var(--accent)}
+h2{margin:5px 0 8px;font-size:28px}
+h2 span{color:var(--accent)}
+.command-head p{margin:0;color:var(--muted)}
+.usage{background:var(--code);color:var(--code-text);padding:16px;border-radius:13px;overflow:auto}
+.usage-label{font-size:11px;color:#91a4c2;text-transform:uppercase;font-weight:900;margin-bottom:6px}
+.usage code{white-space:nowrap}
+h3{font-size:18px;margin:27px 0 10px}
+.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:12px}
+table{width:100%;border-collapse:collapse;min-width:660px}
+th,td{padding:12px 14px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{font-size:13px;background:#f8fafc;color:#475569}
+tr:last-child td{border-bottom:0}
+td code{color:#b42318;background:#fff1f0;border:1px solid #ffd4d0;padding:2px 6px;border-radius:6px;font-weight:700}
+.muted{color:var(--muted)}
+.center{text-align:center}
+.examples{display:grid;gap:9px}
+.example-line{
+  display:flex;align-items:center;gap:12px;background:var(--code);border-radius:10px;
+  padding:12px 12px 12px 15px;overflow:auto
+}
+.example-line code{color:var(--code-text);white-space:nowrap;flex:1}
+.copy{
+  border:0;background:#25334a;color:white;border-radius:8px;padding:7px 10px;
+  cursor:pointer;font-weight:700;flex:0 0 auto
+}
+.copy:hover{background:#344764}
+.footer-note{color:var(--muted);font-size:13px;margin-top:16px}
+.hidden-tab{display:none!important}
+@media(max-width:760px){
+  h1{font-size:28px}
+  .summary{grid-template-columns:1fr}
+  .command-head{grid-template-columns:1fr}
+  .panel{padding:19px}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="hero">
+    <span class="badge">Docker Compose 초보자 참고표</span>
+    <h1>Docker Compose 명령어별 옵션 정리</h1>
+    <p><code>docker compose --help</code>에서 볼 수 있는 주요 명령을 탭으로 나누고, 각 명령의 용도·문법·옵션·예시를 한 화면에서 확인할 수 있도록 구성했습니다.</p>
+    <div class="summary">
+      <div><strong>36+</strong><span>명령어 탭</span></div>
+      <div><strong>옵션 표</strong><span>옵션 / 기본값 / 초보자 설명</span></div>
+      <div><strong>복사 버튼</strong><span>예제 명령어 바로 복사</span></div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="notice">
+    설치된 Docker Compose 버전에 따라 <b>옵션이 조금 다를 수 있습니다.</b>
+    내 PC에서 가장 정확한 정보는 <code>docker compose 명령어 --help</code>로 확인하세요.
+  </div>
+
+  <div class="tab-shell">
+    <div class="search-row">
+      <input id="search" type="search" placeholder="명령어 검색: up, logs, port, build..." oninput="filterTabs()">
+    </div>
+    <nav class="tabs" id="tabs">
+      <button class="tab active" data-target="panel-0" onclick="openTab(this)">공통 옵션</button><button class="tab" data-target="panel-1" onclick="openTab(this)">up</button><button class="tab" data-target="panel-2" onclick="openTab(this)">down</button><button class="tab" data-target="panel-3" onclick="openTab(this)">ps</button><button class="tab" data-target="panel-4" onclick="openTab(this)">logs</button><button class="tab" data-target="panel-5" onclick="openTab(this)">port</button><button class="tab" data-target="panel-6" onclick="openTab(this)">build</button><button class="tab" data-target="panel-7" onclick="openTab(this)">create</button><button class="tab" data-target="panel-8" onclick="openTab(this)">start</button><button class="tab" data-target="panel-9" onclick="openTab(this)">stop</button><button class="tab" data-target="panel-10" onclick="openTab(this)">restart</button><button class="tab" data-target="panel-11" onclick="openTab(this)">exec</button><button class="tab" data-target="panel-12" onclick="openTab(this)">run</button><button class="tab" data-target="panel-13" onclick="openTab(this)">config</button><button class="tab" data-target="panel-14" onclick="openTab(this)">pull</button><button class="tab" data-target="panel-15" onclick="openTab(this)">push</button><button class="tab" data-target="panel-16" onclick="openTab(this)">images</button><button class="tab" data-target="panel-17" onclick="openTab(this)">rm</button><button class="tab" data-target="panel-18" onclick="openTab(this)">pause</button><button class="tab" data-target="panel-19" onclick="openTab(this)">unpause</button><button class="tab" data-target="panel-20" onclick="openTab(this)">kill</button><button class="tab" data-target="panel-21" onclick="openTab(this)">stats</button><button class="tab" data-target="panel-22" onclick="openTab(this)">top</button><button class="tab" data-target="panel-23" onclick="openTab(this)">events</button><button class="tab" data-target="panel-24" onclick="openTab(this)">cp</button><button class="tab" data-target="panel-25" onclick="openTab(this)">attach</button><button class="tab" data-target="panel-26" onclick="openTab(this)">commit</button><button class="tab" data-target="panel-27" onclick="openTab(this)">export</button><button class="tab" data-target="panel-28" onclick="openTab(this)">ls</button><button class="tab" data-target="panel-29" onclick="openTab(this)">scale</button><button class="tab" data-target="panel-30" onclick="openTab(this)">wait</button><button class="tab" data-target="panel-31" onclick="openTab(this)">watch</button><button class="tab" data-target="panel-32" onclick="openTab(this)">version</button><button class="tab" data-target="panel-33" onclick="openTab(this)">volumes</button><button class="tab" data-target="panel-34" onclick="openTab(this)">convert</button><button class="tab" data-target="panel-35" onclick="openTab(this)">publish</button><button class="tab" data-target="panel-36" onclick="openTab(this)">bridge</button>
+    </nav>
+  </div>
+
+  
+      <section id="panel-0" class="panel active">
+        <div class="command-head">
+          <div>
+            <div class="eyebrow">DOCKER COMPOSE COMMAND</div>
+            <h2>docker compose <span>공통 옵션</span></h2>
+            <p>모든 Docker Compose 명령에 공통으로 적용할 수 있는 전역 옵션입니다.</p>
+          </div>
+          <div class="usage">
+            <div class="usage-label">Usage</div>
+            <code>docker compose [OPTIONS] COMMAND</code>
+          </div>
+        </div>
+
+        <h3>옵션</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>옵션</th><th>기본값</th><th>설명</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><code>--all-resources</code></td>
+                <td><span class="muted">-</span></td>
+                <td>서비스가 직접 사용하지 않는 리소스까지 포함</td>
+              </tr>
+              <tr>
+                <td><code>--ansi</code></td>
+                <td>auto</td>
+                <td>ANSI 제어문자 출력 방식: never / always / auto</td>
+              </tr>
+              <tr>
+                <td><code>--compatibility</code></td>
+                <td><span class="muted">-</span></td>
+                <td>이전 Compose 동작과의 호환 모드</td>
+              </tr>
+              <tr>
+                <td><code>--dry-run</code></td>
+                <td><span class="muted">-</span></td>
+                <td>실제로 변경하지 않고 수행할 작업을 미리 확인</td>
+              </tr>
+              <tr>
+                <td><code>--env-file</code></td>
+                <td><span class="muted">-</span></td>
+                <td>기본 .env 대신 사용할 환경변수 파일 지정</td>
+              </tr>
+              <tr>
+                <td><code>-f, --file</code></td>
+                <td><span class="muted">-</span></td>
+                <td>사용할 Compose 파일 지정</td>
+              </tr>
+              <tr>
+                <td><code>--parallel</code></td>
+                <td>-1</td>
+                <td>동시에 처리할 작업 수 제한. -1은 제한 없음</td>
+              </tr>
+              <tr>
+                <td><code>--profile</code></td>
+                <td><span class="muted">-</span></td>
+                <td>활성화할 profile 지정</td>
+              </tr>
+              <tr>
+                <td><code>--progress</code></td>
+                <td><span class="muted">-</span></td>
+                <td>진행 출력 방식 지정: auto / tty / plain / json / quiet</td>
+              </tr>
+              <tr>
+                <td><code>--project-directory</code></td>
+                <td><span class="muted">-</span></td>
+                <td>프로젝트 기준 디렉터리 지정</td>
+              </tr>
+              <tr>
+                <td><code>-p, --project-name</code></td>
+                <td><span class="muted">-</span></td>
+                <td>Compose 프로젝트 이름 지정</td>
+              </tr></tbody>
+          </table>
+        </div>
+
+        <h3>실행 예시</h3>
+        <div class="examples"><div class="example-line"><code>docker compose -f compose.dev.yaml up -d</code><button class="copy" onclick="copyCode(this)">복사</button></div>
+<div class="example-line"><code>docker compose -p myproject ps</code><button class="copy" onclick="copyCode(this)">복사</button></div>
+<div class="example-line"><code>docker compose --dry-run up -d</code><button class="copy" onclick="copyCode(this)">복사</button></div></div>
+      </section>
+    
+      <section id="panel-1" class="panel">
+        <div class="command-head">
+          <div>
+            <div class="eyebrow">DOCKER COMPOSE COMMAND</div>
+            <h2>docker compose <span>up</span></h2>
+            <p>서비스의 컨테이너를 생성하고 시작합니다. Compose에서 가장 많이 사용하는 명령입니다.</p>
+          </div>
+          <div class="usage">
+            <div class="usage-label">Usage</div>
+            <code>docker compose up [OPTIONS] [SERVICE...]</code>
+          </div>
+        </div>
+
+        <h3>옵션</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>옵션</th><th>기본값</th><th>설명</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><code>-d, --detach</code></td>
+                <td><span class="muted">-</span></td>
+                <td>백그라운드에서 실행</td>
+              </tr>
+              <tr>
+                <td><code>--build</code></td>
+                <td><span class="muted">-</span></td>
+                <td>시작 전에 이미지를 빌드</td>
+              </tr>
+              <tr>
+                <td><code>--force-recreate</code></td>
+                <td><span class="muted">-</span></td>
+                <td>설정 변경이 없어도 컨테이너를 강제로 다시 생성</td>
+              </tr>
+              <tr>
+                <td><code>--no-recreate</code></td>
+                <td><span class="muted">-</span></td>
+                <td>기존 컨테이너가 있으면 다시 생성하지 않음</td>
+              </tr>
+              <tr>
+                <td><code>--no-build</code></td>
+                <td><span class="muted">-</span></td>
+                <td>이미지를 빌드하지 않음</td>
+              </tr>
+              <tr>
+                <td><code>--pull</code></td>
+                <td>policy</td>
+                <td>실행 전 이미지 pull 정책 지정: always / missing / never</td>
+              </tr>
+              <tr>
+                <td><code>--remove-orphans</code></td>
+                <td><span class="muted">-</span></td>
+                <td>Compose 파일에 없는 기존 서비스 컨테이너 제거</td>
+              </tr>
+              <tr>
+                <td><code>--scale</code></td>
+                <td><span class="muted">-</span></td>
+                <td>특정 서비스를 지정한 개수만큼 실행</td>
+              </tr>
+              <tr>
+                <td><code>--wait</code></td>
+                <td><span class="muted">-</span></td>
+                <td>서비스가 running/healthy 상태가 될 때까지 기다림</td>
+              </tr>
+              <tr>
+                <td><code>--wait-timeout</code></td>
+                <td><span class="muted">-</span></td>
+                <td>--wait 최대 대기 시간 지정</td>
+              </tr>
+              <tr>
+                <td><code>--no-deps</code></td>
+                <td><span class="muted">-</span></td>
+                <td>연결된 의존 서비스는 시작하지 않음</td>
+              </tr>
+              <tr>
+                <td><code>-t, --timeout</code></td>
+                <td><span class="muted">-</span></td>
+                <td>종료 대기 시간을 초 단위로 지정</td>
+              </tr>
+              <tr>
+                <td><code>-w, --watch</code></td>
+                <td><span class="muted">-</span></td>
+                <td>소스 변경을 감시하고 재빌드/갱신</td>
+              </tr>
+              <tr>
+                <td><code>--abort-on-container-exit</code></td>
+                <td><span class="muted">-</span></td>
+                <td>컨테이너 하나가 종료되면 전체 중지</td>
+              </tr>
+              <tr>
+                <td><code>--abort-on-container-failure</code></td>
+                <td><span class="muted">-</span></td>
+                <td>컨테이너가 실패하면 전체 중지</td>
+              </tr></tbody>
+          </table>
+        </div>
+
+        <h3>실행 예시</h3>
+        <div class="examples"><div class="example-line"><code>docker compose up -d</code><button class="copy" onclick="copyCode(this)">복사</button></div>
+<div class="example-line"><code>docker compose up -d --build</code><button class="copy" onclick="copyCode(this)">복사</button></div>
+<div class="example-line"><code>docker compose up --scale web=3</code><button class="copy" onclick="copyCode(this)">복사</button></div></div>
+      </section>
+    
+      <section id="panel-2" class="panel">
+        <div class="command-head">
+          <div>
+            <div class="eyebrow">DOCKER COMPOSE COMMAND</div>
+            <h2>docker compose <span>down</span></h2>
+            <p>Compose가 만든 컨테이너와 네트워크를 중지하고 제거합니다.</p>
+          </div>
+          <div class="usage">
+            <div class="usage-label">Usage</div>
+            <code>docker compose down [OPTIONS] [SERVICES]</code>
+          </div>
+        </div>
+
+        <h3>옵션</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>옵션</th><th>기본값</th><th>설명</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><code>--remove-orphans</code></td>
+                <td><span class="muted">-</span></td>
+                <td>Compose 파일에 정의되지 않은 서비스 컨테이너 제거</td>
+              </tr>
+              <tr>
+                <td><code>--rmi</code></td>
+                <td><span class="muted">-</span></td>
+                <td>서비스 이미지 제거: local 또는 all</td>
+              </tr>
+              <tr>
+                <td><code>-t, --timeout</code></td>
+                <td><span class="muted">-</span></td>
+                <td>종료 대기 시간(초)</td>
+              </tr>
+              <tr>
+                <td><code>-v, --volumes</code></td>
+                <td><span class="muted">-</span></td>
+                <td>Compose의 named volume 및 anonymous volume까지 제거</td>
+              </tr></tbody>
+          </table>
+        </div>
+
+        <h3>실행 예시</h3>
+        <div class="examples"><div class="example-line"><code>docker compose down</code><button class="copy" onclick="copyCode(this)">복사</button></div>
+<div class="example-line"><code>docker compose down -v</code><button class="copy" onclick="copyCode(this)">복사</button></div>
+<div class="example-line"><code>docker compose down --rmi all</code><button class="copy" onclick="copyCode(this)">복사</button></div></div>
+      </section>
+    
+      <section id="panel-3" class="panel">
+        <div class="command-head">
+          <div>
+            <div class="eyebrow">DOCKER COMPOSE COMMAND</div>
+            <h2>docker compose <span>ps</span></h2>
+            <p>현재 Compose 프로젝트의 컨테이너 상태와 포트를 확인합니다.</p>
+          </div>
+          <div class="usage">
+            <div class="usage-label">Usage</div>
+            <code>docker compose ps [OPTIONS] [SERVICE...]</code>
+          </div>
+        </div>
+
+        <h3>옵션</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>옵션</th><th>기본값</th><th>설명</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><code>-a, --all</code></td>
+                <td><span class="muted">-</span></td>
+                <td>중지된 컨테이너까지 표시</td>
+              </tr>
+              <tr>
+                <td><code>--filter</code></td>
+                <td><span class="muted">-</span></td>
+                <td>조건에 맞는 서비스만 표시</td>
+              </tr>
+              <tr>
+                <td><code>--format</code></td>
+                <td><span class="muted">-</span></td>
+                <td>table/json 또는 Go template 형식으로 출력</td>
+              </tr>
+              <tr>
+                <td><code>--no-trunc</code></td>
+                <td><span class="muted">-</span></td>
+                <td>출력 내용을 줄이지 않고 모두 표시</td>
+              </tr>
+              <tr>
+                <td><code>--orphans</code></td>
+                <td>true</td>
+                <td>프로젝트에 남아 있는 orphan 서비스 포함</td>
+              </tr>
+              <tr>
+                <td><code>-q, --quiet</code></td>
+                <td><span class="muted">-</span></td>
+                <td>컨테이너 ID만 표시</td>
+              </tr>
+              <tr>
+                <td><code>--services</code></td>
+                <td><span class="muted">-</span></td>
+                <td>서비스 이름만 표시</td>
+              </tr>
+              <tr>
+                <td><code>--status</code></td>
+                <td><span class="muted">-</span></td>
+                <td>상태로 필터링: running / exited / paused 등</td>
+              </tr></tbody>
+          </table>
+        </div>
+
+        <h3>실행 예시</h3>
+        <div class="examples"><div class="example-line"><code>docker compose ps</code><button class="copy" onclick="copyCode(this)">복사</button></div>
+<div class="example-line"><code>docker compose ps -a</code><button class="copy" onclick="copyCode(this)">복사</button></div>
+<div class="example-line"><code>docker compose ps --status running</code><button class="copy" onclick="copyCode(this)">복사</button></div></div>
+      </section>
+    
+      <section id="panel-4" class="panel">
+        <div class="command-head">
+          <div>
+            <div class="eyebrow">DOCKER COMPOSE COMMAND</div>
+            <h2>docker compose <span>logs</span></h2>
+            <p>서비스 컨테이너의 로그를 조회합니다.</p>
+          </div>
+          <div class="usage">
+            <div class="usage-label">Usage</div>
+            <code>docker compose logs [OPTIONS] [SERVICE...]</code>
+          </div>
+        </div>
+
+        <h3>옵션</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>옵션</th><th>기본값</th><th>설명</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><code>-f, --follow</code></td>
+                <td><span class="muted">-</span></td>
+                <td>새 로그를 계속 실시간 출력</td>
+              </tr>
+              <tr>
+                <td><code>--index</code></td>
+                <td><span class="muted">-</span></td>
+                <td>복제본이 여러 개일 때 특정 컨테이너 번호 지정</td>
+              </tr>
+              <tr>
+                <td><code>--no-color</code></td>
+                <td><span class="muted">-</span></td>
+                <td>색상 없이 출력</td>
+              </tr>
+              <tr>
+                <td><code>--no-log-prefix</code></td>
+                <td><span class="muted">-</span></td>
+                <td>서비스명 등의 로그 prefix 숨김</td>
+              </tr>
+              <tr>
+                <td><code>--since</code></td>
+                <td><span class="muted">-</span></td>
+                <td>지정 시각 또는 상대시간 이후 로그만 표시</td>
+              </tr>
+              <tr>
+                <td><code>-n, --tail</code></td>
+                <td>all</td>
+                <td>마지막 N줄만 표시</td>
+              </tr>
+              <tr>
+                <td><code>-t, --timestamps</code></td>
+                <td><span class="muted">-</span></td>
+                <td>로그에 시간 표시</td>
+              </tr>
+              <tr>
+                <td><code>--until</code></td>
+                <td><span class="muted">-</span></td>
+                <td>지정 시각 이전까지의 로그만 표시</td>
+              </tr></tbody>
+          </table>
+        </div>
+
+        <h3>실행 예시</h3>
+        <div class="examples"><div class="example-line"><code>docker compose logs</code><button class="copy" onclick="copyCode(this)">복사</button></div>
+<div class="example-line"><code>docker compose logs -f web</code><button class="copy" onclick="copyCode(this)">복사</button></div>
+<div class="example-line"><code>docker compose logs --tail 50 web</code><button class="copy" onclick="copyCode(this)">복사</button></div></div>
+      </section>
+    
+      <section id="panel-5" class="panel">
+        <div class="command-head">
+          <div>
+            <div class="eyebrow">DOCKER COMPOSE COMMAND</div>
+            <h2>docker compose <span>port</span></h2>
+            <p>컨테이너 내부 포트가 호스트의 어느 공개 포트에 연결되었는지 확인합니다.</p>
+          </div>
+          <div class="usage">
+            <div class="usage-label">Usage</div>
+            <code>docker compose port [OPTIONS] SERVICE PRIVATE_PORT</code>
+          </div>
+        </div>
+
+        <h3>옵션</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>옵션</th><th>기본값</th><th>설명</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><code>--dry-run</code></td>
+                <td><span class="muted">-</span></td>
+                <td>실제 변경 없이 수행 내용을 확인하는 공통 옵션</td>
+              </tr>
+              <tr>
+                <td><code>--index</code></td>
+                <td><span class="muted">-</span></td>
+                <td>서비스가 여러 replica일 때 특정 컨테이너 번호 선택</td>
+              </tr>
+              <tr>
+                <td><code>--protocol</code></td>
+                <td>tcp</td>
+                <td>tcp 또는 udp 선택</td>
+              </tr></tbody>
+          </table>
+        </div>
+
+        <h3>실행 예시</h3>
+        <div class="examples"><div class="example-line"><code>docker compose port web 80</code><button class="copy" onclick="copyCode(this)">복사</button></div>
+<div class="example-line"><code>docker compose port --protocol tcp web 80</code><button class="copy" onclick="copyCode(this)">복사</button></div>
+<div class="example-line"><code>docker compose port --index 2 web 80</code><button class="copy" onclick="copyCode(this)">복사</button></div></div>
+      </section>
+    
+      <section id="panel-6" class="panel">
+        <div class="command-head">
+          <div>
+            <div class="eyebrow">DOCKER COMPOSE COMMAND</div>
+            <h2>docker compose <span>build</span></h2>
+            <p>Dockerfile을 이용하여 서비스 이미지를 빌드하거나 다시 빌드합니다.</p>
+          </div>
+          <div class="usage">
+            <div class="usage-label">Usage</div>
+            <code>docker compose build [OPTIONS] [SERVICE...]</code>
+          </div>
+        </div>
+
+        <h3>옵션</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>옵션</th><th>기본값</th><th>설명</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><code>--build-arg</code></td>
+                <td><span class="muted">-</span></td>
+                <td>빌드 시 ARG 값 전달</td>
+              </tr>
+              <tr>
+                <td><code>--builder</code></td>
+                <td><span class="muted">-</span></td>
+                <td>사용할 Buildx builder 지정</td>
+              </tr>
+              <tr>
+                <td><code>--check</code></td>
+                <td><span class="muted">-</span></td>
+                <td>빌드 설정 검사</td>
+              </tr>
+              <tr>
+                <td><code>-m, --memory</code></td>
+                <td><span class="muted">-</span></td>
+                <td>빌드 컨테이너 메모리 제한(BuildKit에서는 미지원)</td>
+              </tr>
+              <tr>
+                <td><code>--no-cache</code></td>
+                <td><span class="muted">-</span></td>
+                <td>캐시를 사용하지 않고 새로 빌드</td>
+              </tr>
+              <tr>
+                <td><code>--pull</code></td>
+                <td><span class="muted">-</span></td>
+                <td>기반 이미지를 최신으로 pull 시도</td>
+              </tr>
+              <tr>
+                <td><code>--push</code></td>
+                <td><span class="muted">-</span></td>
+                <td>빌드한 서비스 이미지 push</td>
+              </tr>
+              <tr>
+                <td><code>-q, --quiet</code></td>
+                <td><span class="muted">-</span></td>
+                <td>빌드 출력 최소화</td>
+              </tr>
+              <tr>
+                <td><code>--sbom</code></td>
+                <td><span class="muted">-</span></td>
+                <td>SBOM 정보 추가</td>
+              </tr>
+              <tr>
+                <td><code>--ssh</code></td>
+                <td><span class="muted">-</span></td>
+                <td>빌드 중 SSH 인증 사용</td>
+              </tr>
+              <tr>
+                <td><code>--with-dependencies</code></td>
+                <td><span class="muted">-</span></td>
+                <td>의존 서비스도 함께 빌드</td>
+              </tr></tbody>
+          </table>
+        </div>
+
+        <h3>실행 예시</h3>
+        <div class="examples"><div class="example-line"><code>docker compose build</code><button class="copy" onclick="copyCode(this)">복사</button></div>
+<div class="example-line"><code>docker compose build --no-cache web</code><button class="copy" onclick="copyCode(this)">복사</button></div>
+<div class="example-line"><code>docker compose build --pull</code><button class="copy" onclick="copyCode(this)">복사</button></div></div>
+      </section>
+    
+      <section id="panel-7" class="panel">
+        <div class="command-head">
+          <div>
+            <div class="eyebrow">DOCKER COMPOSE COMMAND</div>
+            <h2>docker compose <span>create</span></h2>
+            <p>서비스 컨테이너를 생성하지만 시작하지는 않습니다.</p>
+          </div>
+          <div class="usage">
+            <div class="usage-label">Usage</div>
+            <code>docker compose create [OPTIONS] [SERVICE...]</code>
+          </div>
+        </div>
+
+        <h3>옵션</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>옵션</th><th>기본값</th><th>설명</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><code>--build</code></td>
+                <td><span class="muted">-</span></td>
+                <td>컨테이너 생성 전에 이미지 빌드</td>
+              </tr>
+              <tr>
+                <td><code>--force-recreate</code></td>
+                <td><span class="muted">-</span></td>
+                <td>기존 컨테이너가 있어도 다시 생성</td>
+              </tr>
+              <tr>
+                <td><code>--no-build</code></td>
+                <td><span class="muted">-</span></td>
+                <td>이미지 빌드 금지</td>
+              </tr>
+              <tr>
+                <td><code>--no-recreate</code></td>
+                <td><span class="muted">-</span></td>
+                <td>기존 컨테이너를 다시 생성하지 않음</td>
+              </tr>
+              <tr>
+                <td><code>--pull</code></td>
+                <td>policy</td>
+                <td>이미지 pull 정책 지정</td>
+              </tr>
+              <tr>
+                <td><code>--quiet-pull</code></td>
+                <td><span class="muted">-</span></td>
+                <td>pull 진행 메시지 숨김</td>
+              </tr>
+              <tr>
+                <td><code>--remove-orphans</code></td>
+                <td><span class="muted">-</span></td>
+                <td>정의되지 않은 서비스 컨테이너 제거</td>
+              </tr>
+              <tr>
+                <td><code>--scale</code></td>
+                <td><span class="muted">-</span></td>
+                <td>서비스 replica 수 지정</td>
+              </tr>
+              <tr>
+                <td><code>-y, --yes</code></td>
+                <td><span class="muted">-</span></td>
+                <td>질문에 자동으로 yes 선택</td>
+              </tr></tbody>
+          </table>
+        </div>
+
+        <h3>실행 예시</h3>
+        <div class="examples"><div class="example-line"><code>docker compose create</code><button class="copy" onclick="copyCode(this)">복사</button></div>
+<div class="example-line"><code>docker compose create --build web</code><button class="copy" onclick="copyCode(this)">복사</button></div></div>
+      </section>
+    
+      <section id="panel-8" class="panel">
+        <div class="command-head">
+          <div>
+            <div class="eyebrow">DOCKER COMPOSE COMMAND</div>
+            <h2>docker compose <span>start</span></h2>
+            <p>이미 생성되어 있고 중지된 서비스 컨테이너를 시작합니다.</p>
+          </div>
+          <div class="usage">
+            <div class="usage-label">Usage</div>
+            <code>docker compose start [SERVICE...]</code>
+          </div>
+        </div>
+
+        <h3>옵션</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>옵션</th><th>기본값</th><th>설명</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><code>--wait</code></td>
+                <td><span class="muted">-</span></td>
+                <td>서비스가 running/healthy 상태가 될 때까지 기다림</td>
+              </tr>
+              <tr>
+                <td><code>--wait-timeout</code></td>
+                <td><span class="muted">-</span></td>
+                <td>최대 대기 시간 지정</td>
+              </tr></tbody>
+          </table>
+        </div>
+
+        <h3>실행 예시</h3>
+        <div class="examples"><div class="example-line"><code>docker compose start</code><button class="copy" onclick="copyCode(this)">복사</button></div>
+<div class="example-line"><code>docker compose start web</code><button class="copy" onclick="copyCode(this)">복사</button></div></div>
+      </section>
+    
+      <section id="panel-9" class="panel">
+        <div class="command-head">
+          <div>
+            <div class="eyebrow">DOCKER COMPOSE COMMAND</div>
+            <h2>docker compose <span>stop</span></h2>
+            <p>컨테이너를 삭제하지 않고 중지만 합니다. 나중에 start로 다시 실행할 수 있습니다.</p>
+          </div>
+          <div class="usage">
+            <div class="usage-label">Usage</div>
+            <code>docker compose stop [OPTIONS] [SERVICE...]</code>
+          </div>
+        </div>
+
+        <h3>옵션</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>옵션</th><th>기본값</th><th>설명</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><code>-t, --timeout</code></td>
+                <td><span class="muted">-</span></td>
+                <td>종료 대기 시간을 초 단위로 지정</td>
+              </tr></tbody>
+          </table>
+        </div>
+
+        <h3>실행 예시</h3>
+        <div class="examples"><div class="example-line"><code>docker compose stop</code><button class="copy" onclick="copyCode(this)">복사</button></div>
+<div class="example-line"><code>docker compose stop -t 10 web</code><button class="copy" onclick="copyCode(this)">복사</button></div></div>
+      </section>
+    
+      <section id="panel-10" class="panel">
+        <div class="command-head">
+          <div>
+            <div class="eyebrow">DOCKER COMPOSE COMMAND</div>
+            <h2>docker compose <span>restart</span></h2>
+            <p>실행 중이거나 중지된 서비스 컨테이너를 재시작합니다.</p>
+          </div>
+          <div class="usage">
+            <div class="usage-label">Usage</div>
+            <code>docker compose restart [OPTIONS] [SERVICE...]</code>
+          </div>
+        </div>
+
+        <h3>옵션</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>옵션</th><th>기본값</th><th>설명</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><code>--no-deps</code></td>
+                <td><span class="muted">-</span></td>
+                <td>의존 서비스를 함께 재시작하지 않음</td>
+              </tr>
+              <tr>
+                <td><code>-t, --timeout</code></td>
+                <td><span class="muted">-</span></td>
+                <td>종료 대기 시간(초)</td>
+              </tr></tbody>
+          </table>
+        </div>
+
+        <h3>실행 예시</h3>
+        <div class="examples"><div class="example-line"><code>docker compose restart</code><button class="copy" onclick="copyCode(this)">복사</button></div>
+<div class="example-line"><code>docker compose restart web</code><button class="copy" onclick="copyCode(this)">복사</button></div>
+<div class="example-line"><code>docker compose restart -t 10 web</code><button class="copy" onclick="copyCode(this)">복사</button></div></div>
+      </section>
+    
+      <section id="panel-11" class="panel">
+        <div class="command-head">
+          <div>
+            <div class="eyebrow">DOCKER COMPOSE COMMAND</div>
+            <h2>docker compose <span>exec</span></h2>
+            <p>이미 실행 중인 서비스 컨테이너 안에서 명령을 실행합니다.</p>
+          </div>
+          <div class="usage">
+            <div class="usage-label">Usage</div>
+            <code>docker compose exec [OPTIONS] SERVICE COMMAND [ARGS...]</code>
+          </div>
+        </div>
+
+        <h3>옵션</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>옵션</th><th>기본값</th><th>설명</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><code>-d, --detach</code></td>
+                <td><span class="muted">-</span></td>
+                <td>명령을 백그라운드에서 실행</td>
+              </tr>
+              <tr>
+                <td><code>-e, --env</code></td>
+                <td><span class="muted">-</span></td>
+                <td>환경변수 지정</td>
+              </tr>
+              <tr>
+                <td><code>--index</code></td>
+                <td><span class="muted">-</span></td>
+                <td>여러 replica 중 특정 컨테이너 선택</td>
+              </tr>
+              <tr>
+                <td><code>-T, --no-tty</code></td>
+                <td><span class="muted">-</span></td>
+                <td>TTY 할당 비활성화</td>
+              </tr>
+              <tr>
+                <td><code>--privileged</code></td>
+                <td><span class="muted">-</span></td>
+                <td>명령에 확장 권한 부여</td>
+              </tr>
+              <tr>
+                <td><code>-u, --user</code></td>
+                <td><span class="muted">-</span></td>
+                <td>실행 사용자 또는 UID 지정</td>
+              </tr>
+              <tr>
+                <td><code>-w, --workdir</code></td>
+                <td><span class="muted">-</span></td>
+                <td>컨테이너 내부 작업 디렉터리 지정</td>
+              </tr></tbody>
+          </table>
+        </div>
+
+        <h3>실행 예시</h3>
+        <div class="examples"><div class="example-line"><code>docker compose exec web sh</code><button class="copy" onclick="copyCode(this)">복사</button></div>
+<div class="example-line"><code>docker compose exec db psql -U postgres</code><button class="copy" onclick="copyCode(this)">복사</button></div>
+<div class="example-line"><code>docker compose exec -u root web sh</code><button class="copy" onclick="copyCode(this)">복사</button></div></div>
+      </section>
+    
+      <section id="panel-12" class="panel">
+        <div class="command-head">
+          <div>
+            <div class="eyebrow">DOCKER COMPOSE COMMAND</div>
+            <h2>docker compose <span>run</span></h2>
+            <p>서비스 설정을 바탕으로 일회성 컨테이너를 만들어 명령을 실행합니다.</p>
+          </div>
+          <div class="usage">
+            <div class="usage-label">Usage</div>
+            <code>docker compose run [OPTIONS] SERVICE [COMMAND] [ARGS...]</code>
+          </div>
+        </div>
+
+        <h3>옵션</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>옵션</th><th>기본값</th><th>설명</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><code>--build</code></td>
+                <td><span class="muted">-</span></td>
+                <td>실행 전에 이미지 빌드</td>
+              </tr>
+              <tr>
+                <td><code>-d, --detach</code></td>
+                <td><span class="muted">-</span></td>
+                <td>백그라운드 실행</td>
+              </tr>
+              <tr>
+                <td><code>--entrypoint</code></td>
+                <td><span class="muted">-</span></td>
+                <td>이미지 ENTRYPOINT 재정의</td>
+              </tr>
+              <tr>
+                <td><code>-e, --env</code></td>
+                <td><span class="muted">-</span></td>
+                <td>환경변수 지정</td>
+              </tr>
+              <tr>
+                <td><code>--env-from-file</code></td>
+                <td><span class="muted">-</span></td>
+                <td>파일에서 환경변수 불러오기</td>
+              </tr>
+              <tr>
+                <td><code>--name</code></td>
+                <td><span class="muted">-</span></td>
+                <td>일회성 컨테이너 이름 지정</td>
+              </tr>
+              <tr>
+                <td><code>--no-deps</code></td>
+                <td><span class="muted">-</span></td>
+                <td>의존 서비스 시작 안 함</td>
+              </tr>
+              <tr>
+                <td><code>-p, --publish</code></td>
+                <td><span class="muted">-</span></td>
+                <td>호스트에 포트 공개</td>
+              </tr>
+              <tr>
+                <td><code>--pull</code></td>
+                <td>policy</td>
+                <td>이미지 pull 정책</td>
+              </tr>
+              <tr>
+                <td><code>--rm</code></td>
+                <td><span class="muted">-</span></td>
+                <td>종료 후 컨테이너 자동 삭제</td>
+              </tr>
+              <tr>
+                <td><code>-P, --service-ports</code></td>
+                <td><span class="muted">-</span></td>
+                <td>서비스에 정의된 포트를 그대로 공개</td>
+              </tr>
+              <tr>
+                <td><code>-u, --user</code></td>
+                <td><span class="muted">-</span></td>
+                <td>실행 사용자 지정</td>
+              </tr>
+              <tr>
+                <td><code>-v, --volume</code></td>
+                <td><span class="muted">-</span></td>
+                <td>볼륨 마운트</td>
+              </tr>
+              <tr>
+                <td><code>-w, --workdir</code></td>
+                <td><span class="muted">-</span></td>
+                <td>작업 디렉터리 지정</td>
+              </tr></tbody>
+          </table>
+        </div>
+
+        <h3>실행 예시</h3>
+        <div class="examples"><div class="example-line"><code>docker compose run --rm web python manage.py migrate</code><button class="copy" onclick="copyCode(this)">복사</button></div>
+<div class="example-line"><code>docker compose run --rm app sh</code><button class="copy" onclick="copyCode(this)">복사</button></div></div>
+      </section>
+    
+      <section id="panel-13" class="panel">
+        <div class="command-head">
+          <div>
+            <div class="eyebrow">DOCKER COMPOSE COMMAND</div>
+            <h2>docker compose <span>config</span></h2>
+            <p>Compose 파일을 해석하고 병합한 최종 설정을 출력하거나 검증합니다.</p>
+          </div>
+          <div class="usage">
+            <div class="usage-label">Usage</div>
+            <code>docker compose config [OPTIONS] [SERVICE...]</code>
+          </div>
+        </div>
+
+        <h3>옵션</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>옵션</th><th>기본값</th><th>설명</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><code>--environment</code></td>
+                <td><span class="muted">-</span></td>
+                <td>변수 치환에 사용되는 환경변수 출력</td>
+              </tr>
+              <tr>
+                <td><code>--format</code></td>
+                <td><span class="muted">-</span></td>
+                <td>출력 형식: yaml 또는 json</td>
+              </tr>
+              <tr>
+                <td><code>--hash</code></td>
+                <td><span class="muted">-</span></td>
+                <td>서비스 설정 hash 출력</td>
+              </tr>
+              <tr>
+                <td><code>--images</code></td>
+                <td><span class="muted">-</span></td>
+                <td>이미지 이름만 출력</td>
+              </tr>
+              <tr>
+                <td><code>--models</code></td>
+                <td><span class="muted">-</span></td>
+                <td>model 이름 출력</td>
+              </tr>
+              <tr>
+                <td><code>--networks</code></td>
+                <td><span class="muted">-</span></td>
+                <td>network 이름 출력</td>
+              </tr>
+              <tr>
+                <td><code>--no-consistency</code></td>
+                <td><span class="muted">-</span></td>
+                <td>설정 일관성 검사 생략</td>
+              </tr>
+              <tr>
+                <td><code>--no-env-resolution</code></td>
+                <td><span class="muted">-</span></td>
+                <td>서비스 env_file 해석 안 함</td>
+              </tr>
+              <tr>
+                <td><code>--no-interpolate</code></td>
+                <td><span class="muted">-</span></td>
+                <td>환경변수 치환 안 함</td>
+              </tr>
+              <tr>
+                <td><code>--no-normalize</code></td>
+                <td><span class="muted">-</span></td>
+                <td>Compose 모델 정규화 안 함</td>
+              </tr>
+              <tr>
+                <td><code>--no-path-resolution</code></td>
+                <td><span class="muted">-</span></td>
+                <td>파일 경로 해석 안 함</td>
+              </tr>
+              <tr>
+                <td><code>-o, --output</code></td>
+                <td><span class="muted">-</span></td>
+                <td>결과를 파일로 저장</td>
+              </tr>
+              <tr>
+                <td><code>--profiles</code></td>
+                <td><span class="muted">-</span></td>
+                <td>profile 이름 출력</td>
+              </tr>
+              <tr>
+                <td><code>-q, --quiet</code></td>
+                <td><span class="muted">-</span></td>
+                <td>출력 없이 유효성만 검사</td>
+              </tr>
+              <tr>
+                <td><code>--services</code></td>
+                <td><span class="muted">-</span></td>
+                <td>서비스 이름 출력</td>
+              </tr>
+              <tr>
+                <td><code>--variables</code></td>
+                <td><span class="muted">-</span></td>
+                <td>모델 변수 및 기본값 출력</td>
+              </tr>
+              <tr>
+                <td><code>--volumes</code></td>
+                <td><span class="muted">-</span></td>
+                <td>volume 이름 출력</td>
+              </tr></tbody>
+          </table>
+        </div>
+
+        <h3>실행 예시</h3>
+        <div class="examples"><div class="example-line"><code>docker compose config</code><button class="copy" onclick="copyCode(this)">복사</button></div>
+<div class="example-line"><code>docker compose config -q</code><button class="copy" onclick="copyCode(this)">복사</button></div>
+<div class="example-line"><code>docker compose config --services</code><button class="copy" onclick="copyCode(this)">복사</button></div></div>
+      </section>
+    
+      <section id="panel-14" class="panel">
+        <div class="command-head">
+          <div>
+            <div class="eyebrow">DOCKER COMPOSE COMMAND</div>
+            <h2>docker compose <span>pull</span></h2>
+            <p>Compose 파일에 정의된 서비스 이미지를 레지스트리에서 내려받습니다.</p>
+          </div>
+          <div class="usage">
+            <div class="usage-label">Usage</div>
+            <code>docker compose pull [OPTIONS] [SERVICE...]</code>
+          </div>
+        </div>
+
+        <h3>옵션</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>옵션</th><th>기본값</th><th>설명</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><code>--ignore-buildable</code></td>
+                <td><span class="muted">-</span></td>
+                <td>직접 build 가능한 서비스는 무시</td>
+              </tr>
+              <tr>
+                <td><code>--ignore-pull-failures</code></td>
+                <td><span class="muted">-</span></td>
+                <td>일부 이미지 pull 실패를 무시하고 계속</td>
+              </tr>
+              <tr>
+                <td><code>--include-deps</code></td>
+                <td><span class="muted">-</span></td>
+                <td>의존 서비스 이미지도 함께 pull</td>
+              </tr>
+              <tr>
+                <td><code>--policy</code></td>
+                <td><span class="muted">-</span></td>
+                <td>pull 정책: missing 또는 always</td>
+              </tr>
+              <tr>
+                <td><code>-q, --quiet</code></td>
+                <td><span class="muted">-</span></td>
+                <td>진행 출력 숨김</td>
+              </tr></tbody>
+          </table>
+        </div>
+
+        <h3>실행 예시</h3>
+        <div class="examples"><div class="example-line"><code>docker compose pull</code><button class="copy" onclick="copyCode(this)">복사</button></div>
+<div class="example-line"><code>docker compose pull db</code><button class="copy" onclick="copyCode(this)">복사</button></div>
+<div class="example-line"><code>docker compose pull --include-deps web</code><button class="copy" onclick="copyCode(this)">복사</button></div></div>
+      </section>
+    
+      <section id="panel-15" class="panel">
+        <div class="command-head">
+          <div>
+            <div class="eyebrow">DOCKER COMPOSE COMMAND</div>
+            <h2>docker compose <span>push</span></h2>
+            <p>서비스 이미지를 설정된 registry/repository로 업로드합니다.</p>
+          </div>
+          <div class="usage">
+            <div class="usage-label">Usage</div>
+            <code>docker compose push [OPTIONS] [SERVICE...]</code>
+          </div>
+        </div>
+
+        <h3>옵션</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>옵션</th><th>기본값</th><th>설명</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><code>--ignore-push-failures</code></td>
+                <td><span class="muted">-</span></td>
+                <td>일부 push 실패를 무시하고 계속</td>
+              </tr>
+              <tr>
+                <td><code>--include-deps</code></td>
+                <td><span class="muted">-</span></td>
+                <td>의존 서비스 이미지도 함께 push</td>
+              </tr>
+              <tr>
+                <td><code>-q, --quiet</code></td>
+                <td><span class="muted">-</span></td>
+                <td>진행 출력 숨김</td>
+              </tr></tbody>
+          </table>
+        </div>
+
+        <h3>실행 예시</h3>
+        <div class="examples"><div class="example-line"><code>docker compose push</code><button class="copy" onclick="copyCode(this)">복사</button></div>
+<div class="example-line"><code>docker compose push web</code><button class="copy" onclick="copyCode(this)">복사</button></div></div>
+      </section>
+    
+      <section id="panel-16" class="panel">
+        <div class="command-head">
+          <div>
+            <div class="eyebrow">DOCKER COMPOSE COMMAND</div>
+            <h2>docker compose <span>images</span></h2>
+            <p>Compose가 생성한 컨테이너가 사용하는 이미지 목록을 표시합니다.</p>
+          </div>
+          <div class="usage">
+            <div class="usage-label">Usage</div>
+            <code>docker compose images [OPTIONS] [SERVICE...]</code>
+          </div>
+        </div>
+
+        <h3>옵션</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>옵션</th><th>기본값</th><th>설명</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><code>--format</code></td>
+                <td>table</td>
+                <td>출력 형식: table 또는 json</td>
+              </tr>
+              <tr>
+                <td><code>-q, --quiet</code></td>
+                <td><span class="muted">-</span></td>
+                <td>이미지 ID만 표시</td>
+              </tr></tbody>
+          </table>
+        </div>
+
+        <h3>실행 예시</h3>
+        <div class="examples"><div class="example-line"><code>docker compose images</code><button class="copy" onclick="copyCode(this)">복사</button></div>
+<div class="example-line"><code>docker compose images -q</code><button class="copy" onclick="copyCode(this)">복사</button></div></div>
+      </section>
+    
+      <section id="panel-17" class="panel">
+        <div class="command-head">
+          <div>
+            <div class="eyebrow">DOCKER COMPOSE COMMAND</div>
+            <h2>docker compose <span>rm</span></h2>
+            <p>중지된 서비스 컨테이너를 제거합니다.</p>
+          </div>
+          <div class="usage">
+            <div class="usage-label">Usage</div>
+            <code>docker compose rm [OPTIONS] [SERVICE...]</code>
+          </div>
+        </div>
+
+        <h3>옵션</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>옵션</th><th>기본값</th><th>설명</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><code>-f, --force</code></td>
+                <td><span class="muted">-</span></td>
+                <td>삭제 확인 질문 없이 실행</td>
+              </tr>
+              <tr>
+                <td><code>-s, --stop</code></td>
+                <td><span class="muted">-</span></td>
+                <td>필요하면 먼저 컨테이너를 중지한 후 삭제</td>
+              </tr>
+              <tr>
+                <td><code>-v, --volumes</code></td>
+                <td><span class="muted">-</span></td>
+                <td>연결된 anonymous volume도 제거</td>
+              </tr></tbody>
+          </table>
+        </div>
+
+        <h3>실행 예시</h3>
+        <div class="examples"><div class="example-line"><code>docker compose rm</code><button class="copy" onclick="copyCode(this)">복사</button></div>
+<div class="example-line"><code>docker compose rm -f</code><button class="copy" onclick="copyCode(this)">복사</button></div>
+<div class="example-line"><code>docker compose rm -s -f web</code><button class="copy" onclick="copyCode(this)">복사</button></div></div>
+      </section>
+    
+      <section id="panel-18" class="panel">
+        <div class="command-head">
+          <div>
+            <div class="eyebrow">DOCKER COMPOSE COMMAND</div>
+            <h2>docker compose <span>pause</span></h2>
+            <p>실행 중인 서비스 프로세스를 일시정지합니다.</p>
+          </div>
+          <div class="usage">
+            <div class="usage-label">Usage</div>
+            <code>docker compose pause [SERVICE...]</code>
+          </div>
+        </div>
+
+        <h3>옵션</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>옵션</th><th>기본값</th><th>설명</th></tr></thead>
+            <tbody><tr><td colspan="3" class="muted center">별도의 명령 전용 옵션이 없습니다. 공통 옵션은 사용할 수 있습니다.</td></tr></tbody>
+          </table>
+        </div>
+
+        <h3>실행 예시</h3>
+        <div class="examples"><div class="example-line"><code>docker compose pause</code><button class="copy" onclick="copyCode(this)">복사</button></div>
+<div class="example-line"><code>docker compose pause web</code><button class="copy" onclick="copyCode(this)">복사</button></div></div>
+      </section>
+    
+      <section id="panel-19" class="panel">
+        <div class="command-head">
+          <div>
+            <div class="eyebrow">DOCKER COMPOSE COMMAND</div>
+            <h2>docker compose <span>unpause</span></h2>
+            <p>pause된 서비스를 다시 실행 상태로 돌립니다.</p>
+          </div>
+          <div class="usage">
+            <div class="usage-label">Usage</div>
+            <code>docker compose unpause [SERVICE...]</code>
+          </div>
+        </div>
+
+        <h3>옵션</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>옵션</th><th>기본값</th><th>설명</th></tr></thead>
+            <tbody><tr><td colspan="3" class="muted center">별도의 명령 전용 옵션이 없습니다. 공통 옵션은 사용할 수 있습니다.</td></tr></tbody>
+          </table>
+        </div>
+
+        <h3>실행 예시</h3>
+        <div class="examples"><div class="example-line"><code>docker compose unpause</code><button class="copy" onclick="copyCode(this)">복사</button></div>
+<div class="example-line"><code>docker compose unpause web</code><button class="copy" onclick="copyCode(this)">복사</button></div></div>
+      </section>
+    
+      <section id="panel-20" class="panel">
+        <div class="command-head">
+          <div>
+            <div class="eyebrow">DOCKER COMPOSE COMMAND</div>
+            <h2>docker compose <span>kill</span></h2>
+            <p>서비스 컨테이너에 신호를 보내 강제로 중지합니다.</p>
+          </div>
+          <div class="usage">
+            <div class="usage-label">Usage</div>
+            <code>docker compose kill [OPTIONS] [SERVICE...]</code>
+          </div>
+        </div>
+
+        <h3>옵션</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>옵션</th><th>기본값</th><th>설명</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><code>--remove-orphans</code></td>
+                <td><span class="muted">-</span></td>
+                <td>정의되지 않은 서비스 컨테이너 제거</td>
+              </tr>
+              <tr>
+                <td><code>-s, --signal</code></td>
+                <td>SIGKILL</td>
+                <td>컨테이너에 보낼 signal 지정</td>
+              </tr></tbody>
+          </table>
+        </div>
+
+        <h3>실행 예시</h3>
+        <div class="examples"><div class="example-line"><code>docker compose kill web</code><button class="copy" onclick="copyCode(this)">복사</button></div>
+<div class="example-line"><code>docker compose kill -s SIGINT web</code><button class="copy" onclick="copyCode(this)">복사</button></div></div>
+      </section>
+    
+      <section id="panel-21" class="panel">
+        <div class="command-head">
+          <div>
+            <div class="eyebrow">DOCKER COMPOSE COMMAND</div>
+            <h2>docker compose <span>stats</span></h2>
+            <p>CPU, 메모리 등 컨테이너 자원 사용량을 실시간으로 확인합니다.</p>
+          </div>
+          <div class="usage">
+            <div class="usage-label">Usage</div>
+            <code>docker compose stats [OPTIONS] [SERVICE]</code>
+          </div>
+        </div>
+
+        <h3>옵션</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>옵션</th><th>기본값</th><th>설명</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><code>-a, --all</code></td>
+                <td><span class="muted">-</span></td>
+                <td>중지된 컨테이너를 포함하여 표시</td>
+              </tr>
+              <tr>
+                <td><code>--format</code></td>
+                <td><span class="muted">-</span></td>
+                <td>table/json/Go template 형식으로 출력</td>
+              </tr>
+              <tr>
+                <td><code>--no-stream</code></td>
+                <td><span class="muted">-</span></td>
+                <td>한 번만 측정하고 종료</td>
+              </tr>
+              <tr>
+                <td><code>--no-trunc</code></td>
+                <td><span class="muted">-</span></td>
+                <td>출력 내용을 줄이지 않음</td>
+              </tr></tbody>
+          </table>
+        </div>
+
+        <h3>실행 예시</h3>
+        <div class="examples"><div class="example-line"><code>docker compose stats</code><button class="copy" onclick="copyCode(this)">복사</button></div>
+<div class="example-line"><code>docker compose stats --no-stream</code><button class="copy" onclick="copyCode(this)">복사</button></div>
+<div class="example-line"><code>docker compose stats web</code><button class="copy" onclick="copyCode(this)">복사</button></div></div>
+      </section>
+    
+      <section id="panel-22" class="panel">
+        <div class="command-head">
+          <div>
+            <div class="eyebrow">DOCKER COMPOSE COMMAND</div>
+            <h2>docker compose <span>top</span></h2>
+            <p>서비스 컨테이너 내부에서 실행 중인 프로세스를 표시합니다.</p>
+          </div>
+          <div class="usage">
+            <div class="usage-label">Usage</div>
+            <code>docker compose top [SERVICES...]</code>
+          </div>
+        </div>
+
+        <h3>옵션</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>옵션</th><th>기본값</th><th>설명</th></tr></thead>
+            <tbody><tr><td colspan="3" class="muted center">별도의 명령 전용 옵션이 없습니다. 공통 옵션은 사용할 수 있습니다.</td></tr></tbody>
+          </table>
+        </div>
+
+        <h3>실행 예시</h3>
+        <div class="examples"><div class="example-line"><code>docker compose top</code><button class="copy" onclick="copyCode(this)">복사</button></div>
+<div class="example-line"><code>docker compose top web</code><button class="copy" onclick="copyCode(this)">복사</button></div></div>
+      </section>
+    
+      <section id="panel-23" class="panel">
+        <div class="command-head">
+          <div>
+            <div class="eyebrow">DOCKER COMPOSE COMMAND</div>
+            <h2>docker compose <span>events</span></h2>
+            <p>Compose 프로젝트 컨테이너에서 발생하는 이벤트를 실시간으로 표시합니다.</p>
+          </div>
+          <div class="usage">
+            <div class="usage-label">Usage</div>
+            <code>docker compose events [OPTIONS] [SERVICE...]</code>
+          </div>
+        </div>
+
+        <h3>옵션</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>옵션</th><th>기본값</th><th>설명</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><code>--json</code></td>
+                <td><span class="muted">-</span></td>
+                <td>이벤트를 JSON 스트림으로 출력</td>
+              </tr>
+              <tr>
+                <td><code>--since</code></td>
+                <td><span class="muted">-</span></td>
+                <td>지정 시각 이후 이벤트 표시</td>
+              </tr>
+              <tr>
+                <td><code>--until</code></td>
+                <td><span class="muted">-</span></td>
+                <td>지정 시각까지 이벤트 표시</td>
+              </tr></tbody>
+          </table>
+        </div>
+
+        <h3>실행 예시</h3>
+        <div class="examples"><div class="example-line"><code>docker compose events</code><button class="copy" onclick="copyCode(this)">복사</button></div>
+<div class="example-line"><code>docker compose events --json</code><button class="copy" onclick="copyCode(this)">복사</button></div></div>
+      </section>
+    
+      <section id="panel-24" class="panel">
+        <div class="command-head">
+          <div>
+            <div class="eyebrow">DOCKER COMPOSE COMMAND</div>
+            <h2>docker compose <span>cp</span></h2>
+            <p>로컬과 서비스 컨테이너 사이에서 파일 또는 폴더를 복사합니다.</p>
+          </div>
+          <div class="usage">
+            <div class="usage-label">Usage</div>
+            <code>docker compose cp [OPTIONS] SERVICE:SRC_PATH DEST_PATH</code>
+          </div>
+        </div>
+
+        <h3>옵션</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>옵션</th><th>기본값</th><th>설명</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><code>--all</code></td>
+                <td><span class="muted">-</span></td>
+                <td>docker compose run으로 생성된 컨테이너도 포함</td>
+              </tr>
+              <tr>
+                <td><code>-a, --archive</code></td>
+                <td><span class="muted">-</span></td>
+                <td>UID/GID 정보를 유지하는 archive 모드</td>
+              </tr>
+              <tr>
+                <td><code>-L, --follow-link</code></td>
+                <td><span class="muted">-</span></td>
+                <td>원본의 symbolic link를 따라감</td>
+              </tr>
+              <tr>
+                <td><code>--index</code></td>
+                <td><span class="muted">-</span></td>
+                <td>여러 replica 중 특정 컨테이너 선택</td>
+              </tr></tbody>
+          </table>
+        </div>
+
+        <h3>실행 예시</h3>
+        <div class="examples"><div class="example-line"><code>docker compose cp web:/usr/share/nginx/html/index.html .</code><button class="copy" onclick="copyCode(this)">복사</button></div>
+<div class="example-line"><code>docker compose cp ./config.json web:/app/config.json</code><button class="copy" onclick="copyCode(this)">복사</button></div></div>
+      </section>
+    
+      <section id="panel-25" class="panel">
+        <div class="command-head">
+          <div>
+            <div class="eyebrow">DOCKER COMPOSE COMMAND</div>
+            <h2>docker compose <span>attach</span></h2>
+            <p>실행 중인 서비스 컨테이너의 표준 입력/출력/오류 스트림에 연결합니다.</p>
+          </div>
+          <div class="usage">
+            <div class="usage-label">Usage</div>
+            <code>docker compose attach [OPTIONS] SERVICE</code>
+          </div>
+        </div>
+
+        <h3>옵션</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>옵션</th><th>기본값</th><th>설명</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><code>--detach-keys</code></td>
+                <td><span class="muted">-</span></td>
+                <td>attach 상태에서 빠져나올 키 조합 변경</td>
+              </tr>
+              <tr>
+                <td><code>--index</code></td>
+                <td><span class="muted">-</span></td>
+                <td>여러 replica 중 특정 컨테이너 선택</td>
+              </tr>
+              <tr>
+                <td><code>--no-stdin</code></td>
+                <td><span class="muted">-</span></td>
+                <td>STDIN 연결하지 않음</td>
+              </tr>
+              <tr>
+                <td><code>--sig-proxy</code></td>
+                <td>true</td>
+                <td>받은 signal을 컨테이너 프로세스로 전달</td>
+              </tr></tbody>
+          </table>
+        </div>
+
+        <h3>실행 예시</h3>
+        <div class="examples"><div class="example-line"><code>docker compose attach web</code><button class="copy" onclick="copyCode(this)">복사</button></div>
+<div class="example-line"><code>docker compose attach --index 2 web</code><button class="copy" onclick="copyCode(this)">복사</button></div></div>
+      </section>
+    
+      <section id="panel-26" class="panel">
+        <div class="command-head">
+          <div>
+            <div class="eyebrow">DOCKER COMPOSE COMMAND</div>
+            <h2>docker compose <span>commit</span></h2>
+            <p>서비스 컨테이너의 현재 변경 내용을 새로운 이미지로 저장합니다.</p>
+          </div>
+          <div class="usage">
+            <div class="usage-label">Usage</div>
+            <code>docker compose commit [OPTIONS] SERVICE [REPOSITORY[:TAG]]</code>
+          </div>
+        </div>
+
+        <h3>옵션</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>옵션</th><th>기본값</th><th>설명</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><code>-a, --author</code></td>
+                <td><span class="muted">-</span></td>
+                <td>작성자 정보</td>
+              </tr>
+              <tr>
+                <td><code>-c, --change</code></td>
+                <td><span class="muted">-</span></td>
+                <td>생성 이미지에 Dockerfile 명령 적용</td>
+              </tr>
+              <tr>
+                <td><code>--index</code></td>
+                <td><span class="muted">-</span></td>
+                <td>여러 replica 중 특정 컨테이너 선택</td>
+              </tr>
+              <tr>
+                <td><code>-m, --message</code></td>
+                <td><span class="muted">-</span></td>
+                <td>commit 메시지</td>
+              </tr>
+              <tr>
+                <td><code>-p, --pause</code></td>
+                <td>true</td>
+                <td>commit 중 컨테이너 일시정지</td>
+              </tr></tbody>
+          </table>
+        </div>
+
+        <h3>실행 예시</h3>
+        <div class="examples"><div class="example-line"><code>docker compose commit web my-web:snapshot</code><button class="copy" onclick="copyCode(this)">복사</button></div>
+<div class="example-line"><code>docker compose commit -m &quot;test snapshot&quot; web my-web:v1</code><button class="copy" onclick="copyCode(this)">복사</button></div></div>
+      </section>
+    
+      <section id="panel-27" class="panel">
+        <div class="command-head">
+          <div>
+            <div class="eyebrow">DOCKER COMPOSE COMMAND</div>
+            <h2>docker compose <span>export</span></h2>
+            <p>서비스 컨테이너의 파일시스템을 tar 아카이브로 내보냅니다.</p>
+          </div>
+          <div class="usage">
+            <div class="usage-label">Usage</div>
+            <code>docker compose export [OPTIONS] SERVICE</code>
+          </div>
+        </div>
+
+        <h3>옵션</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>옵션</th><th>기본값</th><th>설명</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><code>--index</code></td>
+                <td><span class="muted">-</span></td>
+                <td>여러 replica 중 특정 컨테이너 선택</td>
+              </tr>
+              <tr>
+                <td><code>-o, --output</code></td>
+                <td><span class="muted">-</span></td>
+                <td>STDOUT 대신 파일로 저장</td>
+              </tr></tbody>
+          </table>
+        </div>
+
+        <h3>실행 예시</h3>
+        <div class="examples"><div class="example-line"><code>docker compose export -o web.tar web</code><button class="copy" onclick="copyCode(this)">복사</button></div></div>
+      </section>
+    
+      <section id="panel-28" class="panel">
+        <div class="command-head">
+          <div>
+            <div class="eyebrow">DOCKER COMPOSE COMMAND</div>
+            <h2>docker compose <span>ls</span></h2>
+            <p>현재 Docker에서 관리되는 Compose 프로젝트 목록을 확인합니다.</p>
+          </div>
+          <div class="usage">
+            <div class="usage-label">Usage</div>
+            <code>docker compose ls [OPTIONS]</code>
+          </div>
+        </div>
+
+        <h3>옵션</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>옵션</th><th>기본값</th><th>설명</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><code>-a, --all</code></td>
+                <td><span class="muted">-</span></td>
+                <td>중지된 Compose 프로젝트도 표시</td>
+              </tr>
+              <tr>
+                <td><code>--filter</code></td>
+                <td><span class="muted">-</span></td>
+                <td>조건에 맞는 프로젝트만 필터링</td>
+              </tr>
+              <tr>
+                <td><code>--format</code></td>
+                <td>table</td>
+                <td>출력 형식: table 또는 json</td>
+              </tr>
+              <tr>
+                <td><code>-q, --quiet</code></td>
+                <td><span class="muted">-</span></td>
+                <td>프로젝트 이름만 표시</td>
+              </tr></tbody>
+          </table>
+        </div>
+
+        <h3>실행 예시</h3>
+        <div class="examples"><div class="example-line"><code>docker compose ls</code><button class="copy" onclick="copyCode(this)">복사</button></div>
+<div class="example-line"><code>docker compose ls -a</code><button class="copy" onclick="copyCode(this)">복사</button></div>
+<div class="example-line"><code>docker compose ls --format json</code><button class="copy" onclick="copyCode(this)">복사</button></div></div>
+      </section>
+    
+      <section id="panel-29" class="panel">
+        <div class="command-head">
+          <div>
+            <div class="eyebrow">DOCKER COMPOSE COMMAND</div>
+            <h2>docker compose <span>scale</span></h2>
+            <p>서비스 컨테이너의 실행 개수(replica)를 변경합니다.</p>
+          </div>
+          <div class="usage">
+            <div class="usage-label">Usage</div>
+            <code>docker compose scale [SERVICE=REPLICAS...]</code>
+          </div>
+        </div>
+
+        <h3>옵션</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>옵션</th><th>기본값</th><th>설명</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><code>--no-deps</code></td>
+                <td><span class="muted">-</span></td>
+                <td>연결된 의존 서비스는 시작하지 않음</td>
+              </tr></tbody>
+          </table>
+        </div>
+
+        <h3>실행 예시</h3>
+        <div class="examples"><div class="example-line"><code>docker compose scale web=3</code><button class="copy" onclick="copyCode(this)">복사</button></div>
+<div class="example-line"><code>docker compose scale web=3 worker=2</code><button class="copy" onclick="copyCode(this)">복사</button></div></div>
+      </section>
+    
+      <section id="panel-30" class="panel">
+        <div class="command-head">
+          <div>
+            <div class="eyebrow">DOCKER COMPOSE COMMAND</div>
+            <h2>docker compose <span>wait</span></h2>
+            <p>지정한 서비스 컨테이너가 종료될 때까지 명령 실행을 막고 기다립니다.</p>
+          </div>
+          <div class="usage">
+            <div class="usage-label">Usage</div>
+            <code>docker compose wait SERVICE [SERVICE...] [OPTIONS]</code>
+          </div>
+        </div>
+
+        <h3>옵션</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>옵션</th><th>기본값</th><th>설명</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><code>--down-project</code></td>
+                <td><span class="muted">-</span></td>
+                <td>첫 컨테이너가 중지되면 프로젝트를 내림</td>
+              </tr></tbody>
+          </table>
+        </div>
+
+        <h3>실행 예시</h3>
+        <div class="examples"><div class="example-line"><code>docker compose wait web</code><button class="copy" onclick="copyCode(this)">복사</button></div>
+<div class="example-line"><code>docker compose wait web worker</code><button class="copy" onclick="copyCode(this)">복사</button></div></div>
+      </section>
+    
+      <section id="panel-31" class="panel">
+        <div class="command-head">
+          <div>
+            <div class="eyebrow">DOCKER COMPOSE COMMAND</div>
+            <h2>docker compose <span>watch</span></h2>
+            <p>소스 변경을 감시하여 컨테이너 내용을 동기화하거나 재빌드합니다.</p>
+          </div>
+          <div class="usage">
+            <div class="usage-label">Usage</div>
+            <code>docker compose watch [SERVICE...]</code>
+          </div>
+        </div>
+
+        <h3>옵션</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>옵션</th><th>기본값</th><th>설명</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><code>--no-up</code></td>
+                <td><span class="muted">-</span></td>
+                <td>watch 전에 서비스를 build/start하지 않음</td>
+              </tr>
+              <tr>
+                <td><code>--prune</code></td>
+                <td>true</td>
+                <td>재빌드 후 dangling image 정리</td>
+              </tr>
+              <tr>
+                <td><code>--quiet</code></td>
+                <td><span class="muted">-</span></td>
+                <td>빌드 출력 숨김</td>
+              </tr></tbody>
+          </table>
+        </div>
+
+        <h3>실행 예시</h3>
+        <div class="examples"><div class="example-line"><code>docker compose watch</code><button class="copy" onclick="copyCode(this)">복사</button></div>
+<div class="example-line"><code>docker compose watch web</code><button class="copy" onclick="copyCode(this)">복사</button></div></div>
+      </section>
+    
+      <section id="panel-32" class="panel">
+        <div class="command-head">
+          <div>
+            <div class="eyebrow">DOCKER COMPOSE COMMAND</div>
+            <h2>docker compose <span>version</span></h2>
+            <p>설치된 Docker Compose 버전을 표시합니다.</p>
+          </div>
+          <div class="usage">
+            <div class="usage-label">Usage</div>
+            <code>docker compose version [OPTIONS]</code>
+          </div>
+        </div>
+
+        <h3>옵션</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>옵션</th><th>기본값</th><th>설명</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><code>-f, --format</code></td>
+                <td><span class="muted">-</span></td>
+                <td>출력 형식: pretty 또는 json</td>
+              </tr>
+              <tr>
+                <td><code>--short</code></td>
+                <td><span class="muted">-</span></td>
+                <td>버전 번호만 표시</td>
+              </tr></tbody>
+          </table>
+        </div>
+
+        <h3>실행 예시</h3>
+        <div class="examples"><div class="example-line"><code>docker compose version</code><button class="copy" onclick="copyCode(this)">복사</button></div>
+<div class="example-line"><code>docker compose version --short</code><button class="copy" onclick="copyCode(this)">복사</button></div></div>
+      </section>
+    
+      <section id="panel-33" class="panel">
+        <div class="command-head">
+          <div>
+            <div class="eyebrow">DOCKER COMPOSE COMMAND</div>
+            <h2>docker compose <span>volumes</span></h2>
+            <p>Compose 프로젝트에서 사용하는 볼륨 목록을 표시합니다.</p>
+          </div>
+          <div class="usage">
+            <div class="usage-label">Usage</div>
+            <code>docker compose volumes [OPTIONS] [SERVICE...]</code>
+          </div>
+        </div>
+
+        <h3>옵션</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>옵션</th><th>기본값</th><th>설명</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><code>--format</code></td>
+                <td>table</td>
+                <td>출력 형식을 table/json/template으로 지정</td>
+              </tr>
+              <tr>
+                <td><code>-q, --quiet</code></td>
+                <td><span class="muted">-</span></td>
+                <td>볼륨 이름만 표시</td>
+              </tr></tbody>
+          </table>
+        </div>
+
+        <h3>실행 예시</h3>
+        <div class="examples"><div class="example-line"><code>docker compose volumes</code><button class="copy" onclick="copyCode(this)">복사</button></div>
+<div class="example-line"><code>docker compose volumes -q</code><button class="copy" onclick="copyCode(this)">복사</button></div></div>
+      </section>
+    
+      <section id="panel-34" class="panel">
+        <div class="command-head">
+          <div>
+            <div class="eyebrow">DOCKER COMPOSE COMMAND</div>
+            <h2>docker compose <span>convert</span></h2>
+            <p>Compose 파일을 플랫폼에서 사용할 최종 표준 형태로 변환합니다. config의 별칭으로도 사용됩니다.</p>
+          </div>
+          <div class="usage">
+            <div class="usage-label">Usage</div>
+            <code>docker compose convert [OPTIONS] [SERVICE...]</code>
+          </div>
+        </div>
+
+        <h3>옵션</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>옵션</th><th>기본값</th><th>설명</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><code>--format</code></td>
+                <td>yaml</td>
+                <td>출력 형식: yaml 또는 json</td>
+              </tr>
+              <tr>
+                <td><code>--hash</code></td>
+                <td><span class="muted">-</span></td>
+                <td>서비스 설정 hash 출력</td>
+              </tr>
+              <tr>
+                <td><code>--images</code></td>
+                <td><span class="muted">-</span></td>
+                <td>이미지 이름 출력</td>
+              </tr>
+              <tr>
+                <td><code>--no-consistency</code></td>
+                <td><span class="muted">-</span></td>
+                <td>설정 일관성 검사 생략</td>
+              </tr>
+              <tr>
+                <td><code>--no-interpolate</code></td>
+                <td><span class="muted">-</span></td>
+                <td>환경변수 치환 안 함</td>
+              </tr>
+              <tr>
+                <td><code>--no-normalize</code></td>
+                <td><span class="muted">-</span></td>
+                <td>모델 정규화 안 함</td>
+              </tr>
+              <tr>
+                <td><code>-o, --output</code></td>
+                <td><span class="muted">-</span></td>
+                <td>결과를 파일에 저장</td>
+              </tr>
+              <tr>
+                <td><code>--profiles</code></td>
+                <td><span class="muted">-</span></td>
+                <td>profile 이름 출력</td>
+              </tr>
+              <tr>
+                <td><code>-q, --quiet</code></td>
+                <td><span class="muted">-</span></td>
+                <td>출력 없이 검증</td>
+              </tr>
+              <tr>
+                <td><code>--resolve-image-digests</code></td>
+                <td><span class="muted">-</span></td>
+                <td>이미지 tag를 digest에 고정</td>
+              </tr>
+              <tr>
+                <td><code>--services</code></td>
+                <td><span class="muted">-</span></td>
+                <td>서비스 이름 출력</td>
+              </tr>
+              <tr>
+                <td><code>--volumes</code></td>
+                <td><span class="muted">-</span></td>
+                <td>볼륨 이름 출력</td>
+              </tr></tbody>
+          </table>
+        </div>
+
+        <h3>실행 예시</h3>
+        <div class="examples"><div class="example-line"><code>docker compose convert</code><button class="copy" onclick="copyCode(this)">복사</button></div>
+<div class="example-line"><code>docker compose convert --format json</code><button class="copy" onclick="copyCode(this)">복사</button></div></div>
+      </section>
+    
+      <section id="panel-35" class="panel">
+        <div class="command-head">
+          <div>
+            <div class="eyebrow">DOCKER COMPOSE COMMAND</div>
+            <h2>docker compose <span>publish</span></h2>
+            <p>Compose 애플리케이션을 OCI artifact 형태로 게시합니다. 일반 입문 실습에서는 자주 쓰지 않습니다.</p>
+          </div>
+          <div class="usage">
+            <div class="usage-label">Usage</div>
+            <code>docker compose publish [OPTIONS] REPOSITORY[:TAG]</code>
+          </div>
+        </div>
+
+        <h3>옵션</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>옵션</th><th>기본값</th><th>설명</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><code>--app</code></td>
+                <td><span class="muted">-</span></td>
+                <td>참조 이미지까지 포함한 Compose application 게시</td>
+              </tr>
+              <tr>
+                <td><code>--oci-version</code></td>
+                <td><span class="muted">-</span></td>
+                <td>OCI image/artifact specification 버전 지정</td>
+              </tr>
+              <tr>
+                <td><code>--resolve-image-digests</code></td>
+                <td><span class="muted">-</span></td>
+                <td>image tag를 digest에 고정</td>
+              </tr>
+              <tr>
+                <td><code>--with-env</code></td>
+                <td><span class="muted">-</span></td>
+                <td>게시 artifact에 환경변수 포함</td>
+              </tr>
+              <tr>
+                <td><code>-y, --yes</code></td>
+                <td><span class="muted">-</span></td>
+                <td>질문에 자동으로 yes 선택</td>
+              </tr></tbody>
+          </table>
+        </div>
+
+        <h3>실행 예시</h3>
+        <div class="examples"><div class="example-line"><code>docker compose publish myrepo/myapp:v1</code><button class="copy" onclick="copyCode(this)">복사</button></div></div>
+      </section>
+    
+      <section id="panel-36" class="panel">
+        <div class="command-head">
+          <div>
+            <div class="eyebrow">DOCKER COMPOSE COMMAND</div>
+            <h2>docker compose <span>bridge</span></h2>
+            <p>Compose 파일을 Kubernetes manifest, Helm chart 등 다른 모델로 변환하는 고급 기능입니다.</p>
+          </div>
+          <div class="usage">
+            <div class="usage-label">Usage</div>
+            <code>docker compose bridge CMD [OPTIONS]</code>
+          </div>
+        </div>
+
+        <h3>옵션</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>옵션</th><th>기본값</th><th>설명</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><code>convert</code></td>
+                <td><span class="muted">-</span></td>
+                <td>Compose 파일을 다른 모델로 변환하는 하위 명령</td>
+              </tr>
+              <tr>
+                <td><code>transformations</code></td>
+                <td><span class="muted">-</span></td>
+                <td>변환 이미지 관리 하위 명령</td>
+              </tr></tbody>
+          </table>
+        </div>
+
+        <h3>실행 예시</h3>
+        <div class="examples"><div class="example-line"><code>docker compose bridge convert</code><button class="copy" onclick="copyCode(this)">복사</button></div></div>
+      </section>
+    
+
+  <p class="footer-note">
+    기준: Docker 공식 CLI 문서(2026-09-30 확인). 전역 옵션은 Compose 버전에 따라 각 하위 명령의 --help에도 함께 표시될 수 있습니다.
+  </p>
+</main>
+
+<script>
+function openTab(btn) {
+  document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(x => x.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById(btn.dataset.target).classList.add('active');
+}
+
+function filterTabs() {
+  const q = document.getElementById('search').value.trim().toLowerCase();
+  const tabs = [...document.querySelectorAll('.tab')];
+  tabs.forEach(t => {
+    const match = t.textContent.toLowerCase().includes(q);
+    t.classList.toggle('hidden-tab', !match);
+  });
+  if (q) {
+    const first = tabs.find(t => !t.classList.contains('hidden-tab'));
+    if (first) openTab(first);
+  }
+}
+
+function copyCode(btn) {
+  const code = btn.parentElement.querySelector('code').innerText;
+  navigator.clipboard.writeText(code).then(() => {
+    const old = btn.textContent;
+    btn.textContent = '복사됨';
+    setTimeout(() => btn.textContent = old, 900);
+  });
+}
+</script>
+</body>
+</html>

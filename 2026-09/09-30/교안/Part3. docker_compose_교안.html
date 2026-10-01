@@ -1,0 +1,1092 @@
+<!DOCTYPE html><html lang="ko"><head><meta charset="utf-8"><meta content="width=device-width,initial-scale=1.0" name="viewport"><title>docker compose</title><style>
+:root{
+  --ink:#1c1b19; --paper:#ffffff; --soft:#f7f6f3; --soft2:#efedea;
+  --line:#e3e0db; --line2:#cfcbc4; --muted:#86827b; --muted2:#5b574f;
+  --accent:#b23c0a; --accent-soft:#fdf3ec; --ink2:#2f2d2a;
+  --pn:#b23c0a; --pnb:#e8c3ad; --pns:#fdf5f0;
+  --pv:#1d4ed8; --pvb:#c3d0f2; --pvs:#f2f5fd;
+  --pa:#15803d; --pab:#bcdcc8; --pas:#f1f7f3;
+  --pd:#6d28d9; --pdb:#d4c6f5; --pds:#f7f3fe;
+  --px:#b91c1c; --pxb:#f0c3c3; --pxs:#fdf2f2;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+body{font-family:'Noto Sans KR','Malgun Gothic',sans-serif;color:var(--ink);
+  background:#eceae5;line-height:1.65;font-weight:400;letter-spacing:-.003em}
+
+.page{width:210mm;min-height:297mm;background:var(--paper);margin:8mm auto;
+  padding:17mm 18mm 14mm;position:relative;box-shadow:0 1px 14px rgba(0,0,0,.07)}
+@page{size:A4 portrait;margin:0}
+@media print{
+  body{background:#fff}
+  .page{margin:0;box-shadow:none;page-break-after:always;break-after:page}
+  .page:last-child{page-break-after:auto}
+}
+
+/* ── 러닝헤드 ── */
+.rh{display:flex;justify-content:space-between;align-items:baseline;
+  margin-bottom:22px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+.rh .l{font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--muted2)}
+.rh .l b{color:var(--accent)}
+.rh .r{font-size:10.5px;color:var(--muted);letter-spacing:.04em;display:flex;align-items:baseline;gap:12px}
+.rh .r .pg{font-family:'Consolas','JetBrains Mono',monospace;font-size:12px;font-weight:700;
+  color:var(--ink);letter-spacing:.06em;border:1px solid var(--line2);padding:1px 7px;border-radius:3px}
+
+/* ── 제목 ── */
+.kicker{font-size:11px;font-weight:700;letter-spacing:.12em;color:var(--accent);margin-bottom:7px}
+h1{font-size:26px;font-weight:900;line-height:1.25;letter-spacing:-.02em;margin-bottom:9px}
+.lede{font-size:13px;color:var(--muted2);line-height:1.7;margin-bottom:14px;max-width:96%}
+.lede em,em{font-style:normal;color:var(--accent);font-weight:700}
+h2{font-size:12.5px;font-weight:700;letter-spacing:.09em;color:var(--accent);
+  margin:17px 0 9px;display:flex;align-items:center;gap:10px}
+h2::after{content:"";flex:1;height:1px;background:var(--line)}
+h3{font-size:15px;font-weight:700;margin:14px 0 5px}
+p{font-size:13px;line-height:1.75;margin:8px 0;color:var(--ink2)}
+strong{font-weight:700;color:var(--ink)}
+.mn{font-size:11.5px;color:var(--muted);margin-top:5px}
+code{font-family:'Consolas','JetBrains Mono',monospace;background:var(--soft2);
+  padding:1px 5px;border-radius:3px;font-size:12px;color:var(--accent)}
+
+ul,ol{margin:9px 0;padding-left:0;list-style:none}
+li{font-size:13px;line-height:1.7;margin:8px 0;padding-left:010px;padding-left:22px;position:relative;color:var(--ink2)}
+ul li::before{content:"";position:absolute;left:3px;top:10px;width:5px;height:5px;
+  background:var(--accent);border-radius:50%}
+li strong{color:var(--ink)}
+
+/* ── 표 ── */
+table{width:100%;border-collapse:collapse;margin:13px 0;font-size:12.5px}
+th,td{padding:9px 12px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line)}
+thead th{border-bottom:1.5px solid var(--ink);font-weight:700;font-size:11.5px;color:var(--ink);background:var(--soft)}
+tbody td{color:var(--muted2)}
+tbody td b{color:var(--ink);font-weight:700}
+table.zebra tbody tr:nth-child(even) td{background:#faf9f7}
+
+/* ── 그리드 카드 ── */
+.grid{display:grid;gap:1px;background:var(--line);border:1px solid var(--line);margin:14px 0}
+.grid.g3{grid-template-columns:repeat(3,1fr)}
+.grid.g2{grid-template-columns:repeat(2,1fr)}
+.grid.g4{grid-template-columns:repeat(4,1fr)}
+.cell{background:var(--paper);padding:15px 14px}
+.cell .num{font-size:10.5px;font-weight:700;letter-spacing:.08em;color:var(--accent)}
+.cell h4{font-size:13.5px;font-weight:700;margin:6px 0 4px;line-height:1.35}
+.cell p{font-size:11.5px;color:var(--muted2);margin:0;line-height:1.6}
+
+/* ── 강조 박스 ── */
+.point{border-left:2.5px solid var(--accent);padding:3px 0 3px 16px;margin:16px 0}
+.point .pl{font-size:10.5px;font-weight:700;letter-spacing:.09em;color:var(--accent);margin-bottom:4px}
+.point p{margin:0;font-size:13px;color:var(--ink2)}
+.note{background:var(--soft);border:1px solid var(--line);border-radius:4px;
+  padding:12px 15px;margin:14px 0;font-size:12.5px;color:var(--muted2);line-height:1.7}
+.note strong{color:var(--accent)}
+.warn{background:var(--pxs);border:1px solid var(--pxb);border-radius:4px;
+  padding:12px 15px;margin:14px 0;font-size:12.5px;color:var(--ink2);line-height:1.7}
+.warn b{color:var(--px)}
+
+.mission{border:1px solid var(--line2);border-left:3px solid var(--accent);
+  background:var(--accent-soft);padding:13px 16px;margin:13px 0;border-radius:4px}
+.mission b{font-size:10.5px;font-weight:700;letter-spacing:.1em;color:var(--accent)}
+.mission h3{font-size:14px;margin:4px 0 0;line-height:1.5}
+.mission .wy{margin:9px 0 0;padding-top:8px;border-top:1px solid var(--line2);font-size:12px;color:var(--muted2);line-height:1.65}
+.mission .wy b{color:var(--ink);font-size:10.5px;letter-spacing:.06em}
+.why{background:var(--soft);border:1px solid var(--line2);border-left:3px solid var(--ink);
+  padding:12px 16px;margin:13px 0;border-radius:4px}
+.why p{color:var(--ink2);margin:0;font-size:12.5px}
+.why b{color:var(--ink);font-size:10.5px;letter-spacing:.08em}
+
+.kw{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
+.kw span{background:#fff;border:1px solid var(--line2);padding:4px 10px;border-radius:20px;
+  font-size:11px;font-weight:700;color:var(--ink2)}
+.kw span::before{content:"# ";color:var(--accent)}
+
+/* ── 정의 목록 / 비유 ── */
+.deflist{margin:12px 0}
+.deflist .d{display:flex;gap:16px;padding:11px 0;border-bottom:1px solid var(--line)}
+.deflist .d:last-child{border-bottom:none}
+.deflist .dt{flex:0 0 27%;font-weight:700;font-size:13px}
+.deflist .dt small{display:block;font-weight:400;color:var(--muted);font-size:11px;margin-top:1px}
+.deflist .dd{flex:1;font-size:12.5px;color:var(--muted2);line-height:1.65}
+
+/* ── 실습 박스 (검정 헤더 제거) ── */
+.lab{margin:16px 0;border:1.5px solid var(--ink);background:#fff}
+.lab-head{padding:10px 18px;display:flex;align-items:center;gap:12px;
+  border-bottom:1.5px solid var(--ink);background:var(--soft)}
+.lab-head .badge{font-size:10px;font-weight:700;letter-spacing:.1em;
+  border:1px solid var(--ink);padding:2px 9px;border-radius:2px;color:var(--ink);background:#fff}
+.lab-head h3{font-size:16px;margin:0;font-weight:700;color:var(--ink)}
+.lab-head .t{margin-left:auto;font-size:10.5px;color:var(--muted);font-family:'Consolas',monospace}
+.lab-body{padding:15px 18px 16px}
+.steps{counter-reset:st;list-style:none;padding:0;margin:0}
+.steps>li{counter-increment:st;position:relative;padding:0 0 13px 40px;margin:0;font-size:13.5px;
+  line-height:1.55;border-left:1px solid var(--line2);margin-left:13px}
+.steps>li:last-child{border-left:1px solid transparent;padding-bottom:0}
+.steps>li::before{content:counter(st);position:absolute;left:-13px;top:-2px;width:26px;height:26px;
+  background:#fff;border:1.5px solid var(--ink);color:var(--ink);border-radius:50%;
+  display:grid;place-items:center;font-weight:700;font-size:12.5px}
+.steps>li .lt{font-weight:700;color:var(--ink)}
+.steps>li .ls{display:block;font-size:12px;color:var(--muted);font-weight:400;margin-top:2px;line-height:1.6}
+
+/* ── 프롬프트 박스 ── */
+.say{margin:10px 0;background:#fff;border:1px solid var(--line2);border-left:3px solid var(--accent);
+  border-radius:4px;padding:10px 13px}
+.say .sl{font-size:10.5px;font-weight:700;letter-spacing:.05em;color:var(--accent);
+  margin-bottom:4px;display:flex;align-items:center;gap:6px}
+.say .sc{font-family:'Consolas','JetBrains Mono',monospace;font-size:12px;line-height:1.65;
+  color:var(--ink);font-weight:500;white-space:pre-wrap}
+.copybtn{margin-left:auto;font-family:'Noto Sans KR',sans-serif;font-size:10px;font-weight:700;
+  letter-spacing:0;color:var(--muted2);background:#fff;border:1px solid var(--line2);
+  border-radius:3px;padding:2px 9px;cursor:pointer;line-height:1.4}
+.copybtn:hover{border-color:var(--accent);color:var(--accent)}
+@media print{.copybtn{display:none}}
+
+/* ── 품사/토큰 칩 ── */
+.chip{display:inline-flex;align-items:baseline;gap:5px;font-size:12px;font-weight:700;
+  padding:3px 8px;border-radius:3px;border:1px solid;margin:3px 4px 3px 0;line-height:1.3}
+.c-n{color:var(--pn);border-color:var(--pnb);background:var(--pns)}
+.c-v{color:var(--pv);border-color:var(--pvb);background:var(--pvs)}
+.c-a{color:var(--pa);border-color:var(--pab);background:var(--pas)}
+.c-d{color:var(--pd);border-color:var(--pdb);background:var(--pds)}
+.c-x{color:var(--px);border-color:var(--pxb);background:var(--pxs)}
+.c-o{color:var(--muted);border-color:var(--line2);background:var(--soft);font-weight:400}
+
+.parse{border:1px solid var(--line2);background:#fff;margin:13px 0}
+.parse .ph{background:var(--soft);border-bottom:1px solid var(--line);padding:6px 14px;
+  font-size:10.5px;font-weight:700;letter-spacing:.06em;color:var(--muted2);display:flex;justify-content:space-between}
+.parse .pb{padding:13px 14px 14px}
+.parse .src{font-size:14.5px;font-weight:500;color:var(--ink);line-height:1.7}
+.parse .arw{font-size:10.5px;color:var(--muted);letter-spacing:.06em;margin:11px 0 7px;
+  display:flex;align-items:center;gap:10px}
+.parse .arw::after{content:"";flex:1;height:1px;background:var(--line)}
+
+/* ── before / after ── */
+.ba{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);
+  border:1px solid var(--line);margin:13px 0}
+.ba>div{background:#fff;padding:12px 14px}
+.ba .h{font-size:10.5px;font-weight:700;letter-spacing:.06em;margin-bottom:8px}
+.ba .bad .h{color:var(--muted)}
+.ba .bad .h::before{content:"✕ ";color:var(--px)}
+.ba .good .h{color:var(--accent)}
+.ba .good .h::before{content:"✓ ";color:var(--pa)}
+.ba .m{font-family:'Consolas','JetBrains Mono',monospace;font-size:11px;line-height:1.7;color:var(--ink2)}
+.ba .m u{text-decoration:none;background:var(--pxs);color:var(--px);padding:0 3px;border-radius:2px}
+.ba .m b{background:var(--pas);color:var(--pa);padding:0 3px;border-radius:2px;font-weight:500}
+.ba .why2{font-size:11px;color:var(--muted);margin-top:8px;line-height:1.6}
+
+/* ── 막대 ── */
+.bars{margin:12px 0}
+.bars .b{display:flex;align-items:center;gap:10px;margin:7px 0}
+.bars .bl{flex:0 0 26%;font-size:12px;font-weight:700;color:var(--ink)}
+.bars .bt{flex:1;height:13px;background:var(--soft2);border:1px solid var(--line)}
+.bars .bf{height:100%;background:var(--accent)}
+.bars .bf.q{background:var(--line2)}
+.bars .bv{flex:0 0 60px;text-align:right;font-family:'Consolas',monospace;font-size:11px;color:var(--muted2)}
+
+/* ── 흐름 ── */
+.flow{display:flex;gap:5px;align-items:center;flex-wrap:wrap;margin:11px 0}
+.flow span{border:1px solid var(--line2);padding:6px 10px;background:#fff;border-radius:4px;
+  font-size:11.5px;font-weight:700}
+.flow i{font-style:normal;color:var(--accent);font-weight:900}
+
+/* ══════ 목업 컴포넌트 ══════ */
+/* 탐색기 / 창 */
+.win{border:1px solid var(--line2);margin:13px 0;background:#fff}
+.win .tb{display:flex;align-items:center;gap:9px;padding:6px 11px;background:var(--soft2);
+  border-bottom:1px solid var(--line2);font-size:11px;color:var(--muted2);font-weight:700}
+.win .tb .dots{display:flex;gap:4px}
+.win .tb .dots i{width:8px;height:8px;border-radius:50%;border:1px solid var(--line2);background:#fff;display:block}
+.win .tb .rt{margin-left:auto;font-weight:400;color:var(--muted);font-size:10px;letter-spacing:.04em}
+.win .addr{display:flex;align-items:center;gap:7px;padding:6px 11px;border-bottom:1px solid var(--line);
+  font-family:'Consolas',monospace;font-size:11px;color:var(--ink2);background:#fff}
+.win .addr .ic{font-size:10px;color:var(--muted)}
+.win .addr .path{border:1px solid var(--line);border-radius:3px;padding:3px 8px;flex:1;background:var(--soft)}
+.win .addr .path b{color:var(--accent);font-weight:700}
+.win table{margin:0;font-size:11px}
+.win th,.win td{padding:5px 11px;border-bottom:1px solid var(--line)}
+.win thead th{background:var(--soft);font-size:10px;border-bottom:1px solid var(--line2);color:var(--muted2)}
+.win tbody td{color:var(--ink2)}
+.win tbody tr.sel td{background:var(--accent-soft)}
+.win td.ic{width:22px;text-align:center;color:var(--muted);font-family:'Consolas',monospace;font-size:9.5px}
+.win .sb{padding:5px 11px;border-top:1px solid var(--line);background:var(--soft);
+  font-size:10px;color:var(--muted);display:flex;justify-content:space-between}
+.capt{font-size:10.5px;color:var(--muted);margin:-6px 0 13px;padding-left:2px}
+.capt b{color:var(--muted2);font-weight:700}
+
+/* 터미널 */
+.term{border:1px solid var(--line2);background:#fbfaf8;margin:13px 0}
+.term .th{background:var(--soft2);padding:5px 12px;font-size:10.5px;color:var(--muted2);
+  border-bottom:1px solid var(--line2);letter-spacing:.04em;font-weight:700;
+  font-family:'Consolas',monospace;display:flex;justify-content:space-between}
+.term .tb2{padding:11px 13px;font-family:'Consolas','JetBrains Mono',monospace;
+  font-size:11px;line-height:1.8;color:var(--ink2);white-space:pre-wrap}
+.term .p{color:var(--accent);font-weight:700}
+.term .c{color:var(--ink);font-weight:700}
+.term .g{color:var(--pa)}
+.term .d{color:var(--muted)}
+
+/* 폴더 트리 */
+.tree{font-family:'Consolas','JetBrains Mono',monospace;font-size:11px;line-height:1.85;
+  color:var(--ink2);background:var(--soft);border:1px solid var(--line);
+  padding:11px 14px;margin:13px 0;white-space:pre;overflow:hidden}
+.tree b{color:var(--accent);font-weight:700}
+.tree u{text-decoration:none;color:var(--px)}
+.tree i{font-style:normal;color:var(--muted)}
+.ba .tree{margin:0;border:none;background:none;padding:0;font-size:10.5px;line-height:1.8}
+
+/* HEX 뷰어 */
+.hex{border:1px solid var(--line2);margin:13px 0;background:#fff;font-family:'Consolas',monospace}
+.hex .hh{background:var(--soft);border-bottom:1px solid var(--line);padding:5px 12px;
+  font-size:10px;color:var(--muted2);letter-spacing:.06em;font-weight:700;display:flex;justify-content:space-between}
+.hex .hr{display:flex;gap:14px;padding:4px 12px;font-size:11px;border-bottom:1px solid #f2f0ec}
+.hex .hr:last-child{border-bottom:none}
+.hex .of{color:var(--muted);flex:0 0 52px}
+.hex .by{flex:1;color:var(--ink2);letter-spacing:.06em}
+.hex .by b{color:var(--accent);background:var(--accent-soft);padding:1px 2px;font-weight:700}
+.hex .as{flex:0 0 90px;color:var(--muted2);border-left:1px solid var(--line);padding-left:12px}
+.hex .as b{color:var(--accent);font-weight:700}
+
+/* JSON 뷰어 */
+.jsonv{border:1px solid var(--line2);margin:13px 0;background:#fff}
+.jsonv .jh{background:var(--soft);border-bottom:1px solid var(--line);padding:5px 12px;
+  font-size:10.5px;color:var(--muted2);font-weight:700;font-family:'Consolas',monospace;
+  display:flex;justify-content:space-between}
+.jsonv .jb{padding:11px 14px;font-family:'Consolas','JetBrains Mono',monospace;
+  font-size:11.5px;line-height:1.9;white-space:pre;color:var(--muted2)}
+.jk{color:var(--pv);font-weight:700}
+.jv{color:var(--pa);font-weight:700}
+.jnum{color:var(--accent);font-weight:700}
+.jp{color:var(--muted)}
+.jmark{background:#fff7ed;outline:1px solid var(--pnb)}
+
+/* 브라우저 목업 */
+.bw{border:1px solid var(--line2);margin:13px 0;background:#fff}
+.bw .bt{background:var(--soft2);padding:6px 11px;display:flex;gap:8px;align-items:center;
+  font-size:10.5px;font-family:'Consolas',monospace;color:var(--muted2);border-bottom:1px solid var(--line2)}
+.bw .bt .dots{display:flex;gap:4px}
+.bw .bt .dots i{width:8px;height:8px;border-radius:50%;border:1px solid var(--line2);background:#fff;display:block}
+.bw .bt .url{flex:1;background:#fff;border:1px solid var(--line);border-radius:11px;padding:3px 10px;color:var(--ink2)}
+.bw .bc{padding:16px 18px}
+.appttl{font-size:15px;font-weight:800;margin-bottom:2px}
+.appsub{font-size:11px;color:var(--muted);margin-bottom:12px}
+.fld{border:1px solid var(--line2);border-radius:4px;padding:8px 11px;background:#fff;
+  display:flex;justify-content:space-between;align-items:center;
+  font-family:'Consolas',monospace;font-size:12.5px;color:var(--ink);margin:6px 0}
+.fld .u{color:var(--muted);font-size:11px}
+.flbl{font-size:10.5px;font-weight:700;color:var(--muted2);letter-spacing:.04em;margin-top:9px}
+.btn{display:inline-block;border:1.5px solid var(--accent);color:var(--accent);background:var(--accent-soft);
+  border-radius:4px;padding:7px 18px;font-size:12px;font-weight:700;margin-top:11px}
+.res{border:1px solid var(--line);border-radius:4px;margin-top:12px}
+.res .rr{display:flex;justify-content:space-between;padding:8px 12px;border-bottom:1px solid var(--line);font-size:12.5px}
+.res .rr:last-child{border-bottom:none}
+.res .rr .k{color:var(--muted2);font-weight:700}
+.res .rr .v{font-family:'Consolas',monospace;font-weight:700;color:var(--ink)}
+.res .rr.hi{background:var(--accent-soft)}
+.res .rr.hi .v{color:var(--accent)}
+.stamp{font-size:10.5px;color:var(--muted);margin-top:9px;font-family:'Consolas',monospace}
+
+/* URL 분해 */
+.urlx{border:1px solid var(--line2);background:var(--soft);padding:13px 15px;margin:13px 0}
+.urlx .u1{font-family:'Consolas',monospace;font-size:13px;line-height:2.2;word-break:break-all}
+.urlx .u1 span{padding:2px 3px;border-bottom:2.5px solid}
+.urlx .s1{border-color:var(--pv);color:var(--pv)}
+.urlx .s2{border-color:var(--accent);color:var(--accent)}
+.urlx .s3{border-color:var(--pa);color:var(--pa)}
+.urlx .s4{border-color:var(--pd);color:var(--pd)}
+.urlx .lg{margin-top:11px;display:grid;grid-template-columns:repeat(2,1fr);gap:6px 16px}
+.urlx .lg div{font-size:11.5px;color:var(--muted2);display:flex;gap:8px;align-items:baseline}
+.urlx .lg b{flex:0 0 78px;font-family:'Consolas',monospace;font-size:11px}
+
+/* 다이어그램 */
+.dia{border:1px solid var(--line);background:#fff;padding:12px;margin:13px 0}
+.dia svg{display:block;width:100%;height:auto}
+
+/* 체크리스트 */
+.chk{margin:11px 0}
+.chk li{padding-left:26px;font-size:12.5px;margin:7px 0}
+.chk li::before{content:"";position:absolute;left:2px;top:4px;width:13px;height:13px;
+  border:1.5px solid var(--muted2);border-radius:2px;background:#fff}
+.kbd{display:inline-block;border:1px solid var(--line2);border-bottom:2px solid var(--line2);
+  border-radius:4px;padding:1px 8px;font-family:'Consolas',monospace;font-size:11.5px;
+  background:var(--soft);font-weight:700;color:var(--ink);margin:0 1px}
+
+/* 확인 문제 */
+.qa{border:1px solid var(--line2);border-top:2.5px solid var(--ink);padding:12px 15px;margin-top:18px;background:#fff}
+.qa .ql{font-size:10.5px;font-weight:700;letter-spacing:.09em;color:var(--accent);margin-bottom:6px}
+.qa ol{counter-reset:q;margin:0}
+.qa ol li{counter-increment:q;padding-left:22px;font-size:12.5px;margin:7px 0;color:var(--ink2)}
+.qa ol li::before{content:counter(q) ".";position:absolute;left:2px;top:0;font-weight:700;color:var(--muted2);font-size:12px}
+.qa .blank{display:inline-block;border-bottom:1px solid var(--line2);min-width:90px;height:14px;margin:0 3px}
+
+/* 표지 · 간지 (검정 배경 제거 → 테두리 프레임) */
+.cover{padding:12mm;display:flex}
+.cover .fr{flex:1;border:2px solid var(--ink);padding:5px;display:flex}
+.cover .fr2{flex:1;border:1px solid var(--line2);padding:14mm 13mm 10mm;display:flex;flex-direction:column}
+.cover .ck{font-size:11px;font-weight:700;letter-spacing:.16em;color:var(--accent);
+  display:flex;align-items:center;gap:11px}
+.cover .ck::after{content:"";flex:1;height:1px;background:var(--line2)}
+.cover h1{font-size:40px;line-height:1.18;margin:18px 0 12px;letter-spacing:-.03em}
+.cover .cs{font-size:14.5px;color:var(--muted2);line-height:1.7;max-width:88%}
+.cover .cs b{color:var(--ink);font-weight:700}
+.hero{margin:24px 0 0;border:1px solid var(--line2);background:var(--soft);padding:17px 19px}
+.hero .hl{font-size:10.5px;letter-spacing:.1em;color:var(--accent);font-weight:700;margin-bottom:9px}
+.hero .hs{font-size:15.5px;color:var(--ink);font-weight:500;line-height:1.6}
+.hero .hs b{font-weight:800}
+.hero .hd{margin:14px 0 11px;height:1px;background:var(--line2)}
+.hero .hrow{display:flex;align-items:baseline;gap:12px;padding:4px 0}
+.hero .hk{flex:0 0 54px;font-size:10.5px;font-weight:700;color:var(--accent);text-align:right}
+.hero .hv{flex:1;font-size:12.5px;color:var(--ink2)}
+.cover .crow{margin-top:20px;display:flex;border-top:1px solid var(--line2);border-bottom:1px solid var(--line2)}
+.cover .ci{flex:1;padding:13px 0;border-right:1px solid var(--line2)}
+.cover .ci:last-child{border-right:none;padding-left:20px}
+.cover .ci:first-child{padding-right:20px}
+.cover .ci .cl{font-size:10px;letter-spacing:.09em;color:var(--muted);font-weight:700}
+.cover .ci .cv{font-size:12.5px;margin-top:5px;color:var(--ink2);line-height:1.5}
+.cover .ci .cv b{color:var(--accent);font-weight:700}
+.cover .toc{margin-top:auto}
+.cover .toc .th{font-size:10.5px;font-weight:700;letter-spacing:.11em;color:var(--accent);margin-bottom:2px}
+.toc-list{list-style:none;padding:0;margin:0}
+.toc-list li{display:flex;align-items:baseline;gap:14px;padding:8px 0;
+  border-bottom:1px solid var(--line);font-size:13px;color:var(--ink2);margin:0;padding-left:0}
+.toc-list li::before{display:none}
+.toc-list li .ti{font-family:'Consolas',monospace;font-size:11px;color:var(--accent);flex:0 0 34px;font-weight:700}
+.toc-list li .tt{flex:1}
+.toc-list li .tg{font-size:10.5px;color:var(--muted);font-family:'Consolas',monospace}
+.cover .sig{margin-top:16px;display:flex;justify-content:space-between;align-items:baseline;
+  border-top:2px solid var(--ink);padding-top:9px}
+.cover .sig .n{font-size:12px;color:var(--ink);font-weight:700}
+.cover .sig .n span{color:var(--muted);font-family:'Consolas',monospace;font-size:10.5px;margin-left:7px;font-weight:400}
+.cover .sig .b{font-size:10.5px;color:var(--muted);letter-spacing:.07em}
+
+.divider{padding:12mm;display:flex}
+.divider .fr{flex:1;border:2px solid var(--ink);padding:5px;display:flex}
+.divider .fr2{flex:1;border:1px solid var(--line2);padding:26mm 18mm;display:flex;flex-direction:column;justify-content:center}
+.divider .part{color:var(--accent);font-size:12px;font-weight:800;letter-spacing:.16em;
+  display:flex;align-items:center;gap:12px}
+.divider .part::after{content:"";flex:1;height:1px;background:var(--line2)}
+.divider h1{font-size:42px;margin:16px 0 12px;line-height:1.18}
+.divider p{font-size:14.5px;color:var(--muted2);max-width:84%;line-height:1.75}
+.divider .route{margin-top:24px;border-top:1px solid var(--line2);padding-top:14px;
+  line-height:2.1;color:var(--muted2);font-size:12.5px}
+.divider .route b{color:var(--accent);font-family:'Consolas',monospace;font-size:11.5px}
+.divider .goal{margin-top:20px;border:1px solid var(--line2);background:var(--soft);padding:14px 16px}
+.divider .goal .gl{font-size:10.5px;font-weight:700;letter-spacing:.09em;color:var(--accent);margin-bottom:6px}
+.divider .goal ul{margin:0}
+.divider .goal li{font-size:12.5px;margin:5px 0}
+
+.pagenum{position:absolute;bottom:9mm;right:18mm;font-size:10.5px;color:var(--muted);
+  font-family:'Consolas',monospace}
+.brand{position:absolute;bottom:9mm;left:18mm;font-size:9px;color:var(--muted);letter-spacing:.03em}
+.brand b{color:var(--muted2);font-weight:500}
+
+@media print{
+  .page{overflow:hidden}
+}
+.page{overflow:hidden}
+
+
+/* ── 작업 관리자 목업 ── */
+.tm{display:flex}
+.tm .nav{flex:0 0 116px;border-right:1px solid var(--line);padding:6px 0;background:var(--soft)}
+.tm .nav div{font-size:10.5px;padding:5px 11px;color:var(--muted2)}
+.tm .nav div.on{background:#fff;color:var(--ink);font-weight:700;border-left:2px solid var(--accent)}
+.tm .bd{flex:1;min-width:0}
+.tm table{margin:0}
+.tm .hdr{display:flex;justify-content:space-between;padding:7px 12px;border-bottom:1px solid var(--line);
+  font-size:11.5px;font-weight:700;color:var(--ink)}
+.tm .hdr span{font-size:10.5px;color:var(--muted);font-weight:400}
+
+/* ── 간지 배경 ── */
+.page.divider .fr{background:var(--soft2)}
+.page.divider .fr2{background:#fff}
+.page.divider .part{background:var(--accent);color:#fff;display:inline-block;
+  padding:4px 12px;border-radius:2px;letter-spacing:.08em}
+
+/* ── 코드 목업 ── */
+.code{border:1px solid var(--line2);margin:13px 0;background:#fff}
+.code .ch2{background:var(--soft);border-bottom:1px solid var(--line);padding:5px 12px;
+  font-family:'Consolas',monospace;font-size:10.5px;color:var(--muted2);font-weight:700;
+  display:flex;justify-content:space-between}
+.code .cb2{padding:11px 14px;font-family:'Consolas','JetBrains Mono',monospace;
+  font-size:11.5px;line-height:1.85;white-space:pre;color:var(--ink2);overflow:hidden}
+.tag{color:var(--pv);font-weight:700}
+.att{color:var(--pd)}
+.str{color:var(--pa)}
+.cmt{color:var(--muted)}
+.fn{color:var(--accent);font-weight:700}
+.hl2{background:#fff7ed;outline:1px solid var(--pnb)}
+
+/* ── GitHub 화면 목업 ── */
+.gh{border:1px solid var(--line2);margin:13px 0;background:#fff}
+.gh .ghh{background:var(--soft2);border-bottom:1px solid var(--line2);padding:6px 12px;
+  font-size:11px;color:var(--muted2);font-weight:700;display:flex;justify-content:space-between}
+.gh .repo{padding:8px 12px;border-bottom:1px solid var(--line);font-size:12.5px;font-weight:700;color:var(--ink)}
+.gh .repo span{color:var(--muted);font-weight:400;font-size:11px;margin-left:8px}
+.gh .row2{display:flex;gap:10px;padding:6px 12px;border-bottom:1px solid #f4f2ef;font-size:11.5px;align-items:baseline}
+.gh .row2 .ic2{flex:0 0 16px;color:var(--muted);font-family:'Consolas',monospace;font-size:10px}
+.gh .row2 .nm{flex:0 0 34%;font-family:'Consolas',monospace;color:var(--pv)}
+.gh .row2 .msg2{flex:1;color:var(--muted2)}
+.gh .row2 .tm2{flex:0 0 62px;text-align:right;color:var(--muted);font-size:10.5px}
+/* 잔디 */
+.grass{display:flex;gap:3px;flex-wrap:wrap;margin:10px 0;max-width:100%}
+.grass i{width:11px;height:11px;border:1px solid var(--line);background:var(--soft);display:block;border-radius:2px}
+.grass i.l1{background:#f7ddcb;border-color:var(--pnb)}
+.grass i.l2{background:#eeb489;border-color:var(--pnb)}
+.grass i.l3{background:var(--accent);border-color:var(--accent)}
+
+/* ── 작업 진행 표시 ── */
+.chat .wk{font-size:10px;color:var(--muted);font-family:'Consolas',monospace;margin:0 0 5px}
+.chat .bub .ok{color:var(--pa);font-weight:700}
+.chat .bub .no{color:var(--px);font-weight:700}
+.chat .bub code{font-size:11px}
+/* ── 속성창 목업 ── */
+.props{border:1px solid var(--line2);margin:13px 0;background:#fff;max-width:72%}
+.props .ph2{background:var(--soft2);border-bottom:1px solid var(--line2);padding:6px 12px;
+  font-size:11px;font-weight:700;color:var(--muted2)}
+.props .tabs{display:flex;gap:0;border-bottom:1px solid var(--line);font-size:10.5px}
+.props .tabs span{padding:5px 12px;color:var(--muted);border-right:1px solid var(--line)}
+.props .tabs span.on{background:#fff;color:var(--ink);font-weight:700;border-bottom:2px solid var(--accent)}
+.props .pr{display:flex;padding:6px 14px;border-bottom:1px solid #f2f0ec;font-size:11.5px}
+.props .pr b{flex:0 0 84px;color:var(--muted2);font-weight:700}
+.props .pr span{flex:1;color:var(--ink2);font-family:'Consolas',monospace;font-size:11px}
+/* ── 슬래시 명령 목록 ── */
+.slash{border:1px solid var(--line2);margin:13px 0;background:#fff}
+.slash .sh{background:var(--soft);border-bottom:1px solid var(--line);padding:5px 12px;
+  font-size:10.5px;font-weight:700;color:var(--muted2);font-family:'Consolas',monospace;
+  display:flex;justify-content:space-between}
+.slash .sr{display:flex;gap:12px;padding:6px 14px;border-bottom:1px solid #f4f2ef;font-size:11.5px;align-items:baseline}
+.slash .sr:last-child{border-bottom:none}
+.slash .sc2{flex:0 0 92px;font-family:'Consolas',monospace;font-weight:700;color:var(--accent)}
+.slash .sd2{flex:1;color:var(--ink2)}
+
+/* ── 결과 이미지 예시 ── */
+.shots{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:13px 0}
+.shots.one{grid-template-columns:1fr}
+.shots figure{margin:0}
+.shots img{width:100%;display:block;border:1px solid var(--line2);border-radius:3px}
+.shots figcaption{font-size:10.5px;color:var(--muted2);margin-top:5px;font-family:'Consolas',monospace}
+.shots figcaption b{color:var(--accent)}
+
+/* ── 토크나이저 비교 ── */
+.tok{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);
+  border:1px solid var(--line);margin:13px 0}
+.tok>div{background:#fff;padding:12px 14px}
+.tok .tkh{font-size:9.5px;font-weight:700;letter-spacing:.07em;color:var(--muted);margin-bottom:6px}
+.tok .in{border:1px solid var(--line2);border-radius:4px;padding:9px 11px;font-size:14px;
+  font-family:'Consolas',monospace;background:var(--soft);color:var(--ink)}
+.tok .in i{font-style:normal;color:var(--muted);font-size:11px}
+.tok .nums{display:flex;gap:26px;margin-top:11px}
+.tok .nl{font-size:9.5px;font-weight:700;letter-spacing:.06em;color:var(--muted)}
+.tok .n{font-size:21px;font-weight:800;font-family:'Consolas',monospace;line-height:1.2;color:var(--ink)}
+.tok .n.acc{color:var(--accent)}
+.tok .ids{margin-top:10px;font-family:'Consolas',monospace;font-size:11px;color:var(--muted2);
+  background:var(--soft);border:1px solid var(--line);padding:6px 9px;border-radius:3px}
+
+/* ── 목차 ── */
+.tocx{margin:2px 0 0}
+.tocx .g{font-size:11px;font-weight:700;letter-spacing:.08em;color:var(--accent);
+  margin:14px 0 4px;padding-bottom:5px;border-bottom:1.5px solid var(--ink);
+  display:flex;justify-content:space-between;align-items:baseline}
+.tocx .g em{font-style:normal;color:var(--muted);font-weight:400;letter-spacing:0;font-size:11px}
+.tocx .it{display:flex;gap:12px;align-items:baseline;padding:6px 0;border-bottom:1px solid var(--line)}
+.tocx .no{flex:0 0 30px;font-family:'Consolas',monospace;font-size:11.5px;font-weight:700;color:var(--accent)}
+.tocx .tt{flex:1}
+.tocx .tt b{font-size:13px;font-weight:700;color:var(--ink);display:block;line-height:1.4}
+.tocx .tt span{font-size:11.5px;color:var(--muted2);display:block;margin-top:1px;line-height:1.5}
+.tocx .pgn{flex:0 0 24px;text-align:right;font-family:'Consolas',monospace;font-size:11.5px;color:var(--muted2)}
+.tocinfo{margin-top:16px;border:1px solid var(--line2);background:var(--soft);padding:12px 15px}
+.tocinfo .til{font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--accent);margin-bottom:6px}
+.tocinfo .row{display:flex;gap:10px;font-size:11.5px;color:var(--ink2);padding:3px 0;align-items:baseline}
+.tocinfo .row b{flex:0 0 88px;color:var(--ink)}
+
+/* ── 난이도 배지 ── */
+.lv{display:inline-block;font-size:9.5px;font-weight:700;border:1px solid;border-radius:10px;
+  padding:1px 8px;letter-spacing:.03em;line-height:1.6;white-space:nowrap}
+.lv1{color:var(--pv);border-color:var(--pvb);background:var(--pvs)}
+.lv2{color:var(--muted2);border-color:var(--line2);background:var(--soft)}
+.lv3{color:var(--accent);border-color:var(--pnb);background:var(--pns)}
+.lvrow{display:flex;gap:8px;align-items:center;margin:10px 0 4px}
+
+/* ── 난이도 보조 상자 ── */
+.tier{border:1px solid var(--line2);border-radius:4px;padding:11px 14px;margin:12px 0}
+.tier .tl{font-size:10px;font-weight:700;letter-spacing:.06em;margin-bottom:5px;
+  display:flex;gap:8px;align-items:center}
+.tier p{margin:0;font-size:12.5px}
+.tier ul{margin:4px 0 0}
+.tier li{font-size:12.5px;margin:5px 0}
+.tier.b{background:var(--soft)}
+.tier.b .tl{color:var(--muted2)}
+.tier.a{background:#fff;border-style:dashed}
+.tier.a .tl{color:var(--accent)}
+.tier .say{margin:8px 0 0}
+
+/* ── 자동화 회로 ── */
+.auto{border:1px solid var(--line2);border-left:3px solid var(--accent);background:var(--soft);
+  padding:10px 14px;margin:14px 0}
+.auto .al{font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--accent);margin-bottom:6px}
+.auto .ar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.auto .ar span{font-size:12px;color:var(--ink2);background:#fff;border:1px solid var(--line2);
+  border-radius:3px;padding:5px 9px}
+.auto .ar span b{color:var(--accent);font-weight:700;margin-right:5px}
+.auto .ar i{font-style:normal;color:var(--accent);font-weight:900}
+
+/* ── AI 낚시 찾기 ── */
+.trap{border:1.5px dashed var(--line2);border-radius:4px;padding:12px 15px;margin:14px 0;background:#fff}
+.trap .trl{font-size:10.5px;font-weight:700;letter-spacing:.06em;color:var(--px);margin-bottom:7px}
+.trap .fake{border:1px solid var(--line);border-left:2.5px solid var(--line2);background:var(--soft);
+  padding:10px 12px;font-size:12.5px;line-height:1.7;color:var(--ink2)}
+.trap .ask{font-size:12px;color:var(--muted2);margin-top:8px}
+.trap .ask b{color:var(--ink)}
+
+/* ── 메모 영역 (여백 활용) ── */
+.memo{margin-top:26px;border-top:1px solid var(--line);padding-top:9px}
+.memo .ml{font-size:9.5px;font-weight:700;letter-spacing:.12em;color:var(--muted);margin-bottom:8px}
+.memo .line{height:25px;border-bottom:1px dotted var(--line2)}
+
+/* ── 채팅 목업 ── */
+.chat{border:1px solid var(--line2);margin:13px 0;background:#fff}
+.chat .ch{background:var(--soft);border-bottom:1px solid var(--line);padding:6px 12px;
+  font-size:10.5px;font-weight:700;color:var(--muted2);display:flex;justify-content:space-between;
+  font-family:'Consolas',monospace}
+.chat .cb{padding:12px 13px}
+.msg{margin:8px 0;display:flex;gap:10px;align-items:flex-start}
+.msg .av{flex:0 0 44px;font-size:9.5px;font-weight:700;letter-spacing:.05em;color:var(--muted);
+  text-align:right;padding-top:9px}
+.msg .bub{flex:1;border:1px solid var(--line);border-radius:5px;padding:9px 12px;
+  font-size:12px;line-height:1.7;color:var(--ink2);background:#fff}
+.msg.u .bub{background:var(--soft);border-color:var(--line2)}
+.msg.a .bub{border-left:2.5px solid var(--accent)}
+.msg .bub b{color:var(--ink)}
+.msg .bub .tbl{margin-top:6px;font-family:'Consolas',monospace;font-size:10.5px;
+  color:var(--muted2);line-height:1.7;white-space:pre}
+
+/* ── 스펙 카드 ── */
+.stat{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);
+  border:1px solid var(--line);margin:13px 0}
+.stat>div{background:#fff;padding:11px 12px}
+.stat .sl2{font-size:9.5px;font-weight:700;color:var(--accent);letter-spacing:.07em}
+.stat .sv{font-size:14px;font-weight:800;margin-top:3px;font-family:'Consolas',monospace;line-height:1.3}
+.stat .sd{font-size:10px;color:var(--muted);margin-top:3px;line-height:1.5}
+
+/* ── 좌우 2단 ── */
+.split{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:13px 0}
+.split h3{margin-top:0}
+
+
+/* ── v3 추가 ── */
+.term .e{color:var(--px);font-weight:700}
+.term .y{color:var(--pd)}
+.term .b{color:var(--pv);font-weight:700}
+.term.host{background:#f6f8fe}
+.term.host .th{background:var(--pvs);color:var(--pv);border-bottom-color:var(--pvb)}
+.term.root .th{background:var(--pxs);color:var(--px);border-bottom-color:var(--pxb)}
+.term.dev .th{background:var(--pas);color:var(--pa);border-bottom-color:var(--pab)}
+.rh .l .sec{color:var(--ink);margin-left:2px}
+
+/* 로드맵 */
+.road{display:grid;grid-template-columns:repeat(5,1fr);gap:0;border:1.5px solid var(--ink);margin:16px 0}
+.road>div{padding:12px 11px;border-right:1px solid var(--line2);position:relative}
+.road>div:last-child{border-right:none}
+.road .rk{font-family:'Consolas',monospace;font-size:20px;font-weight:900;color:var(--accent);line-height:1}
+.road .rt{font-size:13.5px;font-weight:800;margin:6px 0 4px}
+.road .rq{font-size:11px;color:var(--muted2);line-height:1.55}
+.road .rc{font-family:'Consolas',monospace;font-size:10px;color:var(--ink2);margin-top:7px;line-height:1.6;
+  border-top:1px dashed var(--line2);padding-top:6px}
+
+/* ls -l 해부 */
+.anat{border:1px solid var(--line2);background:#fff;margin:13px 0;overflow:hidden}
+.anat .ah{background:var(--soft);border-bottom:1px solid var(--line);padding:5px 12px;font-size:10.5px;
+  font-weight:700;color:var(--muted2);font-family:'Consolas',monospace}
+.anat .row{display:flex;padding:12px 10px 4px;gap:0;font-family:'Consolas',monospace;font-size:14px}
+.anat .seg{padding:3px 6px;border-bottom:3px solid;margin-right:6px;white-space:pre;font-weight:700}
+.anat .lab{display:flex;padding:0 10px 12px;gap:0}
+.anat .lab div{font-size:10.5px;line-height:1.35;color:var(--muted2);margin-right:6px}
+.anat .lab b{display:block;font-size:10px;color:var(--ink)}
+.s1{border-color:var(--px);color:var(--px)}
+.s2{border-color:var(--accent);color:var(--accent)}
+.s3{border-color:var(--muted);color:var(--muted2)}
+.s4{border-color:var(--pv);color:var(--pv)}
+.s5{border-color:var(--pa);color:var(--pa)}
+.s6{border-color:var(--line2);color:var(--ink2)}
+.s7{border-color:var(--pd);color:var(--pd)}
+.s8{border-color:var(--ink);color:var(--ink)}
+
+/* 권한 비트 */
+.bits{display:grid;grid-template-columns:44px repeat(9,1fr);border:1.5px solid var(--ink);margin:14px 0;
+  font-family:'Consolas',monospace;text-align:center}
+.bits>div{padding:8px 0;border-right:1px solid var(--line2);font-size:17px;font-weight:800}
+.bits>div:last-child{border-right:none}
+.bits .ty{background:var(--pxs);color:var(--px)}
+.bits .u{background:var(--pns);color:var(--pn)}
+.bits .g{background:var(--pas);color:var(--pa)}
+.bits .o{background:var(--pvs);color:var(--pv)}
+.bits .cap{font-size:10px;font-weight:700;padding:5px 0;border-top:1px solid var(--line2);font-family:'Noto Sans KR',sans-serif}
+.bits .sp3{grid-column:span 3}
+
+/* O / X 표 */
+td.ok,td.no,td.mid{text-align:center;font-weight:800;font-family:'Consolas',monospace}
+td.ok{color:var(--pa)!important}
+td.no{color:var(--px)!important}
+td.mid{color:var(--pd)!important}
+th.c{text-align:center}
+
+/* 서버 구성도 */
+.topo{display:grid;grid-template-columns:1fr 1.25fr 1fr;gap:14px;margin:14px 0;align-items:stretch}
+.topo .box{border:1.5px solid var(--ink);background:#fff}
+.topo .box .bh{padding:6px 10px;font-size:11px;font-weight:800;border-bottom:1px solid var(--line2);background:var(--soft);
+  font-family:'Consolas',monospace;display:flex;justify-content:space-between}
+.topo .box .bh span{font-weight:400;color:var(--muted)}
+.topo .box .bb{padding:9px 10px;font-size:11px;line-height:1.7;color:var(--ink2)}
+.topo .box .bb code{font-size:10.5px}
+.topo .box.h{border-color:var(--pv)} .topo .box.h .bh{background:var(--pvs);color:var(--pv)}
+.topo .acct{display:block;border:1px solid var(--line2);border-radius:3px;padding:4px 7px;margin:5px 0;background:var(--soft)}
+.topo .acct b{color:var(--accent)}
+.arrowline{font-size:11px;color:var(--muted2);text-align:center;margin:-4px 0 10px;font-family:'Consolas',monospace}
+.arrowline b{color:var(--accent)}
+
+/* 8진수 */
+.oct{display:flex;gap:10px;margin:12px 0;align-items:stretch}
+.oct>div{flex:1;border:1px solid var(--line2);text-align:center;padding:10px 6px;background:#fff}
+.oct .ov{font-family:'Consolas',monospace;font-size:24px;font-weight:900;color:var(--accent)}
+.oct .ol{font-size:11px;color:var(--muted2);margin-top:2px}
+.oct .op{align-self:center;border:none;flex:0 0 14px;font-size:18px;font-weight:900;color:var(--muted);padding:0;background:none}
+
+.opener .big{font-family:'Consolas',monospace;font-size:120px;font-weight:900;line-height:.9;color:var(--accent);margin:18mm 0 6mm}
+.opener h1{font-size:34px;margin-bottom:12px}
+.opener .oq{border-top:1.5px solid var(--ink);border-bottom:1px solid var(--line2);margin:18px 0;padding:6px 0}
+.opener .oq div{display:flex;gap:14px;padding:8px 0;border-bottom:1px dotted var(--line2);font-size:14px}
+.opener .oq div:last-child{border-bottom:none}
+.opener .oq span{flex:0 0 26px;font-family:'Consolas',monospace;font-weight:900;color:var(--accent)}
+.opener .otoc{columns:2;column-gap:24px;margin-top:10px}
+.opener .otoc div{break-inside:avoid;display:flex;justify-content:space-between;font-size:12.5px;padding:5px 0;border-bottom:1px solid var(--line)}
+.opener .otoc b{font-family:'Consolas',monospace;color:var(--muted2)}
+.lvl{border:1px solid var(--line2);margin:11px 0;background:#fff}
+.lvl .lh{display:flex;align-items:center;gap:10px;padding:7px 13px;border-bottom:1px solid var(--line2);background:var(--soft)}
+.lvl .lh b{font-size:11px;font-weight:800;border:1px solid;border-radius:2px;padding:1px 8px}
+.lvl .lh span{font-size:12px;color:var(--muted2)}
+.lvl.l1 .lh b{color:var(--pa);border-color:var(--pab);background:var(--pas)}
+.lvl.l2 .lh b{color:var(--pv);border-color:var(--pvb);background:var(--pvs)}
+.lvl.l3 .lh b{color:var(--px);border-color:var(--pxb);background:var(--pxs)}
+.lvl ol{counter-reset:q;margin:0;padding:6px 13px 9px}
+.lvl ol li{counter-increment:q;padding-left:30px;margin:6px 0;font-size:12.5px}
+.lvl ol li::before{content:"Q" counter(q);position:absolute;left:0;top:1px;font-family:'Consolas',monospace;font-size:11px;font-weight:800;color:var(--muted)}
+.ans{border-top:1.5px dashed var(--line2);margin-top:14px;padding-top:8px;font-size:11px;color:var(--muted2);line-height:1.7}
+.ans b{color:var(--ink)}
+.ans .al{font-size:10px;font-weight:800;letter-spacing:.08em;color:var(--muted);margin-bottom:3px}
+
+tbody td:first-child b{white-space:nowrap}
+
+th.c{white-space:nowrap}
+
+.code .cb2{font-size:10px;line-height:1.5;padding:9px 12px}
+
+.lwhy{margin:0 0 10px;padding:7px 11px;background:var(--soft);border-left:3px solid var(--accent);font-size:11.8px;line-height:1.55;color:var(--ink2)}
+.lwhy b{color:var(--accent);margin-right:8px;font-size:11px}
+.opener.has-why .big{font-size:84px;margin:8mm 0 4mm}
+.oscene{margin:12px 0 4px;border:1.5px solid var(--accent);background:#fff}
+.oscene .osh{padding:5px 12px;font-size:10.5px;font-weight:800;color:#fff;background:var(--accent);letter-spacing:.08em}
+.oscene .osb{padding:10px 13px 6px;font-size:13px;line-height:1.75;color:var(--ink)}
+.oscene table{margin:4px 13px 12px;width:calc(100% - 26px)}
+.opener.has-why .oq{margin:12px 0}
+.opener.has-why .oq div{padding:6px 0;font-size:13px}
+
+table.quiz td.qn{width:26px;font-family:'Consolas',monospace;font-weight:800;color:var(--accent);text-align:center}
+table.quiz td.qb{width:96px;white-space:nowrap;color:var(--muted2);font-family:'Consolas',monospace}
+.inc{border:1.5px solid var(--ink);margin:10px 0;background:#fff}
+.inc .inh{display:flex;align-items:center;gap:10px;padding:7px 12px;background:var(--ink);color:#fff}
+.inc .inh b{font-size:14px;flex:1}
+.inc .inno{font-family:'Consolas',monospace;font-size:11px;font-weight:900;background:var(--accent);padding:2px 7px}
+.inc .inlv{font-size:10.5px;border:1px solid #fff;padding:1px 7px;border-radius:2px}
+.inc .inb{padding:6px 12px 10px}
+.inc .inrow{display:flex;gap:12px;padding:6px 0;border-bottom:1px dotted var(--line2);font-size:12px;line-height:1.6}
+.inc .inrow>span{flex:0 0 64px;font-size:10.5px;font-weight:800;color:var(--accent);padding-top:2px}
+.inc .inrow>div{flex:1}
+.inc .inrow.learn{border-bottom:none}
+.inc .inrow.learn>div{font-weight:700}
+.inc .term{margin:6px 0}
+
+table.cmdt{table-layout:fixed}
+table.cmdt th:nth-child(1){width:27%} table.cmdt th:nth-child(2){width:13%}
+table.cmdt th:nth-child(3){width:17%} table.cmdt th:nth-child(4){width:27%} table.cmdt th:nth-child(5){width:16%}
+table.cmdt td:first-child code{word-break:break-all}
+
+table.quiz th{white-space:nowrap}
+
+.msn{border:1.5px solid var(--ink);margin:10px 0;background:#fff;break-inside:avoid}
+.msn .mh{display:flex;align-items:center;gap:9px;padding:6px 11px;background:var(--soft);border-bottom:1px solid var(--line2)}
+.msn .mh b{flex:1;font-size:13.5px}
+.msn .mid{font-family:'Consolas',monospace;font-size:11.5px;font-weight:900;color:#fff;background:var(--ink);padding:2px 7px;border-radius:2px}
+.msn .mlv{font-size:10.5px;font-weight:800;border:1px solid;border-radius:2px;padding:1px 7px}
+.msn .mlv.l1{color:var(--pa);border-color:var(--pab);background:var(--pas)}
+.msn .mlv.l2{color:var(--pv);border-color:var(--pvb);background:var(--pvs)}
+.msn .mlv.l3{color:var(--px);border-color:var(--pxb);background:var(--pxs)}
+.msn .mlv.l4{color:#fff;border-color:var(--accent);background:var(--accent)}
+.msn .mtm{font-size:10.5px;color:var(--muted2);font-family:'Consolas',monospace}
+.msn .mb{padding:4px 11px 7px}
+.msn .mr{display:flex;gap:10px;padding:4px 0;border-bottom:1px dotted var(--line);font-size:11.8px;line-height:1.55}
+.msn .mr:last-child{border-bottom:none}
+.msn .mr>span{flex:0 0 34px;font-size:10.5px;font-weight:800;color:var(--accent);padding-top:1px}
+.msn .mr>div{flex:1}
+.msn .mr.ref>div{color:var(--muted2)}
+
+/* ── 간지(파트 표지): 배경색 ── */
+.page.opener{background:#1e2638 !important;color:#e9edf5;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.page.opener .rh{border-bottom-color:rgba(255,255,255,.22)}
+.page.opener .rh .l,.page.opener .rh .r{color:#b7c0d3}
+.page.opener .rh .l b{color:#ff9a6b}
+.page.opener .rh .pg{color:#fff;border-color:rgba(255,255,255,.5);background:transparent}
+.page.opener .big{color:#ff9a6b}
+.page.opener h1,.page.opener h1 *{color:#fff}
+.page.opener .kicker{color:#ff9a6b}
+.page.opener .oq{border-top-color:rgba(255,255,255,.7);border-bottom-color:rgba(255,255,255,.25)}
+.page.opener .oq div{border-bottom-color:rgba(255,255,255,.15);color:#e9edf5}
+.page.opener .oq span{color:#ff9a6b}
+.page.opener .otoc div.it{border-bottom-color:rgba(255,255,255,.14);color:#e9edf5}
+.page.opener .otoc b{color:#8f9bb3}
+.page.opener .otoc .och{break-after:avoid;break-inside:avoid;margin:9px 0 2px;font-size:11px;font-weight:800;color:#ff9a6b;letter-spacing:.04em}
+.page.opener .otoc .och:first-child{margin-top:0}
+.page.opener .brand,.page.opener .pagenum{color:#8f9bb3}
+.page.opener .oscene{border-color:#ff9a6b}
+.page.opener .oscene .osh{background:#ff9a6b;color:#1e2638}
+.page.opener .oscene .osb,.page.opener .oscene td,.page.opener .oscene th{color:var(--ink)}
+.opener .otoc div.it{break-inside:avoid;display:flex;justify-content:space-between;font-size:12.5px;padding:4px 0;border-bottom:1px solid var(--line)}
+
+/* ── 장 표시 ── */
+.rh .l .chip{margin-left:2px;padding:1px 7px;border-radius:2px;background:var(--soft);border:1px solid var(--line2);color:var(--ink2);font-weight:700}
+.chap{display:flex;align-items:baseline;gap:10px;margin:-6px 0 14px;padding:8px 14px;background:#1e2638;color:#fff;font-size:15px;font-weight:800;
+  -webkit-print-color-adjust:exact;print-color-adjust:exact;border-left:6px solid #ff9a6b}
+.chap b{font-size:18px;color:#ff9a6b}
+.chap span{font-size:11.5px;font-weight:500;color:#b7c0d3;margin-left:auto}
+
+.page.opener .otoc .och{display:block;border-bottom:none;padding:0}
+
+.page.opener .otoc{columns:2;column-gap:22px;margin-top:6px}
+.page.opener .otoc div.it{font-size:11.2px;padding:2px 0}
+.page.opener .otoc .och{margin:6px 0 1px;font-size:10.5px}
+.page.opener.has-why .oq div{padding:4px 0;font-size:12.5px}
+
+/* ── v5 글꼴 확대 (가독성) ── */
+h1{font-size:25px;line-height:1.35}
+h3{font-size:15.5px}
+.kicker{font-size:11.5px}
+table{font-size:13px}
+thead th{font-size:12px}
+th,td{padding:6px 10px;line-height:1.55}
+.term .tb2{font-size:12px;line-height:1.65}
+.term .th{font-size:11.5px}
+.code .cb2{font-size:11.6px;line-height:1.55}
+.code .ch2{font-size:11.5px}
+.steps>li{font-size:14px}
+.steps>li .ls{font-size:13px;line-height:1.6}
+.lab-head h3{font-size:15.5px}
+.lwhy{font-size:13px}
+.why p,.note,.warn{font-size:13.2px;line-height:1.65}
+.why b{font-size:13.5px}
+.point p{font-size:13.6px;line-height:1.65}
+.mission h3{font-size:14.8px}
+.mission .wy{font-size:13px}
+.deflist .dd{font-size:13.2px;line-height:1.6}
+.deflist .dt{font-size:14px}
+.flow span{font-size:12.3px}
+.tree{font-size:12.2px}
+.cell p{font-size:13px}
+.cell h4{font-size:15px}
+.msn .mr{font-size:13.2px}
+.msn .mh b{font-size:15px}
+.msn .mr>span{font-size:11.5px;flex-basis:38px}
+.inc .inrow{font-size:13.2px}
+.inc .inrow>span{font-size:11.5px}
+.inc .inh b{font-size:15px}
+.lvl ol li{font-size:13.2px}
+.ans{font-size:12.4px}
+.say .sc{font-size:12.4px}
+.anat .col .cp{font-size:11.2px}
+.oscene .osb{font-size:14px}
+.chap{font-size:16px}
+.rh .l,.rh .r{font-size:11.5px}
+.ba .m{font-size:13px}
+.topo .box .bb{font-size:12.4px}
+.road .rq{font-size:12px}
+table.cmdt{font-size:12.4px}
+
+.grid.g1{grid-template-columns:1fr}
+td.ok,td.mid,td.no{white-space:nowrap}
+.pbreak{height:0;margin:0}
+.calc{font-family:'Consolas',monospace;font-size:12px;line-height:1.8;color:var(--ink2);background:var(--soft);padding:10px 12px;border-radius:3px;margin:10px 0}
+.calc b{color:var(--accent)}
+.page.opener .otoc div.it span{flex:1}
+.cover .toc-list li{padding:3px 0}
+.split .term{margin:0}
+.code .cb2{font-size:10.3px;line-height:1.5;white-space:pre-wrap}
+.dia svg{max-height:220px}
+</style></head><body><section class="page cover"><div class="fr"><div class="fr2">
+<div class="ck">청년취업사관학교 동대문4기 · DOCKER · 세 번째</div>
+<h1>docker compose<br>파일 한 장으로 띄운다</h1>
+<div class="cs">YAML 문법부터 키와 옵션까지 · 명령 다섯 줄을 한 줄로<br><b>기업연계형 AI 서비스·클라우드 실무 과정</b></div>
+<div class="hero"><div class="hl">이 교안을 마치면</div><div class="hs">두 서비스를 <b>파일 한 장</b>에 적어 한 줄로 띄우고, <b>코드는 이미지 안·데이터는 밖</b>으로 나눌 수 있습니다.</div><div class="hd"></div>
+<div class="hrow"><div class="hk">1·2장</div><div class="hv">왜 compose인가 · YAML 규칙 다섯 가지 · 파일 전체 읽기</div></div>
+<div class="hrow"><div class="hk">3장</div><div class="hv">build · image · ports · volumes · environment · depends_on · restart</div></div>
+<div class="hrow"><div class="hk">4장</div><div class="hv">up · down · ps · logs · exec · config를 <b>옵션까지</b></div></div>
+<div class="hrow"><div class="hk">5·6장</div><div class="hv">실습 4개 · 점검표 8가지 · 미션 8개 · 평가 10문항</div></div></div>
+<div class="crow"><div class="ci"><div class="cl">선수</div><div class="cv"><b>이미지 만들기</b> 이수</div></div><div class="ci"><div class="cl">환경</div><div class="cv"><b>Windows + Docker Desktop</b></div></div><div class="ci"><div class="cl">실습 파일</div><div class="cv"><b>docker_lab3</b></div></div></div>
+<div class="toc" style="margin-top:auto;padding-top:12px"><div class="th">CONTENTS</div><ul class="toc-list"><li><span class="ti">00</span><span class="tt">이 교안을 마치면</span><span class="tg" data-toc="ch0">03</span></li><li><span class="ti">01</span><span class="tt">왜 compose인가</span><span class="tg" data-toc="ch1">04</span></li><li><span class="ti">02</span><span class="tt">YAML과 파일 구조</span><span class="tg" data-toc="ch2">08</span></li><li><span class="ti">03</span><span class="tt">키 하나씩</span><span class="tg" data-toc="ch3">13</span></li><li><span class="ti">04</span><span class="tt">명령어와 옵션</span><span class="tg" data-toc="ch4">20</span></li><li><span class="ti">05</span><span class="tt">실습</span><span class="tg" data-toc="ch5">26</span></li><li><span class="ti">06</span><span class="tt">점검과 미션</span><span class="tg" data-toc="ch6">33</span></li></ul></div>
+<div class="sig"><div class="n">부성순</div><div class="b">AI SERVICE · CLOUD PRACTICE</div></div></div></div></section>
+<section class="page" data-sec="0.1" data-title="0.1 이 교안을 마치면" data-ch="0"><div class="rh"><div class="l"><b>DOCKER</b> · <span class="sec">시작하기</span></div><div class="r">0.1 이 교안을 마치면<span class="pg">02</span></div></div><div class="kicker">0 · WHAT YOU CAN DO</div><h1>명령 다섯 줄을<br><em>파일 한 장</em>으로</h1>
+<div class="why"><b>왜 배워야 하나?</b><p>지난 회차에서 두 컨테이너를 띄우려고 <strong>네트워크를 만들고, 두 번 빌드하고, 두 번 run</strong>했습니다. 고칠 때마다 전부 다시 쳤고요. <strong>docker compose</strong>는 그 과정을 <strong>파일 한 장과 명령 한 줄</strong>로 바꿉니다.</p></div>
+<div class="dia"><svg viewBox="0 0 660 250" xmlns="http://www.w3.org/2000/svg" style="font-family:'Noto Sans KR',sans-serif;max-height:none"><rect x="8" y="16" width="310" height="215" rx="6" fill="#fff" stroke="#cfcbc4"></rect><text x="163" y="40" text-anchor="middle" font-size="12.5" font-weight="800" fill="#5b574f">지난 회차 · 손으로 다섯 줄</text><text x="22" y="64" font-size="9.5" font-family="Consolas,monospace" fill="#2f2d2a">docker network create labnet</text><text x="22" y="86" font-size="9.5" font-family="Consolas,monospace" fill="#2f2d2a">docker build -t my-api:1.0 ./api</text><text x="22" y="108" font-size="9.5" font-family="Consolas,monospace" fill="#2f2d2a">docker run -d --network labnet \</text><text x="22" y="130" font-size="9.5" font-family="Consolas,monospace" fill="#2f2d2a">   -p 5000:5000 --name api my-api:1.0</text><text x="22" y="152" font-size="9.5" font-family="Consolas,monospace" fill="#2f2d2a">docker build -t my-site:1.0 ./site</text><text x="22" y="174" font-size="9.5" font-family="Consolas,monospace" fill="#2f2d2a">docker run -d --network labnet \</text><text x="22" y="196" font-size="9.5" font-family="Consolas,monospace" fill="#2f2d2a">   -p 8080:80 --name site my-site:1.0</text><text x="22" y="224" font-size="9.5" fill="#b91c1c">고칠 때마다 rm -f 하고 다시 전부</text><rect x="342" y="16" width="310" height="215" rx="6" fill="#eaf5ec" stroke="#15803d"></rect><text x="497" y="40" text-anchor="middle" font-size="12.5" font-weight="800" fill="#15803d">이번 회차 · 파일 한 장</text><text x="356" y="64" font-size="10" font-family="Consolas,monospace" fill="#1c1b19">services:</text><text x="356" y="84" font-size="10" font-family="Consolas,monospace" fill="#1c1b19">  api:</text><text x="356" y="104" font-size="10" font-family="Consolas,monospace" fill="#1c1b19">    build: ./api</text><text x="356" y="124" font-size="10" font-family="Consolas,monospace" fill="#1c1b19">    ports: ["5000:5000"]</text><text x="356" y="144" font-size="10" font-family="Consolas,monospace" fill="#1c1b19">  site:</text><text x="356" y="164" font-size="10" font-family="Consolas,monospace" fill="#1c1b19">    build: ./site</text><text x="356" y="184" font-size="10" font-family="Consolas,monospace" fill="#1c1b19">    ports: ["8080:80"]</text><text x="356" y="204" font-size="10" font-family="Consolas,monospace" fill="#1c1b19">    depends_on: [api]</text><rect x="356" y="228" width="180" height="24" rx="4" fill="#fff" stroke="#15803d"></rect><text x="446" y="245" text-anchor="middle" font-size="10.5" font-family="Consolas,monospace" font-weight="700" fill="#15803d">docker compose up -d</text></svg></div>
+<h3>할 수 있게 되는 것</h3>
+<table class="zebra"><thead><tr><th style="width:5%">□</th><th style="width:65%">할 수 있게 되는 것</th><th style="width:30%">어디서</th></tr></thead><tbody><tr><td>□</td><td><b>YAML</b> 문법을 읽고, 들여쓰기 오류를 스스로 고친다</td><td>2장</td></tr><tr><td>□</td><td><code>docker-compose.yml</code>의 <b>키를 하나씩</b> 설명한다</td><td>3장</td></tr><tr><td>□</td><td><code>build</code> · <code>image</code> · <code>ports</code> · <code>volumes</code> · <code>environment</code>를 상황에 맞게 쓴다</td><td>3장</td></tr><tr><td>□</td><td><code>depends_on</code> · <code>restart</code> · <code>command</code>가 무엇을 하는지 안다</td><td>3.4</td></tr><tr><td>□</td><td><code>up</code> · <code>down</code> · <code>ps</code> · <code>logs</code> · <code>exec</code>를 <b>옵션까지</b> 쓴다</td><td>4장</td></tr><tr><td>□</td><td>파일 한 장으로 두 서비스를 띄우고 <b>이름으로 통신</b>하게 한다</td><td>5.1</td></tr><tr><td>□</td><td>데이터를 <b>이미지 밖으로</b> 빼고 환경변수로 경로를 준다</td><td>5.2</td></tr><tr><td>□</td><td>고친 뒤 <code>--build</code>로 다시 올리고, <code>down -v</code>의 위험을 안다</td><td>5.3</td></tr><tr><td>□</td><td><code>compose config</code>로 문법 오류를 미리 잡는다</td><td>4.3</td></tr></tbody></table>
+
+
+
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">02</div></section><section class="page" data-sec="0.1" data-title="0.1 이 교안을 마치면" data-ch="0" data-cont="1"><div class="rh"><div class="l"><b>DOCKER</b> · <span class="sec">시작하기</span></div><div class="r">0.1 이 교안을 마치면 (계속)<span class="pg">03</span></div></div><div class="kicker">0 · WHAT YOU CAN DO</div><h1>명령 다섯 줄을<br><em>파일 한 장</em>으로 <small class="cont" style="font-size:.55em;color:var(--muted)">(계속)</small></h1><table class="zebra"><thead><tr><th>이번에 쓰는 실습 파일</th><th>설명</th></tr></thead><tbody><tr><td><code>docker-compose.yml</code></td><td>두 서비스를 정의한 <b>한 장짜리</b> 파일</td></tr><tr><td><code>data/sales.csv</code></td><td><b>이미지 밖으로 뺀</b> 데이터 · 볼륨으로 붙인다</td></tr><tr><td><code>api/</code> · <code>site/</code></td><td>지난 회차와 같은 소스 · Dockerfile에서 CSV COPY만 빠졌다</td></tr></tbody></table><div class="note"><strong>데이터베이스는 이번에 설치하지 않습니다.</strong> 다만 <code>volumes</code>와 <code>depends_on</code>이 왜 생겼는지 설명할 때 <b>데이터베이스를 예로만</b> 듭니다. 실제 DB 컨테이너는 다음 과정에서 다룹니다.</div><div class="point"><div class="pl">오늘의 한 줄</div><p><strong>“무엇을 어떻게 띄울지”를 파일에 적어 두고, 그 파일을 코드와 함께 관리한다.</strong> 이것이 컴포즈를 쓰는 이유입니다.</p></div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">03</div></section>
+<section class="page opener has-why" data-ch="1"><div class="rh"><div class="l"><b>DOCKER</b> · 1장</div><div class="r">왜 compose인가<span class="pg">04</span></div></div><div class="big">1</div><h1>왜 compose인가<br>명령을 외우는 대신 파일로</h1><div class="oscene"><div class="osh">WHY · 현장 장면</div><div class="osb">새 팀원이 묻는다. “이 프로젝트 어떻게 띄워요?” 네트워크 만들고, 빌드 두 번, run 두 번, 포트는 각각 뭐고… <b>말로는 설명할 수 없다.</b> 그래서 그 내용을 파일 한 장에 적어 코드와 함께 넘긴다.</div><table class="zebra osx"><thead><tr><th>이 장을 모르면</th><th>생기는 일</th></tr></thead><tbody><tr><td>이유를 모르면</td><td>YAML만 외우게 된다</td></tr><tr><td>무엇이 자동인지 모르면</td><td>문제가 생겨도 손을 못 댄다</td></tr><tr><td>파일 위치를 모르면</td><td>명령부터 실패한다</td></tr></tbody></table></div><div class="oq"><div><span>01</span>compose는 무엇을 대신 해 주는가?</div><div><span>02</span>손으로 할 때와 무엇이 달라지는가?</div><div><span>03</span>파일은 어디에 있어야 하는가?</div></div><div class="kicker">이 장의 구성</div><div class="otoc"><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">1.1</b>왜 compose인가</span><b data-toc="1.1">05</b></div><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">1.2</b>실습 파일 구조</span><b data-toc="1.2">06</b></div></div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">04</div></section>
+<section class="page" data-sec="1.1" data-title="1.1 왜 compose인가"><div class="rh"><div class="l"><b>DOCKER</b> · 1장 · <span class="sec">왜 compose인가</span></div><div class="r">1.1 왜 compose인가<span class="pg">05</span></div></div><div class="kicker">1.1 · WHY COMPOSE</div><h1>명령을 외우는 대신<br><em>파일로 적어 둔다</em></h1>
+<div class="oscene" style="margin: 10px 0px; zoom: 0.93;"><div class="osh">현장 장면</div><div class="osb">새 팀원이 들어왔습니다. “이 프로젝트 어떻게 띄워요?” 설명하려면 네트워크 만들고, 빌드 두 번, run 두 번, 포트는 각각 뭐고, 환경변수는 뭘 주고… <b>말로 설명할 수 없습니다.</b> 그래서 그 내용을 <b>파일 한 장에 적어</b> 코드와 함께 넘깁니다.</div></div>
+<table class="zebra" style="zoom: 0.93;"><thead><tr><th>손으로 할 때</th><th>compose로 할 때</th></tr></thead><tbody><tr><td>명령 다섯 줄을 순서대로</td><td><code>docker compose up -d</code> <b>한 줄</b></td></tr><tr><td>네트워크를 직접 만든다</td><td><b>자동으로</b> 만들어 준다</td></tr><tr><td>컨테이너 이름·포트를 매번 기억</td><td>파일에 적혀 있다</td></tr><tr><td>고칠 때마다 <code>rm -f</code> 후 다시</td><td><code>up -d</code>가 <b>바뀐 것만</b> 다시 만든다</td></tr><tr><td>정리할 때 하나씩 삭제</td><td><code>docker compose down</code> 한 줄</td></tr><tr><td>다른 사람에게 설명이 어렵다</td><td><b>파일을 주면 끝</b> · git에 함께 올린다</td></tr></tbody></table>
+<table class="zebra" style="zoom: 0.93;"><thead><tr><th>compose가 대신 해 주는 것</th><th>무엇을</th></tr></thead><tbody><tr><td>네트워크 생성</td><td>서비스들이 <b>이름으로</b> 통신할 수 있게</td></tr><tr><td>이름 붙이기</td><td>서비스 이름이 곧 컨테이너 이름이자 주소</td></tr><tr><td>순서 조정</td><td><code>depends_on</code>으로 먼저 띄울 것을 지정</td></tr><tr><td>일괄 조작</td><td>한 번에 띄우고, 한 번에 내리고, 한 번에 로그</td></tr></tbody></table>
+<div class="warn" style="zoom: 0.93;"><b>compose가 만능은 아닙니다.</b> 여러 대의 서버에 나눠 띄우거나 자동으로 늘리는 일은 쿠버네티스 같은 도구의 몫입니다. compose는 <b>한 대의 컴퓨터에서 여러 컨테이너</b>를 다루는 데 씁니다. 개발 환경과 소규모 서버에서 가장 많이 쓰입니다.</div>
+<div class="note" style="zoom: 0.93;"><strong>명령 이름</strong> 예전에는 <code>docker-compose</code>(하이픈)라는 별도 프로그램이었지만, 지금은 도커에 포함되어 <code>docker compose</code>(띄어쓰기)로 씁니다. 옛 자료의 하이픈 명령도 대부분 그대로 동작합니다.</div>
+<div class="mission" style="zoom: 0.93;"><b>확인 미션 Q-01</b><h3>명령을 파일로 옮기기 (5분)</h3><div class="wy">지난 회차의 명령 다섯 줄을 보고, <b>어느 줄이 compose의 어느 키</b>가 되는지 짝지어 적는다.<br>(network create · build · run -p · --name · --network)</div></div>
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">05</div></section>
+<section class="page" data-sec="1.2" data-title="1.2 실습 파일 구조"><div class="rh"><div class="l"><b>DOCKER</b> · 1장 · <span class="sec">왜 compose인가</span></div><div class="r">1.2 실습 파일 구조<span class="pg">06</span></div></div><div class="kicker">1.2 · THE FILES</div><h1>파일 한 장이<br><em>어디에</em> 있어야 하나</h1>
+<div class="tree">docker_lab3
+├── docker-compose.yml   <i>← 두 서비스를 정의한 파일</i>
+├── data/
+│   └── sales.csv        <i>이미지 밖의 데이터</i>
+├── api/
+│   ├── Dockerfile
+│   └── api.py           <i>CSV_PATH 환경변수를 읽는다</i>
+└── site/
+    ├── Dockerfile
+    ├── index.html
+    └── style.css</div>
+<table class="zebra"><thead><tr><th>지난 회차와 달라진 점</th><th>왜</th></tr></thead><tbody><tr><td><code>sales.csv</code>가 <b>api 폴더 밖</b>으로</td><td>데이터는 이미지에 넣지 않고 <b>볼륨으로 붙인다</b> · 데이터가 바뀌어도 다시 빌드할 필요가 없다</td></tr><tr><td>api/Dockerfile에서 <code>COPY sales.csv</code> 삭제</td><td>같은 이유</td></tr><tr><td><code>docker-compose.yml</code> 추가</td><td>띄우는 방법을 파일에 적었다</td></tr></tbody></table>
+<div style="display:flex;gap:8px;align-items:center;margin:12px 0 4px;padding:6px 10px;border-left:3px solid #b23c0a;background:#faf9f7"><b style="font-size:11px;color:#b23c0a;white-space:nowrap">입력 위치</b><span style="font-size:11.5px"><b>VS Code 터미널 (내 PC)</b> · Terminal → New Terminal · 실습 폴더에서 · Windows는 PowerShell · 실습 폴더를 VS Code로 열고</span></div>
+<table class="zebra"><thead><tr><th style="width:42%">명령</th><th style="width:58%">왜 이 명령을 치는가</th></tr></thead><tbody><tr><td><code>cd docker_lab3</code></td><td>compose 파일이 있는 폴더로 · <b>compose 명령은 이 폴더에서</b> 실행한다</td></tr><tr><td><code>dir</code></td><td><code>docker-compose.yml</code>이 보이는지 확인 (macOS·리눅스는 <code>ls</code>)</td></tr><tr><td><code>type docker-compose.yml</code></td><td>파일 내용을 한 번 훑어본다 (macOS·리눅스는 <code>cat</code>)</td></tr></tbody></table>
+<div class="warn"><b>compose 명령은 파일이 있는 폴더에서</b> 실행해야 합니다. 다른 곳에서 치면 <code>no configuration file provided</code> 오류가 납니다. 다른 폴더에서 쓰려면 <code>docker compose -f 경로/docker-compose.yml up</code> 처럼 <code>-f</code>로 지정합니다.</div>
+
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">06</div></section><section class="page" data-sec="1.2" data-title="1.2 실습 파일 구조" data-cont="1"><div class="rh"><div class="l"><b>DOCKER</b> · 1장 · <span class="sec">왜 compose인가</span></div><div class="r">1.2 실습 파일 구조 (계속)<span class="pg">07</span></div></div><div class="kicker">1.2 · THE FILES</div><h1>파일 한 장이<br><em>어디에</em> 있어야 하나 <small class="cont" style="font-size:.55em;color:var(--muted)">(계속)</small></h1><div class="mission"><b>확인 미션 Q-02</b><h3>파일 위치 확인 (3분)</h3><div class="wy">① 상위 폴더로 이동해 <code>docker compose ps</code>를 실행하고 <b>오류 메시지</b>를 기록한다.<br>② 다시 실습 폴더로 와서 같은 명령이 되는지 확인한다.</div></div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">07</div></section>
+<section class="page opener has-why" data-ch="2"><div class="rh"><div class="l"><b>DOCKER</b> · 2장</div><div class="r">YAML과 파일 구조<span class="pg">08</span></div></div><div class="big">2</div><h1>YAML과 파일 구조<br>들여쓰기가 곧 구조다</h1><div class="oscene"><div class="osh">WHY · 현장 장면</div><div class="osb">compose 파일은 YAML로 쓴다. 문법은 단순하지만 <b>들여쓰기가 의미를 가진다.</b> 여기서 막히는 경우가 가장 많아 규칙 다섯 가지를 먼저 익히고, 우리가 쓸 파일을 처음부터 끝까지 읽는다.</div><table class="zebra osx"><thead><tr><th>이 장을 모르면</th><th>생기는 일</th></tr></thead><tbody><tr><td>YAML을 모르면</td><td>오류 메시지를 못 읽는다</td></tr><tr><td>탭을 쓰면</td><td>파일 전체가 안 읽힌다</td></tr><tr><td>구조를 모르면</td><td>어느 키가 어디 속하는지 헷갈린다</td></tr></tbody></table></div><div class="oq"><div><span>01</span>YAML의 규칙 다섯 가지는?</div><div><span>02</span>값을 적는 세 가지 모양은?</div><div><span>03</span>우리 파일은 어떻게 생겼는가?</div></div><div class="kicker">이 장의 구성</div><div class="otoc"><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">2.1</b>YAML 문법</span><b data-toc="2.1">09</b></div><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">2.2</b>파일 전체 읽기</span><b data-toc="2.2">11</b></div></div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">08</div></section>
+<section class="page" data-sec="2.1" data-title="2.1 YAML 문법"><div class="rh"><div class="l"><b>DOCKER</b> · 2장 · <span class="sec">YAML과 파일 구조</span></div><div class="r">2.1 YAML 문법<span class="pg">09</span></div></div><div class="kicker">2.1 · YAML</div><h1>들여쓰기가 곧 구조다<br><em>규칙 다섯 가지</em></h1>
+<div class="why"><b>왜 배워야 하나?</b><p>compose 파일은 <strong>YAML</strong>이라는 형식으로 씁니다. 문법이 단순한 대신 <strong>들여쓰기가 의미를 가집니다.</strong> 여기서 막히는 경우가 가장 많아, 규칙 다섯 가지만 먼저 익힙니다.</p></div>
+<div class="dia"><svg viewBox="0 0 660 230" xmlns="http://www.w3.org/2000/svg" style="font-family:'Noto Sans KR',sans-serif;max-height:none"><rect x="8" y="10" width="644" height="180" rx="6" fill="#1e2638"></rect><text x="20" y="34" font-size="10.5" font-family="Consolas,monospace" fill="#ff9a6b">services:</text><text x="300" y="34" font-size="9.5" fill="#cfcbc4">최상위 키 · 여기 아래에 서비스들을 적는다</text><text x="20" y="54" font-size="10.5" font-family="Consolas,monospace" fill="#8fd6e8">  api:</text><text x="300" y="54" font-size="9.5" fill="#cfcbc4">서비스 이름 (내가 정한다) · 네트워크 주소가 된다</text><text x="20" y="74" font-size="10.5" font-family="Consolas,monospace" fill="#fff">    build: ./api</text><text x="300" y="74" font-size="9.5" fill="#cfcbc4">키: 값  ← 콜론 뒤에 반드시 <tspan>공백 한 칸</tspan></text><text x="20" y="94" font-size="10.5" font-family="Consolas,monospace" fill="#fff">    ports:</text><text x="300" y="94" font-size="9.5" fill="#cfcbc4">값이 여러 개면 아래에 목록으로</text><text x="20" y="114" font-size="10.5" font-family="Consolas,monospace" fill="#a7f3d0">      - "5000:5000"</text><text x="300" y="114" font-size="9.5" fill="#cfcbc4">- 로 시작하면 목록의 한 줄</text><text x="20" y="134" font-size="10.5" font-family="Consolas,monospace" fill="#fff">    environment:</text><text x="300" y="134" font-size="9.5" fill="#cfcbc4">키:값 짝을 여러 개</text><text x="20" y="154" font-size="10.5" font-family="Consolas,monospace" fill="#a7f3d0">      CSV_PATH: /data/sales.csv</text><text x="300" y="154" font-size="9.5" fill="#cfcbc4">따옴표는 없어도 된다</text><text x="20" y="174" font-size="10.5" font-family="Consolas,monospace" fill="#a7f3d0">      PORT: "5000"</text><text x="300" y="174" font-size="9.5" fill="#cfcbc4">숫자를 문자로 넘기려면 따옴표</text><text x="8" y="208" font-size="10.5" fill="#b23c0a" font-weight="700">들여쓰기는 공백만 · 탭(Tab) 금지 · 같은 깊이는 공백 수가 똑같아야 한다</text><text x="8" y="226" font-size="10.5" fill="#86827b">보통 2칸씩 늘린다 · VS Code에서 YAML 확장을 쓰면 틀린 곳에 빨간 줄이 표시된다</text></svg></div>
+<table class="zebra"><thead><tr><th style="width:5%">#</th><th style="width:35%">규칙</th><th style="width:30%">예</th><th style="width:30%">틀린 예</th></tr></thead><tbody><tr><td>1</td><td><b>키: 값</b> · 콜론 뒤에 <b>공백 한 칸</b></td><td><code>build: ./api</code></td><td><code>build:./api</code></td></tr><tr><td>2</td><td>들여쓰기는 <b>공백만</b> · 탭(Tab) 금지</td><td>공백 2칸씩</td><td>Tab 키로 들여쓰기</td></tr><tr><td>3</td><td>같은 깊이는 <b>공백 수가 같아야</b></td><td><code>  api:</code> 와 <code>  site:</code></td><td>한쪽만 3칸</td></tr><tr><td>4</td><td>목록은 <b>- </b>로 시작</td><td><code>- "8080:80"</code></td><td><code>-"8080:80"</code> (공백 없음)</td></tr><tr><td>5</td><td><b>#</b> 뒤는 주석</td><td><code># 설명</code></td><td>—</td></tr></tbody></table>
+<h3>값을 적는 세 가지 모양</h3>
+<table class="zebra"><thead><tr><th>모양</th><th>언제</th><th>예</th></tr></thead><tbody><tr><td><b>키: 값</b></td><td>값이 하나</td><td><code>image: my-api:3.0</code></td></tr><tr><td><b>목록</b> (한 줄에 하나씩 <code>-</code>)</td><td>값이 여럿</td><td><code>ports:</code><br><code>&nbsp;&nbsp;- "5000:5000"</code><br><code>&nbsp;&nbsp;- "5001:5001"</code></td></tr><tr><td><b>중첩</b> (키 아래 키)</td><td>값이 짝으로</td><td><code>environment:</code><br><code>&nbsp;&nbsp;CSV_PATH: /data/sales.csv</code></td></tr></tbody></table>
+
+
+
+
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">09</div></section><section class="page" data-sec="2.1" data-title="2.1 YAML 문법" data-cont="1"><div class="rh"><div class="l"><b>DOCKER</b> · 2장 · <span class="sec">YAML과 파일 구조</span></div><div class="r">2.1 YAML 문법 (계속)<span class="pg">10</span></div></div><div class="kicker">2.1 · YAML</div><h1>들여쓰기가 곧 구조다<br><em>규칙 다섯 가지</em> <small class="cont" style="font-size:.55em;color:var(--muted)">(계속)</small></h1><table class="zebra"><thead><tr><th>따옴표</th><th>필요한가</th><th>이유</th></tr></thead><tbody><tr><td><code>ports: - "8080:80"</code></td><td><b>붙이는 편이 안전</b></td><td>따옴표가 없으면 <code>08:00</code> 같은 값이 시간으로 해석되는 경우가 있다</td></tr><tr><td><code>PORT: "5000"</code></td><td>필요할 때만</td><td>숫자를 <b>문자열로</b> 넘기고 싶을 때</td></tr><tr><td><code>build: ./api</code></td><td>필요 없음</td><td>평범한 문자열</td></tr></tbody></table><div class="warn"><b>가장 흔한 오류 세 가지</b> ① 탭으로 들여쓰기 → <code>found character that cannot start any token</code> ② 콜론 뒤 공백 누락 → <code>mapping values are not allowed</code> ③ 들여쓰기 깊이가 어긋남 → 엉뚱한 키의 하위로 들어가 <b>조용히 무시</b>됩니다.</div><div class="point"><div class="pl">VS Code를 쓰면 반은 예방됩니다</div><p>확장 <strong>YAML</strong>을 설치하면 틀린 곳에 빨간 줄이 표시되고, <code>docker-compose.yml</code>의 키 이름도 자동 완성됩니다. 저장할 때마다 <strong>탭을 공백으로</strong> 바꿔 주기도 합니다.</p></div><div class="mission"><b>확인 미션 Q-03</b><h3>YAML 깨뜨리기 (10분)</h3><div class="wy">다음을 하나씩 만들고 <code>docker compose config</code>의 <b>오류 메시지를 그대로</b> 기록한다.<br>① 탭으로 들여쓰기 ② 콜론 뒤 공백 제거 ③ 목록의 <code>-</code> 제거<br>기록 후 모두 원복한다.</div></div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">10</div></section>
+<section class="page" data-sec="2.2" data-title="2.2 파일 전체 읽기"><div class="rh"><div class="l"><b>DOCKER</b> · 2장 · <span class="sec">YAML과 파일 구조</span></div><div class="r">2.2 파일 전체 읽기<span class="pg">11</span></div></div><div class="kicker">2.2 · THE WHOLE FILE</div><h1>우리가 쓸 파일을<br><em>처음부터 끝까지</em></h1>
+<div class="code"><div class="ch2"><span>docker-compose.yml</span><span>이번 실습 파일</span></div><div class="cb2"><span style="color:#86827b"> 1</span>  services:
+<span style="color:#86827b"> 2</span>  
+<span style="color:#86827b"> 3</span>    api:                          # 서비스 이름 = 네트워크에서의 주소
+<span style="color:#86827b"> 4</span>      build: ./api                # 이 폴더의 Dockerfile로 이미지를 굽는다
+<span style="color:#86827b"> 5</span>      image: my-api:3.0           # 구운 이미지에 붙일 이름표
+<span style="color:#86827b"> 6</span>      container_name: api         # 컨테이너 이름
+<span style="color:#86827b"> 7</span>      ports:
+<span style="color:#86827b"> 8</span>        - "5000:5000"             # 내 PC 5000 → 컨테이너 5000
+<span style="color:#86827b"> 9</span>      environment:
+<span style="color:#86827b">10</span>        CSV_PATH: /data/sales.csv # api.py가 읽을 파일 위치
+<span style="color:#86827b">11</span>        PORT: "5000"
+<span style="color:#86827b">12</span>      volumes:
+<span style="color:#86827b">13</span>        - ./data:/data            # 내 PC의 data 폴더 → 컨테이너의 /data
+<span style="color:#86827b">14</span>      restart: unless-stopped     # 꺼지면 자동으로 다시 시작
+<span style="color:#86827b">15</span>  
+<span style="color:#86827b">16</span>    site:
+<span style="color:#86827b">17</span>      build: ./site
+<span style="color:#86827b">18</span>      image: my-site:3.0
+<span style="color:#86827b">19</span>      container_name: site
+<span style="color:#86827b">20</span>      ports:
+<span style="color:#86827b">21</span>        - "8080:80"
+<span style="color:#86827b">22</span>      depends_on:
+<span style="color:#86827b">23</span>        - api                     # api를 먼저 띄운다
+<span style="color:#86827b">24</span>      restart: unless-stopped</div></div>
+<table class="zebra"><thead><tr><th>구역</th><th>무엇</th></tr></thead><tbody><tr><td><code>services:</code></td><td><b>최상위 키</b> · 이 아래에 띄울 것들을 적는다</td></tr><tr><td><code>api:</code> · <code>site:</code></td><td><b>서비스 이름</b> · 내가 정하며, 그대로 <b>네트워크 주소</b>가 된다</td></tr><tr><td>그 아래 들여쓴 키들</td><td>그 서비스를 <b>어떻게</b> 띄울지 (3장에서 하나씩)</td></tr></tbody></table>
+<div class="note"><strong>예전 자료에 보이는 <code>version: "3"</code></strong>은 이제 쓰지 않습니다. 넣어도 동작하지만 경고가 나옵니다. <b>services부터 시작</b>하면 됩니다.</div>
+
+
+
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">11</div></section><section class="page" data-sec="2.2" data-title="2.2 파일 전체 읽기" data-cont="1"><div class="rh"><div class="l"><b>DOCKER</b> · 2장 · <span class="sec">YAML과 파일 구조</span></div><div class="r">2.2 파일 전체 읽기 (계속)<span class="pg">12</span></div></div><div class="kicker">2.2 · THE WHOLE FILE</div><h1>우리가 쓸 파일을<br><em>처음부터 끝까지</em> <small class="cont" style="font-size:.55em;color:var(--muted)">(계속)</small></h1><h3>최상위에 올 수 있는 키</h3><table class="zebra"><thead><tr><th>키</th><th>무엇</th><th>이번 파일</th></tr></thead><tbody><tr><td><b>services</b></td><td>띄울 컨테이너들</td><td><b>사용</b></td></tr><tr><td><b>volumes</b></td><td><b>도커가 관리하는</b> 저장 공간 선언</td><td>미사용 (우리는 폴더를 직접 붙였다)</td></tr><tr><td><b>networks</b></td><td>네트워크를 직접 정의</td><td>미사용 (자동 생성으로 충분)</td></tr><tr><td><b>configs</b> · <b>secrets</b></td><td>설정·비밀번호 관리</td><td>실무·운영 환경에서</td></tr></tbody></table><div class="mission"><b>확인 미션 Q-04</b><h3>구조 읽기 (5분)</h3><div class="wy">실습 파일에서 다음을 찾아 적는다.<br>① 서비스는 몇 개인가 ② 각 서비스의 이름 ③ <code>api</code> 아래에 있는 키를 모두 나열</div></div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">12</div></section>
+<section class="page opener has-why" data-ch="3"><div class="rh"><div class="l"><b>DOCKER</b> · 3장</div><div class="r">키 하나씩<span class="pg">13</span></div></div><div class="big">3</div><h1>키 하나씩<br>무엇을 적을 수 있나</h1><div class="oscene"><div class="osh">WHY · 현장 장면</div><div class="osb"><b>build · image · ports · volumes · environment · depends_on · restart …</b> 키마다 무엇을 하고, 지난 회차의 어떤 명령에 해당하는지 짝지어 본다. 데이터베이스가 필요한 키는 설명으로만 짚는다.</div><table class="zebra osx"><thead><tr><th>이 장을 모르면</th><th>생기는 일</th></tr></thead><tbody><tr><td>키를 모르면</td><td>남의 파일을 못 읽는다</td></tr><tr><td>볼륨 종류를 모르면</td><td>데이터를 잃는다</td></tr><tr><td>depends_on을 오해하면</td><td>준비 전에 붙어 실패한다</td></tr></tbody></table></div><div class="oq"><div><span>01</span>이미지는 어떻게 정하는가?</div><div><span>02</span>포트와 볼륨은 어떻게 적는가?</div><div><span>03</span>순서와 재시작은 어떻게 정하는가?</div></div><div class="kicker">이 장의 구성</div><div class="otoc"><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">3.1</b>build · image</span><b data-toc="3.1">14</b></div><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">3.2</b>ports · volumes</span><b data-toc="3.2">15</b></div><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">3.3</b>environment</span><b data-toc="3.3">17</b></div><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">3.4</b>depends_on · restart</span><b data-toc="3.4">18</b></div></div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">13</div></section>
+<section class="page" data-sec="3.1" data-title="3.1 이미지를 정하는 키"><div class="rh"><div class="l"><b>DOCKER</b> · 3장 · <span class="sec">키 하나씩</span></div><div class="r">3.1 이미지를 정하는 키<span class="pg">14</span></div></div><div class="kicker">3.1 · BUILD · IMAGE</div><h1>어디서 이미지를<br><em>가져오거나 굽나</em></h1>
+<table class="zebra" style="zoom: 0.89;"><thead><tr><th style="width:28%">키</th><th style="width:36%">무엇</th><th style="width:36%">지난 회차의 무엇과 같나</th></tr></thead><tbody><tr><td><b>build: ./api</b></td><td>이 폴더의 Dockerfile로 <b>직접 굽는다</b></td><td><code>docker build ./api</code></td></tr><tr><td><b>image: my-api:3.0</b></td><td>굽고 나서 붙일 <b>이름표</b> · build 없이 쓰면 <b>받아서</b> 쓴다</td><td><code>-t my-api:3.0</code> 또는 <code>docker pull</code></td></tr><tr><td><b>container_name: api</b></td><td>컨테이너 이름 고정</td><td><code>--name api</code></td></tr></tbody></table>
+<h3 style="zoom: 0.89;">build를 자세히 쓰는 법</h3>
+<div class="code" style="zoom: 0.89;"><div class="ch2"><span>docker-compose.yml</span><span>build를 펼쳐 쓰면</span></div><div class="cb2"><span style="color:#86827b"> 1</span>    api:
+<span style="color:#86827b"> 2</span>      build:
+<span style="color:#86827b"> 3</span>        context: ./api            # 빌드에 쓸 폴더 (지난 회차의 마지막 점)
+<span style="color:#86827b"> 4</span>        dockerfile: Dockerfile    # 파일 이름이 다르면 여기에
+<span style="color:#86827b"> 5</span>        args:                     # 빌드 중에 전달할 값
+<span style="color:#86827b"> 6</span>          APP_VERSION: "3.0"</div></div>
+<table class="zebra" style="zoom: 0.89;"><thead><tr><th>짧게 쓰기</th><th>펼쳐 쓰기</th><th>언제 펼치나</th></tr></thead><tbody><tr><td><code>build: ./api</code></td><td><code>build:</code><br><code>&nbsp;&nbsp;context: ./api</code></td><td>Dockerfile 이름이 다르거나 <code>args</code>가 필요할 때</td></tr></tbody></table>
+<table class="zebra" style="zoom: 0.89;"><thead><tr><th>image만 쓰는 경우</th><th>예</th><th>설명</th></tr></thead><tbody><tr><td>남이 만든 이미지를 그대로</td><td><code>image: nginx:alpine</code></td><td><b>build 없이</b> 받아서 띄운다</td></tr><tr><td>데이터베이스 같은 것</td><td><code>image: postgres:16</code></td><td><b>이번에는 쓰지 않지만</b>, 다음 과정에서 이렇게 한 줄로 DB를 띄운다</td></tr><tr><td>build와 함께</td><td><code>build: ./api</code> + <code>image: my-api:3.0</code></td><td>구운 결과에 이름표를 붙여 <b>나중에 옮기기</b> 좋다</td></tr></tbody></table>
+<div class="point" style="zoom: 0.89;"><div class="pl">지난 회차와 이어 보기</div><p><code>build</code>는 <code>docker build</code>, <code>image</code>는 <code>-t</code> 또는 <code>docker pull</code>에 해당합니다. <strong>명령으로 하던 것을 키로 적는 것</strong>뿐입니다.</p></div>
+<div class="mission" style="zoom: 0.89;"><b>확인 미션 Q-05</b><h3>image만 써 보기 (5분)</h3><div class="wy">① 새 서비스 <code>echo</code>를 추가하고 <code>image: hello-world</code>만 적는다.<br>② <code>docker compose up echo</code>로 실행해 결과를 본다.<br>③ build 없이 동작하는 이유를 적는다.</div></div>
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">14</div></section>
+<section class="page" data-sec="3.2" data-title="3.2 포트와 볼륨"><div class="rh"><div class="l"><b>DOCKER</b> · 3장 · <span class="sec">키 하나씩</span></div><div class="r">3.2 포트와 볼륨<span class="pg">15</span></div></div><div class="kicker">3.2 · PORTS · VOLUMES</div><h1>밖으로 열고<br><em>안으로 붙인다</em></h1>
+<h3>ports · 밖에서 접속할 통로</h3>
+<div class="code"><div class="ch2"><span>docker-compose.yml</span><span>포트 쓰는 여러 모양</span></div><div class="cb2"><span style="color:#86827b"> 1</span>      ports:
+<span style="color:#86827b"> 2</span>        - "5000:5000"      # 내 PC 5000 → 컨테이너 5000
+<span style="color:#86827b"> 3</span>        - "8080:80"        # 포트 번호가 달라도 된다
+<span style="color:#86827b"> 4</span>        - "127.0.0.1:5000:5000"   # 내 PC에서만 접속 허용 (외부 차단)
+<span style="color:#86827b"> 5</span>        - "5000"           # 앞을 비우면 도커가 임의의 번호를 준다</div></div>
+<table class="zebra"><thead><tr><th>적는 법</th><th>뜻</th><th>언제</th></tr></thead><tbody><tr><td><code>"8080:80"</code></td><td><b>내 PC 8080</b> → 컨테이너 80</td><td>가장 흔한 형태</td></tr><tr><td><code>"127.0.0.1:5000:5000"</code></td><td><b>내 컴퓨터에서만</b> 접속 가능</td><td>서버에서 외부 노출을 막고 싶을 때</td></tr><tr><td><b>ports를 아예 안 쓰면</b></td><td>밖에서 접속 불가 · <b>다른 컨테이너는 이름으로 접근 가능</b></td><td>데이터베이스처럼 <b>내부 전용</b> 서비스</td></tr></tbody></table>
+<div class="note"><strong>데이터베이스를 예로 들면</strong> DB 서비스에는 보통 <code>ports</code>를 적지 않습니다. 웹 서버만 밖에 열고, DB는 <b>compose가 만든 네트워크 안에서만</b> 접근하게 하는 것이 안전하기 때문입니다. 이번 실습의 api는 확인을 위해 열어 두었습니다.</div>
+<h3>volumes · 이미지 밖의 데이터를 붙인다</h3>
+<div class="code"><div class="ch2"><span>docker-compose.yml</span><span>볼륨 쓰는 두 가지</span></div><div class="cb2"><span style="color:#86827b"> 1</span>      volumes:
+<span style="color:#86827b"> 2</span>        - ./data:/data              # ① 내 PC 폴더를 붙인다 (bind mount)
+<span style="color:#86827b"> 3</span>        - db-data:/var/lib/postgresql/data   # ② 도커가 관리하는 볼륨 (named volume)</div></div>
+<table class="zebra"><thead><tr><th style="width:18%">종류</th><th style="width:26%">적는 법</th><th style="width:24%">어디에 저장되나</th><th style="width:32%">언제 쓰나</th></tr></thead><tbody><tr><td><b>폴더 붙이기</b></td><td><code>./data:/data</code></td><td><b>내 PC의 그 폴더</b></td><td>내가 <b>직접 보고 고칠</b> 파일 · 소스·설정·CSV</td></tr><tr><td><b>이름 있는 볼륨</b></td><td><code>db-data:/var/lib/…</code></td><td>도커가 관리하는 곳</td><td><b>데이터베이스 파일</b>처럼 내가 직접 열 일이 없는 데이터</td></tr></tbody></table>
+
+
+
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">15</div></section><section class="page" data-sec="3.2" data-title="3.2 포트와 볼륨" data-cont="1"><div class="rh"><div class="l"><b>DOCKER</b> · 3장 · <span class="sec">키 하나씩</span></div><div class="r">3.2 포트와 볼륨 (계속)<span class="pg">16</span></div></div><div class="kicker">3.2 · PORTS · VOLUMES</div><h1>밖으로 열고<br><em>안으로 붙인다</em> <small class="cont" style="font-size:.55em;color:var(--muted)">(계속)</small></h1><div class="note"><strong>이름 있는 볼륨은 이번에 쓰지 않습니다.</strong> 다만 데이터베이스를 띄울 때 꼭 필요합니다. 컨테이너를 지워도 <b>데이터는 볼륨에 남아</b> 다시 띄우면 그대로이기 때문입니다. 쓰려면 최상위에 <code>volumes:</code> 아래 이름을 선언해야 합니다.</div><div class="dia"><svg viewBox="0 0 660 200" xmlns="http://www.w3.org/2000/svg" style="font-family:'Noto Sans KR',sans-serif"><rect x="120" y="14" width="420" height="150" rx="8" fill="#eef3fb" stroke="#1d4ed8" stroke-dasharray="5 4"></rect><text x="330" y="36" text-anchor="middle" font-size="11.5" font-weight="800" fill="#1d4ed8">compose가 자동으로 만든 네트워크</text><rect x="150" y="54" width="170" height="70" rx="6" fill="#eaf5ec" stroke="#15803d"></rect><text x="235" y="78" text-anchor="middle" font-size="12" font-weight="800" fill="#15803d">site</text><text x="235" y="98" text-anchor="middle" font-size="9.5">8080 → 80</text><text x="235" y="114" text-anchor="middle" font-size="9.5" font-family="Consolas,monospace">http://api:5000</text><rect x="345" y="54" width="170" height="70" rx="6" fill="#f3eefb" stroke="#6d28d9"></rect><text x="430" y="78" text-anchor="middle" font-size="12" font-weight="800" fill="#6d28d9">api</text><text x="430" y="98" text-anchor="middle" font-size="9.5">5000 → 5000</text><text x="430" y="114" text-anchor="middle" font-size="9.5">/data 에 CSV가 붙는다</text><line x1="320" y1="89" x2="345" y2="89" stroke="#b23c0a" stroke-width="2"></line><rect x="8" y="54" width="100" height="70" rx="6" fill="#fff" stroke="#1c1b19"></rect><text x="58" y="84" text-anchor="middle" font-size="11" font-weight="800">브라우저</text><text x="58" y="104" text-anchor="middle" font-size="9">localhost</text><rect x="552" y="54" width="100" height="70" rx="6" fill="#faf9f7" stroke="#b23c0a"></rect><text x="602" y="80" text-anchor="middle" font-size="11" font-weight="800" fill="#b23c0a">./data</text><text x="602" y="100" text-anchor="middle" font-size="9">내 PC 폴더</text><text x="602" y="116" text-anchor="middle" font-size="9">sales.csv</text><line x1="515" y1="89" x2="552" y2="89" stroke="#b23c0a" stroke-width="2" stroke-dasharray="3 3"></line><text x="8" y="186" font-size="10.5" fill="#86827b">서비스 이름(api · site)이 그대로 <tspan font-weight="700">주소</tspan>가 된다 · 네트워크를 따로 만들지 않아도 된다</text></svg></div><div class="mission"><b>확인 미션 Q-06</b><h3>포트를 지워 보기 (5분)</h3><div class="wy">① api의 <code>ports</code>를 주석 처리하고 <code>up -d</code>.<br>② 브라우저와 <code>compose exec site wget …</code> 중 <b>무엇이 되고 무엇이 안 되는지</b> 적는다.<br>③ 원복한다.</div></div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">16</div></section>
+<section class="page" data-sec="3.3" data-title="3.3 환경변수"><div class="rh"><div class="l"><b>DOCKER</b> · 3장 · <span class="sec">키 하나씩</span></div><div class="r">3.3 환경변수<span class="pg">17</span></div></div><div class="kicker">3.3 · ENVIRONMENT</div><h1>코드를 고치지 않고<br><em>동작을 바꾼다</em></h1>
+<div class="why" style="zoom: 0.92;"><b>왜 배워야 하나?</b><p>같은 이미지를 개발용·운영용으로 쓰려면 <strong>주소·경로·비밀번호</strong>만 달라야 합니다. 그 값을 코드에 적어 두면 이미지를 두 개 만들어야 하죠. 그래서 <strong>환경변수</strong>로 밖에서 넣어 줍니다.</p></div>
+<div class="code" style="zoom: 0.92;"><div class="ch2"><span>docker-compose.yml</span><span>두 가지 적는 법</span></div><div class="cb2"><span style="color:#86827b"> 1</span>      environment:
+<span style="color:#86827b"> 2</span>        CSV_PATH: /data/sales.csv     # 키: 값 모양
+<span style="color:#86827b"> 3</span>        PORT: "5000"
+<span style="color:#86827b"> 4</span>  
+<span style="color:#86827b"> 5</span>      # 또는 목록 모양 (둘 중 아무거나)
+<span style="color:#86827b"> 6</span>      environment:
+<span style="color:#86827b"> 7</span>        - CSV_PATH=/data/sales.csv
+<span style="color:#86827b"> 8</span>        - PORT=5000
+<span style="color:#86827b"> 9</span>  
+<span style="color:#86827b">10</span>      # 값이 많으면 파일로 빼기
+<span style="color:#86827b">11</span>      env_file:
+<span style="color:#86827b">12</span>        - .env</div></div>
+<table class="zebra" style="zoom: 0.92;"><thead><tr><th>방법</th><th>언제</th><th>주의</th></tr></thead><tbody><tr><td><b>environment</b></td><td>값이 두세 개</td><td>파일에 값이 <b>그대로 보인다</b></td></tr><tr><td><b>env_file</b></td><td>값이 많거나 <b>비밀번호</b></td><td><code>.env</code>는 git에 올리지 않는다 (<code>.gitignore</code>)</td></tr><tr><td><b>${변수}</b></td><td><code>ports: - "${WEB_PORT}:80"</code></td><td><code>.env</code>의 값을 compose 파일 안에서 끌어 쓴다</td></tr></tbody></table>
+<table class="zebra" style="zoom: 0.92;"><thead><tr><th>우리 실습에서</th><th>무엇을 한 것</th></tr></thead><tbody><tr><td><code>CSV_PATH: /data/sales.csv</code></td><td>api.py가 읽을 파일 위치를 <b>밖에서</b> 지정</td></tr><tr><td><code>PORT: "5000"</code></td><td>서버가 열 포트를 지정 · 코드에는 기본값만 있다</td></tr><tr><td>효과</td><td><b>코드를 고치지 않고</b> 다른 CSV를 쓰게 할 수 있다 (5.2에서 해 본다)</td></tr></tbody></table>
+<div class="note" style="zoom: 0.92;"><strong>데이터베이스를 예로 들면</strong> <code>POSTGRES_PASSWORD</code>처럼 <b>비밀번호를 환경변수로</b> 주는 것이 보통입니다. 그래서 실무에서는 compose 파일에 직접 쓰지 않고 <code>env_file</code>로 빼고, 그 파일은 저장소에 올리지 않습니다.</div>
+<div class="mission" style="zoom: 0.92;"><b>확인 미션 Q-07</b><h3>환경변수 바꾸기 (5분)</h3><div class="wy">① <code>PORT</code>를 <code>"5050"</code>으로 바꾸고 <code>up -d</code>.<br>② 왜 접속이 안 되는지 설명하고, <b>어디를 함께 고쳐야</b> 하는지 적는다.<br>③ 원복한다.</div></div>
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">17</div></section>
+<section class="page" data-sec="3.4" data-title="3.4 순서 · 재시작 · 실행 명령"><div class="rh"><div class="l"><b>DOCKER</b> · 3장 · <span class="sec">키 하나씩</span></div><div class="r">3.4 순서 · 재시작 · 실행 명령<span class="pg">18</span></div></div><div class="kicker">3.4 · DEPENDS_ON · RESTART</div><h1>띄우는 순서와<br><em>죽었을 때</em>를 정한다</h1>
+<table class="zebra"><thead><tr><th>키</th><th>무엇</th><th>주의</th></tr></thead><tbody><tr><td><b>depends_on</b></td><td><b>띄우는 순서</b>를 정한다 · api를 먼저, site를 나중에</td><td><b>“준비될 때까지” 기다리지는 않는다</b> · 시작 순서만 보장</td></tr><tr><td><b>restart</b></td><td>컨테이너가 꺼졌을 때 <b>다시 시작</b>할지</td><td><code>no</code>(기본) · <code>always</code> · <code>unless-stopped</code> · <code>on-failure</code></td></tr><tr><td><b>command</b></td><td>이미지의 <b>CMD를 덮어쓴다</b></td><td><code>command: python api.py --debug</code></td></tr><tr><td><b>healthcheck</b></td><td>정말 <b>준비됐는지</b> 주기적으로 확인</td><td>depends_on의 한계를 보완할 때</td></tr></tbody></table>
+<table class="zebra"><thead><tr><th>restart 값</th><th>언제 다시 시작하나</th><th>언제 쓰나</th></tr></thead><tbody><tr><td><code>no</code></td><td>다시 시작하지 않음 (기본)</td><td>한 번 돌고 끝나는 작업</td></tr><tr><td><code>on-failure</code></td><td><b>오류로 죽었을 때</b>만</td><td>배치 작업</td></tr><tr><td><code>always</code></td><td>항상 · <b>도커가 켜지면</b> 함께</td><td>서버에서 계속 떠 있어야 할 것</td></tr><tr><td><code>unless-stopped</code></td><td>always와 같지만, <b>내가 직접 멈춘 것</b>은 그대로</td><td>가장 무난 · 이번 실습에서 사용</td></tr></tbody></table>
+<div class="warn"><b>depends_on의 흔한 오해</b> “api가 <b>응답할 수 있을 때까지</b> 기다려 준다”가 아닙니다. <b>컨테이너가 시작된 것</b>까지만 보장합니다. 데이터베이스처럼 준비에 시간이 걸리는 서비스는 <code>healthcheck</code>를 함께 쓰거나, 애플리케이션이 <b>재시도</b>하도록 만드는 것이 정석입니다.</div>
+<div class="code"><div class="ch2"><span>docker-compose.yml</span><span>healthcheck를 곁들이면 (참고)</span></div><div class="cb2"><span style="color:#86827b"> 1</span>    api:
+<span style="color:#86827b"> 2</span>      build: ./api
+<span style="color:#86827b"> 3</span>      healthcheck:
+<span style="color:#86827b"> 4</span>        test: ["CMD", "python", "-c", "import urllib.request;urllib.request.urlopen('http://localhost:5000/api/health')"]
+<span style="color:#86827b"> 5</span>        interval: 10s      # 10초마다 확인
+<span style="color:#86827b"> 6</span>        timeout: 3s        # 3초 안에 응답 없으면 실패
+<span style="color:#86827b"> 7</span>        retries: 3         # 3번 실패하면 unhealthy
+<span style="color:#86827b"> 8</span>  
+<span style="color:#86827b"> 9</span>    site:
+<span style="color:#86827b">10</span>      depends_on:
+<span style="color:#86827b">11</span>        api:
+<span style="color:#86827b">12</span>          condition: service_healthy   # 건강할 때까지 기다린다</div></div>
+
+
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">18</div></section><section class="page" data-sec="3.4" data-title="3.4 순서 · 재시작 · 실행 명령" data-cont="1"><div class="rh"><div class="l"><b>DOCKER</b> · 3장 · <span class="sec">키 하나씩</span></div><div class="r">3.4 순서 · 재시작 · 실행 명령 (계속)<span class="pg">19</span></div></div><div class="kicker">3.4 · DEPENDS_ON · RESTART</div><h1>띄우는 순서와<br><em>죽었을 때</em>를 정한다 <small class="cont" style="font-size:.55em;color:var(--muted)">(계속)</small></h1><div class="point"><div class="pl">이번 실습에서는</div><p><code>depends_on</code>과 <code>restart: unless-stopped</code>만 씁니다. healthcheck는 <strong>있다는 것만</strong> 알아 두고, 데이터베이스를 붙이는 다음 과정에서 실제로 씁니다.</p></div><div class="mission"><b>확인 미션 Q-08</b><h3>restart 시험 (10분)</h3><div class="wy">① <code>restart</code>를 <code>no</code>로 바꿔 올린다.<br>② <code>docker stop api</code> 후 상태를 본다.<br>③ <code>unless-stopped</code>로 바꿔 같은 실험을 하고 차이를 적는다.</div></div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">19</div></section>
+<section class="page opener has-why" data-ch="4"><div class="rh"><div class="l"><b>DOCKER</b> · 4장</div><div class="r">명령어와 옵션<span class="pg">20</span></div></div><div class="big">4</div><h1>명령어와 옵션<br>올리고 · 보고 · 내린다</h1><div class="oscene"><div class="osh">WHY · 현장 장면</div><div class="osb">compose 명령은 몇 개 안 된다. 대신 <b>옵션에 따라 결과가 크게 달라진다.</b> 특히 <code>--build</code>를 붙이느냐, <code>down</code>에 <code>-v</code>를 붙이느냐가 중요하다.</div><table class="zebra osx"><thead><tr><th>이 장을 모르면</th><th>생기는 일</th></tr></thead><tbody><tr><td>up 옵션을 모르면</td><td>고쳐도 반영이 안 된다</td></tr><tr><td>down -v를 모르면</td><td>데이터를 날린다</td></tr><tr><td>config를 모르면</td><td>오류를 늦게 발견한다</td></tr></tbody></table></div><div class="oq"><div><span>01</span>up과 down에는 어떤 옵션이 있는가?</div><div><span>02</span>상태와 로그는 어떻게 보는가?</div><div><span>03</span>띄우기 전에 무엇을 확인하는가?</div></div><div class="kicker">이 장의 구성</div><div class="otoc"><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">4.1</b>올리고 내리기</span><b data-toc="4.1">21</b></div><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">4.2</b>상태 보기</span><b data-toc="4.2">23</b></div><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">4.3</b>확인과 정리</span><b data-toc="4.3">24</b></div></div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">20</div></section>
+<section class="page" data-sec="4.1" data-title="4.1 올리고 내리기"><div class="rh"><div class="l"><b>DOCKER</b> · 4장 · <span class="sec">명령어와 옵션</span></div><div class="r">4.1 올리고 내리기<span class="pg">21</span></div></div><div class="kicker">4.1 · UP · DOWN</div><h1>가장 많이 쓰는<br><em>두 명령</em></h1>
+<div style="display:flex;gap:8px;align-items:center;margin:12px 0 4px;padding:6px 10px;border-left:3px solid #b23c0a;background:#faf9f7"><b style="font-size:11px;color:#b23c0a;white-space:nowrap">입력 위치</b><span style="font-size:11.5px"><b>VS Code 터미널 (내 PC)</b> · Terminal → New Terminal · 실습 폴더에서 · Windows는 PowerShell · <code>docker-compose.yml</code>이 있는 폴더에서</span></div>
+<table class="zebra"><thead><tr><th style="width:42%">명령</th><th style="width:58%">왜 이 명령을 치는가</th></tr></thead><tbody><tr><td><code>docker compose up</code></td><td>띄운다 · <b>터미널이 묶이고</b> 로그가 흐른다 (Ctrl+C로 중지)</td></tr><tr><td><code>docker compose up -d</code></td><td><b>백그라운드</b>로 띄운다 · 실습에서는 보통 이것</td></tr><tr><td><code>docker compose up -d --build</code></td><td><b>이미지를 다시 굽고</b> 띄운다 · 코드를 고쳤을 때</td></tr><tr><td><code>docker compose up -d api</code></td><td><b>특정 서비스만</b> 띄운다</td></tr><tr><td><code>docker compose down</code></td><td>멈추고 <b>컨테이너·네트워크 삭제</b> · 이미지와 볼륨은 남는다</td></tr><tr><td><code>docker compose down -v</code></td><td><b>볼륨까지 삭제</b> · 데이터가 사라지므로 주의</td></tr><tr><td><code>docker compose stop</code></td><td>멈추기만 · 컨테이너는 남는다</td></tr><tr><td><code>docker compose start</code></td><td>멈춘 것 다시 시작</td></tr><tr><td><code>docker compose restart api</code></td><td>특정 서비스만 재시작</td></tr></tbody></table>
+<table class="zebra"><thead><tr><th>up의 똑똑한 점</th><th>설명</th></tr></thead><tbody><tr><td><b>바뀐 것만</b> 다시 만든다</td><td>compose 파일이나 이미지가 바뀐 서비스만 새로 만들고 나머지는 그대로 둔다</td></tr><tr><td><code>--build</code>를 붙이면</td><td>Dockerfile·소스가 바뀌었을 때 <b>다시 굽는다</b> · 안 붙이면 기존 이미지를 쓴다</td></tr><tr><td><code>--force-recreate</code></td><td>바뀐 게 없어도 <b>무조건</b> 다시 만든다</td></tr><tr><td><code>--no-deps</code></td><td><code>depends_on</code>을 무시하고 그 서비스만</td></tr></tbody></table>
+<div class="warn"><b><code>down -v</code>는 조심하세요.</b> <code>-v</code>는 <b>볼륨 삭제</b>입니다. 데이터베이스를 쓰는 환경에서 이 명령을 치면 <b>데이터가 전부 사라집니다.</b> 평소에는 옵션 없이 <code>docker compose down</code>만 씁니다.</div>
+<table class="zebra"><thead><tr><th>비슷해 보이는 것</th><th>차이</th></tr></thead><tbody><tr><td><code>stop</code> vs <code>down</code></td><td>stop은 <b>멈추기만</b> · down은 <b>삭제까지</b></td></tr><tr><td><code>down</code> vs <code>down -v</code></td><td>볼륨을 <b>남기느냐 지우느냐</b></td></tr><tr><td><code>up -d</code> vs <code>start</code></td><td>up은 <b>없으면 만들어서</b> 띄움 · start는 <b>있는 것</b>만 다시 시작</td></tr></tbody></table>
+
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">21</div></section><section class="page" data-sec="4.1" data-title="4.1 올리고 내리기" data-cont="1"><div class="rh"><div class="l"><b>DOCKER</b> · 4장 · <span class="sec">명령어와 옵션</span></div><div class="r">4.1 올리고 내리기 (계속)<span class="pg">22</span></div></div><div class="kicker">4.1 · UP · DOWN</div><h1>가장 많이 쓰는<br><em>두 명령</em> <small class="cont" style="font-size:.55em;color:var(--muted)">(계속)</small></h1><div class="mission"><b>확인 미션 Q-09</b><h3>up 옵션 비교 (10분)</h3><div class="wy">① HTML을 고치고 <code>up -d</code>만 실행 → 반영되는가?<br>② <code>up -d --build</code> 실행 → 반영되는가?<br>③ <code>--force-recreate</code>는 언제 필요한지 적는다.</div></div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">22</div></section>
+<section class="page" data-sec="4.2" data-title="4.2 상태 보기"><div class="rh"><div class="l"><b>DOCKER</b> · 4장 · <span class="sec">명령어와 옵션</span></div><div class="r">4.2 상태 보기<span class="pg">23</span></div></div><div class="kicker">4.2 · PS · LOGS · EXEC</div><h1>지금 어떤지<br><em>무슨 일이 있었는지</em></h1>
+<div style="display:flex;gap:8px;align-items:center;margin:12px 0 4px;padding:6px 10px;border-left:3px solid #b23c0a;background:#faf9f7"><b style="font-size:11px;color:#b23c0a;white-space:nowrap">입력 위치</b><span style="font-size:11.5px"><b>VS Code 터미널 (내 PC)</b> · Terminal → New Terminal · 실습 폴더에서 · Windows는 PowerShell</span></div>
+<table class="zebra"><thead><tr><th style="width:42%">명령</th><th style="width:58%">왜 이 명령을 치는가</th></tr></thead><tbody><tr><td><code>docker compose ps</code></td><td>이 프로젝트의 <b>컨테이너 상태</b> · 다른 프로젝트는 안 보여 깔끔하다</td></tr><tr><td><code>docker compose ps -a</code></td><td>멈춘 것까지</td></tr><tr><td><code>docker compose logs</code></td><td><b>모든 서비스</b>의 로그를 한 번에 · 서비스 이름이 앞에 붙는다</td></tr><tr><td><code>docker compose logs -f api</code></td><td>api 로그만 <b>실시간</b>으로 (Ctrl+C로 중단)</td></tr><tr><td><code>docker compose logs --tail 20 api</code></td><td>마지막 20줄만</td></tr><tr><td><code>docker compose exec api sh</code></td><td>api 컨테이너 <b>안으로</b> · slim 이미지에는 bash가 없어 <code>sh</code></td></tr><tr><td><code>docker compose exec api ls /data</code></td><td>들어가지 않고 <b>명령 하나만</b> 실행</td></tr><tr><td><code>docker compose top</code></td><td>각 컨테이너 안에서 도는 <b>프로세스</b></td></tr></tbody></table>
+<table class="zebra"><thead><tr><th>docker ps와 무엇이 다른가</th><th>설명</th></tr></thead><tbody><tr><td><code>docker ps</code></td><td>내 PC의 <b>모든</b> 컨테이너</td></tr><tr><td><code>docker compose ps</code></td><td><b>이 폴더의 프로젝트</b> 것만 · 여러 프로젝트를 동시에 다룰 때 유용</td></tr></tbody></table>
+<div class="note"><strong>프로젝트 이름</strong> compose는 <b>폴더 이름</b>을 프로젝트 이름으로 씁니다. 그래서 같은 파일이라도 폴더가 다르면 <b>별개의 묶음</b>으로 동작합니다. <code>-p 이름</code>으로 직접 정할 수도 있습니다.</div>
+<div class="mission"><b>확인 미션 Q-10</b><h3>로그 옵션 (5분)</h3><div class="wy">① <code>compose logs</code>와 <code>compose logs api</code>의 차이를 적는다.<br>② <code>--tail 5</code>를 붙여 결과를 비교한다.<br>③ <code>docker ps</code>와 <code>compose ps</code>의 차이도 한 줄로.</div></div>
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">23</div></section>
+<section class="page" data-sec="4.3" data-title="4.3 확인과 정리 명령"><div class="rh"><div class="l"><b>DOCKER</b> · 4장 · <span class="sec">명령어와 옵션</span></div><div class="r">4.3 확인과 정리 명령<span class="pg">24</span></div></div><div class="kicker">4.3 · CONFIG · IMAGES</div><h1>띄우기 전에 검사하고<br><em>정리</em>한다</h1>
+<div style="display:flex;gap:8px;align-items:center;margin:12px 0 4px;padding:6px 10px;border-left:3px solid #b23c0a;background:#faf9f7"><b style="font-size:11px;color:#b23c0a;white-space:nowrap">입력 위치</b><span style="font-size:11.5px"><b>VS Code 터미널 (내 PC)</b> · Terminal → New Terminal · 실습 폴더에서 · Windows는 PowerShell</span></div>
+<table class="zebra"><thead><tr><th style="width:42%">명령</th><th style="width:58%">왜 이 명령을 치는가</th></tr></thead><tbody><tr><td><code>docker compose config</code></td><td><b>문법 검사</b> · 오류가 있으면 줄 번호와 함께 알려 준다 · 올리기 전에 한 번</td></tr><tr><td><code>docker compose config --services</code></td><td>정의된 <b>서비스 이름</b>만 나열</td></tr><tr><td><code>docker compose build</code></td><td>띄우지 않고 <b>굽기만</b></td></tr><tr><td><code>docker compose build --no-cache api</code></td><td>캐시 없이 처음부터 다시 굽기</td></tr><tr><td><code>docker compose pull</code></td><td><code>image:</code>로 지정한 것들을 <b>미리 받기</b></td></tr><tr><td><code>docker compose images</code></td><td>이 프로젝트가 쓰는 이미지 목록</td></tr><tr><td><code>docker compose down --rmi local</code></td><td>내릴 때 <b>직접 구운 이미지까지</b> 삭제</td></tr></tbody></table>
+<div class="term keep"><div class="th"><span>VS Code 터미널</span><span>config로 오류를 잡는 예</span></div><div class="tb2">PS C:\docker_lab3&gt; docker compose config
+services.api.ports must be a list
+
+<span class="d"># 원인 : ports 아래에 "-"를 빼먹음</span>
+<span class="d">#   ports:</span>
+<span class="d">#     "5000:5000"      ← 틀림</span>
+<span class="d">#   ports:</span>
+<span class="d">#     - "5000:5000"    ← 맞음</span></div></div>
+<table class="zebra"><thead><tr><th>오류 메시지</th><th>뜻</th><th>고치는 곳</th></tr></thead><tbody><tr><td><code>services.api.ports must be a list</code></td><td>목록이어야 하는데 값 하나가 왔다</td><td><code>-</code> 추가</td></tr><tr><td><code>mapping values are not allowed here</code></td><td>콜론 뒤 <b>공백 누락</b></td><td><code>키: 값</code></td></tr><tr><td><code>found character that cannot start any token</code></td><td><b>탭 문자</b> 사용</td><td>공백으로 교체</td></tr><tr><td><code>no configuration file provided</code></td><td>파일이 없는 폴더에서 실행</td><td><code>cd</code>로 이동</td></tr><tr><td><code>service must be a mapping</code></td><td>서비스 아래 키가 비었거나 들여쓰기 어긋남</td><td>들여쓰기 확인</td></tr></tbody></table>
+
+
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">24</div></section><section class="page" data-sec="4.3" data-title="4.3 확인과 정리 명령" data-cont="1"><div class="rh"><div class="l"><b>DOCKER</b> · 4장 · <span class="sec">명령어와 옵션</span></div><div class="r">4.3 확인과 정리 명령 (계속)<span class="pg">25</span></div></div><div class="kicker">4.3 · CONFIG · IMAGES</div><h1>띄우기 전에 검사하고<br><em>정리</em>한다 <small class="cont" style="font-size:.55em;color:var(--muted)">(계속)</small></h1><div class="point"><div class="pl">습관 하나</div><p>파일을 고친 뒤에는 <strong><code>docker compose config</code></strong>를 먼저 쳐 보세요. 오류를 <strong>띄우기 전에</strong> 잡을 수 있고, 최종적으로 어떤 값이 적용되는지도 보여 줍니다.</p></div><div class="mission"><b>확인 미션 Q-11</b><h3>config 읽기 (5분)</h3><div class="wy"><code>docker compose config</code>의 출력을 원본 파일과 비교해 <b>달라진 점 두 가지</b>를 찾는다.<br>(힌트: 상대경로 · 생략된 기본값)</div></div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">25</div></section>
+<section class="page opener has-why" data-ch="5"><div class="rh"><div class="l"><b>DOCKER</b> · 5장</div><div class="r">실습<span class="pg">26</span></div></div><div class="big">5</div><h1>실습<br>한 줄로 올리고, 데이터는 밖에</h1><div class="oscene"><div class="osh">WHY · 현장 장면</div><div class="osb">파일 한 장으로 두 서비스를 올리고, CSV를 이미지 밖으로 빼 본다. <b>데이터를 고칠 때와 코드를 고칠 때 필요한 명령이 다른 것</b>을 직접 확인한다.</div><table class="zebra osx"><thead><tr><th>이 장을 모르면</th><th>생기는 일</th></tr></thead><tbody><tr><td>직접 안 하면</td><td>파일만 읽고 끝난다</td></tr><tr><td>차이를 안 보면</td><td>언제 --build가 필요한지 모른다</td></tr><tr><td>내려 보지 않으면</td><td>정리 습관이 안 생긴다</td></tr></tbody></table></div><div class="oq"><div><span>01</span>파일 한 장으로 어떻게 띄우는가?</div><div><span>02</span>데이터를 밖으로 빼면 무엇이 달라지는가?</div><div><span>03</span>무엇을 고치면 무엇을 다시 해야 하는가?</div></div><div class="kicker">이 장의 구성</div><div class="otoc"><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">5.1</b>한 줄로 띄우기</span><b data-toc="5.1">27</b></div><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">5.2</b>데이터를 밖으로</span><b data-toc="5.2">29</b></div><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">5.3</b>고치고 다시 올리기</span><b data-toc="5.3">31</b></div></div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">26</div></section>
+<section class="page" data-sec="5.1" data-title="5.1 실습 ① 한 줄로 띄우기"><div class="rh"><div class="l"><b>DOCKER</b> · 5장 · <span class="sec">실습</span></div><div class="r">5.1 실습 ① 한 줄로 띄우기<span class="pg">27</span></div></div><div class="kicker">5.1 · UP</div><h1>파일 한 장으로<br><em>두 서비스</em>를 올린다</h1>
+<div style="display:flex;gap:8px;align-items:center;margin:12px 0 4px;padding:6px 10px;border-left:3px solid #b23c0a;background:#faf9f7"><b style="font-size:11px;color:#b23c0a;white-space:nowrap">입력 위치</b><span style="font-size:11.5px"><b>VS Code 터미널 (내 PC)</b> · Terminal → New Terminal · 실습 폴더에서 · Windows는 PowerShell · <code>docker_lab3</code> 폴더에서</span></div>
+<table class="zebra"><thead><tr><th style="width:42%">명령</th><th style="width:58%">왜 이 명령을 치는가</th></tr></thead><tbody><tr><td><code>docker compose config</code></td><td><b>먼저 문법 검사</b> · 오류가 없으면 정리된 설정이 출력된다</td></tr><tr><td><code>docker compose up -d --build</code></td><td>두 서비스를 굽고 <b>한 번에</b> 띄운다</td></tr><tr><td><code>docker compose ps</code></td><td>두 줄이 <b>running</b>인지 확인</td></tr><tr><td><code>docker compose logs api</code></td><td>api가 뜬 기록 · <code>CSV_PATH=/data/sales.csv</code>가 보인다</td></tr><tr><td><code>curl http://localhost:5000/api/summary</code></td><td>API 확인</td></tr></tbody></table>
+<div class="term keep"><div class="th"><span>VS Code 터미널</span><span>up 출력 (예시)</span></div><div class="tb2">PS C:\docker_lab3&gt; docker compose up -d --build
+[+] Building 5.1s (12/12) FINISHED
+[+] Running 3/3
+ ✔ Network docker_lab3_default  Created
+ ✔ Container api                Started
+ ✔ Container site               Started</div></div>
+<table class="zebra"><thead><tr><th>출력에서 볼 것</th><th>뜻</th></tr></thead><tbody><tr><td><code>Network docker_lab3_default Created</code></td><td><b>네트워크를 자동으로</b> 만들었다 · 지난 회차의 <code>network create</code>가 필요 없다</td></tr><tr><td><code>Container api Started</code></td><td><code>depends_on</code> 때문에 <b>api가 먼저</b></td></tr><tr><td>이름이 <code>api</code> · <code>site</code></td><td><code>container_name</code>을 적었기 때문 · 안 적으면 <code>docker_lab3-api-1</code></td></tr></tbody></table>
+
+
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">27</div></section><section class="page" data-sec="5.1" data-title="5.1 실습 ① 한 줄로 띄우기" data-cont="1"><div class="rh"><div class="l"><b>DOCKER</b> · 5장 · <span class="sec">실습</span></div><div class="r">5.1 실습 ① 한 줄로 띄우기 (계속)<span class="pg">28</span></div></div><div class="kicker">5.1 · UP</div><h1>파일 한 장으로<br><em>두 서비스</em>를 올린다 <small class="cont" style="font-size:.55em;color:var(--muted)">(계속)</small></h1><div class="lab"><div class="lab-head"><span class="badge">실습 5-1</span><h3>띄우고 확인하기</h3></div><div class="lab-body"><ol class="steps"><li><span class="lt">올리기</span><span class="ls"><code>docker compose up -d --build</code></span></li><li><span class="lt">브라우저</span><span class="ls"><code>http://localhost:8080</code> → 대시보드 · 연결 상태 <b>성공</b></span></li><li><span class="lt">이름으로 통신 확인</span><span class="ls"><code>docker compose exec site wget -qO- http://api:5000/api/health</code></span></li><li><span class="lt">로그</span><span class="ls"><code>docker compose logs -f api</code> → 브라우저 새로고침하면 기록이 쌓인다 (Ctrl+C)</span></li><li><span class="lt">내리기</span><span class="ls"><code>docker compose down</code> → 컨테이너와 네트워크가 함께 사라진다</span></li></ol></div></div><div class="point"><div class="pl">지난 회차와 비교</div><p><strong>네트워크를 만들지 않았고, 이름을 붙이지 않았고, 두 번 빌드하지 않았습니다.</strong> 파일에 적어 두었기 때문입니다. 한 일은 <code>up -d --build</code> 한 줄뿐입니다.</p></div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">28</div></section>
+<section class="page" data-sec="5.2" data-title="5.2 실습 ② 데이터를 밖으로"><div class="rh"><div class="l"><b>DOCKER</b> · 5장 · <span class="sec">실습</span></div><div class="r">5.2 실습 ② 데이터를 밖으로<span class="pg">29</span></div></div><div class="kicker">5.2 · VOLUME · ENV</div><h1>CSV를 고쳐도<br><em>다시 굽지 않는다</em></h1>
+<div class="why"><b>왜 배워야 하나?</b><p>지난 회차에는 CSV가 이미지 안에 있어서, 데이터만 바꿔도 <strong>다시 빌드</strong>해야 했습니다. 이번 파일은 <code>volumes</code>로 <strong>내 PC의 data 폴더를 붙였고</strong>, 경로는 <code>environment</code>로 알려 줍니다.</p></div>
+<div class="code"><div class="ch2"><span>docker-compose.yml</span><span>관련된 세 줄</span></div><div class="cb2"><span style="color:#86827b"> 1</span>      environment:
+<span style="color:#86827b"> 2</span>        CSV_PATH: /data/sales.csv   # 컨테이너 안에서의 경로
+<span style="color:#86827b"> 3</span>      volumes:
+<span style="color:#86827b"> 4</span>        - ./data:/data              # 내 PC ./data  →  컨테이너 /data</div></div>
+<div class="lab"><div class="lab-head"><span class="badge">실습 5-2</span><h3>데이터만 바꿔 보기</h3></div><div class="lab-body"><ol class="steps"><li><span class="lt">현재 총액 확인</span><span class="ls">브라우저에서 총 매출을 적어 둔다</span></li><li><span class="lt">CSV 수정</span><span class="ls">VS Code에서 <code>data/sales.csv</code> 맨 아래에 줄 두 개를 추가하고 저장</span></li><li><span class="lt">새로고침</span><span class="ls">브라우저에서 <b>다시 불러오기</b> 클릭</span></li><li><span class="lt">결과</span><span class="ls"><b>총액이 바뀐다</b> · 빌드도, 재시작도 하지 않았다</span></li><li><span class="lt">확인</span><span class="ls"><code>docker compose exec api ls /data</code> → 내 폴더의 파일이 그대로 보인다</span></li></ol></div></div>
+<table class="zebra"><thead><tr><th>무엇이 이미지 안에 있고 밖에 있나</th><th>결과</th></tr></thead><tbody><tr><td><b>api.py</b> · 이미지 안 (<code>COPY</code>)</td><td>고치면 <b>다시 빌드</b>해야 반영</td></tr><tr><td><b>sales.csv</b> · 이미지 밖 (<code>volumes</code>)</td><td>고치면 <b>바로 반영</b></td></tr><tr><td><b>포트·경로</b> · compose 파일</td><td>고치면 <code>up -d</code>로 <b>다시 올리면</b> 반영</td></tr></tbody></table>
+
+
+
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">29</div></section><section class="page" data-sec="5.2" data-title="5.2 실습 ② 데이터를 밖으로" data-cont="1"><div class="rh"><div class="l"><b>DOCKER</b> · 5장 · <span class="sec">실습</span></div><div class="r">5.2 실습 ② 데이터를 밖으로 (계속)<span class="pg">30</span></div></div><div class="kicker">5.2 · VOLUME · ENV</div><h1>CSV를 고쳐도<br><em>다시 굽지 않는다</em> <small class="cont" style="font-size:.55em;color:var(--muted)">(계속)</small></h1><div class="lab"><div class="lab-head"><span class="badge">실습 5-3</span><h3>환경변수로 다른 파일 읽기</h3></div><div class="lab-body"><ol class="steps"><li><span class="lt">파일 준비</span><span class="ls"><code>data/sales-2.csv</code>를 만들고 몇 줄만 넣는다</span></li><li><span class="lt">설정 변경</span><span class="ls">compose 파일의 <code>CSV_PATH</code>를 <code>/data/sales-2.csv</code>로</span></li><li><span class="lt">반영</span><span class="ls"><code>docker compose up -d</code> · <b>--build 없이</b></span></li><li><span class="lt">확인</span><span class="ls">총액이 새 파일 기준으로 바뀐다</span></li><li><span class="lt">되돌리기</span><span class="ls"><code>CSV_PATH</code>를 원래대로 → <code>docker compose up -d</code></span></li></ol></div></div><div class="point"><div class="pl">여기서 배운 것</div><p><strong>코드는 이미지 안에, 데이터와 설정은 밖에.</strong> 이렇게 나눠 두면 같은 이미지를 개발·운영에 함께 쓰면서 <strong>값만 바꿔</strong> 동작을 달리할 수 있습니다. 데이터베이스 비밀번호를 환경변수로 주는 것도 같은 이유입니다.</p></div><div class="mission"><b>확인 미션 Q-12</b><h3>어디에 있나 (5분)</h3><div class="wy">① <code>compose exec api ls /data</code>와 내 PC의 <code>data</code> 폴더를 비교한다.<br>② <code>compose exec api ls /app</code>에는 무엇이 있는지 확인한다.<br>③ 둘의 차이를 <b>Dockerfile과 compose 파일을 근거로</b> 설명한다.</div></div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">30</div></section>
+<section class="page" data-sec="5.3" data-title="5.3 실습 ③ 고치고 다시 올리기"><div class="rh"><div class="l"><b>DOCKER</b> · 5장 · <span class="sec">실습</span></div><div class="r">5.3 실습 ③ 고치고 다시 올리기<span class="pg">31</span></div></div><div class="kicker">5.3 · REBUILD · DOWN</div><h1>무엇을 고쳤느냐에 따라<br><em>명령이 다르다</em></h1>
+<table class="zebra"><thead><tr><th style="width:30%">고친 것</th><th style="width:34%">필요한 명령</th><th style="width:36%">왜</th></tr></thead><tbody><tr><td><code>data/sales.csv</code> (데이터)</td><td><b>없음</b></td><td>볼륨으로 붙어 있어 즉시 반영</td></tr><tr><td><code>docker-compose.yml</code> (설정)</td><td><code>docker compose up -d</code></td><td>바뀐 서비스만 다시 만든다</td></tr><tr><td><code>api.py</code> · <code>index.html</code> (코드)</td><td><code>docker compose up -d --build</code></td><td>이미지를 <b>다시 구워야</b> 한다</td></tr><tr><td><code>Dockerfile</code></td><td><code>docker compose up -d --build</code></td><td>같은 이유</td></tr></tbody></table>
+<div class="lab"><div class="lab-head"><span class="badge">실습 5-4</span><h3>코드 고치고 반영</h3></div><div class="lab-body"><ol class="steps"><li><span class="lt">화면 수정</span><span class="ls"><code>site/index.html</code>의 <code>&lt;h1&gt;</code> 문구 변경</span></li><li><span class="lt">그냥 올려 보기</span><span class="ls"><code>docker compose up -d</code> → <b>바뀌지 않는다</b></span></li><li><span class="lt">다시 굽기</span><span class="ls"><code>docker compose up -d --build</code> → 반영</span></li><li><span class="lt">확인</span><span class="ls">브라우저 새로고침 (필요하면 Ctrl+F5)</span></li></ol></div></div>
+<h3>내릴 때</h3>
+<table class="zebra"><thead><tr><th style="width:42%">명령</th><th style="width:58%">왜 이 명령을 치는가</th></tr></thead><tbody><tr><td><code>docker compose stop</code></td><td><b>멈추기만</b> · 다시 <code>start</code>하면 그대로</td></tr><tr><td><code>docker compose down</code></td><td>컨테이너와 네트워크 <b>삭제</b> · 데이터(./data)와 이미지는 남는다</td></tr><tr><td><code>docker compose down --rmi local</code></td><td><b>직접 구운 이미지까지</b> 삭제</td></tr><tr><td><code>docker compose down -v</code></td><td><b>볼륨까지 삭제</b> · 이번 실습은 폴더를 붙였으므로 CSV는 안 지워지지만, <b>DB를 쓸 때는 데이터가 사라진다</b></td></tr></tbody></table>
+
+
+
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">31</div></section><section class="page" data-sec="5.3" data-title="5.3 실습 ③ 고치고 다시 올리기" data-cont="1"><div class="rh"><div class="l"><b>DOCKER</b> · 5장 · <span class="sec">실습</span></div><div class="r">5.3 실습 ③ 고치고 다시 올리기 (계속)<span class="pg">32</span></div></div><div class="kicker">5.3 · REBUILD · DOWN</div><h1>무엇을 고쳤느냐에 따라<br><em>명령이 다르다</em> <small class="cont" style="font-size:.55em;color:var(--muted)">(계속)</small></h1><div class="warn"><b>습관을 이렇게 들이세요.</b> 평소 정리는 <code>docker compose down</code>까지만. <code>-v</code>는 <b>데이터를 버려도 되는 것이 확실할 때만</b> 붙입니다.</div><div class="mission"><b>MISSION D3-01</b><h3>한 줄로 올리고 내리기</h3><div class="wy">① <code>config</code>로 검사한 뒤 <code>up -d --build</code>로 올린다<br>② <code>ps</code> · <code>logs</code>로 상태와 기록을 확인한다<br>③ <code>site</code>에서 <code>http://api:5000</code>을 호출해 <b>이름 통신</b>을 확인한다<br>④ <code>down</code>으로 내리고 <code>docker ps -a</code>가 비었는지 확인한다</div></div><div class="mission"><b>MISSION D3-02</b><h3>데이터와 코드의 차이</h3><div class="wy">① CSV를 고쳐 <b>빌드 없이</b> 반영되는 것을 보인다<br>② HTML을 고쳐 <b>빌드가 필요한</b> 것을 보인다<br>③ 두 경우의 차이를 <b>Dockerfile을 근거로</b> 설명한다</div></div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">32</div></section>
+<section class="page opener has-why" data-ch="6"><div class="rh"><div class="l"><b>DOCKER</b> · 6장</div><div class="r">점검과 미션<span class="pg">33</span></div></div><div class="big">6</div><h1>점검과 미션<br>스스로 진단하고 확인한다</h1><div class="oscene"><div class="osh">WHY · 현장 장면</div><div class="osb">compose에서 막히는 지점은 정해져 있다. 문법 · 포트 · 볼륨 경로 · 빌드 누락. 점검표로 진단 순서를 익히고 미션 8개로 확인한다.</div><table class="zebra osx"><thead><tr><th>이 장을 모르면</th><th>생기는 일</th></tr></thead><tbody><tr><td>점검표가 없으면</td><td>오류에서 멈춘다</td></tr><tr><td>진단 순서가 없으면</td><td>추측으로 고친다</td></tr><tr><td>미션을 안 풀면</td><td>혼자 할 수 있는지 모른다</td></tr></tbody></table></div><div class="oq"><div><span>01</span>안 될 때 어디부터 보는가?</div><div><span>02</span>미션 8개를 혼자 통과할 수 있는가?</div><div><span>03</span>다음 단계는 무엇인가?</div></div><div class="kicker">이 장의 구성</div><div class="otoc"><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">6.1</b>안 될 때 점검표</span><b data-toc="6.1">34</b></div><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">6.2</b>미션 ①~⑤</span><b data-toc="6.2">35</b></div><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">6.3</b>미션 ⑥~⑭</span><b data-toc="6.3">37</b></div><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">6.4</b>정리와 평가</span><b data-toc="6.4">41</b></div></div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">33</div></section>
+<section class="page" data-sec="6.1" data-title="6.1 안 될 때 점검표"><div class="rh"><div class="l"><b>DOCKER</b> · 6장 · <span class="sec">점검과 미션</span></div><div class="r">6.1 안 될 때 점검표<span class="pg">34</span></div></div><div class="kicker">6.1 · TROUBLESHOOTING</div><h1>compose에서<br><em>막히는 곳</em></h1>
+<table class="zebra"><thead><tr><th style="width:4%">#</th><th style="width:28%">증상</th><th style="width:22%">확인</th><th style="width:22%">원인</th><th style="width:24%">조치</th></tr></thead><tbody><tr><td>1</td><td><code>no configuration file provided</code></td><td><code>dir</code></td><td>파일이 없는 폴더에서 실행</td><td><code>cd</code>로 이동 · 또는 <code>-f 경로</code></td></tr><tr><td>2</td><td><code>services.api.ports must be a list</code></td><td><code>compose config</code></td><td>목록 기호 <code>-</code> 누락</td><td><code>- "5000:5000"</code></td></tr><tr><td>3</td><td><code>mapping values are not allowed</code></td><td>해당 줄</td><td>콜론 뒤 <b>공백 누락</b></td><td><code>키: 값</code></td></tr><tr><td>4</td><td><code>port is already allocated</code></td><td><code>docker ps</code></td><td>그 포트를 <b>다른 컨테이너</b>가 사용</td><td>포트 변경 또는 기존 것 삭제</td></tr><tr><td>5</td><td>up은 됐는데 화면이 안 나옴</td><td><code>compose ps</code></td><td>서비스가 <code>Exited</code></td><td><code>compose logs 서비스</code>의 마지막 줄</td></tr><tr><td>6</td><td><code>FileNotFoundError: /data/sales.csv</code></td><td><code>compose exec api ls /data</code></td><td>볼륨 경로·파일명 오류</td><td><code>./data</code> 폴더와 파일 확인</td></tr><tr><td>7</td><td>고쳤는데 그대로</td><td>—</td><td>코드 변경인데 <code>--build</code> 안 함</td><td><code>up -d --build</code></td></tr><tr><td>8</td><td><code>site</code>에서 api를 못 찾음</td><td><code>compose ps</code></td><td>서비스 이름 오타</td><td><code>http://api:5000</code> · 서비스 이름과 같아야</td></tr></tbody></table>
+<div class="point"><div class="pl">진단 순서</div><p><strong>① <code>compose config</code>로 문법 → ② <code>compose ps</code>로 살아 있나 → ③ <code>compose logs</code>로 무슨 일이 있었나 → ④ <code>compose exec</code>로 안을 확인.</strong> 네 단계면 대부분 잡힙니다.</p></div>
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">34</div></section>
+<section class="page" data-sec="6.2" data-title="6.2 미션 모음"><div class="rh"><div class="l"><b>DOCKER</b> · 6장 · <span class="sec">점검과 미션</span></div><div class="r">6.2 미션 모음<span class="pg">35</span></div></div><div class="kicker">6.2 · MISSIONS</div><h1>미션 14개 · ①~⑤</h1>
+<div class="why"><b>왜 배워야 하나?</b><p>각 미션은 <strong>상황 · 목표 · 조건 · 검증</strong>으로 되어 있습니다.</p></div>
+<div class="msn"><div class="mh"><span class="mid">D3-M01</span><span class="mlv l1">기본</span><b>파일 읽기</b><span class="mtm"></span></div><div class="mb"><div class="mr"><span>상황</span><div>팀원이 준 compose 파일을 이해해야 한다.</div></div><div class="mr"><span>목표</span><div>제공된 파일의 모든 키를 표로 정리한다.</div></div><div class="mr"><span>조건</span><div>키마다 “무엇을 하나”를 한 줄로</div></div><div class="mr"><span>검증</span><div>키 12개 이상 정리표</div></div><div class="mr ref"><span>참고</span><div>3장</div></div></div></div>
+<div class="msn"><div class="mh"><span class="mid">D3-M02</span><span class="mlv l1">기본</span><b>올리고 확인</b><span class="mtm"></span></div><div class="mb"><div class="mr"><span>상황</span><div>두 서비스를 띄워야 한다.</div></div><div class="mr"><span>목표</span><div>config → up -d --build → ps → logs 순서로 확인한다.</div></div><div class="mr"><span>조건</span><div>config를 먼저 실행</div></div><div class="mr"><span>검증</span><div>각 단계 화면 기록</div></div><div class="mr ref"><span>참고</span><div>4장 · 5.1</div></div></div></div>
+<div class="msn"><div class="mh"><span class="mid">D3-M03</span><span class="mlv l1">기본</span><b>YAML 고치기</b><span class="mtm"></span></div><div class="mb"><div class="mr"><span>상황</span><div>들여쓰기 오류를 스스로 잡아야 한다.</div></div><div class="mr"><span>목표</span><div>일부러 오류 3종을 만들고 config로 찾아 고친다.</div></div><div class="mr"><span>조건</span><div>오류 메시지 원문 기록</div></div><div class="mr"><span>검증</span><div>오류 3개와 각각의 메시지·수정</div></div><div class="mr ref"><span>참고</span><div>2.1 · 4.3</div></div></div></div>
+
+
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">35</div></section><section class="page" data-sec="6.2" data-title="6.2 미션 모음" data-cont="1"><div class="rh"><div class="l"><b>DOCKER</b> · 6장 · <span class="sec">점검과 미션</span></div><div class="r">6.2 미션 모음 (계속)<span class="pg">36</span></div></div><div class="kicker">6.2 · MISSIONS</div><h1>미션 14개 · ①~⑤ <small class="cont" style="font-size:.55em;color:var(--muted)">(계속)</small></h1><div class="msn"><div class="mh"><span class="mid">D3-M04</span><span class="mlv l2">응용</span><b>포트 바꾸기</b><span class="mtm"></span></div><div class="mb"><div class="mr"><span>상황</span><div>8080이 이미 쓰이고 있다.</div></div><div class="mr"><span>목표</span><div>사이트를 9090으로 바꿔 띄운다.</div></div><div class="mr"><span>조건</span><div>compose 파일만 수정 · --build 금지</div></div><div class="mr"><span>검증</span><div>9090에서 열림 · --build가 필요 없는 이유</div></div><div class="mr ref"><span>참고</span><div>3.2 · 4.1</div></div></div></div><div class="msn"><div class="mh"><span class="mid">D3-M05</span><span class="mlv l2">응용</span><b>데이터 교체</b><span class="mtm"></span></div><div class="mb"><div class="mr"><span>상황</span><div>다음 달 데이터가 왔다.</div></div><div class="mr"><span>목표</span><div>data 폴더에 새 CSV를 넣고 환경변수로 바꿔 읽게 한다.</div></div><div class="mr"><span>조건</span><div>이미지 재빌드 금지</div></div><div class="mr"><span>검증</span><div>총액이 바뀐 화면 · 사용한 명령</div></div><div class="mr ref"><span>참고</span><div>5.2</div></div></div></div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">36</div></section>
+<section class="page" data-sec="6.3" data-title="6.3 미션 모음 (계속)"><div class="rh"><div class="l"><b>DOCKER</b> · 6장 · <span class="sec">점검과 미션</span></div><div class="r">6.3 미션 모음 (계속)<span class="pg">37</span></div></div><div class="kicker">6.3 · MISSIONS</div><h1>미션 ⑥~⑩</h1>
+<div class="msn"><div class="mh"><span class="mid">D3-M06</span><span class="mlv l2">응용</span><b>내부 전용으로</b><span class="mtm"></span></div><div class="mb"><div class="mr"><span>상황</span><div>api를 외부에 열지 않아야 한다.</div></div><div class="mr"><span>목표</span><div>api의 ports를 지우고 무엇이 되고 안 되는지 확인한다.</div></div><div class="mr"><span>조건</span><div>브라우저와 컨테이너를 구분해 설명</div></div><div class="mr"><span>검증</span><div>결과와 이유</div></div><div class="mr ref"><span>참고</span><div>3.2</div></div></div></div>
+<div class="msn"><div class="mh"><span class="mid">D3-M07</span><span class="mlv l2">응용</span><b>서비스 추가</b><span class="mtm"></span></div><div class="mb"><div class="mr"><span>상황</span><div>정적 안내 페이지를 하나 더 띄워야 한다.</div></div><div class="mr"><span>목표</span><div>compose 파일에 서비스를 하나 더 추가해 9091로 띄운다.</div></div><div class="mr"><span>조건</span><div>image: nginx:alpine + volumes 사용</div></div><div class="mr"><span>검증</span><div>세 서비스가 동시에 running</div></div><div class="mr ref"><span>참고</span><div>3장</div></div></div></div>
+<div class="msn"><div class="mh"><span class="mid">D3-M08</span><span class="mlv l2">응용</span><b>env_file로 빼기</b><span class="mtm"></span></div><div class="mb"><div class="mr"><span>상황</span><div>설정값이 파일에 그대로 보인다.</div></div><div class="mr"><span>목표</span><div>environment를 .env 파일로 옮기고 같은 결과를 낸다.</div></div><div class="mr"><span>조건</span><div>.env는 git에 올리지 않는다고 가정</div></div><div class="mr"><span>검증</span><div>동작 동일 · 파일 두 개 제출</div></div><div class="mr ref"><span>참고</span><div>3.3</div></div></div></div>
+<div class="msn"><div class="mh"><span class="mid">D3-M09</span><span class="mlv l2">응용</span><b>재시작 정책</b><span class="mtm"></span></div><div class="mb"><div class="mr"><span>상황</span><div>서버가 재부팅돼도 떠 있어야 한다.</div></div><div class="mr"><span>목표</span><div>restart 값을 바꿔 가며 동작 차이를 확인한다.</div></div><div class="mr"><span>조건</span><div>no와 unless-stopped 비교</div></div><div class="mr"><span>검증</span><div>두 경우의 결과 기록</div></div><div class="mr ref"><span>참고</span><div>3.4</div></div></div></div>
+
+
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">37</div></section><section class="page" data-sec="6.3" data-title="6.3 미션 모음 (계속)" data-cont="1"><div class="rh"><div class="l"><b>DOCKER</b> · 6장 · <span class="sec">점검과 미션</span></div><div class="r">6.3 미션 모음 (계속) (계속)<span class="pg">38</span></div></div><div class="kicker">6.3 · MISSIONS</div><h1>미션 ⑥~⑩ <small class="cont" style="font-size:.55em;color:var(--muted)">(계속)</small></h1><div class="msn"><div class="mh"><span class="mid">D3-M10</span><span class="mlv l2">응용</span><b>명령 줄이기</b><span class="mtm"></span></div><div class="mb"><div class="mr"><span>상황</span><div>자주 쓰는 순서를 정리해야 한다.</div></div><div class="mr"><span>목표</span><div>올리기·확인·내리기 표준 순서를 5줄 이내로 만든다.</div></div><div class="mr"><span>조건</span><div>config 포함</div></div><div class="mr"><span>검증</span><div>팀에 공유할 수 있는 형태</div></div><div class="mr ref"><span>참고</span><div>4장</div></div></div></div><table class="zebra"><thead><tr><th>ID</th><th>수준</th><th>미션</th><th>참고</th><th>완료</th></tr></thead><tbody><tr><td><code>D3-M01</code></td><td>기본</td><td>파일 읽기</td><td>3장</td><td>□</td></tr><tr><td><code>D3-M02</code></td><td>기본</td><td>올리고 확인</td><td>4장 · 5.1</td><td>□</td></tr><tr><td><code>D3-M03</code></td><td>기본</td><td>YAML 고치기</td><td>2.1 · 4.3</td><td>□</td></tr><tr><td><code>D3-M04</code></td><td>응용</td><td>포트 바꾸기</td><td>3.2 · 4.1</td><td>□</td></tr><tr><td><code>D3-M05</code></td><td>응용</td><td>데이터 교체</td><td>5.2</td><td>□</td></tr><tr><td><code>D3-M06</code></td><td>응용</td><td>내부 전용으로</td><td>3.2</td><td>□</td></tr><tr><td><code>D3-M07</code></td><td>응용</td><td>서비스 추가</td><td>3장</td><td>□</td></tr><tr><td><code>D3-M08</code></td><td>응용</td><td>env_file로 빼기</td><td>3.3</td><td>□</td></tr><tr><td><code>D3-M09</code></td><td>응용</td><td>재시작 정책</td><td>3.4</td><td>□</td></tr><tr><td><code>D3-M10</code></td><td>응용</td><td>명령 줄이기</td><td>4장</td><td>□</td></tr><tr><td><code>D3-M11</code></td><td>장애</td><td>왜 안 뜨나</td><td>6.1</td><td>□</td></tr><tr><td><code>D3-M12</code></td><td>장애</td><td>볼륨 경로 오류</td><td>3.2 · 6.1</td><td>□</td></tr><tr><td><code>D3-M13</code></td><td>종합</td><td>처음부터 작성</td><td>전체</td><td>□</td></tr><tr><td><code>D3-M14</code></td><td>종합</td><td>설명서 만들기</td><td>5장</td><td>□</td></tr></tbody></table><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">38</div></section>
+<section class="page" data-sec="6.3b" data-title="6.3 미션 모음 (계속)"><div class="rh"><div class="l"><b>DOCKER</b> · 6장 · <span class="sec">점검과 미션</span></div><div class="r">6.3 미션 모음 (계속)<span class="pg">39</span></div></div><div class="kicker">6.3 · MISSIONS</div><h1>미션 ⑪~⑭ · 장애와 종합</h1>
+<div class="msn"><div class="mh"><span class="mid">D3-M11</span><span class="mlv l3">장애</span><b>왜 안 뜨나</b><span class="mtm"></span></div><div class="mb"><div class="mr"><span>상황</span><div>up은 됐는데 화면이 안 나온다.</div></div><div class="mr"><span>목표</span><div>logs와 ps로 원인을 찾아 고친다.</div></div><div class="mr"><span>조건</span><div>추측 금지 · 근거 제시</div></div><div class="mr"><span>검증</span><div>원인 · 근거 · 복구</div></div><div class="mr ref"><span>참고</span><div>6.1</div></div></div></div>
+<div class="msn"><div class="mh"><span class="mid">D3-M12</span><span class="mlv l3">장애</span><b>볼륨 경로 오류</b><span class="mtm"></span></div><div class="mb"><div class="mr"><span>상황</span><div>API가 CSV를 못 찾는다.</div></div><div class="mr"><span>목표</span><div>볼륨 경로를 일부러 틀리게 하고 오류를 읽어 고친다.</div></div><div class="mr"><span>조건</span><div>compose exec로 안을 확인</div></div><div class="mr"><span>검증</span><div>오류 메시지 + 수정</div></div><div class="mr ref"><span>참고</span><div>3.2 · 6.1</div></div></div></div>
+<div class="msn"><div class="mh"><span class="mid">D3-M13</span><span class="mlv l4">종합</span><b>처음부터 작성</b><span class="mtm"></span></div><div class="mb"><div class="mr"><span>상황</span><div>빈 폴더에서 시작해야 한다.</div></div><div class="mr"><span>목표</span><div>제공 파일을 보지 않고 compose 파일을 직접 작성해 두 서비스를 띄운다.</div></div><div class="mr"><span>조건</span><div>키 6개 이상 사용</div></div><div class="mr"><span>검증</span><div>정상 동작 · 작성한 파일 제출</div></div><div class="mr ref"><span>참고</span><div>전체</div></div></div></div>
+<div class="msn"><div class="mh"><span class="mid">D3-M14</span><span class="mlv l4">종합</span><b>설명서 만들기</b><span class="mtm"></span></div><div class="mb"><div class="mr"><span>상황</span><div>새 팀원에게 넘겨야 한다.</div></div><div class="mr"><span>목표</span><div>README.md에 받아서 띄우는 법을 5줄 이내로 쓴다.</div></div><div class="mr"><span>조건</span><div>명령과 접속 주소 포함</div></div><div class="mr"><span>검증</span><div>동료가 그대로 따라 해 성공</div></div><div class="mr ref"><span>참고</span><div>5장</div></div></div></div>
+
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">39</div></section><section class="page" data-sec="6.3b" data-title="6.3 미션 모음 (계속)" data-cont="1"><div class="rh"><div class="l"><b>DOCKER</b> · 6장 · <span class="sec">점검과 미션</span></div><div class="r">6.3 미션 모음 (계속) (계속)<span class="pg">40</span></div></div><div class="kicker">6.3 · MISSIONS</div><h1>미션 ⑪~⑭ · 장애와 종합 <small class="cont" style="font-size:.55em;color:var(--muted)">(계속)</small></h1><table class="zebra"><thead><tr><th>ID</th><th>수준</th><th>미션</th><th>참고</th><th>완료</th></tr></thead><tbody><tr><td><code>D3-M01</code></td><td>기본</td><td>파일 읽기</td><td>3장</td><td>□</td></tr><tr><td><code>D3-M02</code></td><td>기본</td><td>올리고 확인</td><td>4장 · 5.1</td><td>□</td></tr><tr><td><code>D3-M03</code></td><td>기본</td><td>YAML 고치기</td><td>2.1 · 4.3</td><td>□</td></tr><tr><td><code>D3-M04</code></td><td>응용</td><td>포트 바꾸기</td><td>3.2 · 4.1</td><td>□</td></tr><tr><td><code>D3-M05</code></td><td>응용</td><td>데이터 교체</td><td>5.2</td><td>□</td></tr><tr><td><code>D3-M06</code></td><td>응용</td><td>내부 전용으로</td><td>3.2</td><td>□</td></tr><tr><td><code>D3-M07</code></td><td>응용</td><td>서비스 추가</td><td>3장</td><td>□</td></tr><tr><td><code>D3-M08</code></td><td>응용</td><td>env_file로 빼기</td><td>3.3</td><td>□</td></tr><tr><td><code>D3-M09</code></td><td>응용</td><td>재시작 정책</td><td>3.4</td><td>□</td></tr><tr><td><code>D3-M10</code></td><td>응용</td><td>명령 줄이기</td><td>4장</td><td>□</td></tr><tr><td><code>D3-M11</code></td><td>장애</td><td>왜 안 뜨나</td><td>6.1</td><td>□</td></tr><tr><td><code>D3-M12</code></td><td>장애</td><td>볼륨 경로 오류</td><td>3.2 · 6.1</td><td>□</td></tr><tr><td><code>D3-M13</code></td><td>종합</td><td>처음부터 작성</td><td>전체</td><td>□</td></tr><tr><td><code>D3-M14</code></td><td>종합</td><td>설명서 만들기</td><td>5장</td><td>□</td></tr></tbody></table><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">40</div></section>
+<section class="page" data-sec="6.4" data-title="6.4 정리와 평가"><div class="rh"><div class="l"><b>DOCKER</b> · 6장 · <span class="sec">점검과 미션</span></div><div class="r">6.4 정리와 평가<span class="pg">41</span></div></div><div class="kicker">6.4 · SUMMARY</div><h1>정리<br><em>다음 단계 예고</em></h1>
+<table class="zebra"><thead><tr><th>오늘 얻은 것</th><th>한 줄</th></tr></thead><tbody><tr><td>파일로 적기</td><td>띄우는 방법을 <b>코드와 함께</b> 관리하게 됐다</td></tr><tr><td>자동화</td><td>네트워크·이름·순서를 compose가 대신 해 준다</td></tr><tr><td>분리</td><td>코드는 이미지 안, <b>데이터와 설정은 밖</b></td></tr><tr><td>명령 축소</td><td>다섯 줄이 <code>up -d</code> 한 줄로</td></tr><tr><td>검사 습관</td><td><code>config</code>로 미리 잡는다</td></tr></tbody></table>
+<table class="zebra"><thead><tr><th>키 한눈에</th><th>무엇</th></tr></thead><tbody><tr><td><code>build</code> · <code>image</code> · <code>container_name</code></td><td>무엇으로 만들고 어떤 이름으로</td></tr><tr><td><code>ports</code></td><td>밖에서 들어오는 통로</td></tr><tr><td><code>volumes</code></td><td>이미지 밖의 데이터를 붙이기</td></tr><tr><td><code>environment</code> · <code>env_file</code></td><td>값을 밖에서 주입</td></tr><tr><td><code>depends_on</code> · <code>restart</code> · <code>command</code></td><td>순서 · 재시작 · 실행 명령</td></tr><tr><td><code>healthcheck</code></td><td>정말 준비됐는지 확인 (다음 과정)</td></tr></tbody></table>
+<table class="zebra"><thead><tr><th>명령 한눈에</th><th>무엇</th></tr></thead><tbody><tr><td><code>docker compose config</code></td><td>문법 검사</td></tr><tr><td><code>docker compose up -d [--build]</code></td><td>올리기</td></tr><tr><td><code>docker compose ps</code> · <code>logs -f</code></td><td>상태 · 로그</td></tr><tr><td><code>docker compose exec 서비스 sh</code></td><td>안으로 들어가기</td></tr><tr><td><code>docker compose down [-v]</code></td><td>내리기 (-v는 볼륨까지)</td></tr></tbody></table>
+
+
+
+
+
+
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">41</div></section><section class="page" data-sec="6.4" data-title="6.4 정리와 평가" data-cont="1"><div class="rh"><div class="l"><b>DOCKER</b> · 6장 · <span class="sec">점검과 미션</span></div><div class="r">6.4 정리와 평가 (계속)<span class="pg">42</span></div></div><div class="kicker">6.4 · SUMMARY</div><h1>정리<br><em>다음 단계 예고</em> <small class="cont" style="font-size:.55em;color:var(--muted)">(계속)</small></h1><div class="qa"><div class="ql">문제 · 10문항</div><ol><li>compose 파일에서 <code>services</code> 아래 이름은 무엇이 되는가?</li><li>YAML에서 들여쓰기에 탭을 쓰면?</li><li><code>build</code>와 <code>image</code>를 함께 쓰면?</li><li><code>ports</code>를 적지 않으면 어떻게 되나?</li><li>볼륨 두 종류의 차이는?</li><li>환경변수를 쓰는 이유는?</li><li><code>depends_on</code>이 보장하는 것과 못 하는 것은?</li><li><code>up -d</code>와 <code>up -d --build</code>의 차이는?</li><li><code>down</code>과 <code>down -v</code>의 차이는?</li><li>파일을 고친 뒤 가장 먼저 칠 명령은?</li></ol></div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">42</div></section><section class="page" data-sec="6.4" data-title="6.4 정리와 평가" data-cont="1" data-brk="1"><div class="rh"><div class="l"><b>DOCKER</b> · 6장 · <span class="sec">점검과 미션</span></div><div class="r">6.4 정리와 평가 (계속)<span class="pg">43</span></div></div><div class="kicker">6.4 · SUMMARY</div><h1>정리<br><em>다음 단계 예고</em> <small class="cont" style="font-size:.55em;color:var(--muted)">(계속)</small></h1><div class="ans"><div class="al">정답 · 해설</div><b>Q1</b> 서비스 이름이자 컨테이너 이름이고, 같은 네트워크 안에서 <b>주소</b>가 된다.<br><b>Q2</b> 오류가 난다 · 공백만 써야 하고 같은 깊이는 칸 수가 같아야 한다.<br><b>Q3</b> build로 굽고 그 결과에 image의 이름표를 붙인다.<br><b>Q4</b> 밖에서 접속할 수 없다 · 다만 같은 네트워크의 다른 컨테이너는 이름으로 접근할 수 있다.<br><b>Q5</b> <code>./data:/data</code>는 내 PC 폴더를 붙이는 것 · 이름 있는 볼륨은 도커가 관리하며 DB 데이터에 쓴다.<br><b>Q6</b> 코드를 고치지 않고 경로·주소·비밀번호 같은 값을 밖에서 바꾸기 위해.<br><b>Q7</b> 시작 순서는 보장하지만 <b>준비 완료까지 기다리지는 않는다</b> · healthcheck가 필요하다.<br><b>Q8</b> --build는 이미지를 다시 굽는다 · 코드를 고쳤을 때 필요하다.<br><b>Q9</b> -v는 볼륨까지 삭제한다 · DB 데이터가 사라질 수 있어 주의.<br><b>Q10</b> <code>docker compose config</code> · 띄우기 전에 문법 오류를 잡는다.</div><h3>다음 단계에서 다룰 것</h3><table class="zebra"><thead><tr><th>주제</th><th>무엇</th><th>오늘과의 연결</th></tr></thead><tbody><tr><td><b>VM으로 배포</b></td><td>소스를 옮겨 서버에서 <code>up -d</code></td><td>오늘 만든 파일 그대로</td></tr><tr><td><b>데이터베이스 붙이기</b></td><td><code>image: postgres</code> 한 줄로 DB 추가</td><td>오늘 설명만 한 <b>이름 있는 볼륨</b>과 <code>healthcheck</code>를 실제로</td></tr><tr><td><b>자동 시작</b></td><td>서버 재부팅 후에도 자동으로</td><td><code>restart: always</code></td></tr><tr><td><b>운영 점검</b></td><td>로그 · 용량 · 백업</td><td><code>logs</code> · <code>system df</code></td></tr></tbody></table><div class="mission"><b>마지막 질문</b><h3>다음 단계로</h3><div class="wy">“내 PC에서 되는 이 파일을, <b>서버에서 그대로</b> 띄우려면 무엇을 옮겨야 할까?”<br>소스와 compose 파일만 있으면 되는지, 이미지까지 옮겨야 하는지 생각해 보세요.</div></div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">43</div></section>
+<script>
+document.querySelectorAll(".say").forEach(function(box){
+ const sc=box.querySelector(".sc"),sl=box.querySelector(".sl"); if(!sc||!sl)return;
+ const b=document.createElement("button"); b.className="copybtn"; b.textContent="복사"; b.type="button";
+ b.onclick=function(){navigator.clipboard.writeText(sc.innerText).then(function(){b.textContent="복사됨";setTimeout(function(){b.textContent="복사"},1200)})}; sl.appendChild(b);
+});
+</script></body></html>
