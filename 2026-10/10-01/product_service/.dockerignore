@@ -1,0 +1,27 @@
+# Python virtual environments
+**/venv/
+**/.venv/
+**/venv[0-9]*/
+**/.venv[0-9]*/
+
+# Python caches
+**/__pycache__/
+**/*.py[cod]
+**/.pytest_cache/
+**/.mypy_cache/
+**/.ruff_cache/
+
+# Git and editor settings
+**/.git/
+**/.idea/
+**/.vscode/
+
+# Local environment files
+**/.env
+**/.env.*
+!**/.env.example
+
+# Exported Docker images and logs
+**/*.tar
+**/*.tar.gz
+**/*.log

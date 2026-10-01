@@ -1,0 +1,11 @@
+# Python virtual environments
+venv311/
+.venv311/
+
+# Exported Docker image
+product-app.tar
+
+# SQLite temporary files
+db/*.db-wal
+db/*.db-shm
+db/*.db-journal

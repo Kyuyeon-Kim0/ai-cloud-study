@@ -1,0 +1,16 @@
+#multipass vm 접속
+multipass shell k3s-lab
+
+#폴더가 있는지 확인하는 명령
+ls -ld /home/user/product_service
+
+#폴더 없으면 만들기
+# -p 옵션은 상위 폴더가 없으면 함께 생성해줍니다.
+mkdir -p /home/user/product_service
+
+#로컬에 있는 소스코드를 k3s 가상환경에 복사
+multipass transfer "C:\Python\product_service\product-app.tar" k3s-lab:/home/ubuntu/
+
+#도커 데스크탑에서 이미지 추출
+# -o 옵션을 사용하는 것이 파일 손상을 막는 가장 안전한 방법입니다.
+docker save -o product-app.tar product-app:k3s-v1 

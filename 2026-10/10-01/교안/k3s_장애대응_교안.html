@@ -1,0 +1,1067 @@
+<!DOCTYPE html><html lang="ko"><head><meta charset="utf-8"><meta content="width=device-width,initial-scale=1.0" name="viewport"><title>장애 대응과 K3s</title><style>
+:root{
+  --ink:#1c1b19; --paper:#ffffff; --soft:#f7f6f3; --soft2:#efedea;
+  --line:#e3e0db; --line2:#cfcbc4; --muted:#86827b; --muted2:#5b574f;
+  --accent:#b23c0a; --accent-soft:#fdf3ec; --ink2:#2f2d2a;
+  --pn:#b23c0a; --pnb:#e8c3ad; --pns:#fdf5f0;
+  --pv:#1d4ed8; --pvb:#c3d0f2; --pvs:#f2f5fd;
+  --pa:#15803d; --pab:#bcdcc8; --pas:#f1f7f3;
+  --pd:#6d28d9; --pdb:#d4c6f5; --pds:#f7f3fe;
+  --px:#b91c1c; --pxb:#f0c3c3; --pxs:#fdf2f2;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+body{font-family:'Noto Sans KR','Malgun Gothic',sans-serif;color:var(--ink);
+  background:#eceae5;line-height:1.65;font-weight:400;letter-spacing:-.003em}
+
+.page{width:210mm;min-height:297mm;background:var(--paper);margin:8mm auto;
+  padding:17mm 18mm 14mm;position:relative;box-shadow:0 1px 14px rgba(0,0,0,.07)}
+@page{size:A4 portrait;margin:0}
+@media print{
+  body{background:#fff}
+  .page{margin:0;box-shadow:none;page-break-after:always;break-after:page}
+  .page:last-child{page-break-after:auto}
+}
+
+/* ── 러닝헤드 ── */
+.rh{display:flex;justify-content:space-between;align-items:baseline;
+  margin-bottom:22px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+.rh .l{font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--muted2)}
+.rh .l b{color:var(--accent)}
+.rh .r{font-size:10.5px;color:var(--muted);letter-spacing:.04em;display:flex;align-items:baseline;gap:12px}
+.rh .r .pg{font-family:'Consolas','JetBrains Mono',monospace;font-size:12px;font-weight:700;
+  color:var(--ink);letter-spacing:.06em;border:1px solid var(--line2);padding:1px 7px;border-radius:3px}
+
+/* ── 제목 ── */
+.kicker{font-size:11px;font-weight:700;letter-spacing:.12em;color:var(--accent);margin-bottom:7px}
+h1{font-size:26px;font-weight:900;line-height:1.25;letter-spacing:-.02em;margin-bottom:9px}
+.lede{font-size:13px;color:var(--muted2);line-height:1.7;margin-bottom:14px;max-width:96%}
+.lede em,em{font-style:normal;color:var(--accent);font-weight:700}
+h2{font-size:12.5px;font-weight:700;letter-spacing:.09em;color:var(--accent);
+  margin:17px 0 9px;display:flex;align-items:center;gap:10px}
+h2::after{content:"";flex:1;height:1px;background:var(--line)}
+h3{font-size:15px;font-weight:700;margin:14px 0 5px}
+p{font-size:13px;line-height:1.75;margin:8px 0;color:var(--ink2)}
+strong{font-weight:700;color:var(--ink)}
+.mn{font-size:11.5px;color:var(--muted);margin-top:5px}
+code{font-family:'Consolas','JetBrains Mono',monospace;background:var(--soft2);
+  padding:1px 5px;border-radius:3px;font-size:12px;color:var(--accent)}
+
+ul,ol{margin:9px 0;padding-left:0;list-style:none}
+li{font-size:13px;line-height:1.7;margin:8px 0;padding-left:010px;padding-left:22px;position:relative;color:var(--ink2)}
+ul li::before{content:"";position:absolute;left:3px;top:10px;width:5px;height:5px;
+  background:var(--accent);border-radius:50%}
+li strong{color:var(--ink)}
+
+/* ── 표 ── */
+table{width:100%;border-collapse:collapse;margin:13px 0;font-size:12.5px}
+th,td{padding:9px 12px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line)}
+thead th{border-bottom:1.5px solid var(--ink);font-weight:700;font-size:11.5px;color:var(--ink);background:var(--soft)}
+tbody td{color:var(--muted2)}
+tbody td b{color:var(--ink);font-weight:700}
+table.zebra tbody tr:nth-child(even) td{background:#faf9f7}
+
+/* ── 그리드 카드 ── */
+.grid{display:grid;gap:1px;background:var(--line);border:1px solid var(--line);margin:14px 0}
+.grid.g3{grid-template-columns:repeat(3,1fr)}
+.grid.g2{grid-template-columns:repeat(2,1fr)}
+.grid.g4{grid-template-columns:repeat(4,1fr)}
+.cell{background:var(--paper);padding:15px 14px}
+.cell .num{font-size:10.5px;font-weight:700;letter-spacing:.08em;color:var(--accent)}
+.cell h4{font-size:13.5px;font-weight:700;margin:6px 0 4px;line-height:1.35}
+.cell p{font-size:11.5px;color:var(--muted2);margin:0;line-height:1.6}
+
+/* ── 강조 박스 ── */
+.point{border-left:2.5px solid var(--accent);padding:3px 0 3px 16px;margin:16px 0}
+.point .pl{font-size:10.5px;font-weight:700;letter-spacing:.09em;color:var(--accent);margin-bottom:4px}
+.point p{margin:0;font-size:13px;color:var(--ink2)}
+.note{background:var(--soft);border:1px solid var(--line);border-radius:4px;
+  padding:12px 15px;margin:14px 0;font-size:12.5px;color:var(--muted2);line-height:1.7}
+.note strong{color:var(--accent)}
+.warn{background:var(--pxs);border:1px solid var(--pxb);border-radius:4px;
+  padding:12px 15px;margin:14px 0;font-size:12.5px;color:var(--ink2);line-height:1.7}
+.warn b{color:var(--px)}
+
+.mission{border:1px solid var(--line2);border-left:3px solid var(--accent);
+  background:var(--accent-soft);padding:13px 16px;margin:13px 0;border-radius:4px}
+.mission b{font-size:10.5px;font-weight:700;letter-spacing:.1em;color:var(--accent)}
+.mission h3{font-size:14px;margin:4px 0 0;line-height:1.5}
+.mission .wy{margin:9px 0 0;padding-top:8px;border-top:1px solid var(--line2);font-size:12px;color:var(--muted2);line-height:1.65}
+.mission .wy b{color:var(--ink);font-size:10.5px;letter-spacing:.06em}
+.why{background:var(--soft);border:1px solid var(--line2);border-left:3px solid var(--ink);
+  padding:12px 16px;margin:13px 0;border-radius:4px}
+.why p{color:var(--ink2);margin:0;font-size:12.5px}
+.why b{color:var(--ink);font-size:10.5px;letter-spacing:.08em}
+
+.kw{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
+.kw span{background:#fff;border:1px solid var(--line2);padding:4px 10px;border-radius:20px;
+  font-size:11px;font-weight:700;color:var(--ink2)}
+.kw span::before{content:"# ";color:var(--accent)}
+
+/* ── 정의 목록 / 비유 ── */
+.deflist{margin:12px 0}
+.deflist .d{display:flex;gap:16px;padding:11px 0;border-bottom:1px solid var(--line)}
+.deflist .d:last-child{border-bottom:none}
+.deflist .dt{flex:0 0 27%;font-weight:700;font-size:13px}
+.deflist .dt small{display:block;font-weight:400;color:var(--muted);font-size:11px;margin-top:1px}
+.deflist .dd{flex:1;font-size:12.5px;color:var(--muted2);line-height:1.65}
+
+/* ── 실습 박스 (검정 헤더 제거) ── */
+.lab{margin:16px 0;border:1.5px solid var(--ink);background:#fff}
+.lab-head{padding:10px 18px;display:flex;align-items:center;gap:12px;
+  border-bottom:1.5px solid var(--ink);background:var(--soft)}
+.lab-head .badge{font-size:10px;font-weight:700;letter-spacing:.1em;
+  border:1px solid var(--ink);padding:2px 9px;border-radius:2px;color:var(--ink);background:#fff}
+.lab-head h3{font-size:16px;margin:0;font-weight:700;color:var(--ink)}
+.lab-head .t{margin-left:auto;font-size:10.5px;color:var(--muted);font-family:'Consolas',monospace}
+.lab-body{padding:15px 18px 16px}
+.steps{counter-reset:st;list-style:none;padding:0;margin:0}
+.steps>li{counter-increment:st;position:relative;padding:0 0 13px 40px;margin:0;font-size:13.5px;
+  line-height:1.55;border-left:1px solid var(--line2);margin-left:13px}
+.steps>li:last-child{border-left:1px solid transparent;padding-bottom:0}
+.steps>li::before{content:counter(st);position:absolute;left:-13px;top:-2px;width:26px;height:26px;
+  background:#fff;border:1.5px solid var(--ink);color:var(--ink);border-radius:50%;
+  display:grid;place-items:center;font-weight:700;font-size:12.5px}
+.steps>li .lt{font-weight:700;color:var(--ink)}
+.steps>li .ls{display:block;font-size:12px;color:var(--muted);font-weight:400;margin-top:2px;line-height:1.6}
+
+/* ── 프롬프트 박스 ── */
+.say{margin:10px 0;background:#fff;border:1px solid var(--line2);border-left:3px solid var(--accent);
+  border-radius:4px;padding:10px 13px}
+.say .sl{font-size:10.5px;font-weight:700;letter-spacing:.05em;color:var(--accent);
+  margin-bottom:4px;display:flex;align-items:center;gap:6px}
+.say .sc{font-family:'Consolas','JetBrains Mono',monospace;font-size:12px;line-height:1.65;
+  color:var(--ink);font-weight:500;white-space:pre-wrap}
+.copybtn{margin-left:auto;font-family:'Noto Sans KR',sans-serif;font-size:10px;font-weight:700;
+  letter-spacing:0;color:var(--muted2);background:#fff;border:1px solid var(--line2);
+  border-radius:3px;padding:2px 9px;cursor:pointer;line-height:1.4}
+.copybtn:hover{border-color:var(--accent);color:var(--accent)}
+@media print{.copybtn{display:none}}
+
+/* ── 품사/토큰 칩 ── */
+.chip{display:inline-flex;align-items:baseline;gap:5px;font-size:12px;font-weight:700;
+  padding:3px 8px;border-radius:3px;border:1px solid;margin:3px 4px 3px 0;line-height:1.3}
+.c-n{color:var(--pn);border-color:var(--pnb);background:var(--pns)}
+.c-v{color:var(--pv);border-color:var(--pvb);background:var(--pvs)}
+.c-a{color:var(--pa);border-color:var(--pab);background:var(--pas)}
+.c-d{color:var(--pd);border-color:var(--pdb);background:var(--pds)}
+.c-x{color:var(--px);border-color:var(--pxb);background:var(--pxs)}
+.c-o{color:var(--muted);border-color:var(--line2);background:var(--soft);font-weight:400}
+
+.parse{border:1px solid var(--line2);background:#fff;margin:13px 0}
+.parse .ph{background:var(--soft);border-bottom:1px solid var(--line);padding:6px 14px;
+  font-size:10.5px;font-weight:700;letter-spacing:.06em;color:var(--muted2);display:flex;justify-content:space-between}
+.parse .pb{padding:13px 14px 14px}
+.parse .src{font-size:14.5px;font-weight:500;color:var(--ink);line-height:1.7}
+.parse .arw{font-size:10.5px;color:var(--muted);letter-spacing:.06em;margin:11px 0 7px;
+  display:flex;align-items:center;gap:10px}
+.parse .arw::after{content:"";flex:1;height:1px;background:var(--line)}
+
+/* ── before / after ── */
+.ba{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);
+  border:1px solid var(--line);margin:13px 0}
+.ba>div{background:#fff;padding:12px 14px}
+.ba .h{font-size:10.5px;font-weight:700;letter-spacing:.06em;margin-bottom:8px}
+.ba .bad .h{color:var(--muted)}
+.ba .bad .h::before{content:"✕ ";color:var(--px)}
+.ba .good .h{color:var(--accent)}
+.ba .good .h::before{content:"✓ ";color:var(--pa)}
+.ba .m{font-family:'Consolas','JetBrains Mono',monospace;font-size:11px;line-height:1.7;color:var(--ink2)}
+.ba .m u{text-decoration:none;background:var(--pxs);color:var(--px);padding:0 3px;border-radius:2px}
+.ba .m b{background:var(--pas);color:var(--pa);padding:0 3px;border-radius:2px;font-weight:500}
+.ba .why2{font-size:11px;color:var(--muted);margin-top:8px;line-height:1.6}
+
+/* ── 막대 ── */
+.bars{margin:12px 0}
+.bars .b{display:flex;align-items:center;gap:10px;margin:7px 0}
+.bars .bl{flex:0 0 26%;font-size:12px;font-weight:700;color:var(--ink)}
+.bars .bt{flex:1;height:13px;background:var(--soft2);border:1px solid var(--line)}
+.bars .bf{height:100%;background:var(--accent)}
+.bars .bf.q{background:var(--line2)}
+.bars .bv{flex:0 0 60px;text-align:right;font-family:'Consolas',monospace;font-size:11px;color:var(--muted2)}
+
+/* ── 흐름 ── */
+.flow{display:flex;gap:5px;align-items:center;flex-wrap:wrap;margin:11px 0}
+.flow span{border:1px solid var(--line2);padding:6px 10px;background:#fff;border-radius:4px;
+  font-size:11.5px;font-weight:700}
+.flow i{font-style:normal;color:var(--accent);font-weight:900}
+
+/* ══════ 목업 컴포넌트 ══════ */
+/* 탐색기 / 창 */
+.win{border:1px solid var(--line2);margin:13px 0;background:#fff}
+.win .tb{display:flex;align-items:center;gap:9px;padding:6px 11px;background:var(--soft2);
+  border-bottom:1px solid var(--line2);font-size:11px;color:var(--muted2);font-weight:700}
+.win .tb .dots{display:flex;gap:4px}
+.win .tb .dots i{width:8px;height:8px;border-radius:50%;border:1px solid var(--line2);background:#fff;display:block}
+.win .tb .rt{margin-left:auto;font-weight:400;color:var(--muted);font-size:10px;letter-spacing:.04em}
+.win .addr{display:flex;align-items:center;gap:7px;padding:6px 11px;border-bottom:1px solid var(--line);
+  font-family:'Consolas',monospace;font-size:11px;color:var(--ink2);background:#fff}
+.win .addr .ic{font-size:10px;color:var(--muted)}
+.win .addr .path{border:1px solid var(--line);border-radius:3px;padding:3px 8px;flex:1;background:var(--soft)}
+.win .addr .path b{color:var(--accent);font-weight:700}
+.win table{margin:0;font-size:11px}
+.win th,.win td{padding:5px 11px;border-bottom:1px solid var(--line)}
+.win thead th{background:var(--soft);font-size:10px;border-bottom:1px solid var(--line2);color:var(--muted2)}
+.win tbody td{color:var(--ink2)}
+.win tbody tr.sel td{background:var(--accent-soft)}
+.win td.ic{width:22px;text-align:center;color:var(--muted);font-family:'Consolas',monospace;font-size:9.5px}
+.win .sb{padding:5px 11px;border-top:1px solid var(--line);background:var(--soft);
+  font-size:10px;color:var(--muted);display:flex;justify-content:space-between}
+.capt{font-size:10.5px;color:var(--muted);margin:-6px 0 13px;padding-left:2px}
+.capt b{color:var(--muted2);font-weight:700}
+
+/* 터미널 */
+.term{border:1px solid var(--line2);background:#fbfaf8;margin:13px 0}
+.term .th{background:var(--soft2);padding:5px 12px;font-size:10.5px;color:var(--muted2);
+  border-bottom:1px solid var(--line2);letter-spacing:.04em;font-weight:700;
+  font-family:'Consolas',monospace;display:flex;justify-content:space-between}
+.term .tb2{padding:11px 13px;font-family:'Consolas','JetBrains Mono',monospace;
+  font-size:11px;line-height:1.8;color:var(--ink2);white-space:pre-wrap}
+.term .p{color:var(--accent);font-weight:700}
+.term .c{color:var(--ink);font-weight:700}
+.term .g{color:var(--pa)}
+.term .d{color:var(--muted)}
+
+/* 폴더 트리 */
+.tree{font-family:'Consolas','JetBrains Mono',monospace;font-size:11px;line-height:1.85;
+  color:var(--ink2);background:var(--soft);border:1px solid var(--line);
+  padding:11px 14px;margin:13px 0;white-space:pre;overflow:hidden}
+.tree b{color:var(--accent);font-weight:700}
+.tree u{text-decoration:none;color:var(--px)}
+.tree i{font-style:normal;color:var(--muted)}
+.ba .tree{margin:0;border:none;background:none;padding:0;font-size:10.5px;line-height:1.8}
+
+/* HEX 뷰어 */
+.hex{border:1px solid var(--line2);margin:13px 0;background:#fff;font-family:'Consolas',monospace}
+.hex .hh{background:var(--soft);border-bottom:1px solid var(--line);padding:5px 12px;
+  font-size:10px;color:var(--muted2);letter-spacing:.06em;font-weight:700;display:flex;justify-content:space-between}
+.hex .hr{display:flex;gap:14px;padding:4px 12px;font-size:11px;border-bottom:1px solid #f2f0ec}
+.hex .hr:last-child{border-bottom:none}
+.hex .of{color:var(--muted);flex:0 0 52px}
+.hex .by{flex:1;color:var(--ink2);letter-spacing:.06em}
+.hex .by b{color:var(--accent);background:var(--accent-soft);padding:1px 2px;font-weight:700}
+.hex .as{flex:0 0 90px;color:var(--muted2);border-left:1px solid var(--line);padding-left:12px}
+.hex .as b{color:var(--accent);font-weight:700}
+
+/* JSON 뷰어 */
+.jsonv{border:1px solid var(--line2);margin:13px 0;background:#fff}
+.jsonv .jh{background:var(--soft);border-bottom:1px solid var(--line);padding:5px 12px;
+  font-size:10.5px;color:var(--muted2);font-weight:700;font-family:'Consolas',monospace;
+  display:flex;justify-content:space-between}
+.jsonv .jb{padding:11px 14px;font-family:'Consolas','JetBrains Mono',monospace;
+  font-size:11.5px;line-height:1.9;white-space:pre;color:var(--muted2)}
+.jk{color:var(--pv);font-weight:700}
+.jv{color:var(--pa);font-weight:700}
+.jnum{color:var(--accent);font-weight:700}
+.jp{color:var(--muted)}
+.jmark{background:#fff7ed;outline:1px solid var(--pnb)}
+
+/* 브라우저 목업 */
+.bw{border:1px solid var(--line2);margin:13px 0;background:#fff}
+.bw .bt{background:var(--soft2);padding:6px 11px;display:flex;gap:8px;align-items:center;
+  font-size:10.5px;font-family:'Consolas',monospace;color:var(--muted2);border-bottom:1px solid var(--line2)}
+.bw .bt .dots{display:flex;gap:4px}
+.bw .bt .dots i{width:8px;height:8px;border-radius:50%;border:1px solid var(--line2);background:#fff;display:block}
+.bw .bt .url{flex:1;background:#fff;border:1px solid var(--line);border-radius:11px;padding:3px 10px;color:var(--ink2)}
+.bw .bc{padding:16px 18px}
+.appttl{font-size:15px;font-weight:800;margin-bottom:2px}
+.appsub{font-size:11px;color:var(--muted);margin-bottom:12px}
+.fld{border:1px solid var(--line2);border-radius:4px;padding:8px 11px;background:#fff;
+  display:flex;justify-content:space-between;align-items:center;
+  font-family:'Consolas',monospace;font-size:12.5px;color:var(--ink);margin:6px 0}
+.fld .u{color:var(--muted);font-size:11px}
+.flbl{font-size:10.5px;font-weight:700;color:var(--muted2);letter-spacing:.04em;margin-top:9px}
+.btn{display:inline-block;border:1.5px solid var(--accent);color:var(--accent);background:var(--accent-soft);
+  border-radius:4px;padding:7px 18px;font-size:12px;font-weight:700;margin-top:11px}
+.res{border:1px solid var(--line);border-radius:4px;margin-top:12px}
+.res .rr{display:flex;justify-content:space-between;padding:8px 12px;border-bottom:1px solid var(--line);font-size:12.5px}
+.res .rr:last-child{border-bottom:none}
+.res .rr .k{color:var(--muted2);font-weight:700}
+.res .rr .v{font-family:'Consolas',monospace;font-weight:700;color:var(--ink)}
+.res .rr.hi{background:var(--accent-soft)}
+.res .rr.hi .v{color:var(--accent)}
+.stamp{font-size:10.5px;color:var(--muted);margin-top:9px;font-family:'Consolas',monospace}
+
+/* URL 분해 */
+.urlx{border:1px solid var(--line2);background:var(--soft);padding:13px 15px;margin:13px 0}
+.urlx .u1{font-family:'Consolas',monospace;font-size:13px;line-height:2.2;word-break:break-all}
+.urlx .u1 span{padding:2px 3px;border-bottom:2.5px solid}
+.urlx .s1{border-color:var(--pv);color:var(--pv)}
+.urlx .s2{border-color:var(--accent);color:var(--accent)}
+.urlx .s3{border-color:var(--pa);color:var(--pa)}
+.urlx .s4{border-color:var(--pd);color:var(--pd)}
+.urlx .lg{margin-top:11px;display:grid;grid-template-columns:repeat(2,1fr);gap:6px 16px}
+.urlx .lg div{font-size:11.5px;color:var(--muted2);display:flex;gap:8px;align-items:baseline}
+.urlx .lg b{flex:0 0 78px;font-family:'Consolas',monospace;font-size:11px}
+
+/* 다이어그램 */
+.dia{border:1px solid var(--line);background:#fff;padding:12px;margin:13px 0}
+.dia svg{display:block;width:100%;height:auto}
+
+/* 체크리스트 */
+.chk{margin:11px 0}
+.chk li{padding-left:26px;font-size:12.5px;margin:7px 0}
+.chk li::before{content:"";position:absolute;left:2px;top:4px;width:13px;height:13px;
+  border:1.5px solid var(--muted2);border-radius:2px;background:#fff}
+.kbd{display:inline-block;border:1px solid var(--line2);border-bottom:2px solid var(--line2);
+  border-radius:4px;padding:1px 8px;font-family:'Consolas',monospace;font-size:11.5px;
+  background:var(--soft);font-weight:700;color:var(--ink);margin:0 1px}
+
+/* 확인 문제 */
+.qa{border:1px solid var(--line2);border-top:2.5px solid var(--ink);padding:12px 15px;margin-top:18px;background:#fff}
+.qa .ql{font-size:10.5px;font-weight:700;letter-spacing:.09em;color:var(--accent);margin-bottom:6px}
+.qa ol{counter-reset:q;margin:0}
+.qa ol li{counter-increment:q;padding-left:22px;font-size:12.5px;margin:7px 0;color:var(--ink2)}
+.qa ol li::before{content:counter(q) ".";position:absolute;left:2px;top:0;font-weight:700;color:var(--muted2);font-size:12px}
+.qa .blank{display:inline-block;border-bottom:1px solid var(--line2);min-width:90px;height:14px;margin:0 3px}
+
+/* 표지 · 간지 (검정 배경 제거 → 테두리 프레임) */
+.cover{padding:12mm;display:flex}
+.cover .fr{flex:1;border:2px solid var(--ink);padding:5px;display:flex}
+.cover .fr2{flex:1;border:1px solid var(--line2);padding:14mm 13mm 10mm;display:flex;flex-direction:column}
+.cover .ck{font-size:11px;font-weight:700;letter-spacing:.16em;color:var(--accent);
+  display:flex;align-items:center;gap:11px}
+.cover .ck::after{content:"";flex:1;height:1px;background:var(--line2)}
+.cover h1{font-size:40px;line-height:1.18;margin:18px 0 12px;letter-spacing:-.03em}
+.cover .cs{font-size:14.5px;color:var(--muted2);line-height:1.7;max-width:88%}
+.cover .cs b{color:var(--ink);font-weight:700}
+.hero{margin:24px 0 0;border:1px solid var(--line2);background:var(--soft);padding:17px 19px}
+.hero .hl{font-size:10.5px;letter-spacing:.1em;color:var(--accent);font-weight:700;margin-bottom:9px}
+.hero .hs{font-size:15.5px;color:var(--ink);font-weight:500;line-height:1.6}
+.hero .hs b{font-weight:800}
+.hero .hd{margin:14px 0 11px;height:1px;background:var(--line2)}
+.hero .hrow{display:flex;align-items:baseline;gap:12px;padding:4px 0}
+.hero .hk{flex:0 0 54px;font-size:10.5px;font-weight:700;color:var(--accent);text-align:right}
+.hero .hv{flex:1;font-size:12.5px;color:var(--ink2)}
+.cover .crow{margin-top:20px;display:flex;border-top:1px solid var(--line2);border-bottom:1px solid var(--line2)}
+.cover .ci{flex:1;padding:13px 0;border-right:1px solid var(--line2)}
+.cover .ci:last-child{border-right:none;padding-left:20px}
+.cover .ci:first-child{padding-right:20px}
+.cover .ci .cl{font-size:10px;letter-spacing:.09em;color:var(--muted);font-weight:700}
+.cover .ci .cv{font-size:12.5px;margin-top:5px;color:var(--ink2);line-height:1.5}
+.cover .ci .cv b{color:var(--accent);font-weight:700}
+.cover .toc{margin-top:auto}
+.cover .toc .th{font-size:10.5px;font-weight:700;letter-spacing:.11em;color:var(--accent);margin-bottom:2px}
+.toc-list{list-style:none;padding:0;margin:0}
+.toc-list li{display:flex;align-items:baseline;gap:14px;padding:8px 0;
+  border-bottom:1px solid var(--line);font-size:13px;color:var(--ink2);margin:0;padding-left:0}
+.toc-list li::before{display:none}
+.toc-list li .ti{font-family:'Consolas',monospace;font-size:11px;color:var(--accent);flex:0 0 34px;font-weight:700}
+.toc-list li .tt{flex:1}
+.toc-list li .tg{font-size:10.5px;color:var(--muted);font-family:'Consolas',monospace}
+.cover .sig{margin-top:16px;display:flex;justify-content:space-between;align-items:baseline;
+  border-top:2px solid var(--ink);padding-top:9px}
+.cover .sig .n{font-size:12px;color:var(--ink);font-weight:700}
+.cover .sig .n span{color:var(--muted);font-family:'Consolas',monospace;font-size:10.5px;margin-left:7px;font-weight:400}
+.cover .sig .b{font-size:10.5px;color:var(--muted);letter-spacing:.07em}
+
+.divider{padding:12mm;display:flex}
+.divider .fr{flex:1;border:2px solid var(--ink);padding:5px;display:flex}
+.divider .fr2{flex:1;border:1px solid var(--line2);padding:26mm 18mm;display:flex;flex-direction:column;justify-content:center}
+.divider .part{color:var(--accent);font-size:12px;font-weight:800;letter-spacing:.16em;
+  display:flex;align-items:center;gap:12px}
+.divider .part::after{content:"";flex:1;height:1px;background:var(--line2)}
+.divider h1{font-size:42px;margin:16px 0 12px;line-height:1.18}
+.divider p{font-size:14.5px;color:var(--muted2);max-width:84%;line-height:1.75}
+.divider .route{margin-top:24px;border-top:1px solid var(--line2);padding-top:14px;
+  line-height:2.1;color:var(--muted2);font-size:12.5px}
+.divider .route b{color:var(--accent);font-family:'Consolas',monospace;font-size:11.5px}
+.divider .goal{margin-top:20px;border:1px solid var(--line2);background:var(--soft);padding:14px 16px}
+.divider .goal .gl{font-size:10.5px;font-weight:700;letter-spacing:.09em;color:var(--accent);margin-bottom:6px}
+.divider .goal ul{margin:0}
+.divider .goal li{font-size:12.5px;margin:5px 0}
+
+.pagenum{position:absolute;bottom:9mm;right:18mm;font-size:10.5px;color:var(--muted);
+  font-family:'Consolas',monospace}
+.brand{position:absolute;bottom:9mm;left:18mm;font-size:9px;color:var(--muted);letter-spacing:.03em}
+.brand b{color:var(--muted2);font-weight:500}
+
+@media print{
+  .page{overflow:hidden}
+}
+.page{overflow:hidden}
+
+
+/* ── 작업 관리자 목업 ── */
+.tm{display:flex}
+.tm .nav{flex:0 0 116px;border-right:1px solid var(--line);padding:6px 0;background:var(--soft)}
+.tm .nav div{font-size:10.5px;padding:5px 11px;color:var(--muted2)}
+.tm .nav div.on{background:#fff;color:var(--ink);font-weight:700;border-left:2px solid var(--accent)}
+.tm .bd{flex:1;min-width:0}
+.tm table{margin:0}
+.tm .hdr{display:flex;justify-content:space-between;padding:7px 12px;border-bottom:1px solid var(--line);
+  font-size:11.5px;font-weight:700;color:var(--ink)}
+.tm .hdr span{font-size:10.5px;color:var(--muted);font-weight:400}
+
+/* ── 간지 배경 ── */
+.page.divider .fr{background:var(--soft2)}
+.page.divider .fr2{background:#fff}
+.page.divider .part{background:var(--accent);color:#fff;display:inline-block;
+  padding:4px 12px;border-radius:2px;letter-spacing:.08em}
+
+/* ── 코드 목업 ── */
+.code{border:1px solid var(--line2);margin:13px 0;background:#fff}
+.code .ch2{background:var(--soft);border-bottom:1px solid var(--line);padding:5px 12px;
+  font-family:'Consolas',monospace;font-size:10.5px;color:var(--muted2);font-weight:700;
+  display:flex;justify-content:space-between}
+.code .cb2{padding:11px 14px;font-family:'Consolas','JetBrains Mono',monospace;
+  font-size:11.5px;line-height:1.85;white-space:pre;color:var(--ink2);overflow:hidden}
+.tag{color:var(--pv);font-weight:700}
+.att{color:var(--pd)}
+.str{color:var(--pa)}
+.cmt{color:var(--muted)}
+.fn{color:var(--accent);font-weight:700}
+.hl2{background:#fff7ed;outline:1px solid var(--pnb)}
+
+/* ── GitHub 화면 목업 ── */
+.gh{border:1px solid var(--line2);margin:13px 0;background:#fff}
+.gh .ghh{background:var(--soft2);border-bottom:1px solid var(--line2);padding:6px 12px;
+  font-size:11px;color:var(--muted2);font-weight:700;display:flex;justify-content:space-between}
+.gh .repo{padding:8px 12px;border-bottom:1px solid var(--line);font-size:12.5px;font-weight:700;color:var(--ink)}
+.gh .repo span{color:var(--muted);font-weight:400;font-size:11px;margin-left:8px}
+.gh .row2{display:flex;gap:10px;padding:6px 12px;border-bottom:1px solid #f4f2ef;font-size:11.5px;align-items:baseline}
+.gh .row2 .ic2{flex:0 0 16px;color:var(--muted);font-family:'Consolas',monospace;font-size:10px}
+.gh .row2 .nm{flex:0 0 34%;font-family:'Consolas',monospace;color:var(--pv)}
+.gh .row2 .msg2{flex:1;color:var(--muted2)}
+.gh .row2 .tm2{flex:0 0 62px;text-align:right;color:var(--muted);font-size:10.5px}
+/* 잔디 */
+.grass{display:flex;gap:3px;flex-wrap:wrap;margin:10px 0;max-width:100%}
+.grass i{width:11px;height:11px;border:1px solid var(--line);background:var(--soft);display:block;border-radius:2px}
+.grass i.l1{background:#f7ddcb;border-color:var(--pnb)}
+.grass i.l2{background:#eeb489;border-color:var(--pnb)}
+.grass i.l3{background:var(--accent);border-color:var(--accent)}
+
+/* ── 작업 진행 표시 ── */
+.chat .wk{font-size:10px;color:var(--muted);font-family:'Consolas',monospace;margin:0 0 5px}
+.chat .bub .ok{color:var(--pa);font-weight:700}
+.chat .bub .no{color:var(--px);font-weight:700}
+.chat .bub code{font-size:11px}
+/* ── 속성창 목업 ── */
+.props{border:1px solid var(--line2);margin:13px 0;background:#fff;max-width:72%}
+.props .ph2{background:var(--soft2);border-bottom:1px solid var(--line2);padding:6px 12px;
+  font-size:11px;font-weight:700;color:var(--muted2)}
+.props .tabs{display:flex;gap:0;border-bottom:1px solid var(--line);font-size:10.5px}
+.props .tabs span{padding:5px 12px;color:var(--muted);border-right:1px solid var(--line)}
+.props .tabs span.on{background:#fff;color:var(--ink);font-weight:700;border-bottom:2px solid var(--accent)}
+.props .pr{display:flex;padding:6px 14px;border-bottom:1px solid #f2f0ec;font-size:11.5px}
+.props .pr b{flex:0 0 84px;color:var(--muted2);font-weight:700}
+.props .pr span{flex:1;color:var(--ink2);font-family:'Consolas',monospace;font-size:11px}
+/* ── 슬래시 명령 목록 ── */
+.slash{border:1px solid var(--line2);margin:13px 0;background:#fff}
+.slash .sh{background:var(--soft);border-bottom:1px solid var(--line);padding:5px 12px;
+  font-size:10.5px;font-weight:700;color:var(--muted2);font-family:'Consolas',monospace;
+  display:flex;justify-content:space-between}
+.slash .sr{display:flex;gap:12px;padding:6px 14px;border-bottom:1px solid #f4f2ef;font-size:11.5px;align-items:baseline}
+.slash .sr:last-child{border-bottom:none}
+.slash .sc2{flex:0 0 92px;font-family:'Consolas',monospace;font-weight:700;color:var(--accent)}
+.slash .sd2{flex:1;color:var(--ink2)}
+
+/* ── 결과 이미지 예시 ── */
+.shots{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:13px 0}
+.shots.one{grid-template-columns:1fr}
+.shots figure{margin:0}
+.shots img{width:100%;display:block;border:1px solid var(--line2);border-radius:3px}
+.shots figcaption{font-size:10.5px;color:var(--muted2);margin-top:5px;font-family:'Consolas',monospace}
+.shots figcaption b{color:var(--accent)}
+
+/* ── 토크나이저 비교 ── */
+.tok{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);
+  border:1px solid var(--line);margin:13px 0}
+.tok>div{background:#fff;padding:12px 14px}
+.tok .tkh{font-size:9.5px;font-weight:700;letter-spacing:.07em;color:var(--muted);margin-bottom:6px}
+.tok .in{border:1px solid var(--line2);border-radius:4px;padding:9px 11px;font-size:14px;
+  font-family:'Consolas',monospace;background:var(--soft);color:var(--ink)}
+.tok .in i{font-style:normal;color:var(--muted);font-size:11px}
+.tok .nums{display:flex;gap:26px;margin-top:11px}
+.tok .nl{font-size:9.5px;font-weight:700;letter-spacing:.06em;color:var(--muted)}
+.tok .n{font-size:21px;font-weight:800;font-family:'Consolas',monospace;line-height:1.2;color:var(--ink)}
+.tok .n.acc{color:var(--accent)}
+.tok .ids{margin-top:10px;font-family:'Consolas',monospace;font-size:11px;color:var(--muted2);
+  background:var(--soft);border:1px solid var(--line);padding:6px 9px;border-radius:3px}
+
+/* ── 목차 ── */
+.tocx{margin:2px 0 0}
+.tocx .g{font-size:11px;font-weight:700;letter-spacing:.08em;color:var(--accent);
+  margin:14px 0 4px;padding-bottom:5px;border-bottom:1.5px solid var(--ink);
+  display:flex;justify-content:space-between;align-items:baseline}
+.tocx .g em{font-style:normal;color:var(--muted);font-weight:400;letter-spacing:0;font-size:11px}
+.tocx .it{display:flex;gap:12px;align-items:baseline;padding:6px 0;border-bottom:1px solid var(--line)}
+.tocx .no{flex:0 0 30px;font-family:'Consolas',monospace;font-size:11.5px;font-weight:700;color:var(--accent)}
+.tocx .tt{flex:1}
+.tocx .tt b{font-size:13px;font-weight:700;color:var(--ink);display:block;line-height:1.4}
+.tocx .tt span{font-size:11.5px;color:var(--muted2);display:block;margin-top:1px;line-height:1.5}
+.tocx .pgn{flex:0 0 24px;text-align:right;font-family:'Consolas',monospace;font-size:11.5px;color:var(--muted2)}
+.tocinfo{margin-top:16px;border:1px solid var(--line2);background:var(--soft);padding:12px 15px}
+.tocinfo .til{font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--accent);margin-bottom:6px}
+.tocinfo .row{display:flex;gap:10px;font-size:11.5px;color:var(--ink2);padding:3px 0;align-items:baseline}
+.tocinfo .row b{flex:0 0 88px;color:var(--ink)}
+
+/* ── 난이도 배지 ── */
+.lv{display:inline-block;font-size:9.5px;font-weight:700;border:1px solid;border-radius:10px;
+  padding:1px 8px;letter-spacing:.03em;line-height:1.6;white-space:nowrap}
+.lv1{color:var(--pv);border-color:var(--pvb);background:var(--pvs)}
+.lv2{color:var(--muted2);border-color:var(--line2);background:var(--soft)}
+.lv3{color:var(--accent);border-color:var(--pnb);background:var(--pns)}
+.lvrow{display:flex;gap:8px;align-items:center;margin:10px 0 4px}
+
+/* ── 난이도 보조 상자 ── */
+.tier{border:1px solid var(--line2);border-radius:4px;padding:11px 14px;margin:12px 0}
+.tier .tl{font-size:10px;font-weight:700;letter-spacing:.06em;margin-bottom:5px;
+  display:flex;gap:8px;align-items:center}
+.tier p{margin:0;font-size:12.5px}
+.tier ul{margin:4px 0 0}
+.tier li{font-size:12.5px;margin:5px 0}
+.tier.b{background:var(--soft)}
+.tier.b .tl{color:var(--muted2)}
+.tier.a{background:#fff;border-style:dashed}
+.tier.a .tl{color:var(--accent)}
+.tier .say{margin:8px 0 0}
+
+/* ── 자동화 회로 ── */
+.auto{border:1px solid var(--line2);border-left:3px solid var(--accent);background:var(--soft);
+  padding:10px 14px;margin:14px 0}
+.auto .al{font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--accent);margin-bottom:6px}
+.auto .ar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.auto .ar span{font-size:12px;color:var(--ink2);background:#fff;border:1px solid var(--line2);
+  border-radius:3px;padding:5px 9px}
+.auto .ar span b{color:var(--accent);font-weight:700;margin-right:5px}
+.auto .ar i{font-style:normal;color:var(--accent);font-weight:900}
+
+/* ── AI 낚시 찾기 ── */
+.trap{border:1.5px dashed var(--line2);border-radius:4px;padding:12px 15px;margin:14px 0;background:#fff}
+.trap .trl{font-size:10.5px;font-weight:700;letter-spacing:.06em;color:var(--px);margin-bottom:7px}
+.trap .fake{border:1px solid var(--line);border-left:2.5px solid var(--line2);background:var(--soft);
+  padding:10px 12px;font-size:12.5px;line-height:1.7;color:var(--ink2)}
+.trap .ask{font-size:12px;color:var(--muted2);margin-top:8px}
+.trap .ask b{color:var(--ink)}
+
+/* ── 메모 영역 (여백 활용) ── */
+.memo{margin-top:26px;border-top:1px solid var(--line);padding-top:9px}
+.memo .ml{font-size:9.5px;font-weight:700;letter-spacing:.12em;color:var(--muted);margin-bottom:8px}
+.memo .line{height:25px;border-bottom:1px dotted var(--line2)}
+
+/* ── 채팅 목업 ── */
+.chat{border:1px solid var(--line2);margin:13px 0;background:#fff}
+.chat .ch{background:var(--soft);border-bottom:1px solid var(--line);padding:6px 12px;
+  font-size:10.5px;font-weight:700;color:var(--muted2);display:flex;justify-content:space-between;
+  font-family:'Consolas',monospace}
+.chat .cb{padding:12px 13px}
+.msg{margin:8px 0;display:flex;gap:10px;align-items:flex-start}
+.msg .av{flex:0 0 44px;font-size:9.5px;font-weight:700;letter-spacing:.05em;color:var(--muted);
+  text-align:right;padding-top:9px}
+.msg .bub{flex:1;border:1px solid var(--line);border-radius:5px;padding:9px 12px;
+  font-size:12px;line-height:1.7;color:var(--ink2);background:#fff}
+.msg.u .bub{background:var(--soft);border-color:var(--line2)}
+.msg.a .bub{border-left:2.5px solid var(--accent)}
+.msg .bub b{color:var(--ink)}
+.msg .bub .tbl{margin-top:6px;font-family:'Consolas',monospace;font-size:10.5px;
+  color:var(--muted2);line-height:1.7;white-space:pre}
+
+/* ── 스펙 카드 ── */
+.stat{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);
+  border:1px solid var(--line);margin:13px 0}
+.stat>div{background:#fff;padding:11px 12px}
+.stat .sl2{font-size:9.5px;font-weight:700;color:var(--accent);letter-spacing:.07em}
+.stat .sv{font-size:14px;font-weight:800;margin-top:3px;font-family:'Consolas',monospace;line-height:1.3}
+.stat .sd{font-size:10px;color:var(--muted);margin-top:3px;line-height:1.5}
+
+/* ── 좌우 2단 ── */
+.split{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:13px 0}
+.split h3{margin-top:0}
+
+
+/* ── v3 추가 ── */
+.term .e{color:var(--px);font-weight:700}
+.term .y{color:var(--pd)}
+.term .b{color:var(--pv);font-weight:700}
+.term.host{background:#f6f8fe}
+.term.host .th{background:var(--pvs);color:var(--pv);border-bottom-color:var(--pvb)}
+.term.root .th{background:var(--pxs);color:var(--px);border-bottom-color:var(--pxb)}
+.term.dev .th{background:var(--pas);color:var(--pa);border-bottom-color:var(--pab)}
+.rh .l .sec{color:var(--ink);margin-left:2px}
+
+/* 로드맵 */
+.road{display:grid;grid-template-columns:repeat(5,1fr);gap:0;border:1.5px solid var(--ink);margin:16px 0}
+.road>div{padding:12px 11px;border-right:1px solid var(--line2);position:relative}
+.road>div:last-child{border-right:none}
+.road .rk{font-family:'Consolas',monospace;font-size:20px;font-weight:900;color:var(--accent);line-height:1}
+.road .rt{font-size:13.5px;font-weight:800;margin:6px 0 4px}
+.road .rq{font-size:11px;color:var(--muted2);line-height:1.55}
+.road .rc{font-family:'Consolas',monospace;font-size:10px;color:var(--ink2);margin-top:7px;line-height:1.6;
+  border-top:1px dashed var(--line2);padding-top:6px}
+
+/* ls -l 해부 */
+.anat{border:1px solid var(--line2);background:#fff;margin:13px 0;overflow:hidden}
+.anat .ah{background:var(--soft);border-bottom:1px solid var(--line);padding:5px 12px;font-size:10.5px;
+  font-weight:700;color:var(--muted2);font-family:'Consolas',monospace}
+.anat .row{display:flex;padding:12px 10px 4px;gap:0;font-family:'Consolas',monospace;font-size:14px}
+.anat .seg{padding:3px 6px;border-bottom:3px solid;margin-right:6px;white-space:pre;font-weight:700}
+.anat .lab{display:flex;padding:0 10px 12px;gap:0}
+.anat .lab div{font-size:10.5px;line-height:1.35;color:var(--muted2);margin-right:6px}
+.anat .lab b{display:block;font-size:10px;color:var(--ink)}
+.s1{border-color:var(--px);color:var(--px)}
+.s2{border-color:var(--accent);color:var(--accent)}
+.s3{border-color:var(--muted);color:var(--muted2)}
+.s4{border-color:var(--pv);color:var(--pv)}
+.s5{border-color:var(--pa);color:var(--pa)}
+.s6{border-color:var(--line2);color:var(--ink2)}
+.s7{border-color:var(--pd);color:var(--pd)}
+.s8{border-color:var(--ink);color:var(--ink)}
+
+/* 권한 비트 */
+.bits{display:grid;grid-template-columns:44px repeat(9,1fr);border:1.5px solid var(--ink);margin:14px 0;
+  font-family:'Consolas',monospace;text-align:center}
+.bits>div{padding:8px 0;border-right:1px solid var(--line2);font-size:17px;font-weight:800}
+.bits>div:last-child{border-right:none}
+.bits .ty{background:var(--pxs);color:var(--px)}
+.bits .u{background:var(--pns);color:var(--pn)}
+.bits .g{background:var(--pas);color:var(--pa)}
+.bits .o{background:var(--pvs);color:var(--pv)}
+.bits .cap{font-size:10px;font-weight:700;padding:5px 0;border-top:1px solid var(--line2);font-family:'Noto Sans KR',sans-serif}
+.bits .sp3{grid-column:span 3}
+
+/* O / X 표 */
+td.ok,td.no,td.mid{text-align:center;font-weight:800;font-family:'Consolas',monospace}
+td.ok{color:var(--pa)!important}
+td.no{color:var(--px)!important}
+td.mid{color:var(--pd)!important}
+th.c{text-align:center}
+
+/* 서버 구성도 */
+.topo{display:grid;grid-template-columns:1fr 1.25fr 1fr;gap:14px;margin:14px 0;align-items:stretch}
+.topo .box{border:1.5px solid var(--ink);background:#fff}
+.topo .box .bh{padding:6px 10px;font-size:11px;font-weight:800;border-bottom:1px solid var(--line2);background:var(--soft);
+  font-family:'Consolas',monospace;display:flex;justify-content:space-between}
+.topo .box .bh span{font-weight:400;color:var(--muted)}
+.topo .box .bb{padding:9px 10px;font-size:11px;line-height:1.7;color:var(--ink2)}
+.topo .box .bb code{font-size:10.5px}
+.topo .box.h{border-color:var(--pv)} .topo .box.h .bh{background:var(--pvs);color:var(--pv)}
+.topo .acct{display:block;border:1px solid var(--line2);border-radius:3px;padding:4px 7px;margin:5px 0;background:var(--soft)}
+.topo .acct b{color:var(--accent)}
+.arrowline{font-size:11px;color:var(--muted2);text-align:center;margin:-4px 0 10px;font-family:'Consolas',monospace}
+.arrowline b{color:var(--accent)}
+
+/* 8진수 */
+.oct{display:flex;gap:10px;margin:12px 0;align-items:stretch}
+.oct>div{flex:1;border:1px solid var(--line2);text-align:center;padding:10px 6px;background:#fff}
+.oct .ov{font-family:'Consolas',monospace;font-size:24px;font-weight:900;color:var(--accent)}
+.oct .ol{font-size:11px;color:var(--muted2);margin-top:2px}
+.oct .op{align-self:center;border:none;flex:0 0 14px;font-size:18px;font-weight:900;color:var(--muted);padding:0;background:none}
+
+.opener .big{font-family:'Consolas',monospace;font-size:120px;font-weight:900;line-height:.9;color:var(--accent);margin:18mm 0 6mm}
+.opener h1{font-size:34px;margin-bottom:12px}
+.opener .oq{border-top:1.5px solid var(--ink);border-bottom:1px solid var(--line2);margin:18px 0;padding:6px 0}
+.opener .oq div{display:flex;gap:14px;padding:8px 0;border-bottom:1px dotted var(--line2);font-size:14px}
+.opener .oq div:last-child{border-bottom:none}
+.opener .oq span{flex:0 0 26px;font-family:'Consolas',monospace;font-weight:900;color:var(--accent)}
+.opener .otoc{columns:2;column-gap:24px;margin-top:10px}
+.opener .otoc div{break-inside:avoid;display:flex;justify-content:space-between;font-size:12.5px;padding:5px 0;border-bottom:1px solid var(--line)}
+.opener .otoc b{font-family:'Consolas',monospace;color:var(--muted2)}
+.lvl{border:1px solid var(--line2);margin:11px 0;background:#fff}
+.lvl .lh{display:flex;align-items:center;gap:10px;padding:7px 13px;border-bottom:1px solid var(--line2);background:var(--soft)}
+.lvl .lh b{font-size:11px;font-weight:800;border:1px solid;border-radius:2px;padding:1px 8px}
+.lvl .lh span{font-size:12px;color:var(--muted2)}
+.lvl.l1 .lh b{color:var(--pa);border-color:var(--pab);background:var(--pas)}
+.lvl.l2 .lh b{color:var(--pv);border-color:var(--pvb);background:var(--pvs)}
+.lvl.l3 .lh b{color:var(--px);border-color:var(--pxb);background:var(--pxs)}
+.lvl ol{counter-reset:q;margin:0;padding:6px 13px 9px}
+.lvl ol li{counter-increment:q;padding-left:30px;margin:6px 0;font-size:12.5px}
+.lvl ol li::before{content:"Q" counter(q);position:absolute;left:0;top:1px;font-family:'Consolas',monospace;font-size:11px;font-weight:800;color:var(--muted)}
+.ans{border-top:1.5px dashed var(--line2);margin-top:14px;padding-top:8px;font-size:11px;color:var(--muted2);line-height:1.7}
+.ans b{color:var(--ink)}
+.ans .al{font-size:10px;font-weight:800;letter-spacing:.08em;color:var(--muted);margin-bottom:3px}
+
+tbody td:first-child b{white-space:nowrap}
+
+th.c{white-space:nowrap}
+
+.code .cb2{font-size:10px;line-height:1.5;padding:9px 12px}
+
+.lwhy{margin:0 0 10px;padding:7px 11px;background:var(--soft);border-left:3px solid var(--accent);font-size:11.8px;line-height:1.55;color:var(--ink2)}
+.lwhy b{color:var(--accent);margin-right:8px;font-size:11px}
+.opener.has-why .big{font-size:84px;margin:8mm 0 4mm}
+.oscene{margin:12px 0 4px;border:1.5px solid var(--accent);background:#fff}
+.oscene .osh{padding:5px 12px;font-size:10.5px;font-weight:800;color:#fff;background:var(--accent);letter-spacing:.08em}
+.oscene .osb{padding:10px 13px 6px;font-size:13px;line-height:1.75;color:var(--ink)}
+.oscene table{margin:4px 13px 12px;width:calc(100% - 26px)}
+.opener.has-why .oq{margin:12px 0}
+.opener.has-why .oq div{padding:6px 0;font-size:13px}
+
+table.quiz td.qn{width:26px;font-family:'Consolas',monospace;font-weight:800;color:var(--accent);text-align:center}
+table.quiz td.qb{width:96px;white-space:nowrap;color:var(--muted2);font-family:'Consolas',monospace}
+.inc{border:1.5px solid var(--ink);margin:10px 0;background:#fff}
+.inc .inh{display:flex;align-items:center;gap:10px;padding:7px 12px;background:var(--ink);color:#fff}
+.inc .inh b{font-size:14px;flex:1}
+.inc .inno{font-family:'Consolas',monospace;font-size:11px;font-weight:900;background:var(--accent);padding:2px 7px}
+.inc .inlv{font-size:10.5px;border:1px solid #fff;padding:1px 7px;border-radius:2px}
+.inc .inb{padding:6px 12px 10px}
+.inc .inrow{display:flex;gap:12px;padding:6px 0;border-bottom:1px dotted var(--line2);font-size:12px;line-height:1.6}
+.inc .inrow>span{flex:0 0 64px;font-size:10.5px;font-weight:800;color:var(--accent);padding-top:2px}
+.inc .inrow>div{flex:1}
+.inc .inrow.learn{border-bottom:none}
+.inc .inrow.learn>div{font-weight:700}
+.inc .term{margin:6px 0}
+
+table.cmdt{table-layout:fixed}
+table.cmdt th:nth-child(1){width:27%} table.cmdt th:nth-child(2){width:13%}
+table.cmdt th:nth-child(3){width:17%} table.cmdt th:nth-child(4){width:27%} table.cmdt th:nth-child(5){width:16%}
+table.cmdt td:first-child code{word-break:break-all}
+
+table.quiz th{white-space:nowrap}
+
+.msn{border:1.5px solid var(--ink);margin:10px 0;background:#fff;break-inside:avoid}
+.msn .mh{display:flex;align-items:center;gap:9px;padding:6px 11px;background:var(--soft);border-bottom:1px solid var(--line2)}
+.msn .mh b{flex:1;font-size:13.5px}
+.msn .mid{font-family:'Consolas',monospace;font-size:11.5px;font-weight:900;color:#fff;background:var(--ink);padding:2px 7px;border-radius:2px}
+.msn .mlv{font-size:10.5px;font-weight:800;border:1px solid;border-radius:2px;padding:1px 7px}
+.msn .mlv.l1{color:var(--pa);border-color:var(--pab);background:var(--pas)}
+.msn .mlv.l2{color:var(--pv);border-color:var(--pvb);background:var(--pvs)}
+.msn .mlv.l3{color:var(--px);border-color:var(--pxb);background:var(--pxs)}
+.msn .mlv.l4{color:#fff;border-color:var(--accent);background:var(--accent)}
+.msn .mtm{font-size:10.5px;color:var(--muted2);font-family:'Consolas',monospace}
+.msn .mb{padding:4px 11px 7px}
+.msn .mr{display:flex;gap:10px;padding:4px 0;border-bottom:1px dotted var(--line);font-size:11.8px;line-height:1.55}
+.msn .mr:last-child{border-bottom:none}
+.msn .mr>span{flex:0 0 34px;font-size:10.5px;font-weight:800;color:var(--accent);padding-top:1px}
+.msn .mr>div{flex:1}
+.msn .mr.ref>div{color:var(--muted2)}
+
+/* ── 간지(파트 표지): 배경색 ── */
+.page.opener{background:#1e2638 !important;color:#e9edf5;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.page.opener .rh{border-bottom-color:rgba(255,255,255,.22)}
+.page.opener .rh .l,.page.opener .rh .r{color:#b7c0d3}
+.page.opener .rh .l b{color:#ff9a6b}
+.page.opener .rh .pg{color:#fff;border-color:rgba(255,255,255,.5);background:transparent}
+.page.opener .big{color:#ff9a6b}
+.page.opener h1,.page.opener h1 *{color:#fff}
+.page.opener .kicker{color:#ff9a6b}
+.page.opener .oq{border-top-color:rgba(255,255,255,.7);border-bottom-color:rgba(255,255,255,.25)}
+.page.opener .oq div{border-bottom-color:rgba(255,255,255,.15);color:#e9edf5}
+.page.opener .oq span{color:#ff9a6b}
+.page.opener .otoc div.it{border-bottom-color:rgba(255,255,255,.14);color:#e9edf5}
+.page.opener .otoc b{color:#8f9bb3}
+.page.opener .otoc .och{break-after:avoid;break-inside:avoid;margin:9px 0 2px;font-size:11px;font-weight:800;color:#ff9a6b;letter-spacing:.04em}
+.page.opener .otoc .och:first-child{margin-top:0}
+.page.opener .brand,.page.opener .pagenum{color:#8f9bb3}
+.page.opener .oscene{border-color:#ff9a6b}
+.page.opener .oscene .osh{background:#ff9a6b;color:#1e2638}
+.page.opener .oscene .osb,.page.opener .oscene td,.page.opener .oscene th{color:var(--ink)}
+.opener .otoc div.it{break-inside:avoid;display:flex;justify-content:space-between;font-size:12.5px;padding:4px 0;border-bottom:1px solid var(--line)}
+
+/* ── 장 표시 ── */
+.rh .l .chip{margin-left:2px;padding:1px 7px;border-radius:2px;background:var(--soft);border:1px solid var(--line2);color:var(--ink2);font-weight:700}
+.chap{display:flex;align-items:baseline;gap:10px;margin:-6px 0 14px;padding:8px 14px;background:#1e2638;color:#fff;font-size:15px;font-weight:800;
+  -webkit-print-color-adjust:exact;print-color-adjust:exact;border-left:6px solid #ff9a6b}
+.chap b{font-size:18px;color:#ff9a6b}
+.chap span{font-size:11.5px;font-weight:500;color:#b7c0d3;margin-left:auto}
+
+.page.opener .otoc .och{display:block;border-bottom:none;padding:0}
+
+.page.opener .otoc{columns:2;column-gap:22px;margin-top:6px}
+.page.opener .otoc div.it{font-size:11.2px;padding:2px 0}
+.page.opener .otoc .och{margin:6px 0 1px;font-size:10.5px}
+.page.opener.has-why .oq div{padding:4px 0;font-size:12.5px}
+
+/* ── v5 글꼴 확대 (가독성) ── */
+h1{font-size:25px;line-height:1.35}
+h3{font-size:15.5px}
+.kicker{font-size:11.5px}
+table{font-size:13px}
+thead th{font-size:12px}
+th,td{padding:6px 10px;line-height:1.55}
+.term .tb2{font-size:12px;line-height:1.65}
+.term .th{font-size:11.5px}
+.code .cb2{font-size:11.6px;line-height:1.55}
+.code .ch2{font-size:11.5px}
+.steps>li{font-size:14px}
+.steps>li .ls{font-size:13px;line-height:1.6}
+.lab-head h3{font-size:15.5px}
+.lwhy{font-size:13px}
+.why p,.note,.warn{font-size:13.2px;line-height:1.65}
+.why b{font-size:13.5px}
+.point p{font-size:13.6px;line-height:1.65}
+.mission h3{font-size:14.8px}
+.mission .wy{font-size:13px}
+.deflist .dd{font-size:13.2px;line-height:1.6}
+.deflist .dt{font-size:14px}
+.flow span{font-size:12.3px}
+.tree{font-size:12.2px}
+.cell p{font-size:13px}
+.cell h4{font-size:15px}
+.msn .mr{font-size:13.2px}
+.msn .mh b{font-size:15px}
+.msn .mr>span{font-size:11.5px;flex-basis:38px}
+.inc .inrow{font-size:13.2px}
+.inc .inrow>span{font-size:11.5px}
+.inc .inh b{font-size:15px}
+.lvl ol li{font-size:13.2px}
+.ans{font-size:12.4px}
+.say .sc{font-size:12.4px}
+.anat .col .cp{font-size:11.2px}
+.oscene .osb{font-size:14px}
+.chap{font-size:16px}
+.rh .l,.rh .r{font-size:11.5px}
+.ba .m{font-size:13px}
+.topo .box .bb{font-size:12.4px}
+.road .rq{font-size:12px}
+table.cmdt{font-size:12.4px}
+
+.grid.g1{grid-template-columns:1fr}
+td.ok,td.mid,td.no{white-space:nowrap}
+.pbreak{height:0;margin:0}
+.calc{font-family:'Consolas',monospace;font-size:12px;line-height:1.8;color:var(--ink2);background:var(--soft);padding:10px 12px;border-radius:3px;margin:10px 0}
+.calc b{color:var(--accent)}
+.page.opener .otoc div.it span{flex:1}
+.cover .toc-list li{padding:3px 0}
+.split .term{margin:0}
+.code .cb2{font-size:10.3px;line-height:1.5;white-space:pre-wrap}
+.dia svg{max-height:220px}
+</style></head><body><section class="page cover"><div class="fr"><div class="fr2">
+<div class="ck">청년취업사관학교 동대문4기 · DOCKER → K3s · 다섯 번째</div>
+<h1>장애 대응과 K3s<br>사람이 안 고치게 만든다</h1>
+<div class="cs">컨테이너를 죽여 보고 · 한계를 만나고 · 쿠버네티스로 넘어간다<br><b>기업연계형 AI 서비스·클라우드 실무 과정</b></div>
+<div class="hero"><div class="hl">이 교안을 마치면</div><div class="hs">파드를 지워도 <b>알아서 다시 생기고</b>, 주소가 바뀌어도 <b>접속이 끊기지 않으며</b>, 상태를 <b>그래프로</b> 볼 수 있습니다.</div><div class="hd"></div>
+<div class="hrow"><div class="hk">1·2장</div><div class="hv">컨테이너 강제 종료 · restart · healthcheck · compose의 한계 다섯 가지</div></div>
+<div class="hrow"><div class="hk">3·4장</div><div class="hv">K3s 설치 · Deployment · replicas · 파드 삭제 후 자동 재생성</div></div>
+<div class="hrow"><div class="hk">5장</div><div class="hv">Service · NodePort · 라벨 · 무중단 확인</div></div>
+<div class="hrow"><div class="hk">6·7장</div><div class="hv">Prometheus · Grafana · 점검표 8가지 · 미션 14개 · 평가 10문항</div></div></div>
+<div class="crow"><div class="ci"><div class="cl">선수</div><div class="cv"><b>compose · 멀티컨테이너</b> 이수</div></div><div class="ci"><div class="cl">환경</div><div class="cv"><b>Multipass VM · 리눅스</b> (4GB)</div></div><div class="ci"><div class="cl">실습 파일</div><div class="cv"><b>docker_lab5</b></div></div></div>
+<div class="toc" style="margin-top:auto;padding-top:10px"><div class="th">CONTENTS</div><ul class="toc-list"><li><span class="ti">00</span><span class="tt">이 교안을 마치면</span><span class="tg" data-toc="ch0">02</span></li><li><span class="ti">01</span><span class="tt">장애를 내 본다</span><span class="tg" data-toc="ch1">03</span></li><li><span class="ti">02</span><span class="tt">compose의 한계</span><span class="tg" data-toc="ch2">09</span></li><li><span class="ti">03</span><span class="tt">K3s 설치</span><span class="tg" data-toc="ch3">12</span></li><li><span class="ti">04</span><span class="tt">Deployment와 자가 치유</span><span class="tg" data-toc="ch4">16</span></li><li><span class="ti">05</span><span class="tt">Service</span><span class="tg" data-toc="ch5">21</span></li><li><span class="ti">06</span><span class="tt">Prometheus와 Grafana</span><span class="tg" data-toc="ch6">26</span></li><li><span class="ti">07</span><span class="tt">점검과 미션</span><span class="tg" data-toc="ch7">31</span></li></ul></div>
+<div class="sig"><div class="n">부성순</div><div class="b">AI SERVICE · CLOUD PRACTICE</div></div></div></div></section>
+<section class="page" data-sec="0.1" data-title="0.1 이 교안을 마치면" data-ch="0"><div class="rh"><div class="l"><b>DOCKER</b> · <span class="sec">시작하기</span></div><div class="r">0.1 이 교안을 마치면<span class="pg">02</span></div></div><div class="kicker">0 · WHAT YOU CAN DO</div><h1>컨테이너가 죽었을 때<br><em>사람이 안 고치게</em> 만든다</h1>
+<div class="oscene" style="margin:10px 0"><div class="osh">현장 장면</div><div class="osb">새벽 3시에 알림이 옵니다. 컨테이너 하나가 죽었습니다. 일어나서 접속해 다시 띄웁니다. 다음 주에 또 옵니다. <b>“죽으면 알아서 다시 뜨고, 그동안 서비스는 안 끊기게”</b> 할 수는 없을까요? 여기서 오케스트레이터가 필요해집니다.</div></div>
+<h3>이 교안의 흐름</h3>
+<div class="flow"><span>① 장애를 <b>직접</b> 내 본다<br><small>compose · restart · healthcheck</small></span><i>→</i><span>② <b>한계</b>를 만난다<br><small>복제본 · 무중단 · 여러 대</small></span><i>→</i><span>③ <b>K3s</b>로 넘어간다<br><small>Deployment · Service</small></span><i>→</i><span>④ <b>지켜본다</b><br><small>Prometheus · Grafana</small></span></div>
+<table class="zebra"><thead><tr><th style="width:5%">□</th><th style="width:65%">할 수 있게 되는 것</th><th style="width:30%">어디서</th></tr></thead><tbody><tr><td>□</td><td>컨테이너를 <b>일부러 죽여</b> 자동 재시작을 확인한다</td><td>1.2</td></tr><tr><td>□</td><td><code>healthcheck</code>로 “떠 있지만 아픈” 상태를 잡아낸다</td><td>1.3</td></tr><tr><td>□</td><td>compose로는 <b>안 되는 것</b> 다섯 가지를 설명한다</td><td>2장</td></tr><tr><td>□</td><td>리눅스 VM에 <b>K3s를 설치</b>하고 노드를 확인한다</td><td>3장</td></tr><tr><td>□</td><td><b>Deployment</b>로 파드 개수를 유지한다</td><td>4.1</td></tr><tr><td>□</td><td>파드를 지워도 <b>자동으로 다시 생기는 것</b>을 확인한다</td><td>4.3</td></tr><tr><td>□</td><td><b>Service</b>로 바뀌는 파드 주소를 가린다</td><td>5장</td></tr><tr><td>□</td><td><b>Prometheus</b>로 수집하고 <b>Grafana</b>로 본다</td><td>6장</td></tr></tbody></table>
+<table class="zebra"><thead><tr><th>준비물</th><th>확인</th></tr></thead><tbody><tr><td><b>Multipass VM</b></td><td><b>메모리 4GB 이상</b> 권장 · 6장(모니터링)까지 하려면 필요</td></tr><tr><td>만드는 법</td><td><code>multipass launch --name k3s-lab --cpus 2 --memory 4G --disk 20G</code></td></tr><tr><td><b>실습 파일</b></td><td><code>docker_lab5</code> (app · docker-compose.yml · k8s)</td></tr><tr><td>도커</td><td>VM 안에 설치 (1.1에서 확인)</td></tr></tbody></table>
+<div class="warn"><b>이번 교안은 전부 리눅스에서 합니다.</b> K3s는 리눅스에서 동작하고, 실제 서버 환경과 같기 때문입니다. 내 PC의 Docker Desktop은 쓰지 않습니다.</div>
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">02</div></section>
+<section class="page opener has-why" data-ch="1"><div class="rh"><div class="l"><b>DOCKER</b> · 1장</div><div class="r">장애를 내 본다<span class="pg">03</span></div></div><div class="big">1</div><h1>장애를 내 본다<br>죽여 보고 무엇이 다른지</h1><div class="oscene"><div class="osh">WHY · 현장 장면</div><div class="osb">새벽 3시에 알림이 온다. 컨테이너가 죽었다. 일어나서 다시 띄운다. 다음 주에 또 온다. 먼저 <b>일부러 죽여 보고</b> restart와 healthcheck가 무엇을 해 주는지 확인한다.</div><table class="zebra osx"><thead><tr><th>이 장을 모르면</th><th>생기는 일</th></tr></thead><tbody><tr><td>죽여 보지 않으면</td><td>장애를 글로만 안다</td></tr><tr><td>restart를 모르면</td><td>매번 사람이 살린다</td></tr><tr><td>healthcheck를 모르면</td><td>떠 있는데 안 되는 상태를 못 잡는다</td></tr></tbody></table></div><div class="oq"><div><span>01</span>컨테이너가 죽으면 무엇이 달라지는가?</div><div><span>02</span>자동으로 살아나는 것과 아닌 것의 차이는?</div><div><span>03</span>떠 있지만 아픈 상태는 어떻게 아는가?</div></div><div class="kicker">이 장의 구성</div><div class="otoc"><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">1.1</b>리눅스 VM 준비</span><b data-toc="1.1">04</b></div><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">1.2</b>장애를 직접</span><b data-toc="1.2">05</b></div><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">1.3</b>떠 있지만 아픈 상태</span><b data-toc="1.3">07</b></div></div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">03</div></section>
+<section class="page" data-sec="1.1" data-title="1.1 실습 환경 확인"><div class="rh"><div class="l"><b>DOCKER</b> · 1장 · <span class="sec">장애를 내 본다</span></div><div class="r">1.1 실습 환경 확인<span class="pg">04</span></div></div><div class="kicker">1.1 · SETUP</div><h1>VS Code가 붙어 있는<br><em>리눅스 VM</em>에서</h1>
+<div class="why" style="zoom: 0.88;"><b>왜 배워야 하나?</b><p>앞 교안에서 쓰던 방식 그대로입니다. <strong>VS Code가 SSH로 VM에 연결</strong>되어 있고, 편집과 터미널을 모두 그 창에서 합니다. 이번에는 여기에 <strong>K3s</strong>까지 올립니다.</p></div>
+<h3 style="zoom: 0.88;">① 연결과 도커 확인</h3>
+<div style="display: flex; gap: 8px; align-items: center; margin: 12px 0px 4px; padding: 6px 10px; border-left: 3px solid rgb(21, 128, 61); background: rgb(250, 249, 247); zoom: 0.88;"><b style="font-size:11px;color:#15803d;white-space:nowrap">입력 위치</b><span style="font-size:11.5px"><b>VS Code 터미널 (VM)</b> · SSH로 연결된 창의 Terminal → New Terminal · 프롬프트가 <code>ubuntu@k3s-lab:~$</code> · Terminal → New Terminal (Ctrl + `)</span></div>
+<table class="zebra" style="zoom: 0.88;"><thead><tr><th style="width:42%">명령</th><th style="width:58%">왜 이 명령을 치는가</th></tr></thead><tbody><tr><td><code>hostname</code></td><td>VM 이름이 나와야 한다 · 내 PC 이름이면 SSH 창이 아니다</td></tr><tr><td><code>docker version</code></td><td>Client와 <b>Server</b>가 모두 나오면 준비 완료</td></tr><tr><td><code>free -h</code></td><td><b>메모리</b> 확인 · 6장(모니터링)까지 하려면 <b>4GB 이상</b> 권장</td></tr><tr><td><code>df -h /</code></td><td>디스크 여유 확인 · 10GB 이상 남아 있으면 좋다</td></tr></tbody></table>
+<div class="warn" style="zoom: 0.88;"><b>메모리가 2GB라면</b> 6장에서 모니터링 파드가 <code>Pending</code>으로 멈춥니다. VM을 새로 만드는 편이 빠릅니다 · 내 PC 터미널에서 <code>multipass launch --name k3s-lab --cpus 2 --memory 4G --disk 20G</code> 후 VS Code에서 그 VM으로 SSH 연결하세요.</div>
+<h3 style="zoom: 0.88;">② 실습 파일 준비</h3>
+<table class="zebra" style="zoom: 0.88;"><thead><tr><th>방법</th><th>어떻게</th></tr></thead><tbody><tr><td><b>VS Code에 끌어다 놓기</b></td><td>탐색기에서 <code>/home/ubuntu</code>를 연 뒤 <code>docker_lab5</code> 폴더를 드래그</td></tr><tr><td>multipass transfer</td><td>내 PC 터미널에서 <code>multipass transfer -r docker_lab5 k3s-lab:/home/ubuntu/</code></td></tr></tbody></table>
+<div style="display: flex; gap: 8px; align-items: center; margin: 12px 0px 4px; padding: 6px 10px; border-left: 3px solid rgb(21, 128, 61); background: rgb(250, 249, 247); zoom: 0.88;"><b style="font-size:11px;color:#15803d;white-space:nowrap">입력 위치</b><span style="font-size:11.5px"><b>VS Code 터미널 (VM)</b> · SSH로 연결된 창의 Terminal → New Terminal · 프롬프트가 <code>ubuntu@k3s-lab:~$</code></span></div>
+<table class="zebra" style="zoom: 0.88;"><thead><tr><th style="width:42%">명령</th><th style="width:58%">왜 이 명령을 치는가</th></tr></thead><tbody><tr><td><code>cd ~/docker_lab5 &amp;&amp; ls -R</code></td><td>구조 확인 · app · docker-compose.yml · k8s</td></tr><tr><td><code>cat docker-compose.yml</code></td><td>두 서비스의 <b>restart 값이 다른 것</b>을 미리 확인</td></tr><tr><td><code>sed -n "1,20p" app/app.py</code></td><td>앱이 <code>/kill</code>과 <code>/healthz</code>를 가진 것 확인</td></tr></tbody></table>
+<div class="point" style="zoom: 0.88;"><div class="pl">오늘의 무대</div><p>편집은 VS Code 탐색기, 명령은 같은 창의 터미널, 실행되는 곳은 VM입니다. 브라우저로 볼 때만 <b>내 PC</b>에서 VM의 IP로 접속합니다.</p></div>
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">04</div></section>
+<section class="page" data-sec="1.2" data-title="1.2 장애를 직접 내 본다"><div class="rh"><div class="l"><b>DOCKER</b> · 1장 · <span class="sec">장애를 내 본다</span></div><div class="r">1.2 장애를 직접 내 본다<span class="pg">05</span></div></div><div class="kicker">1.2 · KILL IT</div><h1>죽여 보고<br><em>무엇이 다른지</em> 본다</h1>
+<div class="why"><b>왜 배워야 하나?</b><p>교재로만 읽으면 남지 않습니다. <strong>같은 앱을 두 개</strong> 띄우되 한쪽만 <code>restart</code>를 주고, 둘 다 죽여 보면 차이가 분명해집니다.</p></div>
+<table class="zebra"><thead><tr><th>서비스</th><th>포트</th><th>restart</th><th>예상</th></tr></thead><tbody><tr><td><b>app-no</b></td><td>8001</td><td><code>"no"</code></td><td>죽으면 <b>그대로 멈춤</b></td></tr><tr><td><b>app-always</b></td><td>8002</td><td><code>unless-stopped</code></td><td>죽으면 <b>자동으로 다시</b></td></tr></tbody></table>
+<div style="display:flex;gap:8px;align-items:center;margin:12px 0 4px;padding:6px 10px;border-left:3px solid #15803d;background:#faf9f7"><b style="font-size:11px;color:#15803d;white-space:nowrap">입력 위치</b><span style="font-size:11.5px"><b>VS Code 터미널 (VM)</b> · SSH로 연결된 창의 Terminal → New Terminal · 프롬프트가 <code>ubuntu@k3s-lab:~$</code> · <code>~/docker_lab5</code> 에서</span></div>
+<table class="zebra"><thead><tr><th style="width:42%">명령</th><th style="width:58%">왜 이 명령을 치는가</th></tr></thead><tbody><tr><td><code>docker compose up -d --build</code></td><td>두 앱을 띄운다</td></tr><tr><td><code>curl localhost:8001 | head -5</code></td><td>앱 확인 · <b>호스트명</b>이 보인다 (컨테이너 ID)</td></tr><tr><td><code>curl localhost:8002 | head -5</code></td><td>두 번째 앱도 확인</td></tr><tr><td><code>curl localhost:8001/kill</code></td><td><b>app-no를 죽인다</b> · 3초 뒤 프로세스 종료</td></tr><tr><td><code>docker compose ps -a</code></td><td>app-no가 <code>Exited</code>로 남아 있다</td></tr><tr><td><code>curl --max-time 3 localhost:8001</code></td><td>접속 실패 · <b>사람이 다시 띄워야 한다</b></td></tr><tr><td><code>curl localhost:8002/kill</code></td><td><b>app-always를 죽인다</b></td></tr><tr><td><code>docker compose ps</code></td><td>몇 초 뒤 다시 <code>Up</code> · <b>자동으로 살아났다</b></td></tr><tr><td><code>docker compose logs --tail 20 app-always</code></td><td>다시 시작한 기록 · <code>start on :8000</code>이 두 번</td></tr></tbody></table>
+<table class="zebra"><thead><tr><th>확인할 것</th><th>뜻</th></tr></thead><tbody><tr><td><code>Exited (1)</code></td><td>오류로 종료 · <code>/kill</code>이 종료 코드 1로 끝냈다</td></tr><tr><td><code>Up 5 seconds</code></td><td>방금 <b>다시 시작</b>되었다는 뜻</td></tr><tr><td><code>Restarting</code></td><td>재시작 중 · 계속 반복되면 앱 자체에 문제</td></tr><tr><td>호스트명이 <b>그대로</b></td><td>컨테이너가 재사용된 것 (K3s의 파드와 다른 점 · 4장)</td></tr></tbody></table>
+
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">05</div></section><section class="page" data-sec="1.2" data-title="1.2 장애를 직접 내 본다" data-cont="1"><div class="rh"><div class="l"><b>DOCKER</b> · 1장 · <span class="sec">장애를 내 본다</span></div><div class="r">1.2 장애를 직접 내 본다 (계속)<span class="pg">06</span></div></div><div class="kicker">1.2 · KILL IT</div><h1>죽여 보고<br><em>무엇이 다른지</em> 본다 <small class="cont" style="font-size:.55em;color:var(--muted)">(계속)</small></h1><div class="mission"><b>확인 미션 Q-01</b><h3>되살아나는 것과 아닌 것</h3><div class="wy">① 두 앱을 각각 죽이고 <code>docker compose ps -a</code> 결과를 기록한다.<br>② app-no를 다시 살리려면 어떤 명령이 필요한가?<br>③ <b>죽어 있던 몇 초 동안</b> 들어온 요청은 어떻게 되는가?</div></div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">06</div></section>
+<section class="page" data-sec="1.3" data-title="1.3 떠 있지만 아픈 상태"><div class="rh"><div class="l"><b>DOCKER</b> · 1장 · <span class="sec">장애를 내 본다</span></div><div class="r">1.3 떠 있지만 아픈 상태<span class="pg">07</span></div></div><div class="kicker">1.3 · HEALTHCHECK</div><h1>죽지 않았는데<br><em>일을 못 하는</em> 경우</h1>
+<div class="why"><b>왜 배워야 하나?</b><p>더 곤란한 장애는 <strong>컨테이너는 멀쩡히 떠 있는데 응답을 못 하는</strong> 경우입니다. <code>docker ps</code>에는 <code>Up</code>으로 보여서 아무 문제 없어 보입니다.</p></div>
+<div class="code"><div class="ch2"><span>docker-compose.yml</span><span>app-always에 붙어 있는 healthcheck</span></div><div class="cb2"><span style="color:#86827b"> 1</span>      healthcheck:
+<span style="color:#86827b"> 2</span>        test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0) if urllib.request.urlopen('http://localhost:8000/healthz').status==200 else sys.exit(1)"]
+<span style="color:#86827b"> 3</span>        interval: 10s      # 10초마다 확인
+<span style="color:#86827b"> 4</span>        timeout: 3s        # 3초 안에 답이 없으면 실패
+<span style="color:#86827b"> 5</span>        retries: 2         # 2번 실패하면 unhealthy
+<span style="color:#86827b"> 6</span>        start_period: 5s   # 뜨자마자 5초는 봐준다</div></div>
+<div style="display:flex;gap:8px;align-items:center;margin:12px 0 4px;padding:6px 10px;border-left:3px solid #15803d;background:#faf9f7"><b style="font-size:11px;color:#15803d;white-space:nowrap">입력 위치</b><span style="font-size:11.5px"><b>VS Code 터미널 (VM)</b> · SSH로 연결된 창의 Terminal → New Terminal · 프롬프트가 <code>ubuntu@k3s-lab:~$</code></span></div>
+<table class="zebra"><thead><tr><th style="width:42%">명령</th><th style="width:58%">왜 이 명령을 치는가</th></tr></thead><tbody><tr><td><code>docker compose ps</code></td><td>STATUS 칸에 <code>(healthy)</code>가 붙어 있는지 확인</td></tr><tr><td><code>curl localhost:8002/healthz</code></td><td><b>직접</b> 헬스 체크 · <code>ok</code></td></tr><tr><td><code>docker inspect --format "{{.State.Health.Status}}" app-always</code></td><td>헬스 상태만 뽑아 보기</td></tr><tr><td><code>docker inspect --format "{{json .State.Health}}" app-always</code></td><td>최근 검사 기록까지</td></tr></tbody></table>
+<table class="zebra"><thead><tr><th>상태</th><th>뜻</th><th>언제</th></tr></thead><tbody><tr><td><code>starting</code></td><td>시작 직후 · 아직 판단 보류</td><td><code>start_period</code> 동안</td></tr><tr><td><code>healthy</code></td><td>검사 통과</td><td>정상</td></tr><tr><td><code>unhealthy</code></td><td>연속 실패</td><td><b>떠 있지만 일을 못 하는 상태</b></td></tr></tbody></table>
+<div class="warn"><b>compose에서 unhealthy는 알려만 줍니다.</b> 스스로 재시작하지 않습니다. “아프다”는 것을 알아도 <b>사람이 조치</b>해야 하죠. 쿠버네티스의 <code>livenessProbe</code>는 여기서 한 걸음 더 나가 <b>알아서 다시 만듭니다</b>(4장).</div>
+
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">07</div></section><section class="page" data-sec="1.3" data-title="1.3 떠 있지만 아픈 상태" data-cont="1"><div class="rh"><div class="l"><b>DOCKER</b> · 1장 · <span class="sec">장애를 내 본다</span></div><div class="r">1.3 떠 있지만 아픈 상태 (계속)<span class="pg">08</span></div></div><div class="kicker">1.3 · HEALTHCHECK</div><h1>죽지 않았는데<br><em>일을 못 하는</em> 경우 <small class="cont" style="font-size:.55em;color:var(--muted)">(계속)</small></h1><div class="mission"><b>확인 미션 Q-02</b><h3>아픈 상태 만들기</h3><div class="wy">① <code>curl localhost:8002/healthz</code>로 정상을 확인한다.<br>② 앱이 <code>/kill</code> 직후 <b>3초 동안</b>은 “떠 있지만 아픈” 상태다. 그 사이에 <code>docker compose ps</code>와 <code>/healthz</code>를 확인해 본다.<br>③ compose가 이 상태에 <b>무엇을 해 주는지</b>와 <b>해 주지 않는 것</b>을 적는다.</div></div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">08</div></section>
+<section class="page opener has-why" data-ch="2"><div class="rh"><div class="l"><b>DOCKER</b> · 2장</div><div class="r">compose의 한계<span class="pg">09</span></div></div><div class="big">2</div><h1>compose의 한계<br>여기서부터 다른 도구가 필요하다</h1><div class="oscene"><div class="osh">WHY · 현장 장면</div><div class="osb">죽으면 다시 뜨게는 만들었다. 그런데 <b>복제본 3개를 유지해 줘, 죽는 동안 들어온 요청은, 컴퓨터가 두 대라면</b> 같은 질문에는 답하지 못한다. 그 경계를 분명히 한다.</div><table class="zebra osx"><thead><tr><th>이 장을 모르면</th><th>생기는 일</th></tr></thead><tbody><tr><td>한계를 모르면</td><td>왜 쿠버네티스를 쓰는지 모른다</td></tr><tr><td>선언형을 모르면</td><td>명령만 외우게 된다</td></tr><tr><td>용어를 모르면</td><td>다음 장이 안 읽힌다</td></tr></tbody></table></div><div class="oq"><div><span>01</span>compose가 못 하는 것은 무엇인가?</div><div><span>02</span>명령형과 선언형은 어떻게 다른가?</div><div><span>03</span>Pod · Deployment · Service는 각각 무엇인가?</div></div><div class="kicker">이 장의 구성</div><div class="otoc"><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">2.1</b>compose의 한계</span><b data-toc="2.1">10</b></div><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">2.2</b>선언형이라는 생각</span><b data-toc="2.2">11</b></div></div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">09</div></section>
+<section class="page" data-sec="2.1" data-title="2.1 compose의 한계"><div class="rh"><div class="l"><b>DOCKER</b> · 2장 · <span class="sec">compose의 한계</span></div><div class="r">2.1 compose의 한계<span class="pg">10</span></div></div><div class="kicker">2.1 · THE LIMITS</div><h1>여기서부터는<br><em>다른 도구</em>가 필요하다</h1>
+<div class="why"><b>왜 배워야 하나?</b><p>1장에서 <strong>죽으면 다시 뜨게</strong> 만들었습니다. 그런데 현장에서는 그것만으로 부족합니다. 무엇이 부족한지 <strong>질문 다섯 개</strong>로 확인합니다.</p></div>
+<div class="dia"><svg viewBox="0 0 660 230" xmlns="http://www.w3.org/2000/svg" style="font-family:'Noto Sans KR',sans-serif;max-height:none"><rect x="8" y="14" width="316" height="200" rx="6" fill="#fff" stroke="#cfcbc4"></rect><text x="166" y="38" text-anchor="middle" font-size="12.5" font-weight="800" fill="#5b574f">compose가 해 주는 것</text><text x="24" y="68" font-size="10.5" fill="#15803d">✔ 컨테이너가 죽으면 다시 켠다 (restart)</text><text x="24" y="94" font-size="10.5" fill="#15803d">✔ 아픈지 확인한다 (healthcheck)</text><text x="24" y="120" font-size="10.5" fill="#15803d">✔ 여러 컨테이너를 한 파일로 묶는다</text><text x="24" y="146" font-size="10.5" fill="#15803d">✔ 한 대의 컴퓨터 안에서 관리</text><text x="24" y="188" font-size="10" fill="#86827b">개발 환경과 작은 서버에서는 이것으로 충분하다</text><rect x="336" y="14" width="316" height="200" rx="6" fill="#fdf3ec" stroke="#b23c0a"></rect><text x="494" y="38" text-anchor="middle" font-size="12.5" font-weight="800" fill="#b23c0a">compose가 못 하는 것</text><text x="352" y="68" font-size="10.5" fill="#b91c1c">✕ 똑같은 복제본을 3개 유지해 줘</text><text x="352" y="94" font-size="10.5" fill="#b91c1c">✕ 죽는 동안 들어온 요청은?</text><text x="352" y="120" font-size="10.5" fill="#b91c1c">✕ 컴퓨터가 두 대면 어디에 띄우지?</text><text x="352" y="146" font-size="10.5" fill="#b91c1c">✕ 새 버전을 조금씩 바꿔 치기</text><text x="352" y="172" font-size="10.5" fill="#b91c1c">✕ 준비된 것에만 요청을 보내기</text><text x="352" y="198" font-size="10" fill="#86827b">여기서부터가 오케스트레이터(K3s)의 일</text></svg></div>
+<table class="zebra"><thead><tr><th style="width:26%">질문</th><th style="width:40%">compose로는</th><th style="width:34%">필요한 것</th></tr></thead><tbody><tr><td><b>똑같은 것을 3개 띄워 둬</b></td><td><code>docker compose up --scale</code>로 흉내는 가능하지만 <b>포트가 겹치고</b> 관리가 어렵다</td><td><b>복제본 개수</b>를 선언으로 유지</td></tr><tr><td><b>죽는 동안 들어온 요청은?</b></td><td>다시 뜰 때까지 <b>끊긴다</b></td><td>여러 개 중 <b>살아 있는 것</b>으로 보내기</td></tr><tr><td><b>컴퓨터가 두 대면?</b></td><td>한 대 안에서만 관리한다</td><td><b>여러 노드</b>에 나눠 배치</td></tr><tr><td><b>새 버전으로 바꿔야 해</b></td><td>내렸다 올린다 · 그동안 중단</td><td><b>하나씩 바꿔 치기</b></td></tr><tr><td><b>아픈데 응답만 하고 있어</b></td><td>알려만 준다 (1.3)</td><td><b>알아서 다시 만들기</b></td></tr></tbody></table>
+<div class="point"><div class="pl">한 문장으로</div><p>compose는 <strong>“이 컨테이너들을 띄워라”</strong>를 적는 도구이고, 쿠버네티스는 <strong>“이 상태를 유지해라”</strong>를 적는 도구입니다. 사람이 고치는 대신 <strong>시스템이 계속 맞춰</strong> 줍니다.</p></div>
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">10</div></section>
+<section class="page" data-sec="2.2" data-title="2.2 선언형이라는 생각 방식"><div class="rh"><div class="l"><b>DOCKER</b> · 2장 · <span class="sec">compose의 한계</span></div><div class="r">2.2 선언형이라는 생각 방식<span class="pg">11</span></div></div><div class="kicker">2.2 · DECLARATIVE</div><h1>명령하지 않고<br><em>원하는 상태</em>를 적는다</h1>
+<table class="zebra"><thead><tr><th>방식</th><th>어떻게 말하나</th><th>예</th></tr></thead><tbody><tr><td><b>명령형</b> (compose · docker)</td><td>“띄워라 · 멈춰라 · 지워라”</td><td><code>docker compose up -d</code></td></tr><tr><td><b>선언형</b> (쿠버네티스)</td><td>“<b>항상 이 상태</b>여야 한다”</td><td><code>replicas: 2</code> → 하나가 죽으면 <b>알아서</b> 하나 더 만든다</td></tr></tbody></table>
+<div class="flow"><span>내가 적는다<br><small>파드 2개를 유지</small></span><i>→</i><span>시스템이 본다<br><small>지금 1개뿐이네</small></span><i>→</i><span>시스템이 맞춘다<br><small>하나 더 만든다</small></span><i>→</i><span>반복<br><small>계속 감시</small></span></div>
+<table class="zebra"><thead><tr><th>오늘 만날 이름</th><th>한 줄로</th><th>compose로 치면</th></tr></thead><tbody><tr><td><b>Pod</b></td><td>컨테이너를 감싼 <b>가장 작은 실행 단위</b></td><td>컨테이너 하나 정도</td></tr><tr><td><b>Deployment</b></td><td>파드를 <b>몇 개 유지할지</b> 선언</td><td>서비스 정의 + restart</td></tr><tr><td><b>Service</b></td><td>바뀌는 파드 주소를 가리는 <b>고정 입구</b></td><td>ports + 이름으로 접근</td></tr><tr><td><b>Node</b></td><td>파드가 실제로 도는 <b>컴퓨터</b></td><td>내 VM 한 대</td></tr></tbody></table>
+<div class="note"><strong>왜 K3s인가</strong> 쿠버네티스는 원래 설치가 무겁습니다. <b>K3s</b>는 가볍게 만든 배포판으로, <b>명령 한 줄</b>이면 설치되고 학습·소규모 운영에 널리 쓰입니다. 배우는 개념과 명령은 일반 쿠버네티스와 같습니다.</div>
+<div class="mission"><b>확인 미션 Q-03</b><h3>한계를 내 말로</h3><div class="wy">① compose로 못 하는 것 다섯 가지를 <b>내 문장으로</b> 적는다.<br>② 그중 <b>우리 수업 프로젝트</b>에서 가장 아쉬운 것 하나를 고르고 이유를 쓴다.<br>③ “명령형”과 “선언형”의 차이를 한 문장으로 설명한다.</div></div>
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">11</div></section>
+<section class="page opener has-why" data-ch="3"><div class="rh"><div class="l"><b>DOCKER</b> · 3장</div><div class="r">K3s 설치<span class="pg">12</span></div></div><div class="big">3</div><h1>K3s 설치<br>명령 한 줄로 클러스터를</h1><div class="oscene"><div class="osh">WHY · 현장 장면</div><div class="osb">쿠버네티스는 설치가 무겁다는 말이 많지만, <b>K3s</b>는 명령 한 줄이면 끝난다. 설치하고 노드가 Ready인지 확인한 뒤, kubectl 기본 명령을 docker 명령과 짝지어 익힌다.</div><table class="zebra osx"><thead><tr><th>이 장을 모르면</th><th>생기는 일</th></tr></thead><tbody><tr><td>설치를 못 하면</td><td>이후 전부 막힌다</td></tr><tr><td>권한 설정을 모르면</td><td>매번 sudo와 씨름한다</td></tr><tr><td>명령을 모르면</td><td>상태를 못 본다</td></tr></tbody></table></div><div class="oq"><div><span>01</span>K3s는 어떻게 설치하는가?</div><div><span>02</span>sudo 없이 kubectl을 쓰려면?</div><div><span>03</span>docker 명령과 kubectl은 어떻게 대응되는가?</div></div><div class="kicker">이 장의 구성</div><div class="otoc"><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">3.1</b>K3s 설치</span><b data-toc="3.1">13</b></div><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">3.2</b>기본 명령</span><b data-toc="3.2">15</b></div></div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">12</div></section>
+<section class="page" data-sec="3.1" data-title="3.1 K3s 설치"><div class="rh"><div class="l"><b>DOCKER</b> · 3장 · <span class="sec">K3s 설치</span></div><div class="r">3.1 K3s 설치<span class="pg">13</span></div></div><div class="kicker">3.1 · INSTALL K3s</div><h1>명령 한 줄로<br><em>쿠버네티스</em>를 올린다</h1>
+<div style="display:flex;gap:8px;align-items:center;margin:12px 0 4px;padding:6px 10px;border-left:3px solid #15803d;background:#faf9f7"><b style="font-size:11px;color:#15803d;white-space:nowrap">입력 위치</b><span style="font-size:11.5px"><b>VS Code 터미널 (VM)</b> · SSH로 연결된 창의 Terminal → New Terminal · 프롬프트가 <code>ubuntu@k3s-lab:~$</code></span></div>
+<table class="zebra"><thead><tr><th style="width:42%">명령</th><th style="width:58%">왜 이 명령을 치는가</th></tr></thead><tbody><tr><td><code>curl -sfL https://get.k3s.io | sh -</code></td><td><b>설치 스크립트</b>를 받아 바로 실행 · 1~2분 · 설치와 동시에 서비스가 시작된다</td></tr><tr><td><code>sudo systemctl status k3s --no-pager | head -5</code></td><td><code>active (running)</code>이면 정상</td></tr><tr><td><code>sudo k3s kubectl get nodes</code></td><td><b>노드 목록</b> · <code>Ready</code>가 뜨면 클러스터가 살아 있다</td></tr><tr><td><code>sudo k3s kubectl get pods -A</code></td><td>시스템 파드들 확인 · <b>-A</b>는 모든 네임스페이스</td></tr></tbody></table>
+<div class="term keep"><div class="th"><span>VM</span><span>설치 확인 (예시)</span></div><div class="tb2">ubuntu@k3s-lab:~$ sudo k3s kubectl get nodes
+NAME       STATUS   ROLES                  AGE   VERSION
+k3s-lab    Ready    control-plane,master   48s   v1.3x.x+k3s1
+
+ubuntu@k3s-lab:~$ sudo k3s kubectl get pods -A
+NAMESPACE     NAME                                      READY   STATUS      RESTARTS
+kube-system   coredns-xxxxxxxxxx-xxxxx                  1/1     Running     0
+kube-system   local-path-provisioner-xxxxxxxxx-xxxxx    1/1     Running     0
+kube-system   metrics-server-xxxxxxxxx-xxxxx            1/1     Running     0
+kube-system   svclb-traefik-xxxxxxxx-xxxxx              2/2     Running     0
+kube-system   traefik-xxxxxxxxxx-xxxxx                  1/1     Running     0</div></div>
+<h3>sudo 없이 kubectl 쓰기</h3>
+<table class="zebra"><thead><tr><th style="width:42%">명령</th><th style="width:58%">왜 이 명령을 치는가</th></tr></thead><tbody><tr><td><code>mkdir -p ~/.kube</code></td><td>설정 파일을 둘 폴더</td></tr><tr><td><code>sudo cp /etc/rancher/k3s/k3s.yaml ~/.kube/config</code></td><td>접속 정보를 내 계정으로 복사</td></tr><tr><td><code>sudo chown $USER:$USER ~/.kube/config</code></td><td>소유자를 나로 바꾼다</td></tr><tr><td><code>chmod 600 ~/.kube/config</code></td><td>내 계정만 읽도록 (접속 정보가 들어 있다)</td></tr></tbody></table>
+
+
+
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">13</div></section><section class="page" data-sec="3.1" data-title="3.1 K3s 설치" data-cont="1"><div class="rh"><div class="l"><b>DOCKER</b> · 3장 · <span class="sec">K3s 설치</span></div><div class="r">3.1 K3s 설치 (계속)<span class="pg">14</span></div></div><div class="kicker">3.1 · INSTALL K3s</div><h1>명령 한 줄로<br><em>쿠버네티스</em>를 올린다 <small class="cont" style="font-size:.55em;color:var(--muted)">(계속)</small></h1><table class="zebra"><thead><tr><th style="width:42%">명령</th><th style="width:58%">왜 이 명령을 치는가</th></tr></thead><tbody><tr><td><code>sudo apt install -y --no-install-recommends kubectl || sudo snap install kubectl --classic</code></td><td><b>선택</b> · kubectl 단독 설치 · 없으면 <code>k3s kubectl</code>을 그대로 써도 된다</td></tr><tr><td><code>echo 'alias kubectl="sudo k3s kubectl"' &gt;&gt; ~/.bashrc &amp;&amp; source ~/.bashrc</code></td><td><b>더 간단한 방법</b> · <code>kubectl</code>로 줄여 쓴다</td></tr></tbody></table><div class="note">이 교안은 이후 <code>kubectl</code>로 적습니다. 별칭을 만들지 않았다면 <b>앞에 <code>sudo k3s</code>를 붙여</b>(<code>sudo k3s kubectl get pods</code>) 읽으세요.</div><table class="zebra"><thead><tr><th>설치되는 것</th><th>무엇</th></tr></thead><tbody><tr><td><b>k3s 서비스</b></td><td>클러스터의 본체 · <code>systemctl</code>로 관리된다</td></tr><tr><td><b>containerd</b></td><td>컨테이너를 실제로 돌리는 엔진 · 도커와 별개로 동작</td></tr><tr><td><b>traefik</b></td><td>기본 인그레스 컨트롤러 (이번 교안에서는 쓰지 않음)</td></tr><tr><td><b>local-path</b></td><td>저장소 기본 제공</td></tr></tbody></table><div class="warn"><b>도커와 K3s는 별개입니다.</b> K3s는 자체 엔진(containerd)으로 컨테이너를 돌리므로, <code>docker ps</code>에는 파드가 보이지 않습니다. 1장에서 띄운 compose 컨테이너와 <b>섞이지 않습니다</b>.</div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">14</div></section>
+<section class="page" data-sec="3.2" data-title="3.2 기본 명령 익히기"><div class="rh"><div class="l"><b>DOCKER</b> · 3장 · <span class="sec">K3s 설치</span></div><div class="r">3.2 기본 명령 익히기<span class="pg">15</span></div></div><div class="kicker">3.2 · kubectl BASICS</div><h1>보고 · 만들고<br><em>지운다</em></h1>
+<div style="display:flex;gap:8px;align-items:center;margin:12px 0 4px;padding:6px 10px;border-left:3px solid #15803d;background:#faf9f7"><b style="font-size:11px;color:#15803d;white-space:nowrap">입력 위치</b><span style="font-size:11.5px"><b>VS Code 터미널 (VM)</b> · SSH로 연결된 창의 Terminal → New Terminal · 프롬프트가 <code>ubuntu@k3s-lab:~$</code></span></div>
+<table class="zebra"><thead><tr><th style="width:42%">명령</th><th style="width:58%">왜 이 명령을 치는가</th></tr></thead><tbody><tr><td><code>kubectl get nodes</code></td><td>노드(컴퓨터) 목록</td></tr><tr><td><code>kubectl get pods</code></td><td>파드 목록 · 기본 네임스페이스</td></tr><tr><td><code>kubectl get pods -o wide</code></td><td><b>어느 노드에</b> 떠 있는지, 파드 IP까지</td></tr><tr><td><code>kubectl get all</code></td><td>파드·디플로이먼트·서비스를 한 번에</td></tr><tr><td><code>kubectl apply -f 파일.yaml</code></td><td>파일에 적힌 <b>상태를 적용</b> · 없으면 만들고 있으면 고친다</td></tr><tr><td><code>kubectl delete -f 파일.yaml</code></td><td>그 파일이 만든 것을 지운다</td></tr><tr><td><code>kubectl describe pod 이름</code></td><td><b>자세한 상태와 이벤트</b> · 문제가 생기면 여기부터</td></tr><tr><td><code>kubectl logs 파드이름</code></td><td>컨테이너 로그 · <code>-f</code>로 실시간</td></tr><tr><td><code>kubectl exec -it 파드이름 -- sh</code></td><td>파드 안으로 들어가기</td></tr></tbody></table>
+<table class="zebra"><thead><tr><th>docker 명령과 짝</th><th>kubectl</th></tr></thead><tbody><tr><td><code>docker ps</code></td><td><code>kubectl get pods</code></td></tr><tr><td><code>docker logs</code></td><td><code>kubectl logs</code></td></tr><tr><td><code>docker exec -it … bash</code></td><td><code>kubectl exec -it … -- sh</code></td></tr><tr><td><code>docker compose up -d</code></td><td><code>kubectl apply -f</code></td></tr><tr><td><code>docker compose down</code></td><td><code>kubectl delete -f</code></td></tr></tbody></table>
+<div class="point"><div class="pl">가장 큰 차이</div><p>docker 명령은 <strong>“해라”</strong>이고, <code>kubectl apply</code>는 <strong>“이 상태로 맞춰라”</strong>입니다. 같은 파일을 여러 번 apply해도 결과는 같습니다.</p></div>
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">15</div></section>
+<section class="page opener has-why" data-ch="4"><div class="rh"><div class="l"><b>DOCKER</b> · 4장</div><div class="r">Deployment와 자가 치유<span class="pg">16</span></div></div><div class="big">4</div><h1>Deployment와 자가 치유<br>지워도 다시 생긴다</h1><div class="oscene"><div class="osh">WHY · 현장 장면</div><div class="osb">“파드 2개를 유지해라”를 파일에 적는다. 그다음 <b>일부러 파드를 지운다.</b> 몇 초 뒤 새 파드가 생겨 다시 2개가 된다. 1장의 restart와 무엇이 다른지가 여기서 갈린다.</div><table class="zebra osx"><thead><tr><th>이 장을 모르면</th><th>생기는 일</th></tr></thead><tbody><tr><td>Deployment를 모르면</td><td>개수를 유지하지 못한다</td></tr><tr><td>라벨을 모르면</td><td>Service가 파드를 못 찾는다</td></tr><tr><td>자가 치유를 안 보면</td><td>왜 필요한지 체감 못 한다</td></tr></tbody></table></div><div class="oq"><div><span>01</span>Deployment의 각 줄은 무엇을 하는가?</div><div><span>02</span>파드를 지우면 무슨 일이 일어나는가?</div><div><span>03</span>compose의 restart와 무엇이 다른가?</div></div><div class="kicker">이 장의 구성</div><div class="otoc"><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">4.1</b>Deployment 읽기</span><b data-toc="4.1">17</b></div><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">4.2</b>올려서 확인</span><b data-toc="4.2">19</b></div><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">4.3</b>파드를 지워 본다</span><b data-toc="4.3">20</b></div></div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">16</div></section>
+<section class="page" data-sec="4.1" data-title="4.1 Deployment 읽기"><div class="rh"><div class="l"><b>DOCKER</b> · 4장 · <span class="sec">Deployment와 자가 치유</span></div><div class="r">4.1 Deployment 읽기<span class="pg">17</span></div></div><div class="kicker">4.1 · DEPLOYMENT</div><h1>“몇 개를 유지해라”를<br><em>적는다</em></h1>
+<div class="dia"><svg viewBox="0 0 660 250" xmlns="http://www.w3.org/2000/svg" style="font-family:'Noto Sans KR',sans-serif;max-height:none"><rect x="120" y="14" width="530" height="180" rx="8" fill="#eef3fb" stroke="#1d4ed8" stroke-dasharray="5 4"></rect><text x="385" y="34" text-anchor="middle" font-size="11.5" font-weight="800" fill="#1d4ed8">K3s (쿠버네티스)</text><rect x="140" y="48" width="200" height="60" rx="6" fill="#f3eefb" stroke="#6d28d9"></rect><text x="240" y="70" text-anchor="middle" font-size="12" font-weight="800" fill="#6d28d9">Deployment</text><text x="240" y="90" text-anchor="middle" font-size="9.5">“파드 2개를 항상 유지해라”</text><rect x="380" y="48" width="115" height="60" rx="6" fill="#eaf5ec" stroke="#15803d"></rect><text x="437" y="70" text-anchor="middle" font-size="11.5" font-weight="800" fill="#15803d">Pod</text><text x="437" y="88" text-anchor="middle" font-size="9" font-family="Consolas,monospace">web-xxxxx</text><line x1="340" y1="78" x2="380" y2="78" stroke="#6d28d9" stroke-width="1.6"></line><rect x="510" y="48" width="115" height="60" rx="6" fill="#eaf5ec" stroke="#15803d"></rect><text x="567" y="70" text-anchor="middle" font-size="11.5" font-weight="800" fill="#15803d">Pod</text><text x="567" y="88" text-anchor="middle" font-size="9" font-family="Consolas,monospace">web-xxxxx</text><line x1="340" y1="78" x2="510" y2="78" stroke="#6d28d9" stroke-width="1.6"></line><rect x="140" y="124" width="470" height="52" rx="6" fill="#fdf3ec" stroke="#b23c0a"></rect><text x="375" y="146" text-anchor="middle" font-size="12" font-weight="800" fill="#b23c0a">Service (web-svc)</text><text x="375" y="164" text-anchor="middle" font-size="9.5">파드 주소가 바뀌어도 <tspan font-weight="700">하나의 고정된 이름·포트</tspan>로 접속</text><rect x="10" y="80" width="100" height="56" rx="6" fill="#fff" stroke="#1c1b19"></rect><text x="60" y="104" text-anchor="middle" font-size="11.5" font-weight="800">브라우저</text><text x="60" y="122" text-anchor="middle" font-size="9">:30080</text><line x1="110" y1="108" x2="140" y2="150" stroke="#5b574f" stroke-width="1.8"></line><text x="10" y="216" font-size="10.5" fill="#2f2d2a"><tspan font-weight="700">Deployment</tspan>는 개수를 지키고, <tspan font-weight="700">Pod</tspan>는 실제 실행 단위이며, <tspan font-weight="700">Service</tspan>는 바뀌는 주소를 가려 준다</text><text x="10" y="236" font-size="10.5" fill="#86827b">파드를 지워도 Deployment가 <tspan font-weight="700">새로 만들어</tspan> 개수를 맞춘다 · 이것이 자가 치유</text></svg></div>
+<div class="code"><div class="ch2"><span>k8s/deployment.yaml</span><span>실습 파일</span></div><div class="cb2"><span style="color:#86827b"> 1</span>  apiVersion: apps/v1
+<span style="color:#86827b"> 2</span>  kind: Deployment
+<span style="color:#86827b"> 3</span>  metadata:
+<span style="color:#86827b"> 4</span>    name: web                     # 이 Deployment의 이름
+<span style="color:#86827b"> 5</span>  spec:
+<span style="color:#86827b"> 6</span>    replicas: 2                   # 파드를 몇 개 유지할지
+<span style="color:#86827b"> 7</span>    selector:
+<span style="color:#86827b"> 8</span>      matchLabels:
+<span style="color:#86827b"> 9</span>        app: web                  # 이 라벨이 붙은 파드를 내 것으로 본다
+<span style="color:#86827b">10</span>    template:                     # 아래는 "파드를 어떻게 만들지"의 설계도
+<span style="color:#86827b">11</span>      metadata:
+<span style="color:#86827b">12</span>        labels:
+<span style="color:#86827b">13</span>          app: web
+<span style="color:#86827b">14</span>      spec:
+<span style="color:#86827b">15</span>        containers:
+<span style="color:#86827b">16</span>          - name: web
+<span style="color:#86827b">17</span>            image: nginx:alpine
+<span style="color:#86827b">18</span>            ports:
+<span style="color:#86827b">19</span>              - containerPort: 80
+<span style="color:#86827b">20</span>            readinessProbe:       # 요청을 받을 준비가 됐는지 확인
+<span style="color:#86827b">21</span>              httpGet:
+<span style="color:#86827b">22</span>                path: /
+<span style="color:#86827b">23</span>                port: 80
+<span style="color:#86827b">24</span>              initialDelaySeconds: 2
+<span style="color:#86827b">25</span>              periodSeconds: 5</div></div>
+
+
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">17</div></section><section class="page" data-sec="4.1" data-title="4.1 Deployment 읽기" data-cont="1"><div class="rh"><div class="l"><b>DOCKER</b> · 4장 · <span class="sec">Deployment와 자가 치유</span></div><div class="r">4.1 Deployment 읽기 (계속)<span class="pg">18</span></div></div><div class="kicker">4.1 · DEPLOYMENT</div><h1>“몇 개를 유지해라”를<br><em>적는다</em> <small class="cont" style="font-size:.55em;color:var(--muted)">(계속)</small></h1><table class="zebra"><thead><tr><th style="width:30%">줄</th><th style="width:36%">무엇</th><th style="width:34%">compose로 치면</th></tr></thead><tbody><tr><td><code>kind: Deployment</code></td><td>무엇을 만들지 · 종류</td><td>services 아래 한 서비스</td></tr><tr><td><code>replicas: 2</code></td><td><b>파드를 2개 유지</b></td><td>compose에는 없는 개념</td></tr><tr><td><code>selector.matchLabels</code></td><td><b>어떤 파드가 내 것인지</b> 고르는 기준</td><td>—</td></tr><tr><td><code>template</code></td><td>파드를 만들 <b>설계도</b></td><td>image·ports가 들어가는 자리</td></tr><tr><td><code>image: nginx:alpine</code></td><td>쓸 이미지</td><td><code>image:</code>와 같다</td></tr><tr><td><code>containerPort: 80</code></td><td>컨테이너가 여는 포트</td><td><code>EXPOSE</code>와 비슷한 표시</td></tr><tr><td><code>readinessProbe</code></td><td><b>준비됐는지</b> 검사 · 준비 전에는 요청을 안 보낸다</td><td>healthcheck와 비슷하지만 더 적극적</td></tr></tbody></table><table class="zebra"><thead><tr><th>라벨(label)이란</th><th>설명</th></tr></thead><tbody><tr><td><code>app: web</code></td><td>파드에 붙이는 <b>이름표</b></td></tr><tr><td>왜 필요한가</td><td>파드 이름은 <b>매번 바뀌지만</b>(web-5f8c...) 라벨은 그대로</td></tr><tr><td>누가 쓰나</td><td>Deployment가 “내 파드”를 찾을 때 · Service가 “보낼 대상”을 찾을 때 (5장)</td></tr></tbody></table><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">18</div></section>
+<section class="page" data-sec="4.2" data-title="4.2 올려서 확인"><div class="rh"><div class="l"><b>DOCKER</b> · 4장 · <span class="sec">Deployment와 자가 치유</span></div><div class="r">4.2 올려서 확인<span class="pg">19</span></div></div><div class="kicker">4.2 · APPLY</div><h1>파일을 적용하고<br><em>파드가 생기는 것</em>을 본다</h1>
+<div style="display: flex; gap: 8px; align-items: center; margin: 12px 0px 4px; padding: 6px 10px; border-left: 3px solid rgb(21, 128, 61); background: rgb(250, 249, 247); zoom: 0.96;"><b style="font-size:11px;color:#15803d;white-space:nowrap">입력 위치</b><span style="font-size:11.5px"><b>VS Code 터미널 (VM)</b> · SSH로 연결된 창의 Terminal → New Terminal · 프롬프트가 <code>ubuntu@k3s-lab:~$</code> · <code>~/docker_lab5</code> 에서</span></div>
+<table class="zebra" style="zoom: 0.96;"><thead><tr><th style="width:42%">명령</th><th style="width:58%">왜 이 명령을 치는가</th></tr></thead><tbody><tr><td><code>kubectl apply -f k8s/deployment.yaml</code></td><td><b>상태를 적용</b> · Deployment가 만들어진다</td></tr><tr><td><code>kubectl get deploy</code></td><td>READY가 <code>2/2</code>가 될 때까지</td></tr><tr><td><code>kubectl get pods -o wide</code></td><td>파드 <b>두 개</b>와 각각의 IP · 이름 끝이 임의 문자열</td></tr><tr><td><code>kubectl describe deploy web | head -20</code></td><td>설정과 이벤트 확인</td></tr><tr><td><code>kubectl logs -l app=web --tail 5</code></td><td><b>라벨로</b> 여러 파드의 로그를 한 번에</td></tr></tbody></table>
+<div class="term keep" style="zoom: 0.96;"><div class="th"><span>VM</span><span>파드 확인 (예시)</span></div><div class="tb2">ubuntu@k3s-lab:~$ kubectl get pods -o wide
+NAME                   READY   STATUS    RESTARTS   AGE   IP           NODE
+web-6f7d9c4b8d-2xm7p   1/1     Running   0          25s   10.42.0.12   k3s-lab
+web-6f7d9c4b8d-9qk4t   1/1     Running   0          25s   10.42.0.13   k3s-lab</div></div>
+<table class="zebra" style="zoom: 0.96;"><thead><tr><th>열</th><th>뜻</th></tr></thead><tbody><tr><td>NAME</td><td><b>Deployment이름-해시-임의문자</b> · 파드가 다시 만들어지면 <b>이름이 바뀐다</b></td></tr><tr><td>READY <code>1/1</code></td><td>파드 안 컨테이너 1개 중 1개 준비됨</td></tr><tr><td>STATUS</td><td><code>Running</code>이 정상 · <code>Pending</code>은 자리 배정 중 · <code>CrashLoopBackOff</code>는 계속 죽는 중</td></tr><tr><td>RESTARTS</td><td><b>몇 번 다시 시작됐나</b> · 늘어나면 문제 신호</td></tr><tr><td>IP</td><td>파드마다 <b>다른 IP</b> · 파드가 바뀌면 이 IP도 바뀐다 (5장의 이유)</td></tr></tbody></table>
+<div class="mission" style="zoom: 0.96;"><b>확인 미션 Q-04</b><h3>개수를 바꿔 보기</h3><div class="wy">① <code>k8s/deployment.yaml</code>에서 <code>replicas</code>를 <b>3</b>으로 고치고 다시 apply한다.<br>② <code>kubectl get pods</code>로 <b>세 개</b>가 되는 것을 확인한다.<br>③ 다시 <b>1</b>로 줄이면 무슨 일이 일어나는지 관찰한다.<br>④ <code>kubectl scale deploy web --replicas=2</code> 명령으로도 해 본다.</div></div>
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">19</div></section>
+<section class="page" data-sec="4.3" data-title="4.3 파드를 지워 본다"><div class="rh"><div class="l"><b>DOCKER</b> · 4장 · <span class="sec">Deployment와 자가 치유</span></div><div class="r">4.3 파드를 지워 본다<span class="pg">20</span></div></div><div class="kicker">4.3 · SELF-HEALING</div><h1>지워도<br><em>다시 생긴다</em></h1>
+<div class="why" style="zoom: 0.98;"><b>왜 배워야 하나?</b><p>1장에서 컨테이너를 죽였을 때는 <strong>같은 컨테이너가 다시 시작</strong>됐습니다. 쿠버네티스는 다릅니다. <strong>죽은 파드는 버리고 새 파드를 만듭니다.</strong> 그래서 이름이 바뀝니다.</p></div>
+<div style="display: flex; gap: 8px; align-items: center; margin: 12px 0px 4px; padding: 6px 10px; border-left: 3px solid rgb(21, 128, 61); background: rgb(250, 249, 247); zoom: 0.98;"><b style="font-size:11px;color:#15803d;white-space:nowrap">입력 위치</b><span style="font-size:11.5px"><b>VS Code 터미널 (VM)</b> · SSH로 연결된 창의 Terminal → New Terminal · 프롬프트가 <code>ubuntu@k3s-lab:~$</code></span></div>
+<table class="zebra" style="zoom: 0.98;"><thead><tr><th style="width:42%">명령</th><th style="width:58%">왜 이 명령을 치는가</th></tr></thead><tbody><tr><td><code>kubectl get pods</code></td><td>현재 파드 이름 두 개를 <b>적어 둔다</b></td></tr><tr><td><code>kubectl delete pod &lt;이름 하나&gt;</code></td><td><b>일부러 지운다</b></td></tr><tr><td><code>kubectl get pods</code></td><td>몇 초 만에 <b>새 이름의 파드</b>가 생겨 다시 2개</td></tr><tr><td><code>kubectl get events --sort-by=.lastTimestamp | tail -10</code></td><td><b>무슨 일이 있었는지</b> 순서대로</td></tr><tr><td><code>kubectl delete pod --all</code></td><td>전부 지워 본다 · 그래도 개수가 유지된다</td></tr></tbody></table>
+<table class="zebra" style="zoom: 0.98;"><thead><tr><th>compose와 무엇이 다른가</th><th>compose</th><th>쿠버네티스</th></tr></thead><tbody><tr><td>죽었을 때</td><td><b>같은 컨테이너</b>를 다시 시작</td><td><b>새 파드</b>를 만든다 (이름이 바뀐다)</td></tr><tr><td>개수 유지</td><td>정의된 만큼만 (1개)</td><td><code>replicas</code>만큼 <b>항상</b></td></tr><tr><td>지웠을 때</td><td>지워진 채로 있다</td><td><b>다시 만든다</b></td></tr><tr><td>누가 감시하나</td><td>도커 데몬(재시작 정책)</td><td><b>컨트롤러가 계속</b> 비교하고 맞춘다</td></tr></tbody></table>
+<div class="point" style="zoom: 0.98;"><div class="pl">자가 치유(self-healing)</div><p>내가 적은 것은 “파드 2개”뿐입니다. 하나를 지우든, 노드가 죽든, 시스템이 <strong>계속 그 상태로 되돌립니다.</strong> 새벽에 일어나지 않아도 되는 이유입니다.</p></div>
+<div class="mission" style="zoom: 0.98;"><b>확인 미션 Q-05</b><h3>자가 치유 확인</h3><div class="wy">① 파드 이름을 적어 두고 하나를 지운다.<br>② 새로 생긴 파드의 <b>이름과 AGE</b>를 적는다.<br>③ 1장의 <code>restart</code>와 무엇이 다른지 두 문장으로 쓴다.<br>④ <code>kubectl get events</code>에서 <b>Killing · Created · Started</b> 순서를 찾는다.</div></div>
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">20</div></section>
+<section class="page opener has-why" data-ch="5"><div class="rh"><div class="l"><b>DOCKER</b> · 5장</div><div class="r">Service<span class="pg">21</span></div></div><div class="big">5</div><h1>Service<br>주소가 바뀌어도 접속한다</h1><div class="oscene"><div class="osh">WHY · 현장 장면</div><div class="osb">파드를 지우니 IP도 이름도 바뀌었다. 그러면 어디로 접속해야 하나? <b>Service</b>가 고정된 입구가 되어, 살아 있는 파드에게만 요청을 나눠 보낸다.</div><table class="zebra osx"><thead><tr><th>이 장을 모르면</th><th>생기는 일</th></tr></thead><tbody><tr><td>Service가 없으면</td><td>바뀌는 IP를 쫓아다녀야 한다</td></tr><tr><td>라벨을 잘못 쓰면</td><td>연결이 비어 접속이 안 된다</td></tr><tr><td>포트를 모르면</td><td>밖에서 못 들어온다</td></tr></tbody></table></div><div class="oq"><div><span>01</span>왜 Service가 필요한가?</div><div><span>02</span>port · targetPort · nodePort는 각각 무엇인가?</div><div><span>03</span>파드를 지워도 접속이 유지되는가?</div></div><div class="kicker">이 장의 구성</div><div class="otoc"><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">5.1</b>왜 필요한가</span><b data-toc="5.1">22</b></div><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">5.2</b>올려서 확인</span><b data-toc="5.2">23</b></div><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">5.3</b>정리</span><b data-toc="5.3">25</b></div></div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">21</div></section>
+<section class="page" data-sec="5.1" data-title="5.1 Service가 필요한 이유"><div class="rh"><div class="l"><b>DOCKER</b> · 5장 · <span class="sec">Service</span></div><div class="r">5.1 Service가 필요한 이유<span class="pg">22</span></div></div><div class="kicker">5.1 · WHY SERVICE</div><h1>파드 주소는<br><em>계속 바뀐다</em></h1>
+<div class="why"><b>왜 배워야 하나?</b><p>4.3에서 파드를 지우니 <strong>이름도 IP도 바뀌었습니다.</strong> 그러면 접속하는 쪽은 어디로 요청해야 할까요? 바뀌는 주소를 가려 주는 <strong>고정된 입구</strong>가 필요합니다. 그것이 Service입니다.</p></div>
+<table class="zebra"><thead><tr><th>문제</th><th>Service가 하는 일</th></tr></thead><tbody><tr><td>파드 IP가 바뀐다</td><td><b>변하지 않는 이름·주소</b>를 제공</td></tr><tr><td>파드가 여러 개다</td><td>들어온 요청을 <b>나눠서</b> 보낸다 (부하 분산)</td></tr><tr><td>준비 안 된 파드가 있다</td><td><code>readinessProbe</code>를 통과한 파드<b>에만</b> 보낸다</td></tr><tr><td>밖에서 접속해야 한다</td><td><b>노드의 포트</b>를 열어 준다 (NodePort)</td></tr></tbody></table>
+<div class="code"><div class="ch2"><span>k8s/service.yaml</span><span>실습 파일</span></div><div class="cb2"><span style="color:#86827b"> 1</span>  apiVersion: v1
+<span style="color:#86827b"> 2</span>  kind: Service
+<span style="color:#86827b"> 3</span>  metadata:
+<span style="color:#86827b"> 4</span>    name: web-svc
+<span style="color:#86827b"> 5</span>  spec:
+<span style="color:#86827b"> 6</span>    type: NodePort              # 노드의 포트로 밖에 연다
+<span style="color:#86827b"> 7</span>    selector:
+<span style="color:#86827b"> 8</span>      app: web                  # 이 라벨을 가진 파드들에게 나눠 보낸다
+<span style="color:#86827b"> 9</span>    ports:
+<span style="color:#86827b">10</span>      - port: 80                # 서비스 자신의 포트
+<span style="color:#86827b">11</span>        targetPort: 80          # 파드 안의 포트
+<span style="color:#86827b">12</span>        nodePort: 30080         # 노드에서 열 포트 (30000~32767)</div></div>
+<table class="zebra"><thead><tr><th>키</th><th>뜻</th><th>헷갈리기 쉬운 것</th></tr></thead><tbody><tr><td><code>selector: app: web</code></td><td><b>어떤 파드에게</b> 보낼지 · 라벨로 고른다</td><td>파드 이름이 아니라 <b>라벨</b>이다</td></tr><tr><td><code>port</code></td><td>서비스 자체의 포트</td><td>클러스터 <b>안에서</b> 부를 때 쓴다</td></tr><tr><td><code>targetPort</code></td><td><b>파드 안</b>의 포트</td><td>컨테이너가 실제로 여는 번호</td></tr><tr><td><code>nodePort</code></td><td><b>노드(VM)</b>에서 열리는 포트</td><td>30000~32767 범위만 가능</td></tr><tr><td><code>type: NodePort</code></td><td>밖에서 들어오는 방식</td><td>실무 클라우드에서는 LoadBalancer를 많이 쓴다</td></tr></tbody></table>
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">22</div></section>
+<section class="page" data-sec="5.2" data-title="5.2 Service 올려서 확인"><div class="rh"><div class="l"><b>DOCKER</b> · 5장 · <span class="sec">Service</span></div><div class="r">5.2 Service 올려서 확인<span class="pg">23</span></div></div><div class="kicker">5.2 · APPLY SERVICE</div><h1>고정된 입구로<br><em>두 파드</em>에 닿는다</h1>
+<div style="display:flex;gap:8px;align-items:center;margin:12px 0 4px;padding:6px 10px;border-left:3px solid #15803d;background:#faf9f7"><b style="font-size:11px;color:#15803d;white-space:nowrap">입력 위치</b><span style="font-size:11.5px"><b>VS Code 터미널 (VM)</b> · SSH로 연결된 창의 Terminal → New Terminal · 프롬프트가 <code>ubuntu@k3s-lab:~$</code></span></div>
+<table class="zebra"><thead><tr><th style="width:42%">명령</th><th style="width:58%">왜 이 명령을 치는가</th></tr></thead><tbody><tr><td><code>kubectl apply -f k8s/service.yaml</code></td><td>서비스 생성</td></tr><tr><td><code>kubectl get svc</code></td><td><code>web-svc</code>의 TYPE·PORT(S) 확인 · <code>80:30080/TCP</code></td></tr><tr><td><code>kubectl get endpoints web-svc</code></td><td><b>실제로 연결된 파드 IP 목록</b> · 두 개가 보여야 한다</td></tr><tr><td><code>curl localhost:30080</code></td><td>VM 안에서 접속 · nginx 페이지</td></tr><tr><td><code>kubectl describe svc web-svc | head -20</code></td><td>셀렉터와 엔드포인트를 한눈에</td></tr></tbody></table>
+<table class="zebra"><thead><tr><th>확인 포인트</th><th>뜻</th></tr></thead><tbody><tr><td>Endpoints에 IP 2개</td><td>서비스가 <b>파드 두 개</b>를 찾았다</td></tr><tr><td>Endpoints가 비어 있음</td><td>라벨이 안 맞거나 파드가 준비되지 않음 · <b>가장 흔한 오류</b></td></tr><tr><td><code>curl localhost:30080</code></td><td>노드 포트로 들어와 서비스가 파드로 넘긴다</td></tr></tbody></table>
+<div class="lab"><div class="lab-head"><span class="badge">실습 5-1</span><h3>주소가 바뀌어도 되는지 확인</h3></div><div class="lab-body"><ol class="steps"><li><span class="lt">접속 확인</span><span class="ls"><code>curl -s localhost:30080 | head -3</code> 여러 번</span></li><li><span class="lt">파드 지우기</span><span class="ls"><code>kubectl delete pod --all</code></span></li><li><span class="lt">바로 접속</span><span class="ls"><b>다시 접속해 본다</b> · 새 파드가 준비되면 정상 응답</span></li><li><span class="lt">엔드포인트</span><span class="ls"><code>kubectl get endpoints web-svc</code> → <b>IP가 바뀌어 있다</b></span></li><li><span class="lt">해석</span><span class="ls">접속 주소(<code>:30080</code>)는 <b>한 번도 바뀌지 않았다</b></span></li></ol></div></div>
+
+
+
+
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">23</div></section><section class="page" data-sec="5.2" data-title="5.2 Service 올려서 확인" data-cont="1"><div class="rh"><div class="l"><b>DOCKER</b> · 5장 · <span class="sec">Service</span></div><div class="r">5.2 Service 올려서 확인 (계속)<span class="pg">24</span></div></div><div class="kicker">5.2 · APPLY SERVICE</div><h1>고정된 입구로<br><em>두 파드</em>에 닿는다 <small class="cont" style="font-size:.55em;color:var(--muted)">(계속)</small></h1><h3>내 PC 브라우저에서 보려면</h3><div style="display:flex;gap:8px;align-items:center;margin:12px 0 4px;padding:6px 10px;border-left:3px solid #b23c0a;background:#faf9f7"><b style="font-size:11px;color:#b23c0a;white-space:nowrap">입력 위치</b><span style="font-size:11.5px"><b>VS Code 터미널 (내 PC)</b> · Terminal → New Terminal · 실습 폴더에서 · Windows는 PowerShell</span></div><table class="zebra"><thead><tr><th style="width:42%">명령</th><th style="width:58%">왜 이 명령을 치는가</th></tr></thead><tbody><tr><td><code>multipass list</code></td><td>VM의 IP 확인</td></tr><tr><td><code>브라우저에서 http://VM_IP:30080</code></td><td>노드 포트로 직접 접속</td></tr></tbody></table><div class="mission"><b>확인 미션 Q-06</b><h3>부하 분산 확인</h3><div class="wy">① <code>kubectl scale deploy web --replicas=3</code>으로 파드를 3개로 늘린다.<br>② <code>kubectl get endpoints web-svc</code>에 IP가 <b>세 개</b>가 되는지 확인한다.<br>③ 파드 하나를 지우고 <b>접속이 끊기지 않는지</b> 확인한다. (1장과 비교)</div></div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">24</div></section>
+<section class="page" data-sec="5.3" data-title="5.3 지금까지를 정리"><div class="rh"><div class="l"><b>DOCKER</b> · 5장 · <span class="sec">Service</span></div><div class="r">5.3 지금까지를 정리<span class="pg">25</span></div></div><div class="kicker">5.3 · PUT TOGETHER</div><h1>세 가지가<br><em>맞물려</em> 돌아간다</h1>
+<table class="zebra"><thead><tr><th>이름</th><th>역할</th><th>없으면</th></tr></thead><tbody><tr><td><b>Pod</b></td><td>컨테이너가 실제로 도는 단위</td><td>실행할 것이 없다</td></tr><tr><td><b>Deployment</b></td><td><b>개수를 유지</b>하고 새 파드를 만든다</td><td>죽으면 그대로 끝</td></tr><tr><td><b>Service</b></td><td><b>고정 입구</b> · 살아 있는 파드로 분배</td><td>주소가 바뀔 때마다 못 찾는다</td></tr></tbody></table>
+<div class="flow"><span>파드 삭제</span><i>→</i><span>Deployment가 감지</span><i>→</i><span>새 파드 생성</span><i>→</i><span>준비되면 Service가 연결</span><i>→</i><span>사용자는 몰랐다</span></div>
+<table class="zebra"><thead><tr><th>1장 compose와 비교</th><th>compose</th><th>K3s</th></tr></thead><tbody><tr><td>죽었을 때</td><td>같은 컨테이너 재시작</td><td><b>새 파드</b> 생성</td></tr><tr><td>그동안의 요청</td><td><b>끊긴다</b></td><td>다른 파드가 받는다</td></tr><tr><td>개수 유지</td><td>없음</td><td><code>replicas</code></td></tr><tr><td>접속 주소</td><td>포트 고정 · 컨테이너 1개</td><td><b>Service</b>가 여러 파드를 가림</td></tr><tr><td>아픈 상태</td><td>알려만 준다</td><td><b>다시 만든다</b> (probe)</td></tr></tbody></table>
+<table class="zebra"><thead><tr><th style="width:42%">명령</th><th style="width:58%">왜 이 명령을 치는가</th></tr></thead><tbody><tr><td><code>kubectl get all</code></td><td>지금까지 만든 것 전체 · deploy · rs · pod · svc</td></tr><tr><td><code>kubectl delete -f k8s/</code></td><td><b>정리</b> · 폴더 안의 모든 yaml을 되돌린다</td></tr></tbody></table>
+<div class="note"><code>kubectl get all</code>에 보이는 <b>ReplicaSet(rs)</b>은 Deployment가 내부적으로 만드는 것입니다. 버전을 바꿀 때 <b>옛 세대와 새 세대</b>를 관리하는 역할을 하는데, 지금은 “Deployment가 파드를 만드는 손” 정도로만 알아 두면 됩니다.</div>
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">25</div></section>
+<section class="page opener has-why" data-ch="6"><div class="rh"><div class="l"><b>DOCKER</b> · 6장</div><div class="r">Prometheus와 Grafana<span class="pg">26</span></div></div><div class="big">6</div><h1>Prometheus와 Grafana<br>사람 대신 지켜본다</h1><div class="oscene"><div class="osh">WHY · 현장 장면</div><div class="osb">파드가 수십 개가 되고 밤새 죽었다 살아나면 <code>kubectl get pods</code>를 계속 칠 수 없다. <b>수집하는 도구</b>와 <b>보여 주는 도구</b>를 두어 기록이 남게 한다.</div><table class="zebra osx"><thead><tr><th>이 장을 모르면</th><th>생기는 일</th></tr></thead><tbody><tr><td>모니터링이 없으면</td><td>문제를 나중에 안다</td></tr><tr><td>둘의 역할을 헷갈리면</td><td>설치만 하고 못 쓴다</td></tr><tr><td>자원을 모르면</td><td>파드가 안 뜬다</td></tr></tbody></table></div><div class="oq"><div><span>01</span>Prometheus와 Grafana는 각각 무엇을 하는가?</div><div><span>02</span>K3s에 어떻게 설치하는가?</div><div><span>03</span>대시보드에서 무엇을 보는가?</div></div><div class="kicker">이 장의 구성</div><div class="otoc"><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">6.1</b>왜 모니터링인가</span><b data-toc="6.1">27</b></div><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">6.2</b>Helm으로 설치</span><b data-toc="6.2">28</b></div><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">6.3</b>Grafana 열어 보기</span><b data-toc="6.3">29</b></div></div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">26</div></section>
+<section class="page" data-sec="6.1" data-title="6.1 왜 모니터링인가"><div class="rh"><div class="l"><b>DOCKER</b> · 6장 · <span class="sec">Prometheus와 Grafana</span></div><div class="r">6.1 왜 모니터링인가<span class="pg">27</span></div></div><div class="kicker">6.1 · WHY MONITOR</div><h1>파드가 계속 바뀌는데<br><em>누가 지켜보나</em></h1>
+<div class="why"><b>왜 배워야 하나?</b><p>지금까지 상태를 볼 때마다 <code>kubectl get pods</code>를 쳤습니다. 파드가 수십 개가 되고, 밤중에 죽었다 살아났다 하면 <strong>사람이 계속 치고 있을 수 없습니다.</strong> 그래서 <strong>수집하는 도구</strong>와 <strong>보여 주는 도구</strong>를 둡니다.</p></div>
+<div class="dia"><svg viewBox="0 0 660 170" xmlns="http://www.w3.org/2000/svg" style="font-family:'Noto Sans KR',sans-serif"><rect x="10" y="34" width="180" height="70" rx="6" fill="#eaf5ec" stroke="#15803d"></rect><text x="100" y="60" text-anchor="middle" font-size="12.5" font-weight="800" fill="#15803d">파드 · 노드</text><text x="100" y="82" text-anchor="middle" font-size="10">CPU · 메모리 · 상태</text><rect x="240" y="34" width="180" height="70" rx="6" fill="#fdf3ec" stroke="#b23c0a"></rect><text x="330" y="60" text-anchor="middle" font-size="12.5" font-weight="800" fill="#b23c0a">Prometheus</text><text x="330" y="82" text-anchor="middle" font-size="10">주기적으로 수집·저장</text><rect x="470" y="34" width="180" height="70" rx="6" fill="#eef3fb" stroke="#1d4ed8"></rect><text x="560" y="60" text-anchor="middle" font-size="12.5" font-weight="800" fill="#1d4ed8">Grafana</text><text x="560" y="82" text-anchor="middle" font-size="10">그래프로 보여 준다</text><line x1="190" y1="69" x2="240" y2="69" stroke="#5b574f" stroke-width="2"></line><line x1="420" y1="69" x2="470" y2="69" stroke="#5b574f" stroke-width="2"></line><text x="205" y="60" font-size="9" fill="#5b574f">긁어 간다</text><text x="437" y="60" font-size="9" fill="#5b574f">질의한다</text><text x="10" y="136" font-size="10.5" fill="#2f2d2a">Prometheus는 <tspan font-weight="700">숫자를 모으고</tspan>, Grafana는 <tspan font-weight="700">사람이 보게</tspan> 한다 · 둘은 역할이 다르다</text><text x="10" y="156" font-size="10.5" fill="#86827b">쿠버네티스는 상태를 계속 바꾸기 때문에, 사람이 아니라 <tspan font-weight="700">도구가 지켜봐야</tspan> 한다</text></svg></div>
+<table class="zebra"><thead><tr><th>도구</th><th>하는 일</th><th>한 줄로</th></tr></thead><tbody><tr><td><b>Prometheus</b></td><td>각 노드·파드에서 <b>숫자를 주기적으로 긁어와</b> 저장</td><td>수집과 저장</td></tr><tr><td><b>Grafana</b></td><td>그 숫자를 <b>그래프·대시보드</b>로 보여 준다</td><td>시각화</td></tr><tr><td><b>Alertmanager</b></td><td>조건을 넘으면 <b>알린다</b> (메일·슬랙)</td><td>알림 (이번엔 설치만)</td></tr></tbody></table>
+<table class="zebra"><thead><tr><th>보게 될 것</th><th>예</th></tr></thead><tbody><tr><td>노드</td><td>CPU · 메모리 · 디스크 사용량</td></tr><tr><td>파드</td><td>재시작 횟수 · 상태 · 리소스 사용량</td></tr><tr><td>클러스터</td><td>전체 파드 수 · 준비된 파드 수</td></tr></tbody></table>
+<div class="warn"><b>메모리를 꽤 씁니다.</b> VM 메모리가 <b>4GB 이상</b>이어야 안정적으로 뜹니다. 부족하면 파드가 <code>Pending</code>이나 <code>OOMKilled</code>로 남습니다. <code>multipass launch --memory 4G</code>로 만들었는지 확인하세요.</div>
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">27</div></section>
+<section class="page" data-sec="6.2" data-title="6.2 설치 · Helm으로"><div class="rh"><div class="l"><b>DOCKER</b> · 6장 · <span class="sec">Prometheus와 Grafana</span></div><div class="r">6.2 설치 · Helm으로<span class="pg">28</span></div></div><div class="kicker">6.2 · INSTALL</div><h1>한 묶음으로<br><em>같이 설치</em>한다</h1>
+<div class="note" style="zoom: 0.94;"><strong>Helm</strong>은 쿠버네티스용 설치 도구입니다. 여러 개의 yaml을 <b>하나의 꾸러미(차트)</b>로 묶어 설치·삭제할 수 있게 해 줍니다. Prometheus와 Grafana는 함께 쓰는 것이 보통이라, 둘을 묶은 <b>kube-prometheus-stack</b>을 설치합니다.</div>
+<div style="display: flex; gap: 8px; align-items: center; margin: 12px 0px 4px; padding: 6px 10px; border-left: 3px solid rgb(21, 128, 61); background: rgb(250, 249, 247); zoom: 0.94;"><b style="font-size:11px;color:#15803d;white-space:nowrap">입력 위치</b><span style="font-size:11.5px"><b>VS Code 터미널 (VM)</b> · SSH로 연결된 창의 Terminal → New Terminal · 프롬프트가 <code>ubuntu@k3s-lab:~$</code></span></div>
+<table class="zebra" style="zoom: 0.94;"><thead><tr><th style="width:42%">명령</th><th style="width:58%">왜 이 명령을 치는가</th></tr></thead><tbody><tr><td><code>curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash</code></td><td><b>Helm 설치</b></td></tr><tr><td><code>export KUBECONFIG=~/.kube/config</code></td><td>Helm이 클러스터를 찾을 수 있게 (3.1에서 복사해 둔 파일)</td></tr><tr><td><code>helm repo add prometheus-community https://prometheus-community.github.io/helm-charts</code></td><td>차트 저장소 등록</td></tr><tr><td><code>helm repo update</code></td><td>목록 갱신</td></tr><tr><td><code>kubectl create namespace monitoring</code></td><td><b>네임스페이스</b> 생성 · 모니터링 관련을 한곳에 모은다</td></tr><tr><td><code>helm install mon prometheus-community/kube-prometheus-stack -n monitoring</code></td><td>설치 · <b>몇 분</b> 걸린다</td></tr><tr><td><code>kubectl get pods -n monitoring -w</code></td><td>파드가 <code>Running</code>이 될 때까지 지켜본다 (Ctrl+C로 중단)</td></tr></tbody></table>
+<table class="zebra" style="zoom: 0.94;"><thead><tr><th>설치되는 주요 파드</th><th>무엇</th></tr></thead><tbody><tr><td><code>mon-kube-prometheus-stack-prometheus</code></td><td>Prometheus 본체</td></tr><tr><td><code>mon-grafana</code></td><td>Grafana</td></tr><tr><td><code>mon-kube-state-metrics</code></td><td>파드·디플로이먼트 <b>상태</b>를 숫자로 변환</td></tr><tr><td><code>node-exporter</code></td><td>노드의 <b>CPU·메모리</b> 수치 제공</td></tr><tr><td><code>alertmanager</code></td><td>알림 담당</td></tr></tbody></table>
+<div class="warn" style="zoom: 0.94;"><b>설치가 오래 걸립니다.</b> 이미지를 여러 개 받기 때문에 네트워크 상황에 따라 시간이 걸립니다. <code>kubectl get pods -n monitoring</code>이 모두 <code>Running</code>이 될 때까지 기다리세요. <code>Pending</code>이 계속되면 메모리 부족입니다.</div>
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">28</div></section>
+<section class="page" data-sec="6.3" data-title="6.3 Grafana 열어 보기"><div class="rh"><div class="l"><b>DOCKER</b> · 6장 · <span class="sec">Prometheus와 Grafana</span></div><div class="r">6.3 Grafana 열어 보기<span class="pg">29</span></div></div><div class="kicker">6.3 · OPEN GRAFANA</div><h1>포트를 열어<br><em>대시보드</em>를 본다</h1>
+<div style="display:flex;gap:8px;align-items:center;margin:12px 0 4px;padding:6px 10px;border-left:3px solid #15803d;background:#faf9f7"><b style="font-size:11px;color:#15803d;white-space:nowrap">입력 위치</b><span style="font-size:11.5px"><b>VS Code 터미널 (VM)</b> · SSH로 연결된 창의 Terminal → New Terminal · 프롬프트가 <code>ubuntu@k3s-lab:~$</code></span></div>
+<table class="zebra"><thead><tr><th style="width:42%">명령</th><th style="width:58%">왜 이 명령을 치는가</th></tr></thead><tbody><tr><td><code>kubectl get svc -n monitoring</code></td><td>서비스 목록 · <code>mon-grafana</code> 확인</td></tr><tr><td><code>kubectl get secret -n monitoring mon-grafana -o jsonpath="{.data.admin-password}" | base64 -d; echo</code></td><td><b>초기 비밀번호</b> 확인 · 사용자는 <code>admin</code></td></tr><tr><td><code>kubectl port-forward -n monitoring svc/mon-grafana --address 0.0.0.0 3000:80</code></td><td><b>외부에서 접속할 수 있게</b> 포트 연결 · 터미널이 묶인다 (Ctrl+C로 종료)</td></tr></tbody></table>
+<div style="display:flex;gap:8px;align-items:center;margin:12px 0 4px;padding:6px 10px;border-left:3px solid #b23c0a;background:#faf9f7"><b style="font-size:11px;color:#b23c0a;white-space:nowrap">입력 위치</b><span style="font-size:11.5px"><b>VS Code 터미널 (내 PC)</b> · Terminal → New Terminal · 실습 폴더에서 · Windows는 PowerShell</span></div>
+<table class="zebra"><thead><tr><th style="width:42%">명령</th><th style="width:58%">왜 이 명령을 치는가</th></tr></thead><tbody><tr><td><code>multipass list</code></td><td>VM의 IP 확인</td></tr><tr><td><code>브라우저에서 http://VM_IP:3000</code></td><td>Grafana 로그인 화면 · admin / 위에서 확인한 비밀번호</td></tr></tbody></table>
+<table class="zebra"><thead><tr><th>처음 볼 대시보드</th><th>경로</th></tr></thead><tbody><tr><td><b>Kubernetes / Compute Resources / Cluster</b></td><td>왼쪽 메뉴 <b>Dashboards</b> → 목록에서 선택</td></tr><tr><td><b>Node Exporter / Nodes</b></td><td>노드의 CPU·메모리</td></tr><tr><td><b>Kubernetes / Compute Resources / Namespace (Pods)</b></td><td>네임스페이스별 파드 사용량</td></tr></tbody></table>
+<div class="lab"><div class="lab-head"><span class="badge">실습 6-1</span><h3>부하를 만들어 그래프 확인</h3></div><div class="lab-body"><ol class="steps"><li><span class="lt">파드 늘리기</span><span class="ls"><code>kubectl scale deploy web --replicas=5</code></span></li><li><span class="lt">그래프 보기</span><span class="ls">Grafana에서 파드 수·메모리 변화 확인 (수십 초 뒤 반영)</span></li><li><span class="lt">줄이기</span><span class="ls"><code>kubectl scale deploy web --replicas=2</code></span></li></ol></div></div>
+
+
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">29</div></section><section class="page" data-sec="6.3" data-title="6.3 Grafana 열어 보기" data-cont="1"><div class="rh"><div class="l"><b>DOCKER</b> · 6장 · <span class="sec">Prometheus와 Grafana</span></div><div class="r">6.3 Grafana 열어 보기 (계속)<span class="pg">30</span></div></div><div class="kicker">6.3 · OPEN GRAFANA</div><h1>포트를 열어<br><em>대시보드</em>를 본다 <small class="cont" style="font-size:.55em;color:var(--muted)">(계속)</small></h1><div class="lab"><div class="lab-head"><span class="badge">실습 6-1</span><h3>부하를 만들어 그래프 확인</h3></div><div class="lab-body"><ol class="steps" style="counter-reset: st 3;"><li><span class="lt">파드 죽이기</span><span class="ls"><code>kubectl delete pod --all</code> → <b>재시작 지표</b>가 움직이는지</span></li><li><span class="lt">해석</span><span class="ls">“사람이 안 봐도 기록이 남는다”는 점을 확인</span></li></ol></div></div><div class="note"><strong>Prometheus 화면도 볼 수 있습니다.</strong> <code>kubectl port-forward -n monitoring svc/mon-kube-prometheus-stack-prometheus --address 0.0.0.0 9090:9090</code> 후 <code>http://VM_IP:9090</code>. 상단 <b>Graph</b>에서 <code>kube_pod_status_phase</code> 같은 지표를 직접 조회할 수 있습니다.</div><div class="warn"><b>port-forward는 터미널이 열려 있는 동안만</b> 동작합니다. 실무에서는 Ingress나 LoadBalancer로 노출합니다. 수업에서는 터미널을 하나 더 열어 두고 쓰면 편합니다.</div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">30</div></section>
+<section class="page opener has-why" data-ch="7"><div class="rh"><div class="l"><b>DOCKER</b> · 7장</div><div class="r">점검과 미션<span class="pg">31</span></div></div><div class="big">7</div><h1>점검과 미션<br>스스로 진단하고 확인한다</h1><div class="oscene"><div class="osh">WHY · 현장 장면</div><div class="osb">K3s에서 막히는 지점은 정해져 있다. Pending · ImagePullBackOff · Endpoints 비어 있음. 점검표로 진단 순서를 익히고 미션 14개로 확인한다.</div><table class="zebra osx"><thead><tr><th>이 장을 모르면</th><th>생기는 일</th></tr></thead><tbody><tr><td>점검표가 없으면</td><td>오류에서 멈춘다</td></tr><tr><td>진단 순서가 없으면</td><td>추측으로 고친다</td></tr><tr><td>미션을 안 풀면</td><td>혼자 할 수 있는지 모른다</td></tr></tbody></table></div><div class="oq"><div><span>01</span>안 될 때 어디부터 보는가?</div><div><span>02</span>미션 14개를 혼자 통과할 수 있는가?</div><div><span>03</span>오늘 배운 것을 한 장으로 말할 수 있는가?</div></div><div class="kicker">이 장의 구성</div><div class="otoc"><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">7.1</b>안 될 때 점검표</span><b data-toc="7.1">32</b></div><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">7.2</b>미션 ①~⑤</span><b data-toc="7.2">33</b></div><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">7.3</b>미션 ⑥~⑩</span><b data-toc="7.3">35</b></div><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">7.4</b>미션 ⑪~⑭</span><b data-toc="7.4">37</b></div><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">7.5</b>정리와 평가</span><b data-toc="7.5">39</b></div></div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">31</div></section>
+<section class="page" data-sec="7.1" data-title="7.1 안 될 때 점검표"><div class="rh"><div class="l"><b>DOCKER</b> · 7장 · <span class="sec">점검과 미션</span></div><div class="r">7.1 안 될 때 점검표<span class="pg">32</span></div></div><div class="kicker">7.1 · TROUBLESHOOTING</div><h1>K3s에서<br><em>막히는 곳</em></h1>
+<table class="zebra"><thead><tr><th style="width:4%">#</th><th style="width:24%">증상</th><th style="width:24%">확인</th><th style="width:22%">원인</th><th style="width:26%">조치</th></tr></thead><tbody><tr><td>1</td><td><code>kubectl</code>이 권한 오류</td><td>—</td><td>설정 파일을 못 읽음</td><td>3.1의 <code>~/.kube/config</code> 복사 또는 <code>sudo k3s kubectl</code></td></tr><tr><td>2</td><td>파드가 <code>Pending</code></td><td><code>kubectl describe pod</code></td><td><b>자원 부족</b> · 스케줄 불가</td><td>VM 메모리 늘리기 · replicas 줄이기</td></tr><tr><td>3</td><td><code>ImagePullBackOff</code></td><td>같은 명령의 Events</td><td>이미지 이름 오타 · 없는 태그</td><td>이름 확인 · 내 이미지는 K-M09 방식으로 import</td></tr><tr><td>4</td><td><code>CrashLoopBackOff</code></td><td><code>kubectl logs 파드</code></td><td>앱이 계속 죽는다</td><td>로그 마지막 줄부터</td></tr><tr><td>5</td><td>서비스 접속 안 됨</td><td><code>kubectl get endpoints</code></td><td><b>Endpoints가 비었다</b> · 라벨 불일치</td><td>selector와 파드 라벨을 같게</td></tr><tr><td>6</td><td><code>curl localhost:30080</code> 거부</td><td><code>kubectl get svc</code></td><td>nodePort 범위 밖 · 서비스 미생성</td><td>30000~32767 사용</td></tr><tr><td>7</td><td>모니터링 파드가 안 뜸</td><td><code>kubectl get pods -n monitoring</code></td><td>메모리 부족</td><td>VM을 4G 이상으로</td></tr><tr><td>8</td><td>port-forward가 끊김</td><td>—</td><td>터미널을 닫았다</td><td>다시 실행 · 터미널을 따로 열어 둔다</td></tr></tbody></table>
+<div class="point"><div class="pl">진단 순서</div><p><strong>① <code>get pods</code>로 상태 → ② <code>describe pod</code>의 Events → ③ <code>logs</code>로 앱 오류 → ④ 서비스 문제면 <code>get endpoints</code>.</strong> 네 단계면 대부분 잡힙니다.</p></div>
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">32</div></section>
+<section class="page" data-sec="7.2" data-title="7.2 미션 모음"><div class="rh"><div class="l"><b>DOCKER</b> · 7장 · <span class="sec">점검과 미션</span></div><div class="r">7.2 미션 모음<span class="pg">33</span></div></div><div class="kicker">7.2 · MISSIONS</div><h1>미션 14개 · ①~⑤</h1>
+<div class="why"><b>왜 배워야 하나?</b><p><strong>상황 · 목표 · 조건 · 검증</strong>으로 되어 있습니다. 검증 칸을 통과해야 완료입니다.</p></div>
+<div class="msn"><div class="mh"><span class="mid">K-M01</span><span class="mlv l1">기본</span><b>장애 비교</b><span class="mtm"></span></div><div class="mb"><div class="mr"><span>상황</span><div>컨테이너가 죽었을 때 차이를 알아야 한다.</div></div><div class="mr"><span>목표</span><div>app-no와 app-always를 각각 죽이고 결과를 비교한다.</div></div><div class="mr"><span>조건</span><div>/kill 사용</div></div><div class="mr"><span>검증</span><div>ps -a 결과와 차이 설명</div></div><div class="mr ref"><span>참고</span><div>1.2</div></div></div></div>
+<div class="msn"><div class="mh"><span class="mid">K-M02</span><span class="mlv l1">기본</span><b>healthcheck 관찰</b><span class="mtm"></span></div><div class="mb"><div class="mr"><span>상황</span><div>떠 있지만 아픈 상태를 봐야 한다.</div></div><div class="mr"><span>목표</span><div>healthy → unhealthy로 바뀌는 과정을 기록한다.</div></div><div class="mr"><span>조건</span><div>docker inspect 사용</div></div><div class="mr"><span>검증</span><div>상태 변화 기록</div></div><div class="mr ref"><span>참고</span><div>1.3</div></div></div></div>
+<div class="msn"><div class="mh"><span class="mid">K-M03</span><span class="mlv l1">기본</span><b>K3s 설치</b><span class="mtm"></span></div><div class="mb"><div class="mr"><span>상황</span><div>리눅스에 클러스터를 올려야 한다.</div></div><div class="mr"><span>목표</span><div>K3s를 설치하고 노드가 Ready인지 확인한다.</div></div><div class="mr"><span>조건</span><div>sudo 없이 kubectl이 되게 설정</div></div><div class="mr"><span>검증</span><div>get nodes · get pods -A 결과</div></div><div class="mr ref"><span>참고</span><div>3.1</div></div></div></div>
+
+
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">33</div></section><section class="page" data-sec="7.2" data-title="7.2 미션 모음" data-cont="1"><div class="rh"><div class="l"><b>DOCKER</b> · 7장 · <span class="sec">점검과 미션</span></div><div class="r">7.2 미션 모음 (계속)<span class="pg">34</span></div></div><div class="kicker">7.2 · MISSIONS</div><h1>미션 14개 · ①~⑤ <small class="cont" style="font-size:.55em;color:var(--muted)">(계속)</small></h1><div class="msn"><div class="mh"><span class="mid">K-M04</span><span class="mlv l2">응용</span><b>Deployment 올리기</b><span class="mtm"></span></div><div class="mb"><div class="mr"><span>상황</span><div>파드를 2개 유지해야 한다.</div></div><div class="mr"><span>목표</span><div>deployment.yaml을 적용하고 파드 두 개를 확인한다.</div></div><div class="mr"><span>조건</span><div>-o wide로 IP까지</div></div><div class="mr"><span>검증</span><div>get pods -o wide 결과</div></div><div class="mr ref"><span>참고</span><div>4.2</div></div></div></div><div class="msn"><div class="mh"><span class="mid">K-M05</span><span class="mlv l2">응용</span><b>개수 바꾸기</b><span class="mtm"></span></div><div class="mb"><div class="mr"><span>상황</span><div>트래픽이 늘었다.</div></div><div class="mr"><span>목표</span><div>replicas를 3으로 늘리고 다시 2로 줄인다.</div></div><div class="mr"><span>조건</span><div>파일 수정과 scale 명령을 모두 사용</div></div><div class="mr"><span>검증</span><div>두 방법의 결과 비교</div></div><div class="mr ref"><span>참고</span><div>4.2</div></div></div></div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">34</div></section>
+<section class="page" data-sec="7.3" data-title="7.3 미션 모음 (계속)"><div class="rh"><div class="l"><b>DOCKER</b> · 7장 · <span class="sec">점검과 미션</span></div><div class="r">7.3 미션 모음 (계속)<span class="pg">35</span></div></div><div class="kicker">7.3 · MISSIONS</div><h1>미션 ⑥~⑩</h1>
+<div class="msn"><div class="mh"><span class="mid">K-M06</span><span class="mlv l2">응용</span><b>자가 치유 확인</b><span class="mtm"></span></div><div class="mb"><div class="mr"><span>상황</span><div>파드가 죽어도 유지되는지 봐야 한다.</div></div><div class="mr"><span>목표</span><div>파드를 지우고 새로 생기는 과정을 기록한다.</div></div><div class="mr"><span>조건</span><div>이름과 AGE 변화 기록</div></div><div class="mr"><span>검증</span><div>events에서 Killing·Created 확인</div></div><div class="mr ref"><span>참고</span><div>4.3</div></div></div></div>
+<div class="msn"><div class="mh"><span class="mid">K-M07</span><span class="mlv l2">응용</span><b>Service 연결</b><span class="mtm"></span></div><div class="mb"><div class="mr"><span>상황</span><div>파드 주소가 바뀌어도 접속돼야 한다.</div></div><div class="mr"><span>목표</span><div>service.yaml을 적용하고 30080으로 접속한다.</div></div><div class="mr"><span>조건</span><div>endpoints 확인 포함</div></div><div class="mr"><span>검증</span><div>curl 성공 · endpoints IP 목록</div></div><div class="mr ref"><span>참고</span><div>5.2</div></div></div></div>
+<div class="msn"><div class="mh"><span class="mid">K-M08</span><span class="mlv l2">응용</span><b>무중단 확인</b><span class="mtm"></span></div><div class="mb"><div class="mr"><span>상황</span><div>파드를 지워도 서비스가 살아야 한다.</div></div><div class="mr"><span>목표</span><div>replicas 3에서 파드를 하나씩 지우며 접속을 유지한다.</div></div><div class="mr"><span>조건</span><div>반복 접속하며 관찰</div></div><div class="mr"><span>검증</span><div>끊김 여부 기록 · 1장과 비교</div></div><div class="mr ref"><span>참고</span><div>5.2</div></div></div></div>
+<div class="msn"><div class="mh"><span class="mid">K-M09</span><span class="mlv l2">응용</span><b>내 이미지 올리기</b><span class="mtm"></span></div><div class="mb"><div class="mr"><span>상황</span><div>내가 만든 앱을 K3s에서 돌려야 한다.</div></div><div class="mr"><span>목표</span><div>app 이미지를 빌드해 K3s에 넣고 Deployment로 띄운다.</div></div><div class="mr"><span>조건</span><div>docker save | sudo k3s ctr images import - 사용 · imagePullPolicy: IfNotPresent</div></div><div class="mr"><span>검증</span><div>파드가 Running · 앱 화면 확인</div></div><div class="mr ref"><span>참고</span><div>4장</div></div></div></div>
+
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">35</div></section><section class="page" data-sec="7.3" data-title="7.3 미션 모음 (계속)" data-cont="1"><div class="rh"><div class="l"><b>DOCKER</b> · 7장 · <span class="sec">점검과 미션</span></div><div class="r">7.3 미션 모음 (계속) (계속)<span class="pg">36</span></div></div><div class="kicker">7.3 · MISSIONS</div><h1>미션 ⑥~⑩ <small class="cont" style="font-size:.55em;color:var(--muted)">(계속)</small></h1><div class="msn"><div class="mh"><span class="mid">K-M10</span><span class="mlv l2">응용</span><b>probe 실험</b><span class="mtm"></span></div><div class="mb"><div class="mr"><span>상황</span><div>아픈 파드를 자동으로 교체해야 한다.</div></div><div class="mr"><span>목표</span><div>livenessProbe를 추가하고 /kill로 아프게 만들어 본다.</div></div><div class="mr"><span>조건</span><div>httpGet /healthz 사용</div></div><div class="mr"><span>검증</span><div>RESTARTS가 올라가는 것 확인</div></div><div class="mr ref"><span>참고</span><div>4.1</div></div></div></div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">36</div></section>
+<section class="page" data-sec="7.4" data-title="7.4 미션 모음 (계속)"><div class="rh"><div class="l"><b>DOCKER</b> · 7장 · <span class="sec">점검과 미션</span></div><div class="r">7.4 미션 모음 (계속)<span class="pg">37</span></div></div><div class="kicker">7.4 · MISSIONS</div><h1>미션 ⑪~⑭ · 장애와 종합</h1>
+<div class="msn"><div class="mh"><span class="mid">K-M11</span><span class="mlv l3">장애</span><b>파드가 안 뜬다</b><span class="mtm"></span></div><div class="mb"><div class="mr"><span>상황</span><div>Pending에서 멈췄다.</div></div><div class="mr"><span>목표</span><div>describe로 원인을 찾아 설명한다.</div></div><div class="mr"><span>조건</span><div>이미지 이름을 일부러 틀리게 해 재현</div></div><div class="mr"><span>검증</span><div>이벤트 메시지와 해석</div></div><div class="mr ref"><span>참고</span><div>3.2</div></div></div></div>
+<div class="msn"><div class="mh"><span class="mid">K-M12</span><span class="mlv l3">장애</span><b>접속이 안 된다</b><span class="mtm"></span></div><div class="mb"><div class="mr"><span>상황</span><div>서비스로 접속이 안 된다.</div></div><div class="mr"><span>목표</span><div>endpoints가 비는 상황을 만들고 고친다.</div></div><div class="mr"><span>조건</span><div>selector 라벨을 틀리게 해 재현</div></div><div class="mr"><span>검증</span><div>원인 · 근거 · 복구</div></div><div class="mr ref"><span>참고</span><div>5.2</div></div></div></div>
+<div class="msn"><div class="mh"><span class="mid">K-M13</span><span class="mlv l4">종합</span><b>모니터링</b><span class="mtm"></span></div><div class="mb"><div class="mr"><span>상황</span><div>상태를 사람이 안 보고도 알아야 한다.</div></div><div class="mr"><span>목표</span><div>Prometheus·Grafana를 설치하고 대시보드를 연다.</div></div><div class="mr"><span>조건</span><div>port-forward 사용</div></div><div class="mr"><span>검증</span><div>Grafana 화면 캡처</div></div><div class="mr ref"><span>참고</span><div>6장</div></div></div></div>
+<div class="msn"><div class="mh"><span class="mid">K-M14</span><span class="mlv l4">종합</span><b>한 장 보고서</b><span class="mtm"></span></div><div class="mb"><div class="mr"><span>상황</span><div>팀에 설명해야 한다.</div></div><div class="mr"><span>목표</span><div>compose와 K3s의 차이를 표와 함께 한 장으로 정리한다.</div></div><div class="mr"><span>조건</span><div>오늘 실습한 근거 포함</div></div><div class="mr"><span>검증</span><div>표 + 결론 3줄</div></div><div class="mr ref"><span>참고</span><div>전체</div></div></div></div>
+
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">37</div></section><section class="page" data-sec="7.4" data-title="7.4 미션 모음 (계속)" data-cont="1"><div class="rh"><div class="l"><b>DOCKER</b> · 7장 · <span class="sec">점검과 미션</span></div><div class="r">7.4 미션 모음 (계속) (계속)<span class="pg">38</span></div></div><div class="kicker">7.4 · MISSIONS</div><h1>미션 ⑪~⑭ · 장애와 종합 <small class="cont" style="font-size:.55em;color:var(--muted)">(계속)</small></h1><table class="zebra"><thead><tr><th>ID</th><th>수준</th><th>미션</th><th>참고</th><th>완료</th></tr></thead><tbody><tr><td><code>K-M01</code></td><td>기본</td><td>장애 비교</td><td>1.2</td><td>□</td></tr><tr><td><code>K-M02</code></td><td>기본</td><td>healthcheck 관찰</td><td>1.3</td><td>□</td></tr><tr><td><code>K-M03</code></td><td>기본</td><td>K3s 설치</td><td>3.1</td><td>□</td></tr><tr><td><code>K-M04</code></td><td>응용</td><td>Deployment 올리기</td><td>4.2</td><td>□</td></tr><tr><td><code>K-M05</code></td><td>응용</td><td>개수 바꾸기</td><td>4.2</td><td>□</td></tr><tr><td><code>K-M06</code></td><td>응용</td><td>자가 치유 확인</td><td>4.3</td><td>□</td></tr><tr><td><code>K-M07</code></td><td>응용</td><td>Service 연결</td><td>5.2</td><td>□</td></tr><tr><td><code>K-M08</code></td><td>응용</td><td>무중단 확인</td><td>5.2</td><td>□</td></tr><tr><td><code>K-M09</code></td><td>응용</td><td>내 이미지 올리기</td><td>4장</td><td>□</td></tr><tr><td><code>K-M10</code></td><td>응용</td><td>probe 실험</td><td>4.1</td><td>□</td></tr><tr><td><code>K-M11</code></td><td>장애</td><td>파드가 안 뜬다</td><td>3.2</td><td>□</td></tr><tr><td><code>K-M12</code></td><td>장애</td><td>접속이 안 된다</td><td>5.2</td><td>□</td></tr><tr><td><code>K-M13</code></td><td>종합</td><td>모니터링</td><td>6장</td><td>□</td></tr><tr><td><code>K-M14</code></td><td>종합</td><td>한 장 보고서</td><td>전체</td><td>□</td></tr></tbody></table><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">38</div></section>
+<section class="page" data-sec="7.5" data-title="7.5 정리와 평가"><div class="rh"><div class="l"><b>DOCKER</b> · 7장 · <span class="sec">점검과 미션</span></div><div class="r">7.5 정리와 평가<span class="pg">39</span></div></div><div class="kicker">7.5 · SUMMARY</div><h1>정리<br><em>다음 단계</em></h1>
+<table class="zebra"><thead><tr><th>오늘 얻은 것</th><th>한 줄</th></tr></thead><tbody><tr><td>장애 체험</td><td>죽여 보고 <b>무엇이 다시 살아나는지</b> 확인했다</td></tr><tr><td>한계 인식</td><td>compose로 안 되는 것 다섯 가지를 말할 수 있다</td></tr><tr><td>선언형</td><td>“이 상태를 유지해라”를 파일로 적었다</td></tr><tr><td>자가 치유</td><td>파드를 지워도 <b>개수가 유지</b>되는 것을 봤다</td></tr><tr><td>고정 입구</td><td>Service로 <b>바뀌는 주소</b>를 가렸다</td></tr><tr><td>관측</td><td>Prometheus·Grafana로 <b>사람 대신 지켜보게</b> 했다</td></tr></tbody></table>
+<table class="zebra"><thead><tr><th>명령 한눈에</th><th>무엇</th></tr></thead><tbody><tr><td><code>kubectl get pods -o wide</code> · <code>get svc</code> · <code>get endpoints</code></td><td>상태 보기</td></tr><tr><td><code>kubectl apply -f</code> · <code>delete -f</code></td><td>선언 적용 · 되돌리기</td></tr><tr><td><code>kubectl describe</code> · <code>logs</code> · <code>get events</code></td><td>원인 찾기</td></tr><tr><td><code>kubectl scale deploy web --replicas=3</code></td><td>개수 바꾸기</td></tr><tr><td><code>kubectl port-forward</code></td><td>임시로 포트 열기</td></tr><tr><td><code>helm install … -n monitoring</code></td><td>묶음 설치</td></tr></tbody></table>
+<div class="qa"><div class="ql">문제 · 10문항</div><ol><li>compose의 <code>restart</code>와 쿠버네티스의 자가 치유는 무엇이 다른가?</li><li><code>replicas: 2</code>의 뜻은?</li><li>파드를 지웠는데 다시 생기는 이유는?</li><li>파드 이름이 바뀌는 이유는?</li><li>Service가 필요한 이유는?</li><li>Service는 어떤 기준으로 파드를 고르나?</li><li>Endpoints가 비어 있으면 무엇을 의심하나?</li><li>nodePort는 아무 숫자나 되나?</li><li>Prometheus와 Grafana의 역할 차이는?</li><li>K3s를 쓰는 이유는?</li></ol></div>
+
+
+
+
+
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">39</div></section><section class="page" data-sec="7.5" data-title="7.5 정리와 평가" data-cont="1" data-brk="1"><div class="rh"><div class="l"><b>DOCKER</b> · 7장 · <span class="sec">점검과 미션</span></div><div class="r">7.5 정리와 평가 (계속)<span class="pg">40</span></div></div><div class="kicker">7.5 · SUMMARY</div><h1>정리<br><em>다음 단계</em> <small class="cont" style="font-size:.55em;color:var(--muted)">(계속)</small></h1><div class="ans"><div class="al">정답 · 해설</div><b>Q1</b> restart는 같은 컨테이너를 다시 시작 · 쿠버네티스는 새 파드를 만들어 <b>개수를 맞춘다</b>.<br><b>Q2</b> 파드를 항상 2개 유지하라는 <b>선언</b> · 하나가 사라지면 시스템이 새로 만든다.<br><b>Q3</b> Deployment가 현재 상태와 선언한 상태를 비교해 계속 맞추기 때문.<br><b>Q4</b> 죽은 파드를 재사용하지 않고 <b>새로 만들기</b> 때문.<br><b>Q5</b> 파드 IP가 계속 바뀌므로, <b>고정된 입구</b>가 있어야 접속할 수 있다.<br><b>Q6</b> <b>라벨</b>(selector) · 파드 이름이 아니다.<br><b>Q7</b> 라벨 불일치, 또는 파드가 아직 준비되지 않음(readinessProbe 미통과).<br><b>Q8</b> 30000~32767 범위만 가능.<br><b>Q9</b> Prometheus는 <b>수집·저장</b>, Grafana는 <b>시각화</b>.<br><b>Q10</b> 가벼워서 한 대의 리눅스에도 쉽게 설치되고, 개념과 명령은 일반 쿠버네티스와 같다.</div><h3>다음 단계에서 다룰 만한 것</h3><table class="zebra"><thead><tr><th>주제</th><th>무엇</th></tr></thead><tbody><tr><td><b>롤링 업데이트</b></td><td>새 버전으로 <b>하나씩</b> 바꿔 치기 · <code>kubectl set image</code> · 롤백</td></tr><tr><td><b>ConfigMap · Secret</b></td><td>설정과 비밀번호를 파드 밖에서 주입</td></tr><tr><td><b>Ingress</b></td><td>도메인·경로로 여러 서비스를 하나의 입구에서</td></tr><tr><td><b>PersistentVolume</b></td><td>데이터베이스처럼 <b>데이터가 남아야</b> 하는 경우</td></tr><tr><td><b>알림</b></td><td>Alertmanager로 임계치를 넘으면 통보</td></tr></tbody></table><div class="mission"><b>마지막 질문</b><h3>정리하며</h3><div class="wy">“<b>사람이 새벽에 일어나지 않아도 되게</b> 하려면, 오늘 배운 것 중 무엇이 핵심이었나?”<br>그리고 <b>아직도 사람이 해야 하는 일</b>은 무엇이 남았는지 적어 보세요.</div></div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">40</div></section>
+<script>
+document.querySelectorAll(".say").forEach(function(box){
+ const sc=box.querySelector(".sc"),sl=box.querySelector(".sl"); if(!sc||!sl)return;
+ const b=document.createElement("button"); b.className="copybtn"; b.textContent="복사"; b.type="button";
+ b.onclick=function(){navigator.clipboard.writeText(sc.innerText).then(function(){b.textContent="복사됨";setTimeout(function(){b.textContent="복사"},1200)})}; sl.appendChild(b);
+});
+</script></body></html>
