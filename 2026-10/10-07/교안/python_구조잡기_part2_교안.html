@@ -1,0 +1,1357 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="utf-8"><meta content="width=device-width,initial-scale=1.0" name="viewport"><title>백엔드 구조 설계 Part 2</title><style>
+:root{
+  --ink:#1c1b19; --paper:#ffffff; --soft:#f7f6f3; --soft2:#efedea;
+  --line:#e3e0db; --line2:#cfcbc4; --muted:#86827b; --muted2:#5b574f;
+  --accent:#b23c0a; --accent-soft:#fdf3ec; --ink2:#2f2d2a;
+  --pn:#b23c0a; --pnb:#e8c3ad; --pns:#fdf5f0;
+  --pv:#1d4ed8; --pvb:#c3d0f2; --pvs:#f2f5fd;
+  --pa:#15803d; --pab:#bcdcc8; --pas:#f1f7f3;
+  --pd:#6d28d9; --pdb:#d4c6f5; --pds:#f7f3fe;
+  --px:#b91c1c; --pxb:#f0c3c3; --pxs:#fdf2f2;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+body{font-family:'Noto Sans KR','Malgun Gothic',sans-serif;color:var(--ink);
+  background:#eceae5;line-height:1.65;font-weight:400;letter-spacing:-.003em}
+
+.page{width:210mm;min-height:297mm;background:var(--paper);margin:8mm auto;
+  padding:17mm 18mm 14mm;position:relative;box-shadow:0 1px 14px rgba(0,0,0,.07)}
+@page{size:A4 portrait;margin:0}
+@media print{
+  body{background:#fff}
+  .page{margin:0;box-shadow:none;page-break-after:always;break-after:page}
+  .page:last-child{page-break-after:auto}
+}
+
+/* ── 러닝헤드 ── */
+.rh{display:flex;justify-content:space-between;align-items:baseline;
+  margin-bottom:22px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+.rh .l{font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--muted2)}
+.rh .l b{color:var(--accent)}
+.rh .r{font-size:10.5px;color:var(--muted);letter-spacing:.04em;display:flex;align-items:baseline;gap:12px}
+.rh .r .pg{font-family:'Consolas','JetBrains Mono',monospace;font-size:12px;font-weight:700;
+  color:var(--ink);letter-spacing:.06em;border:1px solid var(--line2);padding:1px 7px;border-radius:3px}
+
+/* ── 제목 ── */
+.kicker{font-size:11px;font-weight:700;letter-spacing:.12em;color:var(--accent);margin-bottom:7px}
+h1{font-size:26px;font-weight:900;line-height:1.25;letter-spacing:-.02em;margin-bottom:9px}
+.lede{font-size:13px;color:var(--muted2);line-height:1.7;margin-bottom:14px;max-width:96%}
+.lede em,em{font-style:normal;color:var(--accent);font-weight:700}
+h2{font-size:12.5px;font-weight:700;letter-spacing:.09em;color:var(--accent);
+  margin:17px 0 9px;display:flex;align-items:center;gap:10px}
+h2::after{content:"";flex:1;height:1px;background:var(--line)}
+h3{font-size:15px;font-weight:700;margin:14px 0 5px}
+p{font-size:13px;line-height:1.75;margin:8px 0;color:var(--ink2)}
+strong{font-weight:700;color:var(--ink)}
+.mn{font-size:11.5px;color:var(--muted);margin-top:5px}
+code{font-family:'Consolas','JetBrains Mono',monospace;background:var(--soft2);
+  padding:1px 5px;border-radius:3px;font-size:12px;color:var(--accent)}
+
+ul,ol{margin:9px 0;padding-left:0;list-style:none}
+li{font-size:13px;line-height:1.7;margin:8px 0;padding-left:010px;padding-left:22px;position:relative;color:var(--ink2)}
+ul li::before{content:"";position:absolute;left:3px;top:10px;width:5px;height:5px;
+  background:var(--accent);border-radius:50%}
+li strong{color:var(--ink)}
+
+/* ── 표 ── */
+table{width:100%;border-collapse:collapse;margin:13px 0;font-size:12.5px}
+th,td{padding:9px 12px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line)}
+thead th{border-bottom:1.5px solid var(--ink);font-weight:700;font-size:11.5px;color:var(--ink);background:var(--soft)}
+tbody td{color:var(--muted2)}
+tbody td b{color:var(--ink);font-weight:700}
+table.zebra tbody tr:nth-child(even) td{background:#faf9f7}
+
+/* ── 그리드 카드 ── */
+.grid{display:grid;gap:1px;background:var(--line);border:1px solid var(--line);margin:14px 0}
+.grid.g3{grid-template-columns:repeat(3,1fr)}
+.grid.g2{grid-template-columns:repeat(2,1fr)}
+.grid.g4{grid-template-columns:repeat(4,1fr)}
+.cell{background:var(--paper);padding:15px 14px}
+.cell .num{font-size:10.5px;font-weight:700;letter-spacing:.08em;color:var(--accent)}
+.cell h4{font-size:13.5px;font-weight:700;margin:6px 0 4px;line-height:1.35}
+.cell p{font-size:11.5px;color:var(--muted2);margin:0;line-height:1.6}
+
+/* ── 강조 박스 ── */
+.point{border-left:2.5px solid var(--accent);padding:3px 0 3px 16px;margin:16px 0}
+.point .pl{font-size:10.5px;font-weight:700;letter-spacing:.09em;color:var(--accent);margin-bottom:4px}
+.point p{margin:0;font-size:13px;color:var(--ink2)}
+.note{background:var(--soft);border:1px solid var(--line);border-radius:4px;
+  padding:12px 15px;margin:14px 0;font-size:12.5px;color:var(--muted2);line-height:1.7}
+.note strong{color:var(--accent)}
+.warn{background:var(--pxs);border:1px solid var(--pxb);border-radius:4px;
+  padding:12px 15px;margin:14px 0;font-size:12.5px;color:var(--ink2);line-height:1.7}
+.warn b{color:var(--px)}
+
+.mission{border:1px solid var(--line2);border-left:3px solid var(--accent);
+  background:var(--accent-soft);padding:13px 16px;margin:13px 0;border-radius:4px}
+.mission b{font-size:10.5px;font-weight:700;letter-spacing:.1em;color:var(--accent)}
+.mission h3{font-size:14px;margin:4px 0 0;line-height:1.5}
+.mission .wy{margin:9px 0 0;padding-top:8px;border-top:1px solid var(--line2);font-size:12px;color:var(--muted2);line-height:1.65}
+.mission .wy b{color:var(--ink);font-size:10.5px;letter-spacing:.06em}
+.why{background:var(--soft);border:1px solid var(--line2);border-left:3px solid var(--ink);
+  padding:12px 16px;margin:13px 0;border-radius:4px}
+.why p{color:var(--ink2);margin:0;font-size:12.5px}
+.why b{color:var(--ink);font-size:10.5px;letter-spacing:.08em}
+
+.kw{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
+.kw span{background:#fff;border:1px solid var(--line2);padding:4px 10px;border-radius:20px;
+  font-size:11px;font-weight:700;color:var(--ink2)}
+.kw span::before{content:"# ";color:var(--accent)}
+
+/* ── 정의 목록 / 비유 ── */
+.deflist{margin:12px 0}
+.deflist .d{display:flex;gap:16px;padding:11px 0;border-bottom:1px solid var(--line)}
+.deflist .d:last-child{border-bottom:none}
+.deflist .dt{flex:0 0 27%;font-weight:700;font-size:13px}
+.deflist .dt small{display:block;font-weight:400;color:var(--muted);font-size:11px;margin-top:1px}
+.deflist .dd{flex:1;font-size:12.5px;color:var(--muted2);line-height:1.65}
+
+/* ── 실습 박스 (검정 헤더 제거) ── */
+.lab{margin:16px 0;border:1.5px solid var(--ink);background:#fff}
+.lab-head{padding:10px 18px;display:flex;align-items:center;gap:12px;
+  border-bottom:1.5px solid var(--ink);background:var(--soft)}
+.lab-head .badge{font-size:10px;font-weight:700;letter-spacing:.1em;
+  border:1px solid var(--ink);padding:2px 9px;border-radius:2px;color:var(--ink);background:#fff}
+.lab-head h3{font-size:16px;margin:0;font-weight:700;color:var(--ink)}
+.lab-head .t{margin-left:auto;font-size:10.5px;color:var(--muted);font-family:'Consolas',monospace}
+.lab-body{padding:15px 18px 16px}
+.steps{counter-reset:st;list-style:none;padding:0;margin:0}
+.steps>li{counter-increment:st;position:relative;padding:0 0 13px 40px;margin:0;font-size:13.5px;
+  line-height:1.55;border-left:1px solid var(--line2);margin-left:13px}
+.steps>li:last-child{border-left:1px solid transparent;padding-bottom:0}
+.steps>li::before{content:counter(st);position:absolute;left:-13px;top:-2px;width:26px;height:26px;
+  background:#fff;border:1.5px solid var(--ink);color:var(--ink);border-radius:50%;
+  display:grid;place-items:center;font-weight:700;font-size:12.5px}
+.steps>li .lt{font-weight:700;color:var(--ink)}
+.steps>li .ls{display:block;font-size:12px;color:var(--muted);font-weight:400;margin-top:2px;line-height:1.6}
+
+/* ── 프롬프트 박스 ── */
+.say{margin:10px 0;background:#fff;border:1px solid var(--line2);border-left:3px solid var(--accent);
+  border-radius:4px;padding:10px 13px}
+.say .sl{font-size:10.5px;font-weight:700;letter-spacing:.05em;color:var(--accent);
+  margin-bottom:4px;display:flex;align-items:center;gap:6px}
+.say .sc{font-family:'Consolas','JetBrains Mono',monospace;font-size:12px;line-height:1.65;
+  color:var(--ink);font-weight:500;white-space:pre-wrap}
+.copybtn{margin-left:auto;font-family:'Noto Sans KR',sans-serif;font-size:10px;font-weight:700;
+  letter-spacing:0;color:var(--muted2);background:#fff;border:1px solid var(--line2);
+  border-radius:3px;padding:2px 9px;cursor:pointer;line-height:1.4}
+.copybtn:hover{border-color:var(--accent);color:var(--accent)}
+@media print{.copybtn{display:none}}
+
+/* ── 품사/토큰 칩 ── */
+.chip{display:inline-flex;align-items:baseline;gap:5px;font-size:12px;font-weight:700;
+  padding:3px 8px;border-radius:3px;border:1px solid;margin:3px 4px 3px 0;line-height:1.3}
+.c-n{color:var(--pn);border-color:var(--pnb);background:var(--pns)}
+.c-v{color:var(--pv);border-color:var(--pvb);background:var(--pvs)}
+.c-a{color:var(--pa);border-color:var(--pab);background:var(--pas)}
+.c-d{color:var(--pd);border-color:var(--pdb);background:var(--pds)}
+.c-x{color:var(--px);border-color:var(--pxb);background:var(--pxs)}
+.c-o{color:var(--muted);border-color:var(--line2);background:var(--soft);font-weight:400}
+
+.parse{border:1px solid var(--line2);background:#fff;margin:13px 0}
+.parse .ph{background:var(--soft);border-bottom:1px solid var(--line);padding:6px 14px;
+  font-size:10.5px;font-weight:700;letter-spacing:.06em;color:var(--muted2);display:flex;justify-content:space-between}
+.parse .pb{padding:13px 14px 14px}
+.parse .src{font-size:14.5px;font-weight:500;color:var(--ink);line-height:1.7}
+.parse .arw{font-size:10.5px;color:var(--muted);letter-spacing:.06em;margin:11px 0 7px;
+  display:flex;align-items:center;gap:10px}
+.parse .arw::after{content:"";flex:1;height:1px;background:var(--line)}
+
+/* ── before / after ── */
+.ba{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);
+  border:1px solid var(--line);margin:13px 0}
+.ba>div{background:#fff;padding:12px 14px}
+.ba .h{font-size:10.5px;font-weight:700;letter-spacing:.06em;margin-bottom:8px}
+.ba .bad .h{color:var(--muted)}
+.ba .bad .h::before{content:"✕ ";color:var(--px)}
+.ba .good .h{color:var(--accent)}
+.ba .good .h::before{content:"✓ ";color:var(--pa)}
+.ba .m{font-family:'Consolas','JetBrains Mono',monospace;font-size:11px;line-height:1.7;color:var(--ink2)}
+.ba .m u{text-decoration:none;background:var(--pxs);color:var(--px);padding:0 3px;border-radius:2px}
+.ba .m b{background:var(--pas);color:var(--pa);padding:0 3px;border-radius:2px;font-weight:500}
+.ba .why2{font-size:11px;color:var(--muted);margin-top:8px;line-height:1.6}
+
+/* ── 막대 ── */
+.bars{margin:12px 0}
+.bars .b{display:flex;align-items:center;gap:10px;margin:7px 0}
+.bars .bl{flex:0 0 26%;font-size:12px;font-weight:700;color:var(--ink)}
+.bars .bt{flex:1;height:13px;background:var(--soft2);border:1px solid var(--line)}
+.bars .bf{height:100%;background:var(--accent)}
+.bars .bf.q{background:var(--line2)}
+.bars .bv{flex:0 0 60px;text-align:right;font-family:'Consolas',monospace;font-size:11px;color:var(--muted2)}
+
+/* ── 흐름 ── */
+.flow{display:flex;gap:5px;align-items:center;flex-wrap:wrap;margin:11px 0}
+.flow span{border:1px solid var(--line2);padding:6px 10px;background:#fff;border-radius:4px;
+  font-size:11.5px;font-weight:700}
+.flow i{font-style:normal;color:var(--accent);font-weight:900}
+
+/* ══════ 목업 컴포넌트 ══════ */
+/* 탐색기 / 창 */
+.win{border:1px solid var(--line2);margin:13px 0;background:#fff}
+.win .tb{display:flex;align-items:center;gap:9px;padding:6px 11px;background:var(--soft2);
+  border-bottom:1px solid var(--line2);font-size:11px;color:var(--muted2);font-weight:700}
+.win .tb .dots{display:flex;gap:4px}
+.win .tb .dots i{width:8px;height:8px;border-radius:50%;border:1px solid var(--line2);background:#fff;display:block}
+.win .tb .rt{margin-left:auto;font-weight:400;color:var(--muted);font-size:10px;letter-spacing:.04em}
+.win .addr{display:flex;align-items:center;gap:7px;padding:6px 11px;border-bottom:1px solid var(--line);
+  font-family:'Consolas',monospace;font-size:11px;color:var(--ink2);background:#fff}
+.win .addr .ic{font-size:10px;color:var(--muted)}
+.win .addr .path{border:1px solid var(--line);border-radius:3px;padding:3px 8px;flex:1;background:var(--soft)}
+.win .addr .path b{color:var(--accent);font-weight:700}
+.win table{margin:0;font-size:11px}
+.win th,.win td{padding:5px 11px;border-bottom:1px solid var(--line)}
+.win thead th{background:var(--soft);font-size:10px;border-bottom:1px solid var(--line2);color:var(--muted2)}
+.win tbody td{color:var(--ink2)}
+.win tbody tr.sel td{background:var(--accent-soft)}
+.win td.ic{width:22px;text-align:center;color:var(--muted);font-family:'Consolas',monospace;font-size:9.5px}
+.win .sb{padding:5px 11px;border-top:1px solid var(--line);background:var(--soft);
+  font-size:10px;color:var(--muted);display:flex;justify-content:space-between}
+.capt{font-size:10.5px;color:var(--muted);margin:-6px 0 13px;padding-left:2px}
+.capt b{color:var(--muted2);font-weight:700}
+
+/* 터미널 */
+.term{border:1px solid var(--line2);background:#fbfaf8;margin:13px 0}
+.term .th{background:var(--soft2);padding:5px 12px;font-size:10.5px;color:var(--muted2);
+  border-bottom:1px solid var(--line2);letter-spacing:.04em;font-weight:700;
+  font-family:'Consolas',monospace;display:flex;justify-content:space-between}
+.term .tb2{padding:11px 13px;font-family:'Consolas','JetBrains Mono',monospace;
+  font-size:11px;line-height:1.8;color:var(--ink2);white-space:pre-wrap}
+.term .p{color:var(--accent);font-weight:700}
+.term .c{color:var(--ink);font-weight:700}
+.term .g{color:var(--pa)}
+.term .d{color:var(--muted)}
+
+/* 폴더 트리 */
+.tree{font-family:'Consolas','JetBrains Mono',monospace;font-size:11px;line-height:1.85;
+  color:var(--ink2);background:var(--soft);border:1px solid var(--line);
+  padding:11px 14px;margin:13px 0;white-space:pre;overflow:hidden}
+.tree b{color:var(--accent);font-weight:700}
+.tree u{text-decoration:none;color:var(--px)}
+.tree i{font-style:normal;color:var(--muted)}
+.ba .tree{margin:0;border:none;background:none;padding:0;font-size:10.5px;line-height:1.8}
+
+/* HEX 뷰어 */
+.hex{border:1px solid var(--line2);margin:13px 0;background:#fff;font-family:'Consolas',monospace}
+.hex .hh{background:var(--soft);border-bottom:1px solid var(--line);padding:5px 12px;
+  font-size:10px;color:var(--muted2);letter-spacing:.06em;font-weight:700;display:flex;justify-content:space-between}
+.hex .hr{display:flex;gap:14px;padding:4px 12px;font-size:11px;border-bottom:1px solid #f2f0ec}
+.hex .hr:last-child{border-bottom:none}
+.hex .of{color:var(--muted);flex:0 0 52px}
+.hex .by{flex:1;color:var(--ink2);letter-spacing:.06em}
+.hex .by b{color:var(--accent);background:var(--accent-soft);padding:1px 2px;font-weight:700}
+.hex .as{flex:0 0 90px;color:var(--muted2);border-left:1px solid var(--line);padding-left:12px}
+.hex .as b{color:var(--accent);font-weight:700}
+
+/* JSON 뷰어 */
+.jsonv{border:1px solid var(--line2);margin:13px 0;background:#fff}
+.jsonv .jh{background:var(--soft);border-bottom:1px solid var(--line);padding:5px 12px;
+  font-size:10.5px;color:var(--muted2);font-weight:700;font-family:'Consolas',monospace;
+  display:flex;justify-content:space-between}
+.jsonv .jb{padding:11px 14px;font-family:'Consolas','JetBrains Mono',monospace;
+  font-size:11.5px;line-height:1.9;white-space:pre;color:var(--muted2)}
+.jk{color:var(--pv);font-weight:700}
+.jv{color:var(--pa);font-weight:700}
+.jnum{color:var(--accent);font-weight:700}
+.jp{color:var(--muted)}
+.jmark{background:#fff7ed;outline:1px solid var(--pnb)}
+
+/* 브라우저 목업 */
+.bw{border:1px solid var(--line2);margin:13px 0;background:#fff}
+.bw .bt{background:var(--soft2);padding:6px 11px;display:flex;gap:8px;align-items:center;
+  font-size:10.5px;font-family:'Consolas',monospace;color:var(--muted2);border-bottom:1px solid var(--line2)}
+.bw .bt .dots{display:flex;gap:4px}
+.bw .bt .dots i{width:8px;height:8px;border-radius:50%;border:1px solid var(--line2);background:#fff;display:block}
+.bw .bt .url{flex:1;background:#fff;border:1px solid var(--line);border-radius:11px;padding:3px 10px;color:var(--ink2)}
+.bw .bc{padding:16px 18px}
+.appttl{font-size:15px;font-weight:800;margin-bottom:2px}
+.appsub{font-size:11px;color:var(--muted);margin-bottom:12px}
+.fld{border:1px solid var(--line2);border-radius:4px;padding:8px 11px;background:#fff;
+  display:flex;justify-content:space-between;align-items:center;
+  font-family:'Consolas',monospace;font-size:12.5px;color:var(--ink);margin:6px 0}
+.fld .u{color:var(--muted);font-size:11px}
+.flbl{font-size:10.5px;font-weight:700;color:var(--muted2);letter-spacing:.04em;margin-top:9px}
+.btn{display:inline-block;border:1.5px solid var(--accent);color:var(--accent);background:var(--accent-soft);
+  border-radius:4px;padding:7px 18px;font-size:12px;font-weight:700;margin-top:11px}
+.res{border:1px solid var(--line);border-radius:4px;margin-top:12px}
+.res .rr{display:flex;justify-content:space-between;padding:8px 12px;border-bottom:1px solid var(--line);font-size:12.5px}
+.res .rr:last-child{border-bottom:none}
+.res .rr .k{color:var(--muted2);font-weight:700}
+.res .rr .v{font-family:'Consolas',monospace;font-weight:700;color:var(--ink)}
+.res .rr.hi{background:var(--accent-soft)}
+.res .rr.hi .v{color:var(--accent)}
+.stamp{font-size:10.5px;color:var(--muted);margin-top:9px;font-family:'Consolas',monospace}
+
+/* URL 분해 */
+.urlx{border:1px solid var(--line2);background:var(--soft);padding:13px 15px;margin:13px 0}
+.urlx .u1{font-family:'Consolas',monospace;font-size:13px;line-height:2.2;word-break:break-all}
+.urlx .u1 span{padding:2px 3px;border-bottom:2.5px solid}
+.urlx .s1{border-color:var(--pv);color:var(--pv)}
+.urlx .s2{border-color:var(--accent);color:var(--accent)}
+.urlx .s3{border-color:var(--pa);color:var(--pa)}
+.urlx .s4{border-color:var(--pd);color:var(--pd)}
+.urlx .lg{margin-top:11px;display:grid;grid-template-columns:repeat(2,1fr);gap:6px 16px}
+.urlx .lg div{font-size:11.5px;color:var(--muted2);display:flex;gap:8px;align-items:baseline}
+.urlx .lg b{flex:0 0 78px;font-family:'Consolas',monospace;font-size:11px}
+
+/* 다이어그램 */
+.dia{border:1px solid var(--line);background:#fff;padding:12px;margin:13px 0}
+.dia svg{display:block;width:100%;height:auto}
+
+/* 체크리스트 */
+.chk{margin:11px 0}
+.chk li{padding-left:26px;font-size:12.5px;margin:7px 0}
+.chk li::before{content:"";position:absolute;left:2px;top:4px;width:13px;height:13px;
+  border:1.5px solid var(--muted2);border-radius:2px;background:#fff}
+.kbd{display:inline-block;border:1px solid var(--line2);border-bottom:2px solid var(--line2);
+  border-radius:4px;padding:1px 8px;font-family:'Consolas',monospace;font-size:11.5px;
+  background:var(--soft);font-weight:700;color:var(--ink);margin:0 1px}
+
+/* 확인 문제 */
+.qa{border:1px solid var(--line2);border-top:2.5px solid var(--ink);padding:12px 15px;margin-top:18px;background:#fff}
+.qa .ql{font-size:10.5px;font-weight:700;letter-spacing:.09em;color:var(--accent);margin-bottom:6px}
+.qa ol{counter-reset:q;margin:0}
+.qa ol li{counter-increment:q;padding-left:22px;font-size:12.5px;margin:7px 0;color:var(--ink2)}
+.qa ol li::before{content:counter(q) ".";position:absolute;left:2px;top:0;font-weight:700;color:var(--muted2);font-size:12px}
+.qa .blank{display:inline-block;border-bottom:1px solid var(--line2);min-width:90px;height:14px;margin:0 3px}
+
+/* 표지 · 간지 (검정 배경 제거 → 테두리 프레임) */
+.cover{padding:12mm;display:flex}
+.cover .fr{flex:1;border:2px solid var(--ink);padding:5px;display:flex}
+.cover .fr2{flex:1;border:1px solid var(--line2);padding:14mm 13mm 10mm;display:flex;flex-direction:column}
+.cover .ck{font-size:11px;font-weight:700;letter-spacing:.16em;color:var(--accent);
+  display:flex;align-items:center;gap:11px}
+.cover .ck::after{content:"";flex:1;height:1px;background:var(--line2)}
+.cover h1{font-size:40px;line-height:1.18;margin:18px 0 12px;letter-spacing:-.03em}
+.cover .cs{font-size:14.5px;color:var(--muted2);line-height:1.7;max-width:88%}
+.cover .cs b{color:var(--ink);font-weight:700}
+.hero{margin:24px 0 0;border:1px solid var(--line2);background:var(--soft);padding:17px 19px}
+.hero .hl{font-size:10.5px;letter-spacing:.1em;color:var(--accent);font-weight:700;margin-bottom:9px}
+.hero .hs{font-size:15.5px;color:var(--ink);font-weight:500;line-height:1.6}
+.hero .hs b{font-weight:800}
+.hero .hd{margin:14px 0 11px;height:1px;background:var(--line2)}
+.hero .hrow{display:flex;align-items:baseline;gap:12px;padding:4px 0}
+.hero .hk{flex:0 0 54px;font-size:10.5px;font-weight:700;color:var(--accent);text-align:right}
+.hero .hv{flex:1;font-size:12.5px;color:var(--ink2)}
+.cover .crow{margin-top:20px;display:flex;border-top:1px solid var(--line2);border-bottom:1px solid var(--line2)}
+.cover .ci{flex:1;padding:13px 0;border-right:1px solid var(--line2)}
+.cover .ci:last-child{border-right:none;padding-left:20px}
+.cover .ci:first-child{padding-right:20px}
+.cover .ci .cl{font-size:10px;letter-spacing:.09em;color:var(--muted);font-weight:700}
+.cover .ci .cv{font-size:12.5px;margin-top:5px;color:var(--ink2);line-height:1.5}
+.cover .ci .cv b{color:var(--accent);font-weight:700}
+.cover .toc{margin-top:auto}
+.cover .toc .th{font-size:10.5px;font-weight:700;letter-spacing:.11em;color:var(--accent);margin-bottom:2px}
+.toc-list{list-style:none;padding:0;margin:0}
+.toc-list li{display:flex;align-items:baseline;gap:14px;padding:8px 0;
+  border-bottom:1px solid var(--line);font-size:13px;color:var(--ink2);margin:0;padding-left:0}
+.toc-list li::before{display:none}
+.toc-list li .ti{font-family:'Consolas',monospace;font-size:11px;color:var(--accent);flex:0 0 34px;font-weight:700}
+.toc-list li .tt{flex:1}
+.toc-list li .tg{font-size:10.5px;color:var(--muted);font-family:'Consolas',monospace}
+.cover .sig{margin-top:16px;display:flex;justify-content:space-between;align-items:baseline;
+  border-top:2px solid var(--ink);padding-top:9px}
+.cover .sig .n{font-size:12px;color:var(--ink);font-weight:700}
+.cover .sig .n span{color:var(--muted);font-family:'Consolas',monospace;font-size:10.5px;margin-left:7px;font-weight:400}
+.cover .sig .b{font-size:10.5px;color:var(--muted);letter-spacing:.07em}
+
+.divider{padding:12mm;display:flex}
+.divider .fr{flex:1;border:2px solid var(--ink);padding:5px;display:flex}
+.divider .fr2{flex:1;border:1px solid var(--line2);padding:26mm 18mm;display:flex;flex-direction:column;justify-content:center}
+.divider .part{color:var(--accent);font-size:12px;font-weight:800;letter-spacing:.16em;
+  display:flex;align-items:center;gap:12px}
+.divider .part::after{content:"";flex:1;height:1px;background:var(--line2)}
+.divider h1{font-size:42px;margin:16px 0 12px;line-height:1.18}
+.divider p{font-size:14.5px;color:var(--muted2);max-width:84%;line-height:1.75}
+.divider .route{margin-top:24px;border-top:1px solid var(--line2);padding-top:14px;
+  line-height:2.1;color:var(--muted2);font-size:12.5px}
+.divider .route b{color:var(--accent);font-family:'Consolas',monospace;font-size:11.5px}
+.divider .goal{margin-top:20px;border:1px solid var(--line2);background:var(--soft);padding:14px 16px}
+.divider .goal .gl{font-size:10.5px;font-weight:700;letter-spacing:.09em;color:var(--accent);margin-bottom:6px}
+.divider .goal ul{margin:0}
+.divider .goal li{font-size:12.5px;margin:5px 0}
+
+.pagenum{position:absolute;bottom:9mm;right:18mm;font-size:10.5px;color:var(--muted);
+  font-family:'Consolas',monospace}
+.brand{position:absolute;bottom:9mm;left:18mm;font-size:9px;color:var(--muted);letter-spacing:.03em}
+.brand b{color:var(--muted2);font-weight:500}
+
+@media print{
+  .page{overflow:hidden}
+}
+.page{overflow:hidden}
+
+
+/* ── 작업 관리자 목업 ── */
+.tm{display:flex}
+.tm .nav{flex:0 0 116px;border-right:1px solid var(--line);padding:6px 0;background:var(--soft)}
+.tm .nav div{font-size:10.5px;padding:5px 11px;color:var(--muted2)}
+.tm .nav div.on{background:#fff;color:var(--ink);font-weight:700;border-left:2px solid var(--accent)}
+.tm .bd{flex:1;min-width:0}
+.tm table{margin:0}
+.tm .hdr{display:flex;justify-content:space-between;padding:7px 12px;border-bottom:1px solid var(--line);
+  font-size:11.5px;font-weight:700;color:var(--ink)}
+.tm .hdr span{font-size:10.5px;color:var(--muted);font-weight:400}
+
+/* ── 간지 배경 ── */
+.page.divider .fr{background:var(--soft2)}
+.page.divider .fr2{background:#fff}
+.page.divider .part{background:var(--accent);color:#fff;display:inline-block;
+  padding:4px 12px;border-radius:2px;letter-spacing:.08em}
+
+/* ── 코드 목업 ── */
+.code{border:1px solid var(--line2);margin:13px 0;background:#fff}
+.code .ch2{background:var(--soft);border-bottom:1px solid var(--line);padding:5px 12px;
+  font-family:'Consolas',monospace;font-size:10.5px;color:var(--muted2);font-weight:700;
+  display:flex;justify-content:space-between}
+.code .cb2{padding:11px 14px;font-family:'Consolas','JetBrains Mono',monospace;
+  font-size:11.5px;line-height:1.85;white-space:pre;color:var(--ink2);overflow:hidden}
+.tag{color:var(--pv);font-weight:700}
+.att{color:var(--pd)}
+.str{color:var(--pa)}
+.cmt{color:var(--muted)}
+.fn{color:var(--accent);font-weight:700}
+.hl2{background:#fff7ed;outline:1px solid var(--pnb)}
+
+/* ── GitHub 화면 목업 ── */
+.gh{border:1px solid var(--line2);margin:13px 0;background:#fff}
+.gh .ghh{background:var(--soft2);border-bottom:1px solid var(--line2);padding:6px 12px;
+  font-size:11px;color:var(--muted2);font-weight:700;display:flex;justify-content:space-between}
+.gh .repo{padding:8px 12px;border-bottom:1px solid var(--line);font-size:12.5px;font-weight:700;color:var(--ink)}
+.gh .repo span{color:var(--muted);font-weight:400;font-size:11px;margin-left:8px}
+.gh .row2{display:flex;gap:10px;padding:6px 12px;border-bottom:1px solid #f4f2ef;font-size:11.5px;align-items:baseline}
+.gh .row2 .ic2{flex:0 0 16px;color:var(--muted);font-family:'Consolas',monospace;font-size:10px}
+.gh .row2 .nm{flex:0 0 34%;font-family:'Consolas',monospace;color:var(--pv)}
+.gh .row2 .msg2{flex:1;color:var(--muted2)}
+.gh .row2 .tm2{flex:0 0 62px;text-align:right;color:var(--muted);font-size:10.5px}
+/* 잔디 */
+.grass{display:flex;gap:3px;flex-wrap:wrap;margin:10px 0;max-width:100%}
+.grass i{width:11px;height:11px;border:1px solid var(--line);background:var(--soft);display:block;border-radius:2px}
+.grass i.l1{background:#f7ddcb;border-color:var(--pnb)}
+.grass i.l2{background:#eeb489;border-color:var(--pnb)}
+.grass i.l3{background:var(--accent);border-color:var(--accent)}
+
+/* ── 작업 진행 표시 ── */
+.chat .wk{font-size:10px;color:var(--muted);font-family:'Consolas',monospace;margin:0 0 5px}
+.chat .bub .ok{color:var(--pa);font-weight:700}
+.chat .bub .no{color:var(--px);font-weight:700}
+.chat .bub code{font-size:11px}
+/* ── 속성창 목업 ── */
+.props{border:1px solid var(--line2);margin:13px 0;background:#fff;max-width:72%}
+.props .ph2{background:var(--soft2);border-bottom:1px solid var(--line2);padding:6px 12px;
+  font-size:11px;font-weight:700;color:var(--muted2)}
+.props .tabs{display:flex;gap:0;border-bottom:1px solid var(--line);font-size:10.5px}
+.props .tabs span{padding:5px 12px;color:var(--muted);border-right:1px solid var(--line)}
+.props .tabs span.on{background:#fff;color:var(--ink);font-weight:700;border-bottom:2px solid var(--accent)}
+.props .pr{display:flex;padding:6px 14px;border-bottom:1px solid #f2f0ec;font-size:11.5px}
+.props .pr b{flex:0 0 84px;color:var(--muted2);font-weight:700}
+.props .pr span{flex:1;color:var(--ink2);font-family:'Consolas',monospace;font-size:11px}
+/* ── 슬래시 명령 목록 ── */
+.slash{border:1px solid var(--line2);margin:13px 0;background:#fff}
+.slash .sh{background:var(--soft);border-bottom:1px solid var(--line);padding:5px 12px;
+  font-size:10.5px;font-weight:700;color:var(--muted2);font-family:'Consolas',monospace;
+  display:flex;justify-content:space-between}
+.slash .sr{display:flex;gap:12px;padding:6px 14px;border-bottom:1px solid #f4f2ef;font-size:11.5px;align-items:baseline}
+.slash .sr:last-child{border-bottom:none}
+.slash .sc2{flex:0 0 92px;font-family:'Consolas',monospace;font-weight:700;color:var(--accent)}
+.slash .sd2{flex:1;color:var(--ink2)}
+
+/* ── 결과 이미지 예시 ── */
+.shots{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:13px 0}
+.shots.one{grid-template-columns:1fr}
+.shots figure{margin:0}
+.shots img{width:100%;display:block;border:1px solid var(--line2);border-radius:3px}
+.shots figcaption{font-size:10.5px;color:var(--muted2);margin-top:5px;font-family:'Consolas',monospace}
+.shots figcaption b{color:var(--accent)}
+
+/* ── 토크나이저 비교 ── */
+.tok{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);
+  border:1px solid var(--line);margin:13px 0}
+.tok>div{background:#fff;padding:12px 14px}
+.tok .tkh{font-size:9.5px;font-weight:700;letter-spacing:.07em;color:var(--muted);margin-bottom:6px}
+.tok .in{border:1px solid var(--line2);border-radius:4px;padding:9px 11px;font-size:14px;
+  font-family:'Consolas',monospace;background:var(--soft);color:var(--ink)}
+.tok .in i{font-style:normal;color:var(--muted);font-size:11px}
+.tok .nums{display:flex;gap:26px;margin-top:11px}
+.tok .nl{font-size:9.5px;font-weight:700;letter-spacing:.06em;color:var(--muted)}
+.tok .n{font-size:21px;font-weight:800;font-family:'Consolas',monospace;line-height:1.2;color:var(--ink)}
+.tok .n.acc{color:var(--accent)}
+.tok .ids{margin-top:10px;font-family:'Consolas',monospace;font-size:11px;color:var(--muted2);
+  background:var(--soft);border:1px solid var(--line);padding:6px 9px;border-radius:3px}
+
+/* ── 목차 ── */
+.tocx{margin:2px 0 0}
+.tocx .g{font-size:11px;font-weight:700;letter-spacing:.08em;color:var(--accent);
+  margin:14px 0 4px;padding-bottom:5px;border-bottom:1.5px solid var(--ink);
+  display:flex;justify-content:space-between;align-items:baseline}
+.tocx .g em{font-style:normal;color:var(--muted);font-weight:400;letter-spacing:0;font-size:11px}
+.tocx .it{display:flex;gap:12px;align-items:baseline;padding:6px 0;border-bottom:1px solid var(--line)}
+.tocx .no{flex:0 0 30px;font-family:'Consolas',monospace;font-size:11.5px;font-weight:700;color:var(--accent)}
+.tocx .tt{flex:1}
+.tocx .tt b{font-size:13px;font-weight:700;color:var(--ink);display:block;line-height:1.4}
+.tocx .tt span{font-size:11.5px;color:var(--muted2);display:block;margin-top:1px;line-height:1.5}
+.tocx .pgn{flex:0 0 24px;text-align:right;font-family:'Consolas',monospace;font-size:11.5px;color:var(--muted2)}
+.tocinfo{margin-top:16px;border:1px solid var(--line2);background:var(--soft);padding:12px 15px}
+.tocinfo .til{font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--accent);margin-bottom:6px}
+.tocinfo .row{display:flex;gap:10px;font-size:11.5px;color:var(--ink2);padding:3px 0;align-items:baseline}
+.tocinfo .row b{flex:0 0 88px;color:var(--ink)}
+
+/* ── 난이도 배지 ── */
+.lv{display:inline-block;font-size:9.5px;font-weight:700;border:1px solid;border-radius:10px;
+  padding:1px 8px;letter-spacing:.03em;line-height:1.6;white-space:nowrap}
+.lv1{color:var(--pv);border-color:var(--pvb);background:var(--pvs)}
+.lv2{color:var(--muted2);border-color:var(--line2);background:var(--soft)}
+.lv3{color:var(--accent);border-color:var(--pnb);background:var(--pns)}
+.lvrow{display:flex;gap:8px;align-items:center;margin:10px 0 4px}
+
+/* ── 난이도 보조 상자 ── */
+.tier{border:1px solid var(--line2);border-radius:4px;padding:11px 14px;margin:12px 0}
+.tier .tl{font-size:10px;font-weight:700;letter-spacing:.06em;margin-bottom:5px;
+  display:flex;gap:8px;align-items:center}
+.tier p{margin:0;font-size:12.5px}
+.tier ul{margin:4px 0 0}
+.tier li{font-size:12.5px;margin:5px 0}
+.tier.b{background:var(--soft)}
+.tier.b .tl{color:var(--muted2)}
+.tier.a{background:#fff;border-style:dashed}
+.tier.a .tl{color:var(--accent)}
+.tier .say{margin:8px 0 0}
+
+/* ── 자동화 회로 ── */
+.auto{border:1px solid var(--line2);border-left:3px solid var(--accent);background:var(--soft);
+  padding:10px 14px;margin:14px 0}
+.auto .al{font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--accent);margin-bottom:6px}
+.auto .ar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.auto .ar span{font-size:12px;color:var(--ink2);background:#fff;border:1px solid var(--line2);
+  border-radius:3px;padding:5px 9px}
+.auto .ar span b{color:var(--accent);font-weight:700;margin-right:5px}
+.auto .ar i{font-style:normal;color:var(--accent);font-weight:900}
+
+/* ── AI 낚시 찾기 ── */
+.trap{border:1.5px dashed var(--line2);border-radius:4px;padding:12px 15px;margin:14px 0;background:#fff}
+.trap .trl{font-size:10.5px;font-weight:700;letter-spacing:.06em;color:var(--px);margin-bottom:7px}
+.trap .fake{border:1px solid var(--line);border-left:2.5px solid var(--line2);background:var(--soft);
+  padding:10px 12px;font-size:12.5px;line-height:1.7;color:var(--ink2)}
+.trap .ask{font-size:12px;color:var(--muted2);margin-top:8px}
+.trap .ask b{color:var(--ink)}
+
+/* ── 메모 영역 (여백 활용) ── */
+.memo{margin-top:26px;border-top:1px solid var(--line);padding-top:9px}
+.memo .ml{font-size:9.5px;font-weight:700;letter-spacing:.12em;color:var(--muted);margin-bottom:8px}
+.memo .line{height:25px;border-bottom:1px dotted var(--line2)}
+
+/* ── 채팅 목업 ── */
+.chat{border:1px solid var(--line2);margin:13px 0;background:#fff}
+.chat .ch{background:var(--soft);border-bottom:1px solid var(--line);padding:6px 12px;
+  font-size:10.5px;font-weight:700;color:var(--muted2);display:flex;justify-content:space-between;
+  font-family:'Consolas',monospace}
+.chat .cb{padding:12px 13px}
+.msg{margin:8px 0;display:flex;gap:10px;align-items:flex-start}
+.msg .av{flex:0 0 44px;font-size:9.5px;font-weight:700;letter-spacing:.05em;color:var(--muted);
+  text-align:right;padding-top:9px}
+.msg .bub{flex:1;border:1px solid var(--line);border-radius:5px;padding:9px 12px;
+  font-size:12px;line-height:1.7;color:var(--ink2);background:#fff}
+.msg.u .bub{background:var(--soft);border-color:var(--line2)}
+.msg.a .bub{border-left:2.5px solid var(--accent)}
+.msg .bub b{color:var(--ink)}
+.msg .bub .tbl{margin-top:6px;font-family:'Consolas',monospace;font-size:10.5px;
+  color:var(--muted2);line-height:1.7;white-space:pre}
+
+/* ── 스펙 카드 ── */
+.stat{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);
+  border:1px solid var(--line);margin:13px 0}
+.stat>div{background:#fff;padding:11px 12px}
+.stat .sl2{font-size:9.5px;font-weight:700;color:var(--accent);letter-spacing:.07em}
+.stat .sv{font-size:14px;font-weight:800;margin-top:3px;font-family:'Consolas',monospace;line-height:1.3}
+.stat .sd{font-size:10px;color:var(--muted);margin-top:3px;line-height:1.5}
+
+/* ── 좌우 2단 ── */
+.split{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:13px 0}
+.split h3{margin-top:0}
+
+
+/* ── v3 추가 ── */
+.term .e{color:var(--px);font-weight:700}
+.term .y{color:var(--pd)}
+.term .b{color:var(--pv);font-weight:700}
+.term.host{background:#f6f8fe}
+.term.host .th{background:var(--pvs);color:var(--pv);border-bottom-color:var(--pvb)}
+.term.root .th{background:var(--pxs);color:var(--px);border-bottom-color:var(--pxb)}
+.term.dev .th{background:var(--pas);color:var(--pa);border-bottom-color:var(--pab)}
+.rh .l .sec{color:var(--ink);margin-left:2px}
+
+/* 로드맵 */
+.road{display:grid;grid-template-columns:repeat(5,1fr);gap:0;border:1.5px solid var(--ink);margin:16px 0}
+.road>div{padding:12px 11px;border-right:1px solid var(--line2);position:relative}
+.road>div:last-child{border-right:none}
+.road .rk{font-family:'Consolas',monospace;font-size:20px;font-weight:900;color:var(--accent);line-height:1}
+.road .rt{font-size:13.5px;font-weight:800;margin:6px 0 4px}
+.road .rq{font-size:11px;color:var(--muted2);line-height:1.55}
+.road .rc{font-family:'Consolas',monospace;font-size:10px;color:var(--ink2);margin-top:7px;line-height:1.6;
+  border-top:1px dashed var(--line2);padding-top:6px}
+
+/* ls -l 해부 */
+.anat{border:1px solid var(--line2);background:#fff;margin:13px 0;overflow:hidden}
+.anat .ah{background:var(--soft);border-bottom:1px solid var(--line);padding:5px 12px;font-size:10.5px;
+  font-weight:700;color:var(--muted2);font-family:'Consolas',monospace}
+.anat .row{display:flex;padding:12px 10px 4px;gap:0;font-family:'Consolas',monospace;font-size:14px}
+.anat .seg{padding:3px 6px;border-bottom:3px solid;margin-right:6px;white-space:pre;font-weight:700}
+.anat .lab{display:flex;padding:0 10px 12px;gap:0}
+.anat .lab div{font-size:10.5px;line-height:1.35;color:var(--muted2);margin-right:6px}
+.anat .lab b{display:block;font-size:10px;color:var(--ink)}
+.s1{border-color:var(--px);color:var(--px)}
+.s2{border-color:var(--accent);color:var(--accent)}
+.s3{border-color:var(--muted);color:var(--muted2)}
+.s4{border-color:var(--pv);color:var(--pv)}
+.s5{border-color:var(--pa);color:var(--pa)}
+.s6{border-color:var(--line2);color:var(--ink2)}
+.s7{border-color:var(--pd);color:var(--pd)}
+.s8{border-color:var(--ink);color:var(--ink)}
+
+/* 권한 비트 */
+.bits{display:grid;grid-template-columns:44px repeat(9,1fr);border:1.5px solid var(--ink);margin:14px 0;
+  font-family:'Consolas',monospace;text-align:center}
+.bits>div{padding:8px 0;border-right:1px solid var(--line2);font-size:17px;font-weight:800}
+.bits>div:last-child{border-right:none}
+.bits .ty{background:var(--pxs);color:var(--px)}
+.bits .u{background:var(--pns);color:var(--pn)}
+.bits .g{background:var(--pas);color:var(--pa)}
+.bits .o{background:var(--pvs);color:var(--pv)}
+.bits .cap{font-size:10px;font-weight:700;padding:5px 0;border-top:1px solid var(--line2);font-family:'Noto Sans KR',sans-serif}
+.bits .sp3{grid-column:span 3}
+
+/* O / X 표 */
+td.ok,td.no,td.mid{text-align:center;font-weight:800;font-family:'Consolas',monospace}
+td.ok{color:var(--pa)!important}
+td.no{color:var(--px)!important}
+td.mid{color:var(--pd)!important}
+th.c{text-align:center}
+
+/* 서버 구성도 */
+.topo{display:grid;grid-template-columns:1fr 1.25fr 1fr;gap:14px;margin:14px 0;align-items:stretch}
+.topo .box{border:1.5px solid var(--ink);background:#fff}
+.topo .box .bh{padding:6px 10px;font-size:11px;font-weight:800;border-bottom:1px solid var(--line2);background:var(--soft);
+  font-family:'Consolas',monospace;display:flex;justify-content:space-between}
+.topo .box .bh span{font-weight:400;color:var(--muted)}
+.topo .box .bb{padding:9px 10px;font-size:11px;line-height:1.7;color:var(--ink2)}
+.topo .box .bb code{font-size:10.5px}
+.topo .box.h{border-color:var(--pv)} .topo .box.h .bh{background:var(--pvs);color:var(--pv)}
+.topo .acct{display:block;border:1px solid var(--line2);border-radius:3px;padding:4px 7px;margin:5px 0;background:var(--soft)}
+.topo .acct b{color:var(--accent)}
+.arrowline{font-size:11px;color:var(--muted2);text-align:center;margin:-4px 0 10px;font-family:'Consolas',monospace}
+.arrowline b{color:var(--accent)}
+
+/* 8진수 */
+.oct{display:flex;gap:10px;margin:12px 0;align-items:stretch}
+.oct>div{flex:1;border:1px solid var(--line2);text-align:center;padding:10px 6px;background:#fff}
+.oct .ov{font-family:'Consolas',monospace;font-size:24px;font-weight:900;color:var(--accent)}
+.oct .ol{font-size:11px;color:var(--muted2);margin-top:2px}
+.oct .op{align-self:center;border:none;flex:0 0 14px;font-size:18px;font-weight:900;color:var(--muted);padding:0;background:none}
+
+.opener .big{font-family:'Consolas',monospace;font-size:120px;font-weight:900;line-height:.9;color:var(--accent);margin:18mm 0 6mm}
+.opener h1{font-size:34px;margin-bottom:12px}
+.opener .oq{border-top:1.5px solid var(--ink);border-bottom:1px solid var(--line2);margin:18px 0;padding:6px 0}
+.opener .oq div{display:flex;gap:14px;padding:8px 0;border-bottom:1px dotted var(--line2);font-size:14px}
+.opener .oq div:last-child{border-bottom:none}
+.opener .oq span{flex:0 0 26px;font-family:'Consolas',monospace;font-weight:900;color:var(--accent)}
+.opener .otoc{columns:2;column-gap:24px;margin-top:10px}
+.opener .otoc div{break-inside:avoid;display:flex;justify-content:space-between;font-size:12.5px;padding:5px 0;border-bottom:1px solid var(--line)}
+.opener .otoc b{font-family:'Consolas',monospace;color:var(--muted2)}
+.lvl{border:1px solid var(--line2);margin:11px 0;background:#fff}
+.lvl .lh{display:flex;align-items:center;gap:10px;padding:7px 13px;border-bottom:1px solid var(--line2);background:var(--soft)}
+.lvl .lh b{font-size:11px;font-weight:800;border:1px solid;border-radius:2px;padding:1px 8px}
+.lvl .lh span{font-size:12px;color:var(--muted2)}
+.lvl.l1 .lh b{color:var(--pa);border-color:var(--pab);background:var(--pas)}
+.lvl.l2 .lh b{color:var(--pv);border-color:var(--pvb);background:var(--pvs)}
+.lvl.l3 .lh b{color:var(--px);border-color:var(--pxb);background:var(--pxs)}
+.lvl ol{counter-reset:q;margin:0;padding:6px 13px 9px}
+.lvl ol li{counter-increment:q;padding-left:30px;margin:6px 0;font-size:12.5px}
+.lvl ol li::before{content:"Q" counter(q);position:absolute;left:0;top:1px;font-family:'Consolas',monospace;font-size:11px;font-weight:800;color:var(--muted)}
+.ans{border-top:1.5px dashed var(--line2);margin-top:14px;padding-top:8px;font-size:11px;color:var(--muted2);line-height:1.7}
+.ans b{color:var(--ink)}
+.ans .al{font-size:10px;font-weight:800;letter-spacing:.08em;color:var(--muted);margin-bottom:3px}
+
+tbody td:first-child b{white-space:nowrap}
+
+th.c{white-space:nowrap}
+
+.code .cb2{font-size:10px;line-height:1.5;padding:9px 12px}
+
+.lwhy{margin:0 0 10px;padding:7px 11px;background:var(--soft);border-left:3px solid var(--accent);font-size:11.8px;line-height:1.55;color:var(--ink2)}
+.lwhy b{color:var(--accent);margin-right:8px;font-size:11px}
+.opener.has-why .big{font-size:84px;margin:8mm 0 4mm}
+.oscene{margin:12px 0 4px;border:1.5px solid var(--accent);background:#fff}
+.oscene .osh{padding:5px 12px;font-size:10.5px;font-weight:800;color:#fff;background:var(--accent);letter-spacing:.08em}
+.oscene .osb{padding:10px 13px 6px;font-size:13px;line-height:1.75;color:var(--ink)}
+.oscene table{margin:4px 13px 12px;width:calc(100% - 26px)}
+.opener.has-why .oq{margin:12px 0}
+.opener.has-why .oq div{padding:6px 0;font-size:13px}
+
+table.quiz td.qn{width:26px;font-family:'Consolas',monospace;font-weight:800;color:var(--accent);text-align:center}
+table.quiz td.qb{width:96px;white-space:nowrap;color:var(--muted2);font-family:'Consolas',monospace}
+.inc{border:1.5px solid var(--ink);margin:10px 0;background:#fff}
+.inc .inh{display:flex;align-items:center;gap:10px;padding:7px 12px;background:var(--ink);color:#fff}
+.inc .inh b{font-size:14px;flex:1}
+.inc .inno{font-family:'Consolas',monospace;font-size:11px;font-weight:900;background:var(--accent);padding:2px 7px}
+.inc .inlv{font-size:10.5px;border:1px solid #fff;padding:1px 7px;border-radius:2px}
+.inc .inb{padding:6px 12px 10px}
+.inc .inrow{display:flex;gap:12px;padding:6px 0;border-bottom:1px dotted var(--line2);font-size:12px;line-height:1.6}
+.inc .inrow>span{flex:0 0 64px;font-size:10.5px;font-weight:800;color:var(--accent);padding-top:2px}
+.inc .inrow>div{flex:1}
+.inc .inrow.learn{border-bottom:none}
+.inc .inrow.learn>div{font-weight:700}
+.inc .term{margin:6px 0}
+
+table.cmdt{table-layout:fixed}
+table.cmdt th:nth-child(1){width:27%} table.cmdt th:nth-child(2){width:13%}
+table.cmdt th:nth-child(3){width:17%} table.cmdt th:nth-child(4){width:27%} table.cmdt th:nth-child(5){width:16%}
+table.cmdt td:first-child code{word-break:break-all}
+
+table.quiz th{white-space:nowrap}
+
+.msn{border:1.5px solid var(--ink);margin:10px 0;background:#fff;break-inside:avoid}
+.msn .mh{display:flex;align-items:center;gap:9px;padding:6px 11px;background:var(--soft);border-bottom:1px solid var(--line2)}
+.msn .mh b{flex:1;font-size:13.5px}
+.msn .mid{font-family:'Consolas',monospace;font-size:11.5px;font-weight:900;color:#fff;background:var(--ink);padding:2px 7px;border-radius:2px}
+.msn .mlv{font-size:10.5px;font-weight:800;border:1px solid;border-radius:2px;padding:1px 7px}
+.msn .mlv.l1{color:var(--pa);border-color:var(--pab);background:var(--pas)}
+.msn .mlv.l2{color:var(--pv);border-color:var(--pvb);background:var(--pvs)}
+.msn .mlv.l3{color:var(--px);border-color:var(--pxb);background:var(--pxs)}
+.msn .mlv.l4{color:#fff;border-color:var(--accent);background:var(--accent)}
+.msn .mtm{font-size:10.5px;color:var(--muted2);font-family:'Consolas',monospace}
+.msn .mb{padding:4px 11px 7px}
+.msn .mr{display:flex;gap:10px;padding:4px 0;border-bottom:1px dotted var(--line);font-size:11.8px;line-height:1.55}
+.msn .mr:last-child{border-bottom:none}
+.msn .mr>span{flex:0 0 34px;font-size:10.5px;font-weight:800;color:var(--accent);padding-top:1px}
+.msn .mr>div{flex:1}
+.msn .mr.ref>div{color:var(--muted2)}
+
+/* ── 간지(파트 표지): 배경색 ── */
+.page.opener{background:#1e2638 !important;color:#e9edf5;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.page.opener .rh{border-bottom-color:rgba(255,255,255,.22)}
+.page.opener .rh .l,.page.opener .rh .r{color:#b7c0d3}
+.page.opener .rh .l b{color:#ff9a6b}
+.page.opener .rh .pg{color:#fff;border-color:rgba(255,255,255,.5);background:transparent}
+.page.opener .big{color:#ff9a6b}
+.page.opener h1,.page.opener h1 *{color:#fff}
+.page.opener .kicker{color:#ff9a6b}
+.page.opener .oq{border-top-color:rgba(255,255,255,.7);border-bottom-color:rgba(255,255,255,.25)}
+.page.opener .oq div{border-bottom-color:rgba(255,255,255,.15);color:#e9edf5}
+.page.opener .oq span{color:#ff9a6b}
+.page.opener .otoc div.it{border-bottom-color:rgba(255,255,255,.14);color:#e9edf5}
+.page.opener .otoc b{color:#8f9bb3}
+.page.opener .otoc .och{break-after:avoid;break-inside:avoid;margin:9px 0 2px;font-size:11px;font-weight:800;color:#ff9a6b;letter-spacing:.04em}
+.page.opener .otoc .och:first-child{margin-top:0}
+.page.opener .brand,.page.opener .pagenum{color:#8f9bb3}
+.page.opener .oscene{border-color:#ff9a6b}
+.page.opener .oscene .osh{background:#ff9a6b;color:#1e2638}
+.page.opener .oscene .osb,.page.opener .oscene td,.page.opener .oscene th{color:var(--ink)}
+.opener .otoc div.it{break-inside:avoid;display:flex;justify-content:space-between;font-size:12.5px;padding:4px 0;border-bottom:1px solid var(--line)}
+
+/* ── 장 표시 ── */
+.rh .l .chip{margin-left:2px;padding:1px 7px;border-radius:2px;background:var(--soft);border:1px solid var(--line2);color:var(--ink2);font-weight:700}
+.chap{display:flex;align-items:baseline;gap:10px;margin:-6px 0 14px;padding:8px 14px;background:#1e2638;color:#fff;font-size:15px;font-weight:800;
+  -webkit-print-color-adjust:exact;print-color-adjust:exact;border-left:6px solid #ff9a6b}
+.chap b{font-size:18px;color:#ff9a6b}
+.chap span{font-size:11.5px;font-weight:500;color:#b7c0d3;margin-left:auto}
+
+.page.opener .otoc .och{display:block;border-bottom:none;padding:0}
+
+.page.opener .otoc{columns:2;column-gap:22px;margin-top:6px}
+.page.opener .otoc div.it{font-size:11.2px;padding:2px 0}
+.page.opener .otoc .och{margin:6px 0 1px;font-size:10.5px}
+.page.opener.has-why .oq div{padding:4px 0;font-size:12.5px}
+
+/* ── v5 글꼴 확대 (가독성) ── */
+h1{font-size:25px;line-height:1.35}
+h3{font-size:15.5px}
+.kicker{font-size:11.5px}
+table{font-size:13px}
+thead th{font-size:12px}
+th,td{padding:6px 10px;line-height:1.55}
+.term .tb2{font-size:12px;line-height:1.65}
+.term .th{font-size:11.5px}
+.code .cb2{font-size:11.6px;line-height:1.55}
+.code .ch2{font-size:11.5px}
+.steps>li{font-size:14px}
+.steps>li .ls{font-size:13px;line-height:1.6}
+.lab-head h3{font-size:15.5px}
+.lwhy{font-size:13px}
+.why p,.note,.warn{font-size:13.2px;line-height:1.65}
+.why b{font-size:13.5px}
+.point p{font-size:13.6px;line-height:1.65}
+.mission h3{font-size:14.8px}
+.mission .wy{font-size:13px}
+.deflist .dd{font-size:13.2px;line-height:1.6}
+.deflist .dt{font-size:14px}
+.flow span{font-size:12.3px}
+.tree{font-size:12.2px}
+.cell p{font-size:13px}
+.cell h4{font-size:15px}
+.msn .mr{font-size:13.2px}
+.msn .mh b{font-size:15px}
+.msn .mr>span{font-size:11.5px;flex-basis:38px}
+.inc .inrow{font-size:13.2px}
+.inc .inrow>span{font-size:11.5px}
+.inc .inh b{font-size:15px}
+.lvl ol li{font-size:13.2px}
+.ans{font-size:12.4px}
+.say .sc{font-size:12.4px}
+.anat .col .cp{font-size:11.2px}
+.oscene .osb{font-size:14px}
+.chap{font-size:16px}
+.rh .l,.rh .r{font-size:11.5px}
+.ba .m{font-size:13px}
+.topo .box .bb{font-size:12.4px}
+.road .rq{font-size:12px}
+table.cmdt{font-size:12.4px}
+
+.grid.g1{grid-template-columns:1fr}
+td.ok,td.mid,td.no{white-space:nowrap}
+.pbreak{height:0;margin:0}
+.calc{font-family:'Consolas',monospace;font-size:12px;line-height:1.8;color:var(--ink2);background:var(--soft);padding:10px 12px;border-radius:3px;margin:10px 0}
+.calc b{color:var(--accent)}
+.page.opener .otoc div.it span{flex:1}
+.cover .toc-list li{padding:3px 0}
+.split .term{margin:0}
+.code .cb2{font-size:10.3px;line-height:1.5;white-space:pre-wrap}
+.dia svg{max-height:220px}
+</style></head><body><section class="page cover"><div class="fr"><div class="fr2">
+<div class="ck">청년취업사관학교 동대문4기 · PYTHON for FastAPI → MCP · PART 2</div>
+<h1>백엔드 구조 설계 · Part 2<br>객체 · 검증 · 동시성</h1>
+<div class="cs">Part 1의 설계를 다시 결정한다 · FastAPI가 실제로 쓰는 재료들로<br><b>기업연계형 AI 서비스·클라우드 실무 과정</b></div>
+<div class="hero"><div class="hl">이 교안을 마치면</div><div class="hs">상태를 어디에 둘지, 검증을 어디서 할지, 기다리는 시간을 어떻게 쓸지 <b>직접 결정하고 구현</b>할 수 있습니다.</div><div class="hd"></div>
+<div class="hrow"><div class="hk">1장</div><div class="hv">전역 · 인자 · 클로저 · 인스턴스 중 무엇에 상태를 둘까</div></div>
+<div class="hrow"><div class="hk">2장</div><div class="hv">데코레이터 · 부모 클래스 · 조합 · 미들웨어 중 어디에 공통을 둘까</div></div>
+<div class="hrow"><div class="hk">3장</div><div class="hv">도구 안 · 호출 통로 · Pydantic 중 어디서 검증할까 (FastAPI와 같은 선택)</div></div>
+<div class="hrow"><div class="hk">4·5장</div><div class="hv">동기 · 스레드 · 비동기 중 무엇으로 · 미션 16개 · 평가 10문항</div></div></div>
+<div class="crow"><div class="ci"><div class="cl">선수</div><div class="cv"><b>Part 1</b> · 도구 레지스트리</div></div><div class="ci"><div class="cl">준비</div><div class="cv"><code>pip install pydantic</code></div></div><div class="ci"><div class="cl">실습 파일</div><div class="cv"><b>tool_lab2</b></div></div></div>
+<div class="toc" style="margin-top:auto;padding-top:12px"><div class="th">CONTENTS</div><ul class="toc-list"><li><span class="ti">00</span><span class="tt">무엇을 다시 설계하는가</span><span class="tg" data-toc="ch0">00</span></li><li><span class="ti">01</span><span class="tt">상태를 어디에 둘까</span><span class="tg" data-toc="ch1">04</span></li><li><span class="ti">02</span><span class="tt">반복되는 것을 어디에 둘까</span><span class="tg" data-toc="ch2">11</span></li><li><span class="ti">03</span><span class="tt">검증을 어디서 할까</span><span class="tg" data-toc="ch3">18</span></li><li><span class="ti">04</span><span class="tt">기다리는 시간을 어떻게 쓸까</span><span class="tg" data-toc="ch4">24</span></li><li><span class="ti">05</span><span class="tt">설계 정리와 미션</span><span class="tg" data-toc="ch5">30</span></li></ul></div>
+<div class="sig"><div class="n">부성순</div><div class="b">AI SERVICE · CLOUD PRACTICE</div></div></div></div></section>
+<section class="page" data-sec="0.1" data-title="0.1 무엇을 다시 설계하는가" data-ch="0"><div class="rh"><div class="l"><b>PYTHON · PART 2</b> · <span class="sec">시작하기</span></div><div class="r">0.1 무엇을 다시 설계하는가<span class="pg">02</span></div></div><div class="kicker">0 · 설계의 다음 단계</div><h1>전역 딕셔너리와<br><em>멈추는 함수</em>를 넘어</h1>
+<div class="why"><b>왜 배워야 하나?</b><p>Part 1에서 <strong>도구 레지스트리</strong>를 만들었습니다. 잘 돌아가지만 네 곳에서 결정을 미뤄 두었습니다. Part 2는 그 네 가지를 <strong>다시 결정하는</strong> 과정이고, 그 선택이 곧 <strong>FastAPI가 실제로 하는 선택</strong>과 같습니다.</p></div>
+<table class="zebra"><thead><tr><th style="width:36%">Part 1에서 미뤄 둔 결정</th><th style="width:30%">Part 2의 선택</th><th style="width:34%">FastAPI에서는</th></tr></thead><tbody><tr><td>상태를 <b>전역</b>에 두었다 · 두 벌을 만들 수 없다</td><td><b>인스턴스</b>에 둔다 (1장)</td><td><code>app = FastAPI()</code> · <code>APIRouter()</code></td></tr><tr><td>공통 동작이 <b>도구마다 반복</b></td><td><b>부모 클래스</b>에 둔다 (2장)</td><td>의존성 · 미들웨어로 공통 처리</td></tr><tr><td><b>검증을 하지 않았다</b> · 명세엔 integer인데 문자열이 들어온다</td><td><b>Pydantic</b>에 맡긴다 (3장)</td><td>요청 본문·쿼리 검증 · 422 응답</td></tr><tr><td>외부를 부르면 <b>그동안 멈춘다</b></td><td><b>비동기</b>로 바꾼다 (4장)</td><td><code>async def</code> 라우터가 기본</td></tr></tbody></table>
+<div class="note"><strong>MCP</strong>(Model Context Protocol)도 같은 구조를 씁니다. 도구 목록과 입력 스키마를 알려 주고 이름으로 호출받죠. <b>FastAPI는 사람·클라이언트에게, MCP는 모델에게</b> 노출한다는 차이만 있고, 지금 하는 결정들은 양쪽에서 그대로 쓰입니다.</div>
+<h3>Part 2가 끝나면</h3>
+<div class="code"><div class="ch2"><span>완성 후 실행</span><span>python3 main.py</span></div><div class="cb2">$ python3 main.py call region_detail '{"region":"서울","min_amount":"많이"}'
+{
+  "ok": false,
+  "error": "invalid_arguments",
+  "detail": [ { "field": "min_amount",
+                "msg": "Input should be a valid integer, unable to parse string as an integer" } ]
+}
+
+$ python3 main.py bench          # 0.5초짜리 두 개 + 집계 하나
+0.71초                            # 순차로 하면 1.0초가 넘는다</div></div>
+
+
+
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">02</div></section><section class="page" data-sec="0.1" data-title="0.1 무엇을 다시 설계하는가" data-ch="0" data-cont="1"><div class="rh"><div class="l"><b>PYTHON · PART 2</b> · <span class="sec">시작하기</span></div><div class="r">0.1 무엇을 다시 설계하는가 (계속)<span class="pg">03</span></div></div><div class="kicker">0 · 설계의 다음 단계</div><h1>전역 딕셔너리와<br><em>멈추는 함수</em>를 넘어</h1><table class="zebra"><thead><tr><th>바뀌는 것</th><th>Part 1</th><th>Part 2</th></tr></thead><tbody><tr><td>도구</td><td><code>@tool</code>을 붙인 <b>함수</b></td><td><code>BaseTool</code>을 물려받은 <b>클래스</b></td></tr><tr><td>레지스트리</td><td>전역 <code>REGISTRY</code> 딕셔너리</td><td><code>ToolRegistry</code> <b>인스턴스</b></td></tr><tr><td>명세</td><td><code>inspect</code>로 직접 추출</td><td><b>Pydantic 모델</b>에서 생성</td></tr><tr><td>검증</td><td>없음</td><td><b>자동</b> · 변환까지</td></tr><tr><td>호출</td><td>동기</td><td><code>await</code> · <b>동시 실행 가능</b></td></tr></tbody></table><div class="tree">tool_lab2/
+├── sales.csv
+├── main.py              4장 · async CLI
+└── tools/
+    ├── __init__.py
+    ├── loader.py        Part 1 그대로
+    ├── base.py          2 · 3장 · BaseTool
+    ├── registry.py      1장 · ToolRegistry
+    ├── sales_tools.py   2 · 3장 · 도구 클래스들
+    └── async_tools.py   4장 · async 도구</div><div class="note"><strong>준비</strong> 3장부터 Pydantic이 필요합니다. <code>pip install pydantic</code> 한 번만 하면 됩니다. 가상환경을 쓰신다면 그 안에서요.</div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">03</div></section>
+<section class="page opener has-why" data-ch="1"><div class="rh"><div class="l"><b>PYTHON · PART 2</b> · 1장</div><div class="r">상태를 어디에 둘까<span class="pg">04</span></div></div><div class="big">1</div><h1>상태를 어디에 둘까<br>전역 변수의 끝</h1><div class="oscene"><div class="osh">WHY · 현장 장면</div><div class="osb">Part 1의 레지스트리는 <b>전역 딕셔너리</b>였다. 두 벌을 만들 수 없고, 테스트할 때마다 비워야 한다. 상태를 가진 객체로 바꾸면 각자 자기 것을 갖는다.</div><table class="zebra osx"><thead><tr><th>이 장을 모르면</th><th>생기는 일</th></tr></thead><tbody><tr><td>클래스를 안 쓰면</td><td>상태를 전역에 두게 된다</td></tr><tr><td>속성 자리를 헷갈리면</td><td>공유되면 안 될 것이 공유된다</td></tr><tr><td>던더를 모르면</td><td>객체가 파이썬답지 않다</td></tr></tbody></table></div><div class="oq"><div><span>01</span>언제 클래스를 쓰는가?</div><div><span>02</span>클래스 속성과 인스턴스 속성은 무엇이 다른가?</div><div><span>03</span>레지스트리를 어떻게 객체로 바꾸는가?</div></div><div class="kicker">이 장의 구성</div><div class="otoc"><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">1.1</b>상태를 어디에 둘까</span><span class="pg2" data-sec="1.1">05</span></div><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">1.2</b>레지스트리를 객체로</span><span class="pg2" data-sec="1.2">08</span></div></div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">04</div></section>
+<section class="page" data-sec="1.1" data-title="1.1 상태를 어디에 둘까" data-ch="1"><div class="rh"><div class="l"><b>PYTHON · PART 2</b> · 1장 · <span class="sec">상태를 어디에 둘까</span></div><div class="r">1.1 상태를 어디에 둘까<span class="pg">05</span></div></div><div class="kicker">1.1 · 설계 결정 · 상태를 어디에</div><h1><em>상태</em>를 기억해야 할 때</h1>
+<div class="why"><b>왜 배워야 하나?</b><p>함수는 호출될 때마다 <strong>처음부터 시작</strong>합니다. 그런데 레지스트리는 “지금까지 등록된 도구”를, 도구는 “몇 번 불렸는지”를 기억해야 합니다. <strong>그 상태를 어디에 둘 것인가</strong>가 이 장의 결정입니다. 클래스는 선택지 중 하나이지 의무가 아닙니다.</p></div>
+<table class="zebra"><thead><tr><th style="width:26%">상태를 어디에 둘까</th><th style="width:26%">되는가</th><th style="width:48%">문제</th></tr></thead><tbody><tr><td><b>전역 변수</b></td><td>된다 (Part 1의 방식)</td><td>두 벌을 만들 수 없다 · 테스트가 서로 영향을 준다</td></tr><tr><td><b>인자로 들고 다니기</b></td><td>된다</td><td>모든 함수가 레지스트리를 인자로 받아야 한다</td></tr><tr><td><b>클로저에 가두기</b></td><td>된다</td><td>꺼내 볼 수 없고 메서드를 더하기 어렵다</td></tr><tr><td><b>클래스 인스턴스</b></td><td><b>우리의 선택</b></td><td>데이터와 동작이 함께 다니고, 여러 벌을 만들 수 있다</td></tr></tbody></table>
+<div class="code"><div class="ch2"><span>전역 변수로 하면</span><span>Part 1의 방식</span></div><div class="cb2"><span style="color:#86827b"> 1</span>  REGISTRY = {}                  # 전역 하나뿐
+<span style="color:#86827b"> 2</span>  
+<span style="color:#86827b"> 3</span>  def add(name, func):
+<span style="color:#86827b"> 4</span>      REGISTRY[name] = func
+<span style="color:#86827b"> 5</span>  
+<span style="color:#86827b"> 6</span>  # 개발용 · 운영용 두 벌을 만들려면? → 방법이 없다
+<span style="color:#86827b"> 7</span>  # 테스트할 때마다 REGISTRY를 비워야 한다 → 서로 영향을 준다
+</div></div>
+<div class="code"><div class="ch2"><span>클래스로 하면</span><span>각자 자기 것을 갖는다</span></div><div class="cb2"><span style="color:#86827b"> 1</span>  class ToolRegistry:
+<span style="color:#86827b"> 2</span>      def __init__(self, name: str = "default") -&gt; None:
+<span style="color:#86827b"> 3</span>          self.name = name
+<span style="color:#86827b"> 4</span>          self._tools = {}            # 인스턴스마다 따로
+<span style="color:#86827b"> 5</span>  
+<span style="color:#86827b"> 6</span>  dev = ToolRegistry("dev")
+<span style="color:#86827b"> 7</span>  prod = ToolRegistry("prod")        # 두 벌이 서로 모른다
+</div></div>
+
+
+
+
+
+
+
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">05</div></section><section class="page" data-sec="1.1" data-title="1.1 상태를 어디에 둘까" data-ch="1" data-cont="1"><div class="rh"><div class="l"><b>PYTHON · PART 2</b> · 1장 · <span class="sec">상태를 어디에 둘까</span></div><div class="r">1.1 상태를 어디에 둘까 (계속)<span class="pg">06</span></div></div><div class="kicker">1.1 · 설계 결정 · 상태를 어디에</div><h1><em>상태</em>를 기억해야 할 때</h1><table class="zebra"><thead><tr><th>용어</th><th>뜻</th><th>위 코드에서</th></tr></thead><tbody><tr><td><b>클래스</b></td><td>설계도</td><td><code>ToolRegistry</code></td></tr><tr><td><b>인스턴스</b></td><td>설계도로 만든 것</td><td><code>dev</code> · <code>prod</code></td></tr><tr><td><code>__init__</code></td><td>인스턴스를 <b>만들 때</b> 한 번 실행</td><td>이름과 빈 딕셔너리를 준비</td></tr><tr><td><code>self</code></td><td><b>그 인스턴스 자신</b></td><td><code>self._tools</code>는 그 인스턴스의 것</td></tr><tr><td><code>_tools</code>의 밑줄</td><td>“<b>바깥에서 직접 건드리지 말라</b>”는 관례 · 강제는 아니다</td><td></td></tr></tbody></table><div class="code"><div class="ch2"><span>두 벌을 만들어 보면</span><span>인스턴스는 서로 모른다</span></div><div class="cb2">&gt;&gt;&gt; a = ToolRegistry("a")
+&gt;&gt;&gt; b = ToolRegistry("b")
+&gt;&gt;&gt; a._tools["x"] = 1
+&gt;&gt;&gt; b._tools
+{}
+&gt;&gt;&gt; a is b, type(a) is type(b)
+(False, True)</div></div><div class="note">설계도는 하나인데 만들어진 것은 둘입니다. 전역 변수였다면 <code>a</code>에 넣은 것이 <code>b</code>에도 보였겠죠. 개발용·테스트용을 따로 두거나, 테스트마다 깨끗한 레지스트리를 쓰려면 이 성질이 필요합니다.</div><h3>깊이 · 클래스 속성과 인스턴스 속성</h3><div class="code"><div class="ch2"><span>두 자리의 차이</span><span>공유되는 것과 각자인 것</span></div><div class="cb2"><span style="color:#86827b"> 1</span>  class BaseTool:
+<span style="color:#86827b"> 2</span>      name: str = ""              # 클래스 속성 · 모든 인스턴스가 공유
+<span style="color:#86827b"> 3</span>      description: str = ""
+<span style="color:#86827b"> 4</span>  
+<span style="color:#86827b"> 5</span>      def __init__(self, *, verbose: bool = False) -&gt; None:
+<span style="color:#86827b"> 6</span>          self.verbose = verbose  # 인스턴스 속성 · 각자 다름
+<span style="color:#86827b"> 7</span>          self.call_count = 0
+</div></div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">06</div></section><section class="page" data-sec="1.1" data-title="1.1 상태를 어디에 둘까" data-ch="1" data-cont="1"><div class="rh"><div class="l"><b>PYTHON · PART 2</b> · 1장 · <span class="sec">상태를 어디에 둘까</span></div><div class="r">1.1 상태를 어디에 둘까 (계속)<span class="pg">07</span></div></div><div class="kicker">1.1 · 설계 결정 · 상태를 어디에</div><h1><em>상태</em>를 기억해야 할 때</h1><table class="zebra"><thead><tr><th>어디에 쓰나</th><th>클래스 속성</th><th>인스턴스 속성</th></tr></thead><tbody><tr><td>정의 위치</td><td><code>class</code> 바로 아래</td><td><code>__init__</code> 안의 <code>self.…</code></td></tr><tr><td>공유 여부</td><td><b>모든 인스턴스가 같은 값</b></td><td><b>인스턴스마다 다름</b></td></tr><tr><td>이 프로젝트에서</td><td><code>name</code> · <code>description</code> (도구 종류의 성질)</td><td><code>call_count</code> · <code>verbose</code> (그 인스턴스의 상태)</td></tr><tr><td>함정</td><td><b>리스트·딕셔너리를 클래스 속성으로</b> 두면 모든 인스턴스가 공유한다</td><td>—</td></tr></tbody></table><div class="warn">클래스 속성에 <code>items = []</code>를 두면 <b>한 인스턴스가 append한 것이 전부에 보입니다.</b> 2장 가변 기본 인자(Part 1)와 같은 함정입니다. 목록은 <code>__init__</code> 안에서 만드세요.</div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">07</div></section>
+<section class="page" data-sec="1.2" data-title="1.2 레지스트리를 객체로" data-ch="1"><div class="rh"><div class="l"><b>PYTHON · PART 2</b> · 1장 · <span class="sec">상태를 어디에 둘까</span></div><div class="r">1.2 레지스트리를 객체로<span class="pg">08</span></div></div><div class="kicker">1.2 · 설계 결정 · 레지스트리의 자리</div><h1>전역을<br><em>객체</em>로 바꾼다</h1>
+<div class="code"><div class="ch2"><span>tools/registry.py</span><span>Part 1의 REGISTRY를 대체한다</span></div><div class="cb2"><span style="color:#86827b"> 1</span>  from typing import Any
+<span style="color:#86827b"> 2</span>  
+<span style="color:#86827b"> 3</span>  from tools.base import BaseTool
+<span style="color:#86827b"> 4</span>  
+<span style="color:#86827b"> 5</span>  
+<span style="color:#86827b"> 6</span>  class ToolRegistry:
+<span style="color:#86827b"> 7</span>      """도구를 담고, 명세를 모으고, 이름으로 호출한다."""
+<span style="color:#86827b"> 8</span>  
+<span style="color:#86827b"> 9</span>      def __init__(self, name: str = "default") -&gt; None:
+<span style="color:#86827b">10</span>          self.name = name
+<span style="color:#86827b">11</span>          self._tools: dict[str, BaseTool] = {}
+<span style="color:#86827b">12</span>  
+<span style="color:#86827b">13</span>      def add(self, tool: BaseTool) -&gt; BaseTool:
+<span style="color:#86827b">14</span>          if tool.name in self._tools:
+<span style="color:#86827b">15</span>              raise ValueError(f"이미 있는 이름: {tool.name}")
+<span style="color:#86827b">16</span>          self._tools[tool.name] = tool
+<span style="color:#86827b">17</span>          return tool
+<span style="color:#86827b">18</span>  
+<span style="color:#86827b">19</span>      def list_tools(self) -&gt; list[dict]:
+<span style="color:#86827b">20</span>          return [t.schema() for t in self._tools.values()]
+<span style="color:#86827b">21</span>  
+<span style="color:#86827b">22</span>      async def call(self, name: str, arguments: dict | None = None) -&gt; Any:
+<span style="color:#86827b">23</span>          if name not in self._tools:
+<span style="color:#86827b">24</span>              raise KeyError(f"없는 도구: {name} (가능: {', '.join(self._tools)})")
+<span style="color:#86827b">25</span>          return await self._tools[name](**(arguments or {}))
+</div></div>
+<table class="zebra"><thead><tr><th>메서드</th><th>하는 일</th><th>Part 1에서는</th></tr></thead><tbody><tr><td><code>add</code></td><td>도구 등록 · <b>중복이면 오류</b></td><td>데코레이터가 몰래 덮어썼다</td></tr><tr><td><code>list_tools</code></td><td>명세 목록</td><td>전역 함수</td></tr><tr><td><code>call</code></td><td>이름으로 호출 · <code>await</code></td><td>동기 함수</td></tr></tbody></table>
+<h3>깊이 · 던더 메서드로 파이썬답게</h3>
+<div class="code"><div class="ch2"><span>추가하면 쓰기 편해진다</span><span>len() · in · print()가 동작한다</span></div><div class="cb2"><span style="color:#86827b"> 1</span>      def __len__(self) -&gt; int:
+<span style="color:#86827b"> 2</span>          return len(self._tools)
+<span style="color:#86827b"> 3</span>  
+<span style="color:#86827b"> 4</span>      def __contains__(self, name: str) -&gt; bool:
+<span style="color:#86827b"> 5</span>          return name in self._tools
+<span style="color:#86827b"> 6</span>  
+<span style="color:#86827b"> 7</span>      def __repr__(self) -&gt; str:
+<span style="color:#86827b"> 8</span>          return f"&lt;ToolRegistry {self.name!r} tools={list(self._tools)}&gt;"
+</div></div>
+
+
+
+
+
+
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">08</div></section><section class="page" data-sec="1.2" data-title="1.2 레지스트리를 객체로" data-ch="1" data-cont="1"><div class="rh"><div class="l"><b>PYTHON · PART 2</b> · 1장 · <span class="sec">상태를 어디에 둘까</span></div><div class="r">1.2 레지스트리를 객체로 (계속)<span class="pg">09</span></div></div><div class="kicker">1.2 · 설계 결정 · 레지스트리의 자리</div><h1>전역을<br><em>객체</em>로 바꾼다</h1><table class="zebra"><thead><tr><th>던더 메서드</th><th>이것을 쓰면</th><th>없으면</th></tr></thead><tbody><tr><td><code>__len__</code></td><td><code>len(registry)</code></td><td><code>len(registry._tools)</code></td></tr><tr><td><code>__contains__</code></td><td><code>"region_detail" in registry</code></td><td><code>… in registry._tools</code></td></tr><tr><td><code>__repr__</code></td><td><code>print(registry)</code>가 읽을 만하게</td><td><code>&lt;object at 0x7f…&gt;</code></td></tr><tr><td><code>__call__</code></td><td><b>인스턴스를 함수처럼</b> 호출 · 2장에서 쓴다</td><td>메서드 이름을 따로 불러야</td></tr></tbody></table><div class="code"><div class="ch2"><span>동작 확인</span><span>ToolRegistry</span></div><div class="cb2">&gt;&gt;&gt; r = ToolRegistry("main")
+&gt;&gt;&gt; len(r)
+0
+&gt;&gt;&gt; print(r)
+&lt;ToolRegistry main tools=[]&gt;
+&gt;&gt;&gt; r.add(SummarizeSales()); r.add(RegionDetail())
+&gt;&gt;&gt; len(r), "region_detail" in r
+(2, True)
+&gt;&gt;&gt; r.add(RegionDetail())
+ValueError: 이미 있는 이름: region_detail</div></div><div class="note">전역 딕셔너리였다면 같은 이름을 다시 등록해도 <b>조용히 덮어썼을</b> 것입니다. <code>add</code>에서 막아 두면 도구 이름이 겹치는 실수를 등록 시점에 잡습니다.</div><div style="display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:start;margin:10px 0;padding:9px 12px;border-left:3px solid #0e7490;background:#ecfeff;border-radius:0 4px 4px 0"><b style="font-size:10.5px;color:#0e7490;white-space:nowrap;letter-spacing:.04em">FastAPI에서</b><span style="font-size:11.5px;color:#164e63;line-height:1.55">FastAPI의 <code>app = FastAPI()</code>도 같은 구조입니다. 전역이 아니라 <b>인스턴스</b>라서 테스트용 앱을 따로 만들 수 있고, <code>APIRouter()</code>를 여러 개 만들어 합치는 것도 같은 이유입니다.</span></div><div style="margin:10px 0;padding:8px 10px;border:1px dashed #cfcbc4;border-radius:4px;background:#faf9f7"><div style="font-size:10.5px;font-weight:800;color:#86827b;margin-bottom:4px;letter-spacing:.04em">더 알아보려면 · 검색어</div><table style="width:100%;border-collapse:collapse"><tbody><tr><td style="padding:3px 8px;font-size:11px;width:52%">클래스 기초</td><td style="padding:3px 8px;font-size:11px;font-family:Consolas,monospace;color:#b23c0a">python class init self</td></tr><tr><td style="padding:3px 8px;font-size:11px;width:52%">인스턴스 vs 클래스 속성</td><td style="padding:3px 8px;font-size:11px;font-family:Consolas,monospace;color:#b23c0a">python class attribute vs instance attribute</td></tr><tr><td style="padding:3px 8px;font-size:11px;width:52%">던더 메서드</td><td style="padding:3px 8px;font-size:11px;font-family:Consolas,monospace;color:#b23c0a">python dunder methods</td></tr><tr><td style="padding:3px 8px;font-size:11px;width:52%">이름 앞 밑줄 관례</td><td style="padding:3px 8px;font-size:11px;font-family:Consolas,monospace;color:#b23c0a">python underscore naming convention</td></tr></tbody></table></div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">09</div></section><section class="page" data-sec="1.2" data-title="1.2 레지스트리를 객체로" data-ch="1" data-cont="1"><div class="rh"><div class="l"><b>PYTHON · PART 2</b> · 1장 · <span class="sec">상태를 어디에 둘까</span></div><div class="r">1.2 레지스트리를 객체로 (계속)<span class="pg">10</span></div></div><div class="kicker">1.2 · 설계 결정 · 레지스트리의 자리</div><h1>전역을<br><em>객체</em>로 바꾼다</h1><div class="mission"><b>미션 PY2-01</b><h3>레지스트리 전환</h3><div class="wy">① <code>ToolRegistry</code>를 작성하고 <code>__len__</code> · <code>__contains__</code> · <code>__repr__</code>를 붙인다<br>② 인스턴스 두 개를 만들어 <b>서로 영향이 없음</b>을 확인한다<br>③ 클래스 속성에 <code>items = []</code>를 둔 클래스를 만들어 <b>공유되는 것</b>을 재현하고, <code>__init__</code>으로 옮겨 고친다<br><b>검증</b> 중복 등록 시 ValueError · 두 인스턴스의 목록이 서로 다를 것</div></div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">10</div></section>
+<section class="page opener has-why" data-ch="2"><div class="rh"><div class="l"><b>PYTHON · PART 2</b> · 2장</div><div class="r">반복되는 것을 어디에 둘까<span class="pg">11</span></div></div><div class="big">2</div><h1>반복되는 것을 어디에 둘까<br>공통 동작의 자리</h1><div class="oscene"><div class="osh">WHY · 현장 장면</div><div class="osb">도구마다 시간 측정·오류 포장을 반복하면 도구가 늘수록 같은 코드가 늘어난다. 공통을 <code>BaseTool</code>에 두고 자식은 <code>run</code>만 구현한다.</div><table class="zebra osx"><thead><tr><th>이 장을 모르면</th><th>생기는 일</th></tr></thead><tbody><tr><td>상속을 모르면</td><td>같은 코드를 열 번 쓴다</td></tr><tr><td>super를 빼면</td><td>부모가 준비한 것이 없어 터진다</td></tr><tr><td>깊게 쌓으면</td><td>어느 메서드가 도는지 모른다</td></tr></tbody></table></div><div class="oq"><div><span>01</span>공통 동작을 어떻게 한 곳에 모으는가?</div><div><span>02</span>부모 동작에 덧붙이려면?</div><div><span>03</span>구현을 강제하는 방법은?</div></div><div class="kicker">이 장의 구성</div><div class="otoc"><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">2.1</b>반복되는 것을 어디에</span><span class="pg2" data-sec="2.1">12</span></div><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">2.2</b>부모 것을 쓰면서 바꾸기</span><span class="pg2" data-sec="2.2">15</span></div></div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">11</div></section>
+<section class="page" data-sec="2.1" data-title="2.1 반복되는 것을 어디에 둘까" data-ch="2"><div class="rh"><div class="l"><b>PYTHON · PART 2</b> · 2장 · <span class="sec">반복되는 것을 어디에 둘까</span></div><div class="r">2.1 반복되는 것을 어디에 둘까<span class="pg">12</span></div></div><div class="kicker">2.1 · 설계 결정 · 공통을 어디에</div><h1>반복되는 것을<br><em>한 곳</em>에</h1>
+<div class="why"><b>왜 배워야 하나?</b><p>도구마다 호출 횟수를 세고, 시간을 재고, 오류를 포장하는 코드를 쓰면 <strong>도구가 늘수록 같은 코드가 늘어납니다.</strong> 이 공통 부분을 어디에 둘지 정합니다. 상속은 그중 한 방법입니다.</p></div>
+<table class="zebra"><thead><tr><th style="width:20%">공통 동작을 어디에</th><th style="width:38%">어떻게</th><th style="width:42%">언제 적합한가</th></tr></thead><tbody><tr><td><b>데코레이터</b></td><td><code>@timed</code>처럼 감싼다</td><td>Part 1의 방식 · 함수에 붙일 때 좋다</td></tr><tr><td><b>부모 클래스</b></td><td><code>BaseTool</code>을 물려받는다</td><td><b>우리의 선택</b> · 상태와 공통 동작을 함께 줄 때</td></tr><tr><td><b>조합(위임)</b></td><td>도구가 <code>Runner</code> 객체를 속성으로 가진다</td><td>동작을 바꿔 끼워야 할 때</td></tr><tr><td><b>미들웨어</b></td><td>호출 통로에서 한 번에 처리</td><td>레지스트리 쪽에 두는 방법 · 더 큰 시스템에서</td></tr></tbody></table>
+
+
+
+
+
+
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">12</div></section><section class="page" data-sec="2.1" data-title="2.1 반복되는 것을 어디에 둘까" data-ch="2" data-cont="1"><div class="rh"><div class="l"><b>PYTHON · PART 2</b> · 2장 · <span class="sec">반복되는 것을 어디에 둘까</span></div><div class="r">2.1 반복되는 것을 어디에 둘까 (계속)<span class="pg">13</span></div></div><div class="kicker">2.1 · 설계 결정 · 공통을 어디에</div><h1>반복되는 것을<br><em>한 곳</em>에</h1><div class="code"><div class="ch2"><span>tools/base.py</span><span>모든 도구의 부모</span></div><div class="cb2"><span style="color:#86827b"> 1</span>  import time
+<span style="color:#86827b"> 2</span>  from typing import Any
+<span style="color:#86827b"> 3</span>  
+<span style="color:#86827b"> 4</span>  
+<span style="color:#86827b"> 5</span>  class BaseTool:
+<span style="color:#86827b"> 6</span>      """도구의 뼈대. run()을 자식이 구현한다."""
+<span style="color:#86827b"> 7</span>  
+<span style="color:#86827b"> 8</span>      name: str = ""
+<span style="color:#86827b"> 9</span>      description: str = ""
+<span style="color:#86827b">10</span>  
+<span style="color:#86827b">11</span>      def __init__(self, *, verbose: bool = False) -&gt; None:
+<span style="color:#86827b">12</span>          self.verbose = verbose
+<span style="color:#86827b">13</span>          self.call_count = 0
+<span style="color:#86827b">14</span>  
+<span style="color:#86827b">15</span>      def run(self, **kwargs: Any) -&gt; dict:
+<span style="color:#86827b">16</span>          """실제 동작 · 자식이 반드시 구현한다."""
+<span style="color:#86827b">17</span>          raise NotImplementedError(f"{type(self).__name__}.run()을 구현하세요")
+<span style="color:#86827b">18</span>  
+<span style="color:#86827b">19</span>      def __call__(self, **kwargs: Any) -&gt; dict:
+<span style="color:#86827b">20</span>          """공통 처리 : 횟수 · 시간 · 오류 포장"""
+<span style="color:#86827b">21</span>          self.call_count += 1
+<span style="color:#86827b">22</span>          started = time.perf_counter()
+<span style="color:#86827b">23</span>          try:
+<span style="color:#86827b">24</span>              result = self.run(**kwargs)
+<span style="color:#86827b">25</span>          except Exception as exc:
+<span style="color:#86827b">26</span>              return {"ok": False, "error": f"{type(exc).__name__}: {exc}"}
+<span style="color:#86827b">27</span>          elapsed = round((time.perf_counter() - started) * 1000, 1)
+<span style="color:#86827b">28</span>          if self.verbose:
+<span style="color:#86827b">29</span>              print(f"[{self.name}] {elapsed}ms (누적 {self.call_count}회)")
+<span style="color:#86827b">30</span>          return {"ok": True, "elapsed_ms": elapsed, "result": result}
+<span style="color:#86827b">31</span>  
+<span style="color:#86827b">32</span>      def __repr__(self) -&gt; str:
+<span style="color:#86827b">33</span>          return f"&lt;{type(self).__name__} name={self.name!r} calls={self.call_count}&gt;"
+</div></div><table class="zebra"><thead><tr><th>설계</th><th>이유</th></tr></thead><tbody><tr><td><b><code>run()</code>은 자식이</b></td><td>도구마다 다른 일 · 부모는 <code>NotImplementedError</code>로 <b>구현을 강제</b></td></tr><tr><td><b><code>__call__</code>은 부모가</b></td><td>모든 도구에 공통 · 자식은 신경 쓰지 않는다</td></tr><tr><td><code>type(self).__name__</code></td><td><b>실제 자식 클래스 이름</b>이 나온다 · 오류 메시지가 친절해진다</td></tr><tr><td><code>{"ok": …}</code> 포장</td><td>성공·실패를 <b>같은 모양</b>으로 · 호출자가 분기하기 쉽다</td></tr></tbody></table><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">13</div></section><section class="page" data-sec="2.1" data-title="2.1 반복되는 것을 어디에 둘까" data-ch="2" data-cont="1"><div class="rh"><div class="l"><b>PYTHON · PART 2</b> · 2장 · <span class="sec">반복되는 것을 어디에 둘까</span></div><div class="r">2.1 반복되는 것을 어디에 둘까 (계속)<span class="pg">14</span></div></div><div class="kicker">2.1 · 설계 결정 · 공통을 어디에</div><h1>반복되는 것을<br><em>한 곳</em>에</h1><div class="code"><div class="ch2"><span>tools/sales_tools.py</span><span>자식은 run만 쓴다</span></div><div class="cb2"><span style="color:#86827b"> 1</span>  from tools.base import BaseTool
+<span style="color:#86827b"> 2</span>  from tools.loader import load_rows
+<span style="color:#86827b"> 3</span>  
+<span style="color:#86827b"> 4</span>  
+<span style="color:#86827b"> 5</span>  class RegionDetail(BaseTool):
+<span style="color:#86827b"> 6</span>      name = "region_detail"
+<span style="color:#86827b"> 7</span>      description = "한 지역의 거래를 돌려준다. min_amount 이상만 포함한다."
+<span style="color:#86827b"> 8</span>  
+<span style="color:#86827b"> 9</span>      def run(self, region: str, min_amount: int = 0) -&gt; dict:
+<span style="color:#86827b">10</span>          rows = [r for r in load_rows()
+<span style="color:#86827b">11</span>                  if r["region"] == region and r["amount"] &gt;= min_amount]
+<span style="color:#86827b">12</span>          return {"region": region, "count": len(rows),
+<span style="color:#86827b">13</span>                  "total": sum(r["amount"] for r in rows)}
+</div></div><div class="code"><div class="ch2"><span>상속 확인</span><span>BaseTool을 물려받은 도구</span></div><div class="cb2">&gt;&gt;&gt; t = RegionDetail(verbose=True)
+&gt;&gt;&gt; t(region="서울")
+[region_detail] 0.2ms (누적 1회)
+{'ok': True, 'elapsed_ms': 0.2, 'result': {'region': '서울', 'count': 6, ...}}
+
+&gt;&gt;&gt; t(region="부산"); print(t)
+&lt;RegionDetail name='region_detail' calls=2&gt;
+
+&gt;&gt;&gt; t()                      # 필수 인자 없이
+{'ok': False, 'error': "TypeError: RegionDetail.run() missing 1 required
+                        positional argument: 'region'"}
+
+&gt;&gt;&gt; class Broken(BaseTool): name = "broken"
+&gt;&gt;&gt; Broken()()
+{'ok': False, 'error': 'NotImplementedError: Broken.run()을 구현하세요'}</div></div><div class="note">도구가 던진 예외를 부모의 <code>__call__</code>이 잡아 <b>같은 모양의 실패 응답</b>으로 바꿉니다. 자식은 <code>run</code>만 쓰고, 횟수·시간·오류 포장은 신경 쓰지 않습니다.</div><div class="point"><div class="pl">무엇이 좋아졌나</div><p>도구를 하나 더 만들 때 <strong>쓰는 코드는 <code>run</code>뿐</strong>입니다. 시간 측정·오류 포장·호출 횟수는 부모가 이미 합니다. 도구가 열 개가 되어도 그 코드는 한 벌입니다.</p></div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">14</div></section>
+<section class="page" data-sec="2.2" data-title="2.2 부모 것을 쓰면서 바꾸기" data-ch="2"><div class="rh"><div class="l"><b>PYTHON · PART 2</b> · 2장 · <span class="sec">반복되는 것을 어디에 둘까</span></div><div class="r">2.2 부모 것을 쓰면서 바꾸기<span class="pg">15</span></div></div><div class="kicker">2.2 · 파이썬이 주는 것 · super와 오버라이드</div><h1>부모 것을 쓰면서<br><em>조금만</em> 바꾸기</h1>
+<div class="code"><div class="ch2"><span>부모 동작에 덧붙이기</span><span>super()로 부모를 부른다</span></div><div class="cb2"><span style="color:#86827b"> 1</span>  class CachedTool(BaseTool):
+<span style="color:#86827b"> 2</span>      """같은 인자로 다시 부르면 저장해 둔 결과를 돌려준다."""
+<span style="color:#86827b"> 3</span>  
+<span style="color:#86827b"> 4</span>      def __init__(self, *, verbose: bool = False) -&gt; None:
+<span style="color:#86827b"> 5</span>          super().__init__(verbose=verbose)     # 부모의 __init__ 실행
+<span style="color:#86827b"> 6</span>          self._cache: dict[str, dict] = {}     # 자식만의 상태 추가
+<span style="color:#86827b"> 7</span>  
+<span style="color:#86827b"> 8</span>      def __call__(self, **kwargs) -&gt; dict:
+<span style="color:#86827b"> 9</span>          key = str(sorted(kwargs.items()))
+<span style="color:#86827b">10</span>          if key in self._cache:
+<span style="color:#86827b">11</span>              return {**self._cache[key], "cached": True}
+<span style="color:#86827b">12</span>          result = super().__call__(**kwargs)   # 부모의 공통 처리 실행
+<span style="color:#86827b">13</span>          if result["ok"]:
+<span style="color:#86827b">14</span>              self._cache[key] = result
+<span style="color:#86827b">15</span>          return result
+</div></div>
+<table class="zebra"><thead><tr><th>쓰임</th><th>설명</th></tr></thead><tbody><tr><td><code>super().__init__(...)</code></td><td>부모의 초기화를 <b>반드시</b> 호출 · 빼면 <code>call_count</code>가 없어 터진다</td></tr><tr><td><code>super().__call__(...)</code></td><td>부모 동작을 <b>그대로 쓰고</b> 앞뒤에 내 일을 더한다</td></tr><tr><td><b>오버라이드</b></td><td>같은 이름의 메서드를 자식이 다시 정의 · <code>run</code>이 대표적</td></tr><tr><td><code>{**a, "b": 1}</code></td><td>딕셔너리를 펼쳐 <b>새 딕셔너리</b>를 만든다 · 원본을 안 건드린다</td></tr></tbody></table>
+<div class="code"><div class="ch2"><span>super를 빼면</span><span>부모가 준비한 것이 없다</span></div><div class="cb2"># CachedTool.__init__ 에서 super().__init__(...) 을 지우고 호출하면
+
+AttributeError: CachedTool object has no attribute call_count</div></div>
+<div class="note">부모의 <code>__init__</code>이 <code>call_count</code>와 <code>verbose</code>를 준비합니다. 자식이 <code>__init__</code>을 다시 정의하면서 <code>super()</code>를 부르지 않으면 그 준비가 건너뛰어집니다.</div>
+
+
+
+
+
+
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">15</div></section><section class="page" data-sec="2.2" data-title="2.2 부모 것을 쓰면서 바꾸기" data-ch="2" data-cont="1"><div class="rh"><div class="l"><b>PYTHON · PART 2</b> · 2장 · <span class="sec">반복되는 것을 어디에 둘까</span></div><div class="r">2.2 부모 것을 쓰면서 바꾸기 (계속)<span class="pg">16</span></div></div><div class="kicker">2.2 · 파이썬이 주는 것 · super와 오버라이드</div><h1>부모 것을 쓰면서<br><em>조금만</em> 바꾸기</h1><h3>깊이 · 상속 구조를 어디까지</h3><table class="zebra"><thead><tr><th>방법</th><th>언제</th><th>주의</th></tr></thead><tbody><tr><td><b>단일 상속</b></td><td>거의 모든 경우</td><td>가장 읽기 쉽다</td></tr><tr><td><b>믹스인</b></td><td>여러 클래스에 <b>같은 기능 한 조각</b>을 더할 때</td><td><code>class Tool(LoggingMixin, BaseTool)</code></td></tr><tr><td><b>다중 상속</b></td><td>꼭 필요할 때만</td><td><b>MRO</b>(호출 순서)를 알아야 한다 · <code>Cls.__mro__</code></td></tr><tr><td><b>추상 클래스</b></td><td>구현을 <b>강제</b>하고 싶을 때</td><td><code>abc.ABC</code> + <code>@abstractmethod</code> · 인스턴스 생성 자체가 막힌다</td></tr></tbody></table><div class="code"><div class="ch2"><span>구현 강제를 더 엄격하게</span><span>NotImplementedError 대신 ABC</span></div><div class="cb2"><span style="color:#86827b"> 1</span>  from abc import ABC, abstractmethod
+<span style="color:#86827b"> 2</span>  
+<span style="color:#86827b"> 3</span>  class BaseTool(ABC):
+<span style="color:#86827b"> 4</span>      @abstractmethod
+<span style="color:#86827b"> 5</span>      def run(self, **kwargs) -&gt; dict: ...
+<span style="color:#86827b"> 6</span>  
+<span style="color:#86827b"> 7</span>  # Broken(BaseTool) 에 run이 없으면
+<span style="color:#86827b"> 8</span>  # → 호출이 아니라 인스턴스를 만들 때 바로 TypeError
+</div></div><div class="warn"><b>상속을 깊게 쌓지 마세요.</b> 세 단계를 넘어가면 어느 부모의 메서드가 실행되는지 추적하기 어려워집니다. “공통 동작이 정말 같은가”를 먼저 보고, 애매하면 <b>상속 대신 조합</b>(다른 객체를 속성으로 가지기)을 쓰는 편이 낫습니다.</div><div style="margin:10px 0;padding:8px 10px;border:1px dashed #cfcbc4;border-radius:4px;background:#faf9f7"><div style="font-size:10.5px;font-weight:800;color:#86827b;margin-bottom:4px;letter-spacing:.04em">더 알아보려면 · 검색어</div><table style="width:100%;border-collapse:collapse"><tbody><tr><td style="padding:3px 8px;font-size:11px;width:52%">super 동작</td><td style="padding:3px 8px;font-size:11px;font-family:Consolas,monospace;color:#b23c0a">python super explained</td></tr><tr><td style="padding:3px 8px;font-size:11px;width:52%">추상 클래스</td><td style="padding:3px 8px;font-size:11px;font-family:Consolas,monospace;color:#b23c0a">python abc abstractmethod</td></tr><tr><td style="padding:3px 8px;font-size:11px;width:52%">메서드 결정 순서</td><td style="padding:3px 8px;font-size:11px;font-family:Consolas,monospace;color:#b23c0a">python mro explained</td></tr><tr><td style="padding:3px 8px;font-size:11px;width:52%">상속 vs 조합</td><td style="padding:3px 8px;font-size:11px;font-family:Consolas,monospace;color:#b23c0a">composition over inheritance python</td></tr></tbody></table></div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">16</div></section><section class="page" data-sec="2.2" data-title="2.2 부모 것을 쓰면서 바꾸기" data-ch="2" data-cont="1"><div class="rh"><div class="l"><b>PYTHON · PART 2</b> · 2장 · <span class="sec">반복되는 것을 어디에 둘까</span></div><div class="r">2.2 부모 것을 쓰면서 바꾸기 (계속)<span class="pg">17</span></div></div><div class="kicker">2.2 · 파이썬이 주는 것 · super와 오버라이드</div><h1>부모 것을 쓰면서<br><em>조금만</em> 바꾸기</h1><div class="mission"><b>미션 PY2-02</b><h3>부모와 자식</h3><div class="wy">① <code>BaseTool</code>을 작성하고 도구 두 개를 자식으로 만든다<br>② <code>run</code>이 없는 자식을 만들어 <b>NotImplementedError</b>를 확인한다<br>③ <code>CachedTool</code>을 만들어 같은 인자로 두 번 부르면 <code>cached: True</code>가 나오게 한다<br>④ <code>super().__init__</code>을 지웠을 때의 오류를 기록한다<br><b>검증</b> 두 번째 호출이 <code>cached</code> · <code>call_count</code>는 1에 머무를 것</div></div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">17</div></section>
+<section class="page opener has-why" data-ch="3"><div class="rh"><div class="l"><b>PYTHON · PART 2</b> · 3장</div><div class="r">검증을 어디서 할까<span class="pg">18</span></div></div><div class="big">3</div><h1>검증을 어디서 할까<br>도구 안인가 통로인가</h1><div class="oscene"><div class="osh">WHY · 현장 장면</div><div class="osb">Part 1에서는 명세에 integer라고 적어 두고도 문자열이 그대로 들어왔다. Pydantic 모델을 상속해 선언하면 <b>검증·변환·명세</b>를 한 번에 얻는다.</div><table class="zebra osx"><thead><tr><th>이 장을 모르면</th><th>생기는 일</th></tr></thead><tbody><tr><td>검증이 없으면</td><td>도구 안에서 터진다</td></tr><tr><td>직접 짜면</td><td>도구마다 반복되고 빠뜨린다</td></tr><tr><td>명세를 따로 쓰면</td><td>실제 동작과 어긋난다</td></tr></tbody></table></div><div class="oq"><div><span>01</span>Pydantic은 무엇을 해 주는가?</div><div><span>02</span>제약은 어떻게 거는가?</div><div><span>03</span>실패를 어떻게 응답으로 돌려주는가?</div></div><div class="kicker">이 장의 구성</div><div class="otoc"><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">3.1</b>검증을 누가 할까</span><span class="pg2" data-sec="3.1">19</span></div><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">3.2</b>검증을 호출 통로에</span><span class="pg2" data-sec="3.2">21</span></div></div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">18</div></section>
+<section class="page" data-sec="3.1" data-title="3.1 검증을 누가 할까" data-ch="3"><div class="rh"><div class="l"><b>PYTHON · PART 2</b> · 3장 · <span class="sec">검증을 어디서 할까</span></div><div class="r">3.1 검증을 누가 할까<span class="pg">19</span></div></div><div class="kicker">3.1 · 파이썬이 주는 것 · Pydantic</div><h1>타입을 적으면<br><em>검사까지</em> 해 준다</h1>
+<div class="why"><b>왜 배워야 하나?</b><p>Part 1 마지막에서 <code>{"min_amount": "많이"}</code>를 넣어도 아무도 막지 않았습니다. <strong>검증을 누가, 어디서 할 것인가</strong>를 정합니다.</p></div>
+<table class="zebra"><thead><tr><th style="width:24%">검증을 누가</th><th style="width:38%">방식</th><th style="width:38%">문제 또는 이점</th></tr></thead><tbody><tr><td><b>도구 안에서 직접</b></td><td><code>if not isinstance(x, int): …</code></td><td>도구마다 반복되고 빠뜨린다</td></tr><tr><td><b>호출 통로에서 수동</b></td><td>스키마를 보고 직접 검사</td><td>스키마 해석 코드를 내가 유지해야 한다</td></tr><tr><td><b>Pydantic 모델</b></td><td>타입을 선언하면 알아서</td><td><b>우리의 선택</b> · 검증·변환·명세가 한 곳에서 나온다</td></tr><tr><td><b>검증하지 않음</b></td><td>—</td><td>Part 1의 상태 · 도구 안에서 터진다</td></tr></tbody></table>
+<div class="code"><div class="ch2"><span>입력 모델 정의</span><span>BaseModel을 물려받는다</span></div><div class="cb2"><span style="color:#86827b"> 1</span>  from pydantic import BaseModel, Field
+<span style="color:#86827b"> 2</span>  
+<span style="color:#86827b"> 3</span>  
+<span style="color:#86827b"> 4</span>  class RegionArgs(BaseModel):
+<span style="color:#86827b"> 5</span>      region: str = Field(description="지역 이름 · 서울 · 부산 · 대구")
+<span style="color:#86827b"> 6</span>      min_amount: int = Field(0, ge=0, description="이 금액 이상만 포함")
+</div></div>
+<div class="code"><div class="ch2"><span>검증 동작</span><span>RegionArgs로 확인</span></div><div class="cb2">&gt;&gt;&gt; RegionArgs(region="서울", min_amount=100)
+region='서울' min_amount=100
+
+&gt;&gt;&gt; RegionArgs(region="서울", min_amount="1000000")      # 문자열이 int로 변환된다
+region='서울' min_amount=1000000
+
+&gt;&gt;&gt; RegionArgs(region="서울", min_amount="많이")
+ValidationError: Input should be a valid integer, unable to parse string as an integer
+
+&gt;&gt;&gt; RegionArgs(min_amount=5)
+ValidationError: region · Field required
+
+&gt;&gt;&gt; RegionArgs(region="서울", min_amount=-1)
+ValidationError: Input should be greater than or equal to 0
+
+&gt;&gt;&gt; RegionArgs(region="서울").model_dump()
+{'region': '서울', 'min_amount': 0}</div></div>
+
+
+
+
+
+
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">19</div></section><section class="page" data-sec="3.1" data-title="3.1 검증을 누가 할까" data-ch="3" data-cont="1"><div class="rh"><div class="l"><b>PYTHON · PART 2</b> · 3장 · <span class="sec">검증을 어디서 할까</span></div><div class="r">3.1 검증을 누가 할까 (계속)<span class="pg">20</span></div></div><div class="kicker">3.1 · 파이썬이 주는 것 · Pydantic</div><h1>타입을 적으면<br><em>검사까지</em> 해 준다</h1><div class="note"><b>변환과 거부가 함께</b> 일어납니다. <code>"1000000"</code>처럼 숫자로 읽을 수 있는 문자열은 int로 바꿔 주고, <code>"많이"</code>는 거부합니다. HTTP 요청이나 JSON으로 들어오는 값은 모두 문자열이라 이 변환이 특히 유용합니다.</div><table class="zebra"><thead><tr><th>Field 옵션</th><th>뜻</th><th>예</th></tr></thead><tbody><tr><td>첫 번째 값</td><td><b>기본값</b> · 없으면 필수</td><td><code>Field(0, …)</code></td></tr><tr><td><code>description</code></td><td>명세에 들어갈 설명 · <b>모델이 읽는다</b></td><td><code>description="지역 이름"</code></td></tr><tr><td><code>ge</code> · <code>le</code></td><td>이상 · 이하</td><td><code>ge=1, le=10</code></td></tr><tr><td><code>gt</code> · <code>lt</code></td><td>초과 · 미만</td><td>—</td></tr><tr><td><code>min_length</code> · <code>max_length</code></td><td>문자열·리스트 길이</td><td><code>min_length=1</code></td></tr><tr><td><code>pattern</code></td><td>정규식</td><td><code>pattern=r"^\\d{4}-\\d{2}$"</code></td></tr></tbody></table><h3>깊이 · 오류를 다루는 법</h3><div class="code"><div class="ch2"><span>ValidationError 꺼내 쓰기</span><span>사람이 읽을 수 있게 바꾼다</span></div><div class="cb2"><span style="color:#86827b"> 1</span>  from pydantic import ValidationError
+<span style="color:#86827b"> 2</span>  
+<span style="color:#86827b"> 3</span>  try:
+<span style="color:#86827b"> 4</span>      RegionArgs(region="서울", min_amount="많이")
+<span style="color:#86827b"> 5</span>  except ValidationError as exc:
+<span style="color:#86827b"> 6</span>      for e in exc.errors():
+<span style="color:#86827b"> 7</span>          print(e["loc"], e["type"], e["msg"])
+<span style="color:#86827b"> 8</span>  # ('min_amount',) int_parsing Input should be a valid integer, …
+</div></div><table class="zebra"><thead><tr><th>errors()의 키</th><th>내용</th></tr></thead><tbody><tr><td><code>loc</code></td><td>문제가 생긴 <b>필드 경로</b> · 중첩이면 튜플이 길어진다</td></tr><tr><td><code>type</code></td><td>오류 종류 · <code>int_parsing</code> · <code>missing</code> · <code>greater_than_equal</code></td></tr><tr><td><code>msg</code></td><td>사람이 읽을 메시지</td></tr><tr><td><code>input</code></td><td>들어온 값</td></tr></tbody></table><div style="display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:start;margin:10px 0;padding:9px 12px;border-left:3px solid #0e7490;background:#ecfeff;border-radius:0 4px 4px 0"><b style="font-size:10.5px;color:#0e7490;white-space:nowrap;letter-spacing:.04em">FastAPI에서</b><span style="font-size:11.5px;color:#164e63;line-height:1.55">FastAPI가 요청 본문을 검증하는 방식이 바로 이것입니다. <code>def create(item: Item)</code>라고 쓰면 Pydantic이 검증하고, 실패하면 <b>422 응답</b>에 지금 본 <code>errors()</code> 구조가 그대로 담깁니다.</span></div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">20</div></section>
+<section class="page" data-sec="3.2" data-title="3.2 검증을 호출 통로에 끼우기" data-ch="3"><div class="rh"><div class="l"><b>PYTHON · PART 2</b> · 3장 · <span class="sec">검증을 어디서 할까</span></div><div class="r">3.2 검증을 호출 통로에 끼우기<span class="pg">21</span></div></div><div class="kicker">3.2 · 설계 결정 · 검증을 어디서</div><h1>부모가<br><em>검증까지</em> 맡는다</h1>
+<div class="code"><div class="ch2"><span>tools/base.py (보강)</span><span>Args 모델이 있으면 검증한다</span></div><div class="cb2"><span style="color:#86827b"> 1</span>  from pydantic import BaseModel, ValidationError
+<span style="color:#86827b"> 2</span>  
+<span style="color:#86827b"> 3</span>  
+<span style="color:#86827b"> 4</span>  class BaseTool:
+<span style="color:#86827b"> 5</span>      name: str = ""
+<span style="color:#86827b"> 6</span>      description: str = ""
+<span style="color:#86827b"> 7</span>      Args: type[BaseModel] | None = None        # 자식이 지정
+<span style="color:#86827b"> 8</span>  
+<span style="color:#86827b"> 9</span>      def schema(self) -&gt; dict:
+<span style="color:#86827b">10</span>          """Pydantic 모델에서 입력 명세를 가져온다."""
+<span style="color:#86827b">11</span>          params = self.Args.model_json_schema() if self.Args else {
+<span style="color:#86827b">12</span>              "type": "object", "properties": {}, "required": []}
+<span style="color:#86827b">13</span>          return {"name": self.name, "description": self.description,
+<span style="color:#86827b">14</span>                  "parameters": params}
+<span style="color:#86827b">15</span>  
+<span style="color:#86827b">16</span>      def __call__(self, **kwargs):
+<span style="color:#86827b">17</span>          self.call_count += 1
+<span style="color:#86827b">18</span>          started = time.perf_counter()
+<span style="color:#86827b">19</span>          try:
+<span style="color:#86827b">20</span>              if self.Args is not None:
+<span style="color:#86827b">21</span>                  kwargs = self.Args(**kwargs).model_dump()     # 검증 + 변환
+<span style="color:#86827b">22</span>              result = self.run(**kwargs)
+<span style="color:#86827b">23</span>          except ValidationError as exc:
+<span style="color:#86827b">24</span>              return {"ok": False, "error": "invalid_arguments",
+<span style="color:#86827b">25</span>                      "detail": [{"field": e["loc"][0], "msg": e["msg"]}
+<span style="color:#86827b">26</span>                                 for e in exc.errors()]}
+<span style="color:#86827b">27</span>          except Exception as exc:
+<span style="color:#86827b">28</span>              return {"ok": False, "error": f"{type(exc).__name__}: {exc}"}
+<span style="color:#86827b">29</span>          ...
+</div></div>
+<div class="code"><div class="ch2"><span>tools/sales_tools.py</span><span>도구마다 Args를 선언</span></div><div class="cb2"><span style="color:#86827b"> 1</span>  class RegionArgs(BaseModel):
+<span style="color:#86827b"> 2</span>      region: str = Field(description="지역 이름 · 서울 · 부산 · 대구")
+<span style="color:#86827b"> 3</span>      min_amount: int = Field(0, ge=0, description="이 금액 이상만 포함")
+<span style="color:#86827b"> 4</span>  
+<span style="color:#86827b"> 5</span>  
+<span style="color:#86827b"> 6</span>  class RegionDetail(BaseTool):
+<span style="color:#86827b"> 7</span>      name = "region_detail"
+<span style="color:#86827b"> 8</span>      description = "한 지역의 거래를 돌려준다. min_amount 이상만 포함한다."
+<span style="color:#86827b"> 9</span>      Args = RegionArgs                      # 이 한 줄로 검증이 붙는다
+<span style="color:#86827b">10</span>  
+<span style="color:#86827b">11</span>      def run(self, region: str, min_amount: int = 0) -&gt; dict:
+<span style="color:#86827b">12</span>          ...
+</div></div>
+
+
+
+
+
+
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">21</div></section><section class="page" data-sec="3.2" data-title="3.2 검증을 호출 통로에 끼우기" data-ch="3" data-cont="1"><div class="rh"><div class="l"><b>PYTHON · PART 2</b> · 3장 · <span class="sec">검증을 어디서 할까</span></div><div class="r">3.2 검증을 호출 통로에 끼우기 (계속)<span class="pg">22</span></div></div><div class="kicker">3.2 · 설계 결정 · 검증을 어디서</div><h1>부모가<br><em>검증까지</em> 맡는다</h1><div class="code"><div class="ch2"><span>검증이 붙은 호출</span><span>도구 안으로 들어가기 전에 걸러진다</span></div><div class="cb2">&gt;&gt;&gt; t = RegionDetail()
+&gt;&gt;&gt; t(region="서울", min_amount="1000000")
+{'ok': True, 'elapsed_ms': 0.2, 'result': {'region': '서울', 'count': 4, ...}}
+
+&gt;&gt;&gt; t(region="서울", min_amount="많이")
+{'ok': False, 'error': 'invalid_arguments',
+ 'detail': [{'field': 'min_amount',
+             'msg': 'Input should be a valid integer, unable to parse string as an integer'}]}
+
+&gt;&gt;&gt; t()
+{'ok': False, 'error': 'invalid_arguments',
+ 'detail': [{'field': 'region', 'msg': 'Field required'}]}
+
+&gt;&gt;&gt; SummarizeSales()(top_n=99)
+{'ok': False, 'error': 'invalid_arguments',
+ 'detail': [{'field': 'top_n', 'msg': 'Input should be less than or equal to 10'}]}</div></div><div class="code"><div class="ch2"><span>명세 비교</span><span>Part 1 직접 추출 vs Pydantic 생성</span></div><div class="cb2"># Part 1 : inspect로 만든 것
+{"region": {"type": "string"},
+ "min_amount": {"type": "integer", "default": 0}}
+
+# Part 2 : model_json_schema()
+{"region": {"type": "string", "title": "Region",
+            "description": "지역 이름 · 서울 · 부산 · 대구"},
+ "min_amount": {"type": "integer", "default": 0, "minimum": 0,
+                "title": "Min Amount", "description": "이 금액 이상만 포함"}}</div></div><table class="zebra"><thead><tr><th>달라진 점</th><th>의미</th></tr></thead><tbody><tr><td><code>description</code>이 들어간다</td><td><b>모델이 읽고</b> 어떤 값을 넣을지 판단</td></tr><tr><td><code>minimum</code> 같은 제약</td><td>명세만 보고 <b>범위</b>를 안다</td></tr><tr><td>검증이 자동</td><td>명세와 실제 동작이 <b>어긋나지 않는다</b></td></tr><tr><td>Part 1의 <code>build_schema</code></td><td>이제 필요 없다 · <b>지워도 된다</b></td></tr></tbody></table><div class="point"><div class="pl">핵심</div><p>Part 1에서는 <strong>명세를 뽑는 코드를 직접</strong> 짰고, Part 2에서는 <strong>모델 하나로 검증과 명세를 동시에</strong> 얻습니다. 이것이 Pydantic을 쓰는 이유입니다.</p></div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">22</div></section><section class="page" data-sec="3.2" data-title="3.2 검증을 호출 통로에 끼우기" data-ch="3" data-cont="1"><div class="rh"><div class="l"><b>PYTHON · PART 2</b> · 3장 · <span class="sec">검증을 어디서 할까</span></div><div class="r">3.2 검증을 호출 통로에 끼우기 (계속)<span class="pg">23</span></div></div><div class="kicker">3.2 · 설계 결정 · 검증을 어디서</div><h1>부모가<br><em>검증까지</em> 맡는다</h1><div style="margin:10px 0;padding:8px 10px;border:1px dashed #cfcbc4;border-radius:4px;background:#faf9f7"><div style="font-size:10.5px;font-weight:800;color:#86827b;margin-bottom:4px;letter-spacing:.04em">더 알아보려면 · 검색어</div><table style="width:100%;border-collapse:collapse"><tbody><tr><td style="padding:3px 8px;font-size:11px;width:52%">Pydantic 기초</td><td style="padding:3px 8px;font-size:11px;font-family:Consolas,monospace;color:#b23c0a">pydantic basemodel quickstart</td></tr><tr><td style="padding:3px 8px;font-size:11px;width:52%">Field 제약</td><td style="padding:3px 8px;font-size:11px;font-family:Consolas,monospace;color:#b23c0a">pydantic field constraints</td></tr><tr><td style="padding:3px 8px;font-size:11px;width:52%">JSON 스키마 생성</td><td style="padding:3px 8px;font-size:11px;font-family:Consolas,monospace;color:#b23c0a">pydantic model_json_schema</td></tr><tr><td style="padding:3px 8px;font-size:11px;width:52%">검증 오류 다루기</td><td style="padding:3px 8px;font-size:11px;font-family:Consolas,monospace;color:#b23c0a">pydantic validationerror errors</td></tr></tbody></table></div><div class="mission"><b>미션 PY2-03</b><h3>검증 붙이기</h3><div class="wy">① 도구 두 개에 <code>Args</code> 모델을 만들어 붙인다<br>② <code>top_n</code>에 <code>ge=1, le=10</code> 제약을 넣고 <b>위반</b>시켜 본다<br>③ <code>description</code>을 넣은 뒤 <code>schema()</code> 출력을 Part 1과 비교한다<br>④ 잘못된 인자 세 가지(타입·필수 누락·범위)를 각각 재현해 <code>detail</code>을 기록한다<br><b>검증</b> 세 경우 모두 <code>ok: False</code>이고 <code>field</code>가 정확히 지목될 것</div></div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">23</div></section>
+<section class="page opener has-why" data-ch="4"><div class="rh"><div class="l"><b>PYTHON · PART 2</b> · 4장</div><div class="r">기다리는 시간을 어떻게 쓸까<span class="pg">24</span></div></div><div class="big">4</div><h1>기다리는 시간을 어떻게 쓸까<br>멈출 것인가 넘길 것인가</h1><div class="oscene"><div class="osh">WHY · 현장 장면</div><div class="osb">도구가 외부를 부르면 응답을 기다리는 동안 아무것도 못 한다. 0.5초짜리 둘이 1초가 된다. <code>async</code>로 바꾸면 0.5초에 끝난다.</div><table class="zebra osx"><thead><tr><th>이 장을 모르면</th><th>생기는 일</th></tr></thead><tbody><tr><td>비동기를 모르면</td><td>요청마다 멈춘다</td></tr><tr><td>time.sleep을 쓰면</td><td>효과가 사라진다</td></tr><tr><td>섞어 쓸 줄 모르면</td><td>동기 도구를 못 받는다</td></tr></tbody></table></div><div class="oq"><div><span>01</span>async와 await는 무엇을 하는가?</div><div><span>02</span>동기·비동기 도구를 어떻게 함께 받는가?</div><div><span>03</span>여러 도구를 동시에 부르려면?</div></div><div class="kicker">이 장의 구성</div><div class="otoc"><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">4.1</b>기다리는 시간을 어떻게</span><span class="pg2" data-sec="4.1">25</span></div><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">4.2</b>여러 도구를 한꺼번에</span><span class="pg2" data-sec="4.2">27</span></div></div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">24</div></section>
+<section class="page" data-sec="4.1" data-title="4.1 기다리는 시간을 어떻게 쓸까" data-ch="4"><div class="rh"><div class="l"><b>PYTHON · PART 2</b> · 4장 · <span class="sec">기다리는 시간을 어떻게 쓸까</span></div><div class="r">4.1 기다리는 시간을 어떻게 쓸까<span class="pg">25</span></div></div><div class="kicker">4.1 · 파이썬이 주는 것 · async와 await</div><h1>멈춰 있는 시간을<br><em>다른 일</em>에 쓴다</h1>
+<div class="why"><b>왜 배워야 하나?</b><p>도구가 외부 API를 부르면 <strong>응답을 기다리는 동안 아무것도 못 합니다.</strong> 0.5초짜리 둘이 1초가 되죠. 이 기다리는 시간을 어떻게 쓸지 정합니다.</p></div>
+<table class="zebra"><thead><tr><th style="width:22%">기다리는 시간을 어떻게</th><th style="width:34%">방식</th><th style="width:44%">적합한 경우</th></tr></thead><tbody><tr><td><b>그냥 기다린다</b></td><td>동기 코드</td><td>호출이 드물고 빠를 때 · 가장 단순하다</td></tr><tr><td><b>스레드로 분산</b></td><td><code>ThreadPoolExecutor</code></td><td>기존 동기 라이브러리를 그대로 쓸 때</td></tr><tr><td><b>비동기</b></td><td><code>async</code> · <code>await</code></td><td><b>우리의 선택</b> · I/O 대기가 많을 때 가장 가볍다</td></tr><tr><td><b>프로세스로</b></td><td><code>multiprocessing</code></td><td>CPU를 많이 쓰는 계산 · 비동기는 도움이 안 된다</td></tr></tbody></table>
+<div class="flow"><span>요청 A 보냄<br><small>0.0초</small></span><i>→</i><span>기다리는 동안<br><small>B도 보낸다</small></span><i>→</i><span style="border-color:var(--accent);background:var(--accent-soft)">A·B 응답<br><small>0.5초</small></span><i>→</i><span>끝<br><small>순차라면 1.0초</small></span></div>
+<div class="code"><div class="ch2"><span>동기와 비동기</span><span>표기 세 가지만 알면 된다</span></div><div class="cb2"><span style="color:#86827b"> 1</span>  # 동기 — 끝날 때까지 멈춘다
+<span style="color:#86827b"> 2</span>  def fetch(delay):
+<span style="color:#86827b"> 3</span>      time.sleep(delay)
+<span style="color:#86827b"> 4</span>      return "done"
+<span style="color:#86827b"> 5</span>  
+<span style="color:#86827b"> 6</span>  # 비동기 — 기다리는 자리를 양보한다
+<span style="color:#86827b"> 7</span>  async def fetch(delay):          # ① async def 로 정의
+<span style="color:#86827b"> 8</span>      await asyncio.sleep(delay)   # ② 기다리는 곳에 await
+<span style="color:#86827b"> 9</span>      return "done"
+<span style="color:#86827b">10</span>  
+<span style="color:#86827b">11</span>  asyncio.run(fetch(0.5))          # ③ 실행은 asyncio.run 으로
+</div></div>
+<table class="zebra"><thead><tr><th>표기</th><th>뜻</th><th>주의</th></tr></thead><tbody><tr><td><code>async def</code></td><td><b>코루틴 함수</b> · 부르면 바로 실행되지 않고 <b>코루틴 객체</b>가 나온다</td><td><code>fetch(0.5)</code>만 쓰면 아무 일도 안 일어난다</td></tr><tr><td><code>await</code></td><td>여기서 <b>기다리되 양보한다</b></td><td><code>async def</code> 안에서만 쓸 수 있다</td></tr><tr><td><code>asyncio.run()</code></td><td>바깥에서 <b>한 번</b> 실행</td><td>프로그램 진입점에서 한 번만</td></tr><tr><td><code>asyncio.sleep</code></td><td>비동기 대기</td><td><code>time.sleep</code>을 쓰면 <b>전체가 멈춘다</b></td></tr></tbody></table>
+
+
+
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">25</div></section><section class="page" data-sec="4.1" data-title="4.1 기다리는 시간을 어떻게 쓸까" data-ch="4" data-cont="1"><div class="rh"><div class="l"><b>PYTHON · PART 2</b> · 4장 · <span class="sec">기다리는 시간을 어떻게 쓸까</span></div><div class="r">4.1 기다리는 시간을 어떻게 쓸까 (계속)<span class="pg">26</span></div></div><div class="kicker">4.1 · 파이썬이 주는 것 · async와 await</div><h1>멈춰 있는 시간을<br><em>다른 일</em>에 쓴다</h1><div class="warn"><b>async 안에서 <code>time.sleep</code>을 쓰면 의미가 없습니다.</b> 그 순간 이벤트 루프 전체가 멈춥니다. 네트워크·파일도 마찬가지로 <b>비동기를 지원하는 라이브러리</b>(httpx·aiofiles)를 써야 효과가 납니다.</div><div class="code"><div class="ch2"><span>코루틴은 계획일 뿐</span><span>그냥 부르면 실행되지 않는다</span></div><div class="cb2">&gt;&gt;&gt; async def hi():
+...     return 1
+&gt;&gt;&gt; hi()
+&lt;coroutine object hi at 0x7f...&gt;        # 경고도 함께 뜬다
+
+&gt;&gt;&gt; import asyncio
+&gt;&gt;&gt; asyncio.run(hi())
+1</div></div><div class="note"><code>async def</code>는 <b>실행 계획</b>을 만들 뿐이고, 돌리는 쪽(<code>asyncio.run</code>이나 <code>await</code>)이 따로 있어야 합니다. 이 성질 때문에 <code>await</code>를 빠뜨리면 조용히 아무 일도 일어나지 않습니다.</div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">26</div></section>
+<section class="page" data-sec="4.2" data-title="4.2 여러 도구를 한꺼번에" data-ch="4"><div class="rh"><div class="l"><b>PYTHON · PART 2</b> · 4장 · <span class="sec">기다리는 시간을 어떻게 쓸까</span></div><div class="r">4.2 여러 도구를 한꺼번에<span class="pg">27</span></div></div><div class="kicker">4.2 · 설계 결정 · 동시에 부르기</div><h1>여러 도구를<br><em>한꺼번에</em></h1>
+<div class="code"><div class="ch2"><span>tools/async_tools.py</span><span>외부 호출을 흉내 낸 도구</span></div><div class="cb2"><span style="color:#86827b"> 1</span>  import asyncio
+<span style="color:#86827b"> 2</span>  
+<span style="color:#86827b"> 3</span>  from pydantic import BaseModel, Field
+<span style="color:#86827b"> 4</span>  
+<span style="color:#86827b"> 5</span>  from tools.base import BaseTool
+<span style="color:#86827b"> 6</span>  
+<span style="color:#86827b"> 7</span>  
+<span style="color:#86827b"> 8</span>  class FetchArgs(BaseModel):
+<span style="color:#86827b"> 9</span>      source: str = Field(description="가져올 곳 이름")
+<span style="color:#86827b">10</span>      delay: float = Field(0.5, ge=0, le=3, description="응답까지 걸리는 시간(초)")
+<span style="color:#86827b">11</span>  
+<span style="color:#86827b">12</span>  
+<span style="color:#86827b">13</span>  class FetchExternal(BaseTool):
+<span style="color:#86827b">14</span>      name = "fetch_external"
+<span style="color:#86827b">15</span>      description = "외부 시스템에서 데이터를 가져온다(흉내)."
+<span style="color:#86827b">16</span>      Args = FetchArgs
+<span style="color:#86827b">17</span>  
+<span style="color:#86827b">18</span>      async def run(self, source: str, delay: float = 0.5) -&gt; dict:
+<span style="color:#86827b">19</span>          await asyncio.sleep(delay)          # 실제로는 네트워크 대기
+<span style="color:#86827b">20</span>          return {"source": source, "rows": 42, "waited": delay}
+</div></div>
+<div class="code"><div class="ch2"><span>tools/base.py (보강)</span><span>동기·비동기 도구를 모두 받는다</span></div><div class="cb2"><span style="color:#86827b"> 1</span>  import inspect
+<span style="color:#86827b"> 2</span>  
+<span style="color:#86827b"> 3</span>      async def __call__(self, **kwargs) -&gt; dict:     # async 로 바뀐다
+<span style="color:#86827b"> 4</span>          ...
+<span style="color:#86827b"> 5</span>              result = self.run(**kwargs)
+<span style="color:#86827b"> 6</span>              if inspect.isawaitable(result):          # async 도구면 기다린다
+<span style="color:#86827b"> 7</span>                  result = await result
+<span style="color:#86827b"> 8</span>          ...
+</div></div>
+<table class="zebra"><thead><tr><th>왜 이렇게</th><th>설명</th></tr></thead><tbody><tr><td><code>__call__</code>을 <code>async</code>로</td><td>비동기 도구를 <b>기다릴 수</b> 있어야 한다</td></tr><tr><td><code>inspect.isawaitable</code></td><td><b>동기 도구는 그대로</b>, 비동기 도구만 await · 둘을 섞어 쓸 수 있다</td></tr><tr><td>레지스트리도 <code>async def call</code></td><td>호출 통로 전체가 비동기가 된다</td></tr></tbody></table>
+<div class="code"><div class="ch2"><span>동시 실행</span><span>asyncio.gather</span></div><div class="cb2"><span style="color:#86827b"> 1</span>  results = await asyncio.gather(
+<span style="color:#86827b"> 2</span>      registry.call("fetch_external", {"source": "A", "delay": 0.5}),
+<span style="color:#86827b"> 3</span>      registry.call("fetch_external", {"source": "B", "delay": 0.5}),
+<span style="color:#86827b"> 4</span>      registry.call("summarize_sales", {"top_n": 1}),
+<span style="color:#86827b"> 5</span>  )
+</div></div>
+
+
+
+
+
+
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">27</div></section><section class="page" data-sec="4.2" data-title="4.2 여러 도구를 한꺼번에" data-ch="4" data-cont="1"><div class="rh"><div class="l"><b>PYTHON · PART 2</b> · 4장 · <span class="sec">기다리는 시간을 어떻게 쓸까</span></div><div class="r">4.2 여러 도구를 한꺼번에 (계속)<span class="pg">28</span></div></div><div class="kicker">4.2 · 설계 결정 · 동시에 부르기</div><h1>여러 도구를<br><em>한꺼번에</em></h1><div class="code"><div class="ch2"><span>순차와 동시</span><span>같은 작업, 다른 시간</span></div><div class="cb2"># 순차 : 0.5초짜리 두 개
+await registry.call("fetch_external", {"source": "A", "delay": 0.5})
+await registry.call("fetch_external", {"source": "B", "delay": 0.5})
+→ 1.0초
+
+# 동시 : gather 로 묶으면
+await asyncio.gather(
+    registry.call("fetch_external", {"source": "A", "delay": 0.5}),
+    registry.call("fetch_external", {"source": "B", "delay": 0.5}),
+    registry.call("summarize_sales", {"top_n": 1}),      # 동기 도구도 함께
+)
+→ 0.5초</div></div><div class="code"><div class="ch2"><span>실행 결과</span><span>python3 main.py bench</span></div><div class="cb2">$ python3 main.py bench
+[ { "ok": true, "elapsed_ms": 500.4, "result": {"source": "A", ...} },
+  { "ok": true, "elapsed_ms": 500.3, "result": {"source": "B", ...} },
+  { "ok": true, "elapsed_ms": 0.2,   "result": {"count": 15, ...} } ]
+
+전체 0.71초   # 순차로 하면 1.0초를 넘는다</div></div><table class="zebra"><thead><tr><th>동시 실행에서 알아 둘 것</th><th>설명</th></tr></thead><tbody><tr><td><code>gather</code>는 <b>결과 순서를 보존</b></td><td>넣은 순서대로 리스트가 돌아온다</td></tr><tr><td>하나가 실패하면</td><td>기본은 <b>전체가 예외</b> · <code>return_exceptions=True</code>로 바꿀 수 있다</td></tr><tr><td><code>asyncio.wait_for</code></td><td><b>시간 제한</b>을 둘 때 · 외부 호출에는 거의 필수</td></tr><tr><td>CPU를 쓰는 작업</td><td>비동기로 이득이 없다 · <code>asyncio.to_thread</code>나 프로세스로</td></tr></tbody></table><div style="display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:start;margin:10px 0;padding:9px 12px;border-left:3px solid #0e7490;background:#ecfeff;border-radius:0 4px 4px 0"><b style="font-size:10.5px;color:#0e7490;white-space:nowrap;letter-spacing:.04em">FastAPI에서</b><span style="font-size:11.5px;color:#164e63;line-height:1.55">MCP 서버와 FastAPI는 <b>처음부터 비동기</b>로 동작합니다. 도구가 외부 API를 부르는 동안에도 다른 요청을 받아야 하기 때문입니다. 그래서 라우터와 도구를 <code>async def</code>로 쓰는 것이 기본입니다.</span></div><div style="margin:10px 0;padding:8px 10px;border:1px dashed #cfcbc4;border-radius:4px;background:#faf9f7"><div style="font-size:10.5px;font-weight:800;color:#86827b;margin-bottom:4px;letter-spacing:.04em">더 알아보려면 · 검색어</div><table style="width:100%;border-collapse:collapse"><tbody><tr><td style="padding:3px 8px;font-size:11px;width:52%">비동기 기초</td><td style="padding:3px 8px;font-size:11px;font-family:Consolas,monospace;color:#b23c0a">python asyncio tutorial</td></tr><tr><td style="padding:3px 8px;font-size:11px;width:52%">동시 실행</td><td style="padding:3px 8px;font-size:11px;font-family:Consolas,monospace;color:#b23c0a">asyncio gather vs create_task</td></tr><tr><td style="padding:3px 8px;font-size:11px;width:52%">시간 제한</td><td style="padding:3px 8px;font-size:11px;font-family:Consolas,monospace;color:#b23c0a">asyncio wait_for timeout</td></tr><tr><td style="padding:3px 8px;font-size:11px;width:52%">동기 코드 섞기</td><td style="padding:3px 8px;font-size:11px;font-family:Consolas,monospace;color:#b23c0a">asyncio to_thread</td></tr><tr><td style="padding:3px 8px;font-size:11px;width:52%">비동기 HTTP</td><td style="padding:3px 8px;font-size:11px;font-family:Consolas,monospace;color:#b23c0a">httpx async client</td></tr></tbody></table></div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">28</div></section><section class="page" data-sec="4.2" data-title="4.2 여러 도구를 한꺼번에" data-ch="4" data-cont="1"><div class="rh"><div class="l"><b>PYTHON · PART 2</b> · 4장 · <span class="sec">기다리는 시간을 어떻게 쓸까</span></div><div class="r">4.2 여러 도구를 한꺼번에 (계속)<span class="pg">29</span></div></div><div class="kicker">4.2 · 설계 결정 · 동시에 부르기</div><h1>여러 도구를<br><em>한꺼번에</em></h1><div class="mission"><b>미션 PY2-04</b><h3>비동기 도구</h3><div class="wy">① <code>FetchExternal</code>을 만들고 <code>BaseTool.__call__</code>을 async로 바꾼다<br>② 순차와 <code>gather</code>의 시간 차이를 측정해 기록한다<br>③ <code>asyncio.sleep</code> 대신 <code>time.sleep</code>을 써 보고 <b>gather가 소용없어지는 것</b>을 확인한다<br>④ <code>asyncio.wait_for(..., timeout=0.2)</code>로 감싸 <b>TimeoutError</b>를 재현한다<br><b>검증</b> ②의 두 시간과 ③④의 결과를 적을 것</div></div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">29</div></section>
+<section class="page opener has-why" data-ch="5"><div class="rh"><div class="l"><b>PYTHON · PART 2</b> · 5장</div><div class="r">설계 정리와 미션<span class="pg">30</span></div></div><div class="big">5</div><h1>설계 정리와 미션<br>Part 1에서 여기까지</h1><div class="oscene"><div class="osh">WHY · 현장 장면</div><div class="osb">네 가지를 모두 더한 <code>BaseTool</code>을 모아 보고, Part 1과 무엇이 어떻게 달라졌는지 비교한다. 그다음 남은 과제도 짚는다.</div><table class="zebra osx"><thead><tr><th>이 장을 모르면</th><th>생기는 일</th></tr></thead><tbody><tr><td>모아 보지 않으면</td><td>조각으로 남는다</td></tr><tr><td>비교하지 않으면</td><td>왜 바꿨는지 모른다</td></tr><tr><td>미션을 안 풀면</td><td>읽기만 한 것이다</td></tr></tbody></table></div><div class="oq"><div><span>01</span>네 개념이 한 클래스에 어떻게 들어가는가?</div><div><span>02</span>Part 1과 무엇이 달라졌는가?</div><div><span>03</span>미션 16개를 통과할 수 있는가?</div></div><div class="kicker">이 장의 구성</div><div class="otoc"><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">5.1</b>설계한 것 모아 보기</span><span class="pg2" data-sec="5.1">31</span></div><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">5.2</b>무엇이 어디로 갔나</span><span class="pg2" data-sec="5.2">33</span></div><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">5.3</b>미션 ①~⑧</span><span class="pg2" data-sec="5.3">34</span></div><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">5.4</b>미션 ⑨~⑯</span><span class="pg2" data-sec="5.4">37</span></div><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">5.5</b>평가</span><span class="pg2" data-sec="5.5">40</span></div></div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">30</div></section>
+<section class="page" data-sec="5.1" data-title="5.1 설계한 것 모아 보기" data-ch="5"><div class="rh"><div class="l"><b>PYTHON · PART 2</b> · 5장 · <span class="sec">설계 정리와 미션</span></div><div class="r">5.1 설계한 것 모아 보기<span class="pg">31</span></div></div><div class="kicker">5.1 · 설계 정리</div><h1>클래스 · 상속 · 검증 · 비동기가<br><em>한 파일</em>에</h1>
+<div class="code"><div class="ch2"><span>tools/base.py</span><span>네 가지가 모두 들어 있다</span></div><div class="cb2"><span style="color:#86827b"> 1</span>  import inspect
+<span style="color:#86827b"> 2</span>  import time
+<span style="color:#86827b"> 3</span>  from typing import Any
+<span style="color:#86827b"> 4</span>  
+<span style="color:#86827b"> 5</span>  from pydantic import BaseModel, ValidationError
+<span style="color:#86827b"> 6</span>  
+<span style="color:#86827b"> 7</span>  
+<span style="color:#86827b"> 8</span>  class BaseTool:
+<span style="color:#86827b"> 9</span>      """도구의 뼈대. 검증하고, 공통 처리를 맡고, 동기·비동기를 모두 받는다."""
+<span style="color:#86827b">10</span>  
+<span style="color:#86827b">11</span>      name: str = ""
+<span style="color:#86827b">12</span>      description: str = ""
+<span style="color:#86827b">13</span>      Args: type[BaseModel] | None = None
+<span style="color:#86827b">14</span>  
+<span style="color:#86827b">15</span>      def __init__(self, *, verbose: bool = False) -&gt; None:
+<span style="color:#86827b">16</span>          self.verbose = verbose
+<span style="color:#86827b">17</span>          self.call_count = 0
+<span style="color:#86827b">18</span>  
+<span style="color:#86827b">19</span>      def run(self, **kwargs: Any) -&gt; dict:
+<span style="color:#86827b">20</span>          raise NotImplementedError(f"{type(self).__name__}.run()을 구현하세요")
+<span style="color:#86827b">21</span>  
+<span style="color:#86827b">22</span>      def schema(self) -&gt; dict:
+<span style="color:#86827b">23</span>          params = self.Args.model_json_schema() if self.Args else {
+<span style="color:#86827b">24</span>              "type": "object", "properties": {}, "required": []}
+<span style="color:#86827b">25</span>          return {"name": self.name, "description": self.description,
+<span style="color:#86827b">26</span>                  "parameters": params}
+<span style="color:#86827b">27</span>  
+<span style="color:#86827b">28</span>      async def __call__(self, **kwargs: Any) -&gt; dict:
+<span style="color:#86827b">29</span>          self.call_count += 1
+<span style="color:#86827b">30</span>          started = time.perf_counter()
+<span style="color:#86827b">31</span>          try:
+<span style="color:#86827b">32</span>              if self.Args is not None:
+<span style="color:#86827b">33</span>                  kwargs = self.Args(**kwargs).model_dump()
+<span style="color:#86827b">34</span>              result = self.run(**kwargs)
+<span style="color:#86827b">35</span>              if inspect.isawaitable(result):
+<span style="color:#86827b">36</span>                  result = await result
+<span style="color:#86827b">37</span>          except ValidationError as exc:
+<span style="color:#86827b">38</span>              return {"ok": False, "error": "invalid_arguments",
+<span style="color:#86827b">39</span>                      "detail": [{"field": e["loc"][0], "msg": e["msg"]}
+<span style="color:#86827b">40</span>                                 for e in exc.errors()]}
+<span style="color:#86827b">41</span>          except Exception as exc:
+<span style="color:#86827b">42</span>              return {"ok": False, "error": f"{type(exc).__name__}: {exc}"}
+<span style="color:#86827b">43</span>          elapsed = round((time.perf_counter() - started) * 1000, 1)
+<span style="color:#86827b">44</span>          if self.verbose:
+<span style="color:#86827b">45</span>              print(f"[{self.name}] {elapsed}ms (누적 {self.call_count}회)")
+<span style="color:#86827b">46</span>          return {"ok": True, "elapsed_ms": elapsed, "result": result}
+<span style="color:#86827b">47</span>  
+<span style="color:#86827b">48</span>      def __repr__(self) -&gt; str:
+<span style="color:#86827b">49</span>          return f"&lt;{type(self).__name__} name={self.name!r} calls={self.call_count}&gt;"
+</div></div>
+
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">31</div></section><section class="page" data-sec="5.1" data-title="5.1 설계한 것 모아 보기" data-ch="5" data-cont="1"><div class="rh"><div class="l"><b>PYTHON · PART 2</b> · 5장 · <span class="sec">설계 정리와 미션</span></div><div class="r">5.1 설계한 것 모아 보기 (계속)<span class="pg">32</span></div></div><div class="kicker">5.1 · 설계 정리</div><h1>클래스 · 상속 · 검증 · 비동기가<br><em>한 파일</em>에</h1><table class="zebra"><thead><tr><th>개념</th><th>어디에 쓰였나</th></tr></thead><tbody><tr><td>클래스 · <code>__init__</code> · <code>self</code></td><td><code>call_count</code> 같은 <b>상태</b>를 인스턴스가 갖는다</td></tr><tr><td>클래스 속성</td><td><code>name</code> · <code>description</code> · <code>Args</code></td></tr><tr><td>상속 · 오버라이드</td><td>자식은 <code>run</code>만 구현</td></tr><tr><td><code>super()</code></td><td><code>CachedTool</code>이 부모 동작에 덧붙인다</td></tr><tr><td>던더 메서드</td><td><code>__call__</code> · <code>__repr__</code> · <code>__len__</code></td></tr><tr><td>Pydantic 상속</td><td><code>Args</code> 모델이 검증과 명세를 모두 담당</td></tr><tr><td><code>async</code> · <code>await</code></td><td>외부를 기다리는 도구</td></tr><tr><td><code>inspect.isawaitable</code></td><td>동기·비동기 도구를 <b>한 통로</b>로</td></tr></tbody></table><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">32</div></section>
+<section class="page" data-sec="5.2" data-title="5.2 무엇이 어디로 갔나" data-ch="5"><div class="rh"><div class="l"><b>PYTHON · PART 2</b> · 5장 · <span class="sec">설계 정리와 미션</span></div><div class="r">5.2 무엇이 어디로 갔나<span class="pg">33</span></div></div><div class="kicker">5.2 · Part 1과 비교</div><h1>무엇이<br><em>어디로</em> 갔나</h1>
+<table class="zebra"><thead><tr><th style="width:14%">항목</th><th style="width:26%">Part 1</th><th style="width:26%">Part 2</th><th style="width:34%">왜 바뀌었나</th></tr></thead><tbody><tr><td>도구</td><td><code>@tool</code> 함수</td><td><code>BaseTool</code> 자식 클래스</td><td>상태와 공통 동작이 필요해서</td></tr><tr><td>레지스트리</td><td>전역 <code>REGISTRY</code></td><td><code>ToolRegistry</code> 인스턴스</td><td>두 벌을 만들 수 있어야 해서</td></tr><tr><td>명세</td><td><code>inspect</code>로 직접 추출</td><td><code>model_json_schema()</code></td><td>검증과 명세를 한 곳에서</td></tr><tr><td>검증</td><td>없음</td><td>Pydantic 자동</td><td>문자열이 int 자리에 들어오지 않게</td></tr><tr><td>공통 처리</td><td>도구마다 반복</td><td>부모가 담당</td><td>도구가 늘어도 한 벌</td></tr><tr><td>호출</td><td>동기</td><td><code>await</code> · <code>gather</code></td><td>기다리는 동안 다른 일</td></tr></tbody></table>
+<h3>남은 것 · 그다음 단계</h3>
+<table class="zebra"><thead><tr><th>아직 없는 것</th><th>무엇이 필요한가</th></tr></thead><tbody><tr><td>도구 목록을 <b>외부에 노출</b></td><td>전송 계층 · stdio 또는 HTTP(FastAPI)</td></tr><tr><td>여러 요청을 동시에 처리</td><td>웹 서버 · <code>uvicorn</code></td></tr><tr><td>도구 실행 <b>권한·제한</b></td><td>인증 · 레이트 리밋</td></tr><tr><td>긴 작업의 <b>진행 상황</b></td><td>스트리밍 · 서버 전송 이벤트</td></tr><tr><td>실패한 호출 <b>재시도</b></td><td>백오프 · 멱등성 설계</td></tr></tbody></table>
+<div class="point"><div class="pl">여기까지 오면</div><p><strong>도구를 정의하고 · 검증하고 · 동시에 실행하는 구조</strong>가 손에 있습니다. MCP 서버든 에이전트 프레임워크든, 그 위에 <strong>전송 방식</strong>을 얹는 일이 남았을 뿐입니다. 코드를 읽을 때 “이건 아는 구조다”라고 말할 수 있는 상태입니다.</p></div>
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">33</div></section>
+<section class="page" data-sec="5.3" data-title="5.3 미션" data-ch="5"><div class="rh"><div class="l"><b>PYTHON · PART 2</b> · 5장 · <span class="sec">설계 정리와 미션</span></div><div class="r">5.3 미션<span class="pg">34</span></div></div><div class="kicker">5.3 · 미션</div><h1>미션 16개 · ①~⑧</h1>
+<div class="why"><b>왜 배워야 하나?</b><p><strong>상황 · 목표 · 조건 · 검증</strong>으로 되어 있습니다.</p></div>
+<div class="msn"><div class="mh"><span class="mid">PY2-01</span><span class="mlv l1">기본</span><b>레지스트리 객체화</b><span class="mtm"></span></div><div class="mb"><div class="mr"><span>상황</span><div>전역 딕셔너리를 벗어나야 한다.</div></div><div class="mr"><span>목표</span><div>ToolRegistry 클래스를 만들고 인스턴스 두 개가 독립인지 확인한다.</div></div><div class="mr"><span>조건</span><div>__len__ · __contains__ · __repr__ 포함</div></div><div class="mr"><span>검증</span><div>두 인스턴스의 목록이 다를 것</div></div><div class="mr"><span>참고</span><div>1.2</div></div></div></div>
+<div class="msn"><div class="mh"><span class="mid">PY2-02</span><span class="mlv l1">기본</span><b>클래스 속성 함정</b><span class="mtm"></span></div><div class="mb"><div class="mr"><span>상황</span><div>공유되면 안 되는 것이 공유된다.</div></div><div class="mr"><span>목표</span><div>클래스 속성에 리스트를 두고 두 인스턴스에서 append해 본다.</div></div><div class="mr"><span>조건</span><div>그다음 __init__으로 옮겨 고친다</div></div><div class="mr"><span>검증</span><div>고치기 전후 출력 비교</div></div><div class="mr"><span>참고</span><div>1.1</div></div></div></div>
+<div class="msn"><div class="mh"><span class="mid">PY2-03</span><span class="mlv l1">기본</span><b>BaseTool 작성</b><span class="mtm"></span></div><div class="mb"><div class="mr"><span>상황</span><div>도구마다 같은 코드를 반복하고 있다.</div></div><div class="mr"><span>목표</span><div>공통 처리(횟수·시간·오류 포장)를 부모로 올린다.</div></div><div class="mr"><span>조건</span><div>자식은 run만 구현</div></div><div class="mr"><span>검증</span><div>도구 두 개가 run만으로 동작</div></div><div class="mr"><span>참고</span><div>2.1</div></div></div></div>
+
+
+
+
+
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">34</div></section><section class="page" data-sec="5.3" data-title="5.3 미션" data-ch="5" data-cont="1"><div class="rh"><div class="l"><b>PYTHON · PART 2</b> · 5장 · <span class="sec">설계 정리와 미션</span></div><div class="r">5.3 미션 (계속)<span class="pg">35</span></div></div><div class="kicker">5.3 · 미션</div><h1>미션 16개 · ①~⑧</h1><div class="msn"><div class="mh"><span class="mid">PY2-04</span><span class="mlv l1">기본</span><b>구현 강제</b><span class="mtm"></span></div><div class="mb"><div class="mr"><span>상황</span><div>run을 빠뜨린 도구가 있다.</div></div><div class="mr"><span>목표</span><div>NotImplementedError와 abc.abstractmethod 두 방식을 모두 시험한다.</div></div><div class="mr"><span>조건</span><div>차이를 기록</div></div><div class="mr"><span>검증</span><div>전자는 호출 시, 후자는 생성 시 오류</div></div><div class="mr"><span>참고</span><div>2.2</div></div></div></div><div class="msn"><div class="mh"><span class="mid">PY2-05</span><span class="mlv l2">응용</span><b>super 활용</b><span class="mtm"></span></div><div class="mb"><div class="mr"><span>상황</span><div>캐시 기능을 더하고 싶다.</div></div><div class="mr"><span>목표</span><div>CachedTool을 만들어 같은 인자면 저장된 결과를 돌려준다.</div></div><div class="mr"><span>조건</span><div>super().__call__ 사용</div></div><div class="mr"><span>검증</span><div>두 번째 호출에 cached: True</div></div><div class="mr"><span>참고</span><div>2.2</div></div></div></div><div class="msn"><div class="mh"><span class="mid">PY2-06</span><span class="mlv l2">응용</span><b>super 누락 실험</b><span class="mtm"></span></div><div class="mb"><div class="mr"><span>상황</span><div>부모 초기화를 건너뛰면?</div></div><div class="mr"><span>목표</span><div>super().__init__을 지우고 무슨 오류가 나는지 확인한다.</div></div><div class="mr"><span>조건</span><div>원복할 것</div></div><div class="mr"><span>검증</span><div>오류 원문과 이유</div></div><div class="mr"><span>참고</span><div>2.2</div></div></div></div><div class="msn"><div class="mh"><span class="mid">PY2-07</span><span class="mlv l2">응용</span><b>입력 모델</b><span class="mtm"></span></div><div class="mb"><div class="mr"><span>상황</span><div>타입 검증이 없다.</div></div><div class="mr"><span>목표</span><div>도구마다 Args 모델을 만들어 붙인다.</div></div><div class="mr"><span>조건</span><div>Field에 description 포함</div></div><div class="mr"><span>검증</span><div>잘못된 타입이 run 전에 걸릴 것</div></div><div class="mr"><span>참고</span><div>3.2</div></div></div></div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">35</div></section><section class="page" data-sec="5.3" data-title="5.3 미션" data-ch="5" data-cont="1"><div class="rh"><div class="l"><b>PYTHON · PART 2</b> · 5장 · <span class="sec">설계 정리와 미션</span></div><div class="r">5.3 미션 (계속)<span class="pg">36</span></div></div><div class="kicker">5.3 · 미션</div><h1>미션 16개 · ①~⑧</h1><div class="msn"><div class="mh"><span class="mid">PY2-08</span><span class="mlv l2">응용</span><b>제약 조건</b><span class="mtm"></span></div><div class="mb"><div class="mr"><span>상황</span><div>범위를 벗어난 값이 들어온다.</div></div><div class="mr"><span>목표</span><div>top_n에 ge/le를 걸고 위반 결과를 기록한다.</div></div><div class="mr"><span>조건</span><div>에러 메시지 원문 기록</div></div><div class="mr"><span>검증</span><div>ok: False와 field 지목</div></div><div class="mr"><span>참고</span><div>3.1</div></div></div></div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">36</div></section>
+<section class="page" data-sec="5.4" data-title="5.4 미션 (계속)" data-ch="5"><div class="rh"><div class="l"><b>PYTHON · PART 2</b> · 5장 · <span class="sec">설계 정리와 미션</span></div><div class="r">5.4 미션 (계속)<span class="pg">37</span></div></div><div class="kicker">5.4 · 미션</div><h1>미션 ⑨~⑯</h1>
+<div class="msn"><div class="mh"><span class="mid">PY2-09</span><span class="mlv l2">응용</span><b>명세 비교</b><span class="mtm"></span></div><div class="mb"><div class="mr"><span>상황</span><div>Part 1의 스키마와 무엇이 다른가.</div></div><div class="mr"><span>목표</span><div>model_json_schema() 결과를 Part 1 build_schema와 비교한다.</div></div><div class="mr"><span>조건</span><div>차이 세 가지 이상</div></div><div class="mr"><span>검증</span><div>비교표 제출</div></div><div class="mr"><span>참고</span><div>3.2</div></div></div></div>
+<div class="msn"><div class="mh"><span class="mid">PY2-10</span><span class="mlv l2">응용</span><b>오류 응답 설계</b><span class="mtm"></span></div><div class="mb"><div class="mr"><span>상황</span><div>실패를 어떻게 돌려줄까.</div></div><div class="mr"><span>목표</span><div>ValidationError를 잡아 field와 msg만 담은 응답으로 바꾼다.</div></div><div class="mr"><span>조건</span><div>예외를 그대로 던지지 말 것</div></div><div class="mr"><span>검증</span><div>세 가지 실패 사례의 응답</div></div><div class="mr"><span>참고</span><div>3.2</div></div></div></div>
+<div class="msn"><div class="mh"><span class="mid">PY2-11</span><span class="mlv l2">응용</span><b>비동기 도구</b><span class="mtm"></span></div><div class="mb"><div class="mr"><span>상황</span><div>외부 호출 도구가 필요하다.</div></div><div class="mr"><span>목표</span><div>async def run을 가진 도구를 만들고 BaseTool이 await하게 한다.</div></div><div class="mr"><span>조건</span><div>inspect.isawaitable 사용</div></div><div class="mr"><span>검증</span><div>동기·비동기 도구가 함께 동작</div></div><div class="mr"><span>참고</span><div>4.2</div></div></div></div>
+<div class="msn"><div class="mh"><span class="mid">PY2-12</span><span class="mlv l2">응용</span><b>동시 실행</b><span class="mtm"></span></div><div class="mb"><div class="mr"><span>상황</span><div>두 번 기다릴 필요가 없다.</div></div><div class="mr"><span>목표</span><div>asyncio.gather로 순차 대비 시간 차이를 측정한다.</div></div><div class="mr"><span>조건</span><div>각각 0.5초짜리 두 개</div></div><div class="mr"><span>검증</span><div>두 시간을 기록</div></div><div class="mr"><span>참고</span><div>4.2</div></div></div></div>
+
+
+
+
+
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">37</div></section><section class="page" data-sec="5.4" data-title="5.4 미션 (계속)" data-ch="5" data-cont="1"><div class="rh"><div class="l"><b>PYTHON · PART 2</b> · 5장 · <span class="sec">설계 정리와 미션</span></div><div class="r">5.4 미션 (계속) (계속)<span class="pg">38</span></div></div><div class="kicker">5.4 · 미션</div><h1>미션 ⑨~⑯</h1><div class="msn"><div class="mh"><span class="mid">PY2-13</span><span class="mlv l3">장애</span><b>time.sleep 함정</b><span class="mtm"></span></div><div class="mb"><div class="mr"><span>상황</span><div>비동기인데 빨라지지 않는다.</div></div><div class="mr"><span>목표</span><div>asyncio.sleep을 time.sleep으로 바꿔 gather가 무의미해지는 것을 확인한다.</div></div><div class="mr"><span>조건</span><div>시간 측정 필수</div></div><div class="mr"><span>검증</span><div>두 경우의 시간과 이유</div></div><div class="mr"><span>참고</span><div>4.1</div></div></div></div><div class="msn"><div class="mh"><span class="mid">PY2-14</span><span class="mlv l3">장애</span><b>타임아웃</b><span class="mtm"></span></div><div class="mb"><div class="mr"><span>상황</span><div>외부가 응답하지 않는다.</div></div><div class="mr"><span>목표</span><div>asyncio.wait_for로 제한을 걸고 TimeoutError를 재현한다.</div></div><div class="mr"><span>조건</span><div>도구 응답으로 포장할 것</div></div><div class="mr"><span>검증</span><div>timeout 응답 모양 제시</div></div><div class="mr"><span>참고</span><div>4.2</div></div></div></div><div class="msn"><div class="mh"><span class="mid">PY2-15</span><span class="mlv l4">종합</span><b>CLI 완성</b><span class="mtm"></span></div><div class="mb"><div class="mr"><span>상황</span><div>사람이 쓸 수 있어야 한다.</div></div><div class="mr"><span>목표</span><div>main.py에 list·schema·call·bench를 넣는다.</div></div><div class="mr"><span>조건</span><div>asyncio.run은 한 번만</div></div><div class="mr"><span>검증</span><div>네 명령 모두 동작</div></div><div class="mr"><span>참고</span><div>4.2</div></div></div></div><div class="msn"><div class="mh"><span class="mid">PY2-16</span><span class="mlv l4">종합</span><b>설계 정리</b><span class="mtm"></span></div><div class="mb"><div class="mr"><span>상황</span><div>무엇이 어디로 갔는지 설명해야 한다.</div></div><div class="mr"><span>목표</span><div>Part 1과 Part 2의 구조를 비교해 한 장으로 정리한다.</div></div><div class="mr"><span>조건</span><div>각 변경의 이유 포함</div></div><div class="mr"><span>검증</span><div>비교표 + 결론 세 줄</div></div><div class="mr"><span>참고</span><div>전체</div></div></div></div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">38</div></section><section class="page" data-sec="5.4" data-title="5.4 미션 (계속)" data-ch="5" data-cont="1"><div class="rh"><div class="l"><b>PYTHON · PART 2</b> · 5장 · <span class="sec">설계 정리와 미션</span></div><div class="r">5.4 미션 (계속) (계속)<span class="pg">39</span></div></div><div class="kicker">5.4 · 미션</div><h1>미션 ⑨~⑯</h1><table class="zebra"><thead><tr><th>ID</th><th>수준</th><th>미션</th><th>참고</th><th>완료</th></tr></thead><tbody><tr><td><code>PY2-01</code></td><td>기본</td><td>레지스트리 객체화</td><td>1.2</td><td>□</td></tr><tr><td><code>PY2-02</code></td><td>기본</td><td>클래스 속성 함정</td><td>1.1</td><td>□</td></tr><tr><td><code>PY2-03</code></td><td>기본</td><td>BaseTool 작성</td><td>2.1</td><td>□</td></tr><tr><td><code>PY2-04</code></td><td>기본</td><td>구현 강제</td><td>2.2</td><td>□</td></tr><tr><td><code>PY2-05</code></td><td>응용</td><td>super 활용</td><td>2.2</td><td>□</td></tr><tr><td><code>PY2-06</code></td><td>응용</td><td>super 누락 실험</td><td>2.2</td><td>□</td></tr><tr><td><code>PY2-07</code></td><td>응용</td><td>입력 모델</td><td>3.2</td><td>□</td></tr><tr><td><code>PY2-08</code></td><td>응용</td><td>제약 조건</td><td>3.1</td><td>□</td></tr><tr><td><code>PY2-09</code></td><td>응용</td><td>명세 비교</td><td>3.2</td><td>□</td></tr><tr><td><code>PY2-10</code></td><td>응용</td><td>오류 응답 설계</td><td>3.2</td><td>□</td></tr><tr><td><code>PY2-11</code></td><td>응용</td><td>비동기 도구</td><td>4.2</td><td>□</td></tr><tr><td><code>PY2-12</code></td><td>응용</td><td>동시 실행</td><td>4.2</td><td>□</td></tr><tr><td><code>PY2-13</code></td><td>장애</td><td>time.sleep 함정</td><td>4.1</td><td>□</td></tr><tr><td><code>PY2-14</code></td><td>장애</td><td>타임아웃</td><td>4.2</td><td>□</td></tr><tr><td><code>PY2-15</code></td><td>종합</td><td>CLI 완성</td><td>4.2</td><td>□</td></tr><tr><td><code>PY2-16</code></td><td>종합</td><td>설계 정리</td><td>전체</td><td>□</td></tr></tbody></table><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">39</div></section>
+<section class="page" data-sec="5.5" data-title="5.5 평가" data-ch="5"><div class="rh"><div class="l"><b>PYTHON · PART 2</b> · 5장 · <span class="sec">설계 정리와 미션</span></div><div class="r">5.5 평가<span class="pg">40</span></div></div><div class="kicker">5.5 · 평가</div><h1>10문항</h1>
+<div class="qa"><div class="ql">문제 · 10문항</div><ol><li>함수 대신 클래스를 쓰는 기준은?</li><li>클래스 속성과 인스턴스 속성의 차이는?</li><li>클래스 속성에 리스트를 두면 생기는 문제는?</li><li><code>super().__init__()</code>을 빼면?</li><li>구현을 강제하는 두 방법의 차이는?</li><li>Pydantic 모델이 해 주는 세 가지는?</li><li><code>Field(0, ge=0)</code>의 뜻은?</li><li><code>async def</code> 함수를 그냥 호출하면?</li><li><code>async</code> 안에서 <code>time.sleep</code>을 쓰면?</li><li>동기·비동기 도구를 한 통로로 받는 방법은?</li></ol></div>
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">40</div></section><section class="page" data-sec="5.5" data-title="5.5 평가" data-ch="5" data-cont="1" data-brk="1"><div class="rh"><div class="l"><b>PYTHON · PART 2</b> · 5장 · <span class="sec">설계 정리와 미션</span></div><div class="r">5.5 평가 (계속)<span class="pg">41</span></div></div><div class="kicker">5.5 · 평가</div><h1>10문항</h1>
+<div class="ans"><div class="al">정답 · 해설</div><b>Q1</b> 상태를 기억해야 하거나, 데이터와 동작이 함께 다녀야 할 때.<br><b>Q2</b> 클래스 속성은 모든 인스턴스가 공유 · 인스턴스 속성은 <code>__init__</code>에서 각자 만든다.<br><b>Q3</b> 한 인스턴스가 바꾼 것이 모두에게 보인다 · <code>__init__</code> 안에서 만들어야 한다.<br><b>Q4</b> 부모가 준비하는 속성이 없어 <code>AttributeError</code>가 난다.<br><b>Q5</b> <code>NotImplementedError</code>는 호출할 때 · <code>abc.abstractmethod</code>는 인스턴스를 만들 때 막는다.<br><b>Q6</b> 타입 검증 · 자동 변환 · JSON 스키마 생성.<br><b>Q7</b> 기본값 0 · 0 이상만 허용.<br><b>Q8</b> 코루틴 객체만 생기고 실행되지 않는다 · <code>await</code>나 <code>asyncio.run</code>이 필요하다.<br><b>Q9</b> 이벤트 루프 전체가 멈춰 동시 실행의 이득이 사라진다.<br><b>Q10</b> 결과가 <code>inspect.isawaitable</code>이면 <code>await</code>하고, 아니면 그대로 쓴다.</div>
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">41</div></section>
+</body></html>

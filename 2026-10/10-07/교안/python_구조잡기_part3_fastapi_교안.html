@@ -1,0 +1,1284 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="utf-8"><meta content="width=device-width,initial-scale=1.0" name="viewport"><title>백엔드 구조 설계 Part 3 · FastAPI</title><style>
+:root{
+  --ink:#1c1b19; --paper:#ffffff; --soft:#f7f6f3; --soft2:#efedea;
+  --line:#e3e0db; --line2:#cfcbc4; --muted:#86827b; --muted2:#5b574f;
+  --accent:#b23c0a; --accent-soft:#fdf3ec; --ink2:#2f2d2a;
+  --pn:#b23c0a; --pnb:#e8c3ad; --pns:#fdf5f0;
+  --pv:#1d4ed8; --pvb:#c3d0f2; --pvs:#f2f5fd;
+  --pa:#15803d; --pab:#bcdcc8; --pas:#f1f7f3;
+  --pd:#6d28d9; --pdb:#d4c6f5; --pds:#f7f3fe;
+  --px:#b91c1c; --pxb:#f0c3c3; --pxs:#fdf2f2;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+body{font-family:'Noto Sans KR','Malgun Gothic',sans-serif;color:var(--ink);
+  background:#eceae5;line-height:1.65;font-weight:400;letter-spacing:-.003em}
+
+.page{width:210mm;min-height:297mm;background:var(--paper);margin:8mm auto;
+  padding:17mm 18mm 14mm;position:relative;box-shadow:0 1px 14px rgba(0,0,0,.07)}
+@page{size:A4 portrait;margin:0}
+@media print{
+  body{background:#fff}
+  .page{margin:0;box-shadow:none;page-break-after:always;break-after:page}
+  .page:last-child{page-break-after:auto}
+}
+
+/* ── 러닝헤드 ── */
+.rh{display:flex;justify-content:space-between;align-items:baseline;
+  margin-bottom:22px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+.rh .l{font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--muted2)}
+.rh .l b{color:var(--accent)}
+.rh .r{font-size:10.5px;color:var(--muted);letter-spacing:.04em;display:flex;align-items:baseline;gap:12px}
+.rh .r .pg{font-family:'Consolas','JetBrains Mono',monospace;font-size:12px;font-weight:700;
+  color:var(--ink);letter-spacing:.06em;border:1px solid var(--line2);padding:1px 7px;border-radius:3px}
+
+/* ── 제목 ── */
+.kicker{font-size:11px;font-weight:700;letter-spacing:.12em;color:var(--accent);margin-bottom:7px}
+h1{font-size:26px;font-weight:900;line-height:1.25;letter-spacing:-.02em;margin-bottom:9px}
+.lede{font-size:13px;color:var(--muted2);line-height:1.7;margin-bottom:14px;max-width:96%}
+.lede em,em{font-style:normal;color:var(--accent);font-weight:700}
+h2{font-size:12.5px;font-weight:700;letter-spacing:.09em;color:var(--accent);
+  margin:17px 0 9px;display:flex;align-items:center;gap:10px}
+h2::after{content:"";flex:1;height:1px;background:var(--line)}
+h3{font-size:15px;font-weight:700;margin:14px 0 5px}
+p{font-size:13px;line-height:1.75;margin:8px 0;color:var(--ink2)}
+strong{font-weight:700;color:var(--ink)}
+.mn{font-size:11.5px;color:var(--muted);margin-top:5px}
+code{font-family:'Consolas','JetBrains Mono',monospace;background:var(--soft2);
+  padding:1px 5px;border-radius:3px;font-size:12px;color:var(--accent)}
+
+ul,ol{margin:9px 0;padding-left:0;list-style:none}
+li{font-size:13px;line-height:1.7;margin:8px 0;padding-left:010px;padding-left:22px;position:relative;color:var(--ink2)}
+ul li::before{content:"";position:absolute;left:3px;top:10px;width:5px;height:5px;
+  background:var(--accent);border-radius:50%}
+li strong{color:var(--ink)}
+
+/* ── 표 ── */
+table{width:100%;border-collapse:collapse;margin:13px 0;font-size:12.5px}
+th,td{padding:9px 12px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line)}
+thead th{border-bottom:1.5px solid var(--ink);font-weight:700;font-size:11.5px;color:var(--ink);background:var(--soft)}
+tbody td{color:var(--muted2)}
+tbody td b{color:var(--ink);font-weight:700}
+table.zebra tbody tr:nth-child(even) td{background:#faf9f7}
+
+/* ── 그리드 카드 ── */
+.grid{display:grid;gap:1px;background:var(--line);border:1px solid var(--line);margin:14px 0}
+.grid.g3{grid-template-columns:repeat(3,1fr)}
+.grid.g2{grid-template-columns:repeat(2,1fr)}
+.grid.g4{grid-template-columns:repeat(4,1fr)}
+.cell{background:var(--paper);padding:15px 14px}
+.cell .num{font-size:10.5px;font-weight:700;letter-spacing:.08em;color:var(--accent)}
+.cell h4{font-size:13.5px;font-weight:700;margin:6px 0 4px;line-height:1.35}
+.cell p{font-size:11.5px;color:var(--muted2);margin:0;line-height:1.6}
+
+/* ── 강조 박스 ── */
+.point{border-left:2.5px solid var(--accent);padding:3px 0 3px 16px;margin:16px 0}
+.point .pl{font-size:10.5px;font-weight:700;letter-spacing:.09em;color:var(--accent);margin-bottom:4px}
+.point p{margin:0;font-size:13px;color:var(--ink2)}
+.note{background:var(--soft);border:1px solid var(--line);border-radius:4px;
+  padding:12px 15px;margin:14px 0;font-size:12.5px;color:var(--muted2);line-height:1.7}
+.note strong{color:var(--accent)}
+.warn{background:var(--pxs);border:1px solid var(--pxb);border-radius:4px;
+  padding:12px 15px;margin:14px 0;font-size:12.5px;color:var(--ink2);line-height:1.7}
+.warn b{color:var(--px)}
+
+.mission{border:1px solid var(--line2);border-left:3px solid var(--accent);
+  background:var(--accent-soft);padding:13px 16px;margin:13px 0;border-radius:4px}
+.mission b{font-size:10.5px;font-weight:700;letter-spacing:.1em;color:var(--accent)}
+.mission h3{font-size:14px;margin:4px 0 0;line-height:1.5}
+.mission .wy{margin:9px 0 0;padding-top:8px;border-top:1px solid var(--line2);font-size:12px;color:var(--muted2);line-height:1.65}
+.mission .wy b{color:var(--ink);font-size:10.5px;letter-spacing:.06em}
+.why{background:var(--soft);border:1px solid var(--line2);border-left:3px solid var(--ink);
+  padding:12px 16px;margin:13px 0;border-radius:4px}
+.why p{color:var(--ink2);margin:0;font-size:12.5px}
+.why b{color:var(--ink);font-size:10.5px;letter-spacing:.08em}
+
+.kw{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
+.kw span{background:#fff;border:1px solid var(--line2);padding:4px 10px;border-radius:20px;
+  font-size:11px;font-weight:700;color:var(--ink2)}
+.kw span::before{content:"# ";color:var(--accent)}
+
+/* ── 정의 목록 / 비유 ── */
+.deflist{margin:12px 0}
+.deflist .d{display:flex;gap:16px;padding:11px 0;border-bottom:1px solid var(--line)}
+.deflist .d:last-child{border-bottom:none}
+.deflist .dt{flex:0 0 27%;font-weight:700;font-size:13px}
+.deflist .dt small{display:block;font-weight:400;color:var(--muted);font-size:11px;margin-top:1px}
+.deflist .dd{flex:1;font-size:12.5px;color:var(--muted2);line-height:1.65}
+
+/* ── 실습 박스 (검정 헤더 제거) ── */
+.lab{margin:16px 0;border:1.5px solid var(--ink);background:#fff}
+.lab-head{padding:10px 18px;display:flex;align-items:center;gap:12px;
+  border-bottom:1.5px solid var(--ink);background:var(--soft)}
+.lab-head .badge{font-size:10px;font-weight:700;letter-spacing:.1em;
+  border:1px solid var(--ink);padding:2px 9px;border-radius:2px;color:var(--ink);background:#fff}
+.lab-head h3{font-size:16px;margin:0;font-weight:700;color:var(--ink)}
+.lab-head .t{margin-left:auto;font-size:10.5px;color:var(--muted);font-family:'Consolas',monospace}
+.lab-body{padding:15px 18px 16px}
+.steps{counter-reset:st;list-style:none;padding:0;margin:0}
+.steps>li{counter-increment:st;position:relative;padding:0 0 13px 40px;margin:0;font-size:13.5px;
+  line-height:1.55;border-left:1px solid var(--line2);margin-left:13px}
+.steps>li:last-child{border-left:1px solid transparent;padding-bottom:0}
+.steps>li::before{content:counter(st);position:absolute;left:-13px;top:-2px;width:26px;height:26px;
+  background:#fff;border:1.5px solid var(--ink);color:var(--ink);border-radius:50%;
+  display:grid;place-items:center;font-weight:700;font-size:12.5px}
+.steps>li .lt{font-weight:700;color:var(--ink)}
+.steps>li .ls{display:block;font-size:12px;color:var(--muted);font-weight:400;margin-top:2px;line-height:1.6}
+
+/* ── 프롬프트 박스 ── */
+.say{margin:10px 0;background:#fff;border:1px solid var(--line2);border-left:3px solid var(--accent);
+  border-radius:4px;padding:10px 13px}
+.say .sl{font-size:10.5px;font-weight:700;letter-spacing:.05em;color:var(--accent);
+  margin-bottom:4px;display:flex;align-items:center;gap:6px}
+.say .sc{font-family:'Consolas','JetBrains Mono',monospace;font-size:12px;line-height:1.65;
+  color:var(--ink);font-weight:500;white-space:pre-wrap}
+.copybtn{margin-left:auto;font-family:'Noto Sans KR',sans-serif;font-size:10px;font-weight:700;
+  letter-spacing:0;color:var(--muted2);background:#fff;border:1px solid var(--line2);
+  border-radius:3px;padding:2px 9px;cursor:pointer;line-height:1.4}
+.copybtn:hover{border-color:var(--accent);color:var(--accent)}
+@media print{.copybtn{display:none}}
+
+/* ── 품사/토큰 칩 ── */
+.chip{display:inline-flex;align-items:baseline;gap:5px;font-size:12px;font-weight:700;
+  padding:3px 8px;border-radius:3px;border:1px solid;margin:3px 4px 3px 0;line-height:1.3}
+.c-n{color:var(--pn);border-color:var(--pnb);background:var(--pns)}
+.c-v{color:var(--pv);border-color:var(--pvb);background:var(--pvs)}
+.c-a{color:var(--pa);border-color:var(--pab);background:var(--pas)}
+.c-d{color:var(--pd);border-color:var(--pdb);background:var(--pds)}
+.c-x{color:var(--px);border-color:var(--pxb);background:var(--pxs)}
+.c-o{color:var(--muted);border-color:var(--line2);background:var(--soft);font-weight:400}
+
+.parse{border:1px solid var(--line2);background:#fff;margin:13px 0}
+.parse .ph{background:var(--soft);border-bottom:1px solid var(--line);padding:6px 14px;
+  font-size:10.5px;font-weight:700;letter-spacing:.06em;color:var(--muted2);display:flex;justify-content:space-between}
+.parse .pb{padding:13px 14px 14px}
+.parse .src{font-size:14.5px;font-weight:500;color:var(--ink);line-height:1.7}
+.parse .arw{font-size:10.5px;color:var(--muted);letter-spacing:.06em;margin:11px 0 7px;
+  display:flex;align-items:center;gap:10px}
+.parse .arw::after{content:"";flex:1;height:1px;background:var(--line)}
+
+/* ── before / after ── */
+.ba{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);
+  border:1px solid var(--line);margin:13px 0}
+.ba>div{background:#fff;padding:12px 14px}
+.ba .h{font-size:10.5px;font-weight:700;letter-spacing:.06em;margin-bottom:8px}
+.ba .bad .h{color:var(--muted)}
+.ba .bad .h::before{content:"✕ ";color:var(--px)}
+.ba .good .h{color:var(--accent)}
+.ba .good .h::before{content:"✓ ";color:var(--pa)}
+.ba .m{font-family:'Consolas','JetBrains Mono',monospace;font-size:11px;line-height:1.7;color:var(--ink2)}
+.ba .m u{text-decoration:none;background:var(--pxs);color:var(--px);padding:0 3px;border-radius:2px}
+.ba .m b{background:var(--pas);color:var(--pa);padding:0 3px;border-radius:2px;font-weight:500}
+.ba .why2{font-size:11px;color:var(--muted);margin-top:8px;line-height:1.6}
+
+/* ── 막대 ── */
+.bars{margin:12px 0}
+.bars .b{display:flex;align-items:center;gap:10px;margin:7px 0}
+.bars .bl{flex:0 0 26%;font-size:12px;font-weight:700;color:var(--ink)}
+.bars .bt{flex:1;height:13px;background:var(--soft2);border:1px solid var(--line)}
+.bars .bf{height:100%;background:var(--accent)}
+.bars .bf.q{background:var(--line2)}
+.bars .bv{flex:0 0 60px;text-align:right;font-family:'Consolas',monospace;font-size:11px;color:var(--muted2)}
+
+/* ── 흐름 ── */
+.flow{display:flex;gap:5px;align-items:center;flex-wrap:wrap;margin:11px 0}
+.flow span{border:1px solid var(--line2);padding:6px 10px;background:#fff;border-radius:4px;
+  font-size:11.5px;font-weight:700}
+.flow i{font-style:normal;color:var(--accent);font-weight:900}
+
+/* ══════ 목업 컴포넌트 ══════ */
+/* 탐색기 / 창 */
+.win{border:1px solid var(--line2);margin:13px 0;background:#fff}
+.win .tb{display:flex;align-items:center;gap:9px;padding:6px 11px;background:var(--soft2);
+  border-bottom:1px solid var(--line2);font-size:11px;color:var(--muted2);font-weight:700}
+.win .tb .dots{display:flex;gap:4px}
+.win .tb .dots i{width:8px;height:8px;border-radius:50%;border:1px solid var(--line2);background:#fff;display:block}
+.win .tb .rt{margin-left:auto;font-weight:400;color:var(--muted);font-size:10px;letter-spacing:.04em}
+.win .addr{display:flex;align-items:center;gap:7px;padding:6px 11px;border-bottom:1px solid var(--line);
+  font-family:'Consolas',monospace;font-size:11px;color:var(--ink2);background:#fff}
+.win .addr .ic{font-size:10px;color:var(--muted)}
+.win .addr .path{border:1px solid var(--line);border-radius:3px;padding:3px 8px;flex:1;background:var(--soft)}
+.win .addr .path b{color:var(--accent);font-weight:700}
+.win table{margin:0;font-size:11px}
+.win th,.win td{padding:5px 11px;border-bottom:1px solid var(--line)}
+.win thead th{background:var(--soft);font-size:10px;border-bottom:1px solid var(--line2);color:var(--muted2)}
+.win tbody td{color:var(--ink2)}
+.win tbody tr.sel td{background:var(--accent-soft)}
+.win td.ic{width:22px;text-align:center;color:var(--muted);font-family:'Consolas',monospace;font-size:9.5px}
+.win .sb{padding:5px 11px;border-top:1px solid var(--line);background:var(--soft);
+  font-size:10px;color:var(--muted);display:flex;justify-content:space-between}
+.capt{font-size:10.5px;color:var(--muted);margin:-6px 0 13px;padding-left:2px}
+.capt b{color:var(--muted2);font-weight:700}
+
+/* 터미널 */
+.term{border:1px solid var(--line2);background:#fbfaf8;margin:13px 0}
+.term .th{background:var(--soft2);padding:5px 12px;font-size:10.5px;color:var(--muted2);
+  border-bottom:1px solid var(--line2);letter-spacing:.04em;font-weight:700;
+  font-family:'Consolas',monospace;display:flex;justify-content:space-between}
+.term .tb2{padding:11px 13px;font-family:'Consolas','JetBrains Mono',monospace;
+  font-size:11px;line-height:1.8;color:var(--ink2);white-space:pre-wrap}
+.term .p{color:var(--accent);font-weight:700}
+.term .c{color:var(--ink);font-weight:700}
+.term .g{color:var(--pa)}
+.term .d{color:var(--muted)}
+
+/* 폴더 트리 */
+.tree{font-family:'Consolas','JetBrains Mono',monospace;font-size:11px;line-height:1.85;
+  color:var(--ink2);background:var(--soft);border:1px solid var(--line);
+  padding:11px 14px;margin:13px 0;white-space:pre;overflow:hidden}
+.tree b{color:var(--accent);font-weight:700}
+.tree u{text-decoration:none;color:var(--px)}
+.tree i{font-style:normal;color:var(--muted)}
+.ba .tree{margin:0;border:none;background:none;padding:0;font-size:10.5px;line-height:1.8}
+
+/* HEX 뷰어 */
+.hex{border:1px solid var(--line2);margin:13px 0;background:#fff;font-family:'Consolas',monospace}
+.hex .hh{background:var(--soft);border-bottom:1px solid var(--line);padding:5px 12px;
+  font-size:10px;color:var(--muted2);letter-spacing:.06em;font-weight:700;display:flex;justify-content:space-between}
+.hex .hr{display:flex;gap:14px;padding:4px 12px;font-size:11px;border-bottom:1px solid #f2f0ec}
+.hex .hr:last-child{border-bottom:none}
+.hex .of{color:var(--muted);flex:0 0 52px}
+.hex .by{flex:1;color:var(--ink2);letter-spacing:.06em}
+.hex .by b{color:var(--accent);background:var(--accent-soft);padding:1px 2px;font-weight:700}
+.hex .as{flex:0 0 90px;color:var(--muted2);border-left:1px solid var(--line);padding-left:12px}
+.hex .as b{color:var(--accent);font-weight:700}
+
+/* JSON 뷰어 */
+.jsonv{border:1px solid var(--line2);margin:13px 0;background:#fff}
+.jsonv .jh{background:var(--soft);border-bottom:1px solid var(--line);padding:5px 12px;
+  font-size:10.5px;color:var(--muted2);font-weight:700;font-family:'Consolas',monospace;
+  display:flex;justify-content:space-between}
+.jsonv .jb{padding:11px 14px;font-family:'Consolas','JetBrains Mono',monospace;
+  font-size:11.5px;line-height:1.9;white-space:pre;color:var(--muted2)}
+.jk{color:var(--pv);font-weight:700}
+.jv{color:var(--pa);font-weight:700}
+.jnum{color:var(--accent);font-weight:700}
+.jp{color:var(--muted)}
+.jmark{background:#fff7ed;outline:1px solid var(--pnb)}
+
+/* 브라우저 목업 */
+.bw{border:1px solid var(--line2);margin:13px 0;background:#fff}
+.bw .bt{background:var(--soft2);padding:6px 11px;display:flex;gap:8px;align-items:center;
+  font-size:10.5px;font-family:'Consolas',monospace;color:var(--muted2);border-bottom:1px solid var(--line2)}
+.bw .bt .dots{display:flex;gap:4px}
+.bw .bt .dots i{width:8px;height:8px;border-radius:50%;border:1px solid var(--line2);background:#fff;display:block}
+.bw .bt .url{flex:1;background:#fff;border:1px solid var(--line);border-radius:11px;padding:3px 10px;color:var(--ink2)}
+.bw .bc{padding:16px 18px}
+.appttl{font-size:15px;font-weight:800;margin-bottom:2px}
+.appsub{font-size:11px;color:var(--muted);margin-bottom:12px}
+.fld{border:1px solid var(--line2);border-radius:4px;padding:8px 11px;background:#fff;
+  display:flex;justify-content:space-between;align-items:center;
+  font-family:'Consolas',monospace;font-size:12.5px;color:var(--ink);margin:6px 0}
+.fld .u{color:var(--muted);font-size:11px}
+.flbl{font-size:10.5px;font-weight:700;color:var(--muted2);letter-spacing:.04em;margin-top:9px}
+.btn{display:inline-block;border:1.5px solid var(--accent);color:var(--accent);background:var(--accent-soft);
+  border-radius:4px;padding:7px 18px;font-size:12px;font-weight:700;margin-top:11px}
+.res{border:1px solid var(--line);border-radius:4px;margin-top:12px}
+.res .rr{display:flex;justify-content:space-between;padding:8px 12px;border-bottom:1px solid var(--line);font-size:12.5px}
+.res .rr:last-child{border-bottom:none}
+.res .rr .k{color:var(--muted2);font-weight:700}
+.res .rr .v{font-family:'Consolas',monospace;font-weight:700;color:var(--ink)}
+.res .rr.hi{background:var(--accent-soft)}
+.res .rr.hi .v{color:var(--accent)}
+.stamp{font-size:10.5px;color:var(--muted);margin-top:9px;font-family:'Consolas',monospace}
+
+/* URL 분해 */
+.urlx{border:1px solid var(--line2);background:var(--soft);padding:13px 15px;margin:13px 0}
+.urlx .u1{font-family:'Consolas',monospace;font-size:13px;line-height:2.2;word-break:break-all}
+.urlx .u1 span{padding:2px 3px;border-bottom:2.5px solid}
+.urlx .s1{border-color:var(--pv);color:var(--pv)}
+.urlx .s2{border-color:var(--accent);color:var(--accent)}
+.urlx .s3{border-color:var(--pa);color:var(--pa)}
+.urlx .s4{border-color:var(--pd);color:var(--pd)}
+.urlx .lg{margin-top:11px;display:grid;grid-template-columns:repeat(2,1fr);gap:6px 16px}
+.urlx .lg div{font-size:11.5px;color:var(--muted2);display:flex;gap:8px;align-items:baseline}
+.urlx .lg b{flex:0 0 78px;font-family:'Consolas',monospace;font-size:11px}
+
+/* 다이어그램 */
+.dia{border:1px solid var(--line);background:#fff;padding:12px;margin:13px 0}
+.dia svg{display:block;width:100%;height:auto}
+
+/* 체크리스트 */
+.chk{margin:11px 0}
+.chk li{padding-left:26px;font-size:12.5px;margin:7px 0}
+.chk li::before{content:"";position:absolute;left:2px;top:4px;width:13px;height:13px;
+  border:1.5px solid var(--muted2);border-radius:2px;background:#fff}
+.kbd{display:inline-block;border:1px solid var(--line2);border-bottom:2px solid var(--line2);
+  border-radius:4px;padding:1px 8px;font-family:'Consolas',monospace;font-size:11.5px;
+  background:var(--soft);font-weight:700;color:var(--ink);margin:0 1px}
+
+/* 확인 문제 */
+.qa{border:1px solid var(--line2);border-top:2.5px solid var(--ink);padding:12px 15px;margin-top:18px;background:#fff}
+.qa .ql{font-size:10.5px;font-weight:700;letter-spacing:.09em;color:var(--accent);margin-bottom:6px}
+.qa ol{counter-reset:q;margin:0}
+.qa ol li{counter-increment:q;padding-left:22px;font-size:12.5px;margin:7px 0;color:var(--ink2)}
+.qa ol li::before{content:counter(q) ".";position:absolute;left:2px;top:0;font-weight:700;color:var(--muted2);font-size:12px}
+.qa .blank{display:inline-block;border-bottom:1px solid var(--line2);min-width:90px;height:14px;margin:0 3px}
+
+/* 표지 · 간지 (검정 배경 제거 → 테두리 프레임) */
+.cover{padding:12mm;display:flex}
+.cover .fr{flex:1;border:2px solid var(--ink);padding:5px;display:flex}
+.cover .fr2{flex:1;border:1px solid var(--line2);padding:14mm 13mm 10mm;display:flex;flex-direction:column}
+.cover .ck{font-size:11px;font-weight:700;letter-spacing:.16em;color:var(--accent);
+  display:flex;align-items:center;gap:11px}
+.cover .ck::after{content:"";flex:1;height:1px;background:var(--line2)}
+.cover h1{font-size:40px;line-height:1.18;margin:18px 0 12px;letter-spacing:-.03em}
+.cover .cs{font-size:14.5px;color:var(--muted2);line-height:1.7;max-width:88%}
+.cover .cs b{color:var(--ink);font-weight:700}
+.hero{margin:24px 0 0;border:1px solid var(--line2);background:var(--soft);padding:17px 19px}
+.hero .hl{font-size:10.5px;letter-spacing:.1em;color:var(--accent);font-weight:700;margin-bottom:9px}
+.hero .hs{font-size:15.5px;color:var(--ink);font-weight:500;line-height:1.6}
+.hero .hs b{font-weight:800}
+.hero .hd{margin:14px 0 11px;height:1px;background:var(--line2)}
+.hero .hrow{display:flex;align-items:baseline;gap:12px;padding:4px 0}
+.hero .hk{flex:0 0 54px;font-size:10.5px;font-weight:700;color:var(--accent);text-align:right}
+.hero .hv{flex:1;font-size:12.5px;color:var(--ink2)}
+.cover .crow{margin-top:20px;display:flex;border-top:1px solid var(--line2);border-bottom:1px solid var(--line2)}
+.cover .ci{flex:1;padding:13px 0;border-right:1px solid var(--line2)}
+.cover .ci:last-child{border-right:none;padding-left:20px}
+.cover .ci:first-child{padding-right:20px}
+.cover .ci .cl{font-size:10px;letter-spacing:.09em;color:var(--muted);font-weight:700}
+.cover .ci .cv{font-size:12.5px;margin-top:5px;color:var(--ink2);line-height:1.5}
+.cover .ci .cv b{color:var(--accent);font-weight:700}
+.cover .toc{margin-top:auto}
+.cover .toc .th{font-size:10.5px;font-weight:700;letter-spacing:.11em;color:var(--accent);margin-bottom:2px}
+.toc-list{list-style:none;padding:0;margin:0}
+.toc-list li{display:flex;align-items:baseline;gap:14px;padding:8px 0;
+  border-bottom:1px solid var(--line);font-size:13px;color:var(--ink2);margin:0;padding-left:0}
+.toc-list li::before{display:none}
+.toc-list li .ti{font-family:'Consolas',monospace;font-size:11px;color:var(--accent);flex:0 0 34px;font-weight:700}
+.toc-list li .tt{flex:1}
+.toc-list li .tg{font-size:10.5px;color:var(--muted);font-family:'Consolas',monospace}
+.cover .sig{margin-top:16px;display:flex;justify-content:space-between;align-items:baseline;
+  border-top:2px solid var(--ink);padding-top:9px}
+.cover .sig .n{font-size:12px;color:var(--ink);font-weight:700}
+.cover .sig .n span{color:var(--muted);font-family:'Consolas',monospace;font-size:10.5px;margin-left:7px;font-weight:400}
+.cover .sig .b{font-size:10.5px;color:var(--muted);letter-spacing:.07em}
+
+.divider{padding:12mm;display:flex}
+.divider .fr{flex:1;border:2px solid var(--ink);padding:5px;display:flex}
+.divider .fr2{flex:1;border:1px solid var(--line2);padding:26mm 18mm;display:flex;flex-direction:column;justify-content:center}
+.divider .part{color:var(--accent);font-size:12px;font-weight:800;letter-spacing:.16em;
+  display:flex;align-items:center;gap:12px}
+.divider .part::after{content:"";flex:1;height:1px;background:var(--line2)}
+.divider h1{font-size:42px;margin:16px 0 12px;line-height:1.18}
+.divider p{font-size:14.5px;color:var(--muted2);max-width:84%;line-height:1.75}
+.divider .route{margin-top:24px;border-top:1px solid var(--line2);padding-top:14px;
+  line-height:2.1;color:var(--muted2);font-size:12.5px}
+.divider .route b{color:var(--accent);font-family:'Consolas',monospace;font-size:11.5px}
+.divider .goal{margin-top:20px;border:1px solid var(--line2);background:var(--soft);padding:14px 16px}
+.divider .goal .gl{font-size:10.5px;font-weight:700;letter-spacing:.09em;color:var(--accent);margin-bottom:6px}
+.divider .goal ul{margin:0}
+.divider .goal li{font-size:12.5px;margin:5px 0}
+
+.pagenum{position:absolute;bottom:9mm;right:18mm;font-size:10.5px;color:var(--muted);
+  font-family:'Consolas',monospace}
+.brand{position:absolute;bottom:9mm;left:18mm;font-size:9px;color:var(--muted);letter-spacing:.03em}
+.brand b{color:var(--muted2);font-weight:500}
+
+@media print{
+  .page{overflow:hidden}
+}
+.page{overflow:hidden}
+
+
+/* ── 작업 관리자 목업 ── */
+.tm{display:flex}
+.tm .nav{flex:0 0 116px;border-right:1px solid var(--line);padding:6px 0;background:var(--soft)}
+.tm .nav div{font-size:10.5px;padding:5px 11px;color:var(--muted2)}
+.tm .nav div.on{background:#fff;color:var(--ink);font-weight:700;border-left:2px solid var(--accent)}
+.tm .bd{flex:1;min-width:0}
+.tm table{margin:0}
+.tm .hdr{display:flex;justify-content:space-between;padding:7px 12px;border-bottom:1px solid var(--line);
+  font-size:11.5px;font-weight:700;color:var(--ink)}
+.tm .hdr span{font-size:10.5px;color:var(--muted);font-weight:400}
+
+/* ── 간지 배경 ── */
+.page.divider .fr{background:var(--soft2)}
+.page.divider .fr2{background:#fff}
+.page.divider .part{background:var(--accent);color:#fff;display:inline-block;
+  padding:4px 12px;border-radius:2px;letter-spacing:.08em}
+
+/* ── 코드 목업 ── */
+.code{border:1px solid var(--line2);margin:13px 0;background:#fff}
+.code .ch2{background:var(--soft);border-bottom:1px solid var(--line);padding:5px 12px;
+  font-family:'Consolas',monospace;font-size:10.5px;color:var(--muted2);font-weight:700;
+  display:flex;justify-content:space-between}
+.code .cb2{padding:11px 14px;font-family:'Consolas','JetBrains Mono',monospace;
+  font-size:11.5px;line-height:1.85;white-space:pre;color:var(--ink2);overflow:hidden}
+.tag{color:var(--pv);font-weight:700}
+.att{color:var(--pd)}
+.str{color:var(--pa)}
+.cmt{color:var(--muted)}
+.fn{color:var(--accent);font-weight:700}
+.hl2{background:#fff7ed;outline:1px solid var(--pnb)}
+
+/* ── GitHub 화면 목업 ── */
+.gh{border:1px solid var(--line2);margin:13px 0;background:#fff}
+.gh .ghh{background:var(--soft2);border-bottom:1px solid var(--line2);padding:6px 12px;
+  font-size:11px;color:var(--muted2);font-weight:700;display:flex;justify-content:space-between}
+.gh .repo{padding:8px 12px;border-bottom:1px solid var(--line);font-size:12.5px;font-weight:700;color:var(--ink)}
+.gh .repo span{color:var(--muted);font-weight:400;font-size:11px;margin-left:8px}
+.gh .row2{display:flex;gap:10px;padding:6px 12px;border-bottom:1px solid #f4f2ef;font-size:11.5px;align-items:baseline}
+.gh .row2 .ic2{flex:0 0 16px;color:var(--muted);font-family:'Consolas',monospace;font-size:10px}
+.gh .row2 .nm{flex:0 0 34%;font-family:'Consolas',monospace;color:var(--pv)}
+.gh .row2 .msg2{flex:1;color:var(--muted2)}
+.gh .row2 .tm2{flex:0 0 62px;text-align:right;color:var(--muted);font-size:10.5px}
+/* 잔디 */
+.grass{display:flex;gap:3px;flex-wrap:wrap;margin:10px 0;max-width:100%}
+.grass i{width:11px;height:11px;border:1px solid var(--line);background:var(--soft);display:block;border-radius:2px}
+.grass i.l1{background:#f7ddcb;border-color:var(--pnb)}
+.grass i.l2{background:#eeb489;border-color:var(--pnb)}
+.grass i.l3{background:var(--accent);border-color:var(--accent)}
+
+/* ── 작업 진행 표시 ── */
+.chat .wk{font-size:10px;color:var(--muted);font-family:'Consolas',monospace;margin:0 0 5px}
+.chat .bub .ok{color:var(--pa);font-weight:700}
+.chat .bub .no{color:var(--px);font-weight:700}
+.chat .bub code{font-size:11px}
+/* ── 속성창 목업 ── */
+.props{border:1px solid var(--line2);margin:13px 0;background:#fff;max-width:72%}
+.props .ph2{background:var(--soft2);border-bottom:1px solid var(--line2);padding:6px 12px;
+  font-size:11px;font-weight:700;color:var(--muted2)}
+.props .tabs{display:flex;gap:0;border-bottom:1px solid var(--line);font-size:10.5px}
+.props .tabs span{padding:5px 12px;color:var(--muted);border-right:1px solid var(--line)}
+.props .tabs span.on{background:#fff;color:var(--ink);font-weight:700;border-bottom:2px solid var(--accent)}
+.props .pr{display:flex;padding:6px 14px;border-bottom:1px solid #f2f0ec;font-size:11.5px}
+.props .pr b{flex:0 0 84px;color:var(--muted2);font-weight:700}
+.props .pr span{flex:1;color:var(--ink2);font-family:'Consolas',monospace;font-size:11px}
+/* ── 슬래시 명령 목록 ── */
+.slash{border:1px solid var(--line2);margin:13px 0;background:#fff}
+.slash .sh{background:var(--soft);border-bottom:1px solid var(--line);padding:5px 12px;
+  font-size:10.5px;font-weight:700;color:var(--muted2);font-family:'Consolas',monospace;
+  display:flex;justify-content:space-between}
+.slash .sr{display:flex;gap:12px;padding:6px 14px;border-bottom:1px solid #f4f2ef;font-size:11.5px;align-items:baseline}
+.slash .sr:last-child{border-bottom:none}
+.slash .sc2{flex:0 0 92px;font-family:'Consolas',monospace;font-weight:700;color:var(--accent)}
+.slash .sd2{flex:1;color:var(--ink2)}
+
+/* ── 결과 이미지 예시 ── */
+.shots{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:13px 0}
+.shots.one{grid-template-columns:1fr}
+.shots figure{margin:0}
+.shots img{width:100%;display:block;border:1px solid var(--line2);border-radius:3px}
+.shots figcaption{font-size:10.5px;color:var(--muted2);margin-top:5px;font-family:'Consolas',monospace}
+.shots figcaption b{color:var(--accent)}
+
+/* ── 토크나이저 비교 ── */
+.tok{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);
+  border:1px solid var(--line);margin:13px 0}
+.tok>div{background:#fff;padding:12px 14px}
+.tok .tkh{font-size:9.5px;font-weight:700;letter-spacing:.07em;color:var(--muted);margin-bottom:6px}
+.tok .in{border:1px solid var(--line2);border-radius:4px;padding:9px 11px;font-size:14px;
+  font-family:'Consolas',monospace;background:var(--soft);color:var(--ink)}
+.tok .in i{font-style:normal;color:var(--muted);font-size:11px}
+.tok .nums{display:flex;gap:26px;margin-top:11px}
+.tok .nl{font-size:9.5px;font-weight:700;letter-spacing:.06em;color:var(--muted)}
+.tok .n{font-size:21px;font-weight:800;font-family:'Consolas',monospace;line-height:1.2;color:var(--ink)}
+.tok .n.acc{color:var(--accent)}
+.tok .ids{margin-top:10px;font-family:'Consolas',monospace;font-size:11px;color:var(--muted2);
+  background:var(--soft);border:1px solid var(--line);padding:6px 9px;border-radius:3px}
+
+/* ── 목차 ── */
+.tocx{margin:2px 0 0}
+.tocx .g{font-size:11px;font-weight:700;letter-spacing:.08em;color:var(--accent);
+  margin:14px 0 4px;padding-bottom:5px;border-bottom:1.5px solid var(--ink);
+  display:flex;justify-content:space-between;align-items:baseline}
+.tocx .g em{font-style:normal;color:var(--muted);font-weight:400;letter-spacing:0;font-size:11px}
+.tocx .it{display:flex;gap:12px;align-items:baseline;padding:6px 0;border-bottom:1px solid var(--line)}
+.tocx .no{flex:0 0 30px;font-family:'Consolas',monospace;font-size:11.5px;font-weight:700;color:var(--accent)}
+.tocx .tt{flex:1}
+.tocx .tt b{font-size:13px;font-weight:700;color:var(--ink);display:block;line-height:1.4}
+.tocx .tt span{font-size:11.5px;color:var(--muted2);display:block;margin-top:1px;line-height:1.5}
+.tocx .pgn{flex:0 0 24px;text-align:right;font-family:'Consolas',monospace;font-size:11.5px;color:var(--muted2)}
+.tocinfo{margin-top:16px;border:1px solid var(--line2);background:var(--soft);padding:12px 15px}
+.tocinfo .til{font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--accent);margin-bottom:6px}
+.tocinfo .row{display:flex;gap:10px;font-size:11.5px;color:var(--ink2);padding:3px 0;align-items:baseline}
+.tocinfo .row b{flex:0 0 88px;color:var(--ink)}
+
+/* ── 난이도 배지 ── */
+.lv{display:inline-block;font-size:9.5px;font-weight:700;border:1px solid;border-radius:10px;
+  padding:1px 8px;letter-spacing:.03em;line-height:1.6;white-space:nowrap}
+.lv1{color:var(--pv);border-color:var(--pvb);background:var(--pvs)}
+.lv2{color:var(--muted2);border-color:var(--line2);background:var(--soft)}
+.lv3{color:var(--accent);border-color:var(--pnb);background:var(--pns)}
+.lvrow{display:flex;gap:8px;align-items:center;margin:10px 0 4px}
+
+/* ── 난이도 보조 상자 ── */
+.tier{border:1px solid var(--line2);border-radius:4px;padding:11px 14px;margin:12px 0}
+.tier .tl{font-size:10px;font-weight:700;letter-spacing:.06em;margin-bottom:5px;
+  display:flex;gap:8px;align-items:center}
+.tier p{margin:0;font-size:12.5px}
+.tier ul{margin:4px 0 0}
+.tier li{font-size:12.5px;margin:5px 0}
+.tier.b{background:var(--soft)}
+.tier.b .tl{color:var(--muted2)}
+.tier.a{background:#fff;border-style:dashed}
+.tier.a .tl{color:var(--accent)}
+.tier .say{margin:8px 0 0}
+
+/* ── 자동화 회로 ── */
+.auto{border:1px solid var(--line2);border-left:3px solid var(--accent);background:var(--soft);
+  padding:10px 14px;margin:14px 0}
+.auto .al{font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--accent);margin-bottom:6px}
+.auto .ar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.auto .ar span{font-size:12px;color:var(--ink2);background:#fff;border:1px solid var(--line2);
+  border-radius:3px;padding:5px 9px}
+.auto .ar span b{color:var(--accent);font-weight:700;margin-right:5px}
+.auto .ar i{font-style:normal;color:var(--accent);font-weight:900}
+
+/* ── AI 낚시 찾기 ── */
+.trap{border:1.5px dashed var(--line2);border-radius:4px;padding:12px 15px;margin:14px 0;background:#fff}
+.trap .trl{font-size:10.5px;font-weight:700;letter-spacing:.06em;color:var(--px);margin-bottom:7px}
+.trap .fake{border:1px solid var(--line);border-left:2.5px solid var(--line2);background:var(--soft);
+  padding:10px 12px;font-size:12.5px;line-height:1.7;color:var(--ink2)}
+.trap .ask{font-size:12px;color:var(--muted2);margin-top:8px}
+.trap .ask b{color:var(--ink)}
+
+/* ── 메모 영역 (여백 활용) ── */
+.memo{margin-top:26px;border-top:1px solid var(--line);padding-top:9px}
+.memo .ml{font-size:9.5px;font-weight:700;letter-spacing:.12em;color:var(--muted);margin-bottom:8px}
+.memo .line{height:25px;border-bottom:1px dotted var(--line2)}
+
+/* ── 채팅 목업 ── */
+.chat{border:1px solid var(--line2);margin:13px 0;background:#fff}
+.chat .ch{background:var(--soft);border-bottom:1px solid var(--line);padding:6px 12px;
+  font-size:10.5px;font-weight:700;color:var(--muted2);display:flex;justify-content:space-between;
+  font-family:'Consolas',monospace}
+.chat .cb{padding:12px 13px}
+.msg{margin:8px 0;display:flex;gap:10px;align-items:flex-start}
+.msg .av{flex:0 0 44px;font-size:9.5px;font-weight:700;letter-spacing:.05em;color:var(--muted);
+  text-align:right;padding-top:9px}
+.msg .bub{flex:1;border:1px solid var(--line);border-radius:5px;padding:9px 12px;
+  font-size:12px;line-height:1.7;color:var(--ink2);background:#fff}
+.msg.u .bub{background:var(--soft);border-color:var(--line2)}
+.msg.a .bub{border-left:2.5px solid var(--accent)}
+.msg .bub b{color:var(--ink)}
+.msg .bub .tbl{margin-top:6px;font-family:'Consolas',monospace;font-size:10.5px;
+  color:var(--muted2);line-height:1.7;white-space:pre}
+
+/* ── 스펙 카드 ── */
+.stat{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);
+  border:1px solid var(--line);margin:13px 0}
+.stat>div{background:#fff;padding:11px 12px}
+.stat .sl2{font-size:9.5px;font-weight:700;color:var(--accent);letter-spacing:.07em}
+.stat .sv{font-size:14px;font-weight:800;margin-top:3px;font-family:'Consolas',monospace;line-height:1.3}
+.stat .sd{font-size:10px;color:var(--muted);margin-top:3px;line-height:1.5}
+
+/* ── 좌우 2단 ── */
+.split{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:13px 0}
+.split h3{margin-top:0}
+
+
+/* ── v3 추가 ── */
+.term .e{color:var(--px);font-weight:700}
+.term .y{color:var(--pd)}
+.term .b{color:var(--pv);font-weight:700}
+.term.host{background:#f6f8fe}
+.term.host .th{background:var(--pvs);color:var(--pv);border-bottom-color:var(--pvb)}
+.term.root .th{background:var(--pxs);color:var(--px);border-bottom-color:var(--pxb)}
+.term.dev .th{background:var(--pas);color:var(--pa);border-bottom-color:var(--pab)}
+.rh .l .sec{color:var(--ink);margin-left:2px}
+
+/* 로드맵 */
+.road{display:grid;grid-template-columns:repeat(5,1fr);gap:0;border:1.5px solid var(--ink);margin:16px 0}
+.road>div{padding:12px 11px;border-right:1px solid var(--line2);position:relative}
+.road>div:last-child{border-right:none}
+.road .rk{font-family:'Consolas',monospace;font-size:20px;font-weight:900;color:var(--accent);line-height:1}
+.road .rt{font-size:13.5px;font-weight:800;margin:6px 0 4px}
+.road .rq{font-size:11px;color:var(--muted2);line-height:1.55}
+.road .rc{font-family:'Consolas',monospace;font-size:10px;color:var(--ink2);margin-top:7px;line-height:1.6;
+  border-top:1px dashed var(--line2);padding-top:6px}
+
+/* ls -l 해부 */
+.anat{border:1px solid var(--line2);background:#fff;margin:13px 0;overflow:hidden}
+.anat .ah{background:var(--soft);border-bottom:1px solid var(--line);padding:5px 12px;font-size:10.5px;
+  font-weight:700;color:var(--muted2);font-family:'Consolas',monospace}
+.anat .row{display:flex;padding:12px 10px 4px;gap:0;font-family:'Consolas',monospace;font-size:14px}
+.anat .seg{padding:3px 6px;border-bottom:3px solid;margin-right:6px;white-space:pre;font-weight:700}
+.anat .lab{display:flex;padding:0 10px 12px;gap:0}
+.anat .lab div{font-size:10.5px;line-height:1.35;color:var(--muted2);margin-right:6px}
+.anat .lab b{display:block;font-size:10px;color:var(--ink)}
+.s1{border-color:var(--px);color:var(--px)}
+.s2{border-color:var(--accent);color:var(--accent)}
+.s3{border-color:var(--muted);color:var(--muted2)}
+.s4{border-color:var(--pv);color:var(--pv)}
+.s5{border-color:var(--pa);color:var(--pa)}
+.s6{border-color:var(--line2);color:var(--ink2)}
+.s7{border-color:var(--pd);color:var(--pd)}
+.s8{border-color:var(--ink);color:var(--ink)}
+
+/* 권한 비트 */
+.bits{display:grid;grid-template-columns:44px repeat(9,1fr);border:1.5px solid var(--ink);margin:14px 0;
+  font-family:'Consolas',monospace;text-align:center}
+.bits>div{padding:8px 0;border-right:1px solid var(--line2);font-size:17px;font-weight:800}
+.bits>div:last-child{border-right:none}
+.bits .ty{background:var(--pxs);color:var(--px)}
+.bits .u{background:var(--pns);color:var(--pn)}
+.bits .g{background:var(--pas);color:var(--pa)}
+.bits .o{background:var(--pvs);color:var(--pv)}
+.bits .cap{font-size:10px;font-weight:700;padding:5px 0;border-top:1px solid var(--line2);font-family:'Noto Sans KR',sans-serif}
+.bits .sp3{grid-column:span 3}
+
+/* O / X 표 */
+td.ok,td.no,td.mid{text-align:center;font-weight:800;font-family:'Consolas',monospace}
+td.ok{color:var(--pa)!important}
+td.no{color:var(--px)!important}
+td.mid{color:var(--pd)!important}
+th.c{text-align:center}
+
+/* 서버 구성도 */
+.topo{display:grid;grid-template-columns:1fr 1.25fr 1fr;gap:14px;margin:14px 0;align-items:stretch}
+.topo .box{border:1.5px solid var(--ink);background:#fff}
+.topo .box .bh{padding:6px 10px;font-size:11px;font-weight:800;border-bottom:1px solid var(--line2);background:var(--soft);
+  font-family:'Consolas',monospace;display:flex;justify-content:space-between}
+.topo .box .bh span{font-weight:400;color:var(--muted)}
+.topo .box .bb{padding:9px 10px;font-size:11px;line-height:1.7;color:var(--ink2)}
+.topo .box .bb code{font-size:10.5px}
+.topo .box.h{border-color:var(--pv)} .topo .box.h .bh{background:var(--pvs);color:var(--pv)}
+.topo .acct{display:block;border:1px solid var(--line2);border-radius:3px;padding:4px 7px;margin:5px 0;background:var(--soft)}
+.topo .acct b{color:var(--accent)}
+.arrowline{font-size:11px;color:var(--muted2);text-align:center;margin:-4px 0 10px;font-family:'Consolas',monospace}
+.arrowline b{color:var(--accent)}
+
+/* 8진수 */
+.oct{display:flex;gap:10px;margin:12px 0;align-items:stretch}
+.oct>div{flex:1;border:1px solid var(--line2);text-align:center;padding:10px 6px;background:#fff}
+.oct .ov{font-family:'Consolas',monospace;font-size:24px;font-weight:900;color:var(--accent)}
+.oct .ol{font-size:11px;color:var(--muted2);margin-top:2px}
+.oct .op{align-self:center;border:none;flex:0 0 14px;font-size:18px;font-weight:900;color:var(--muted);padding:0;background:none}
+
+.opener .big{font-family:'Consolas',monospace;font-size:120px;font-weight:900;line-height:.9;color:var(--accent);margin:18mm 0 6mm}
+.opener h1{font-size:34px;margin-bottom:12px}
+.opener .oq{border-top:1.5px solid var(--ink);border-bottom:1px solid var(--line2);margin:18px 0;padding:6px 0}
+.opener .oq div{display:flex;gap:14px;padding:8px 0;border-bottom:1px dotted var(--line2);font-size:14px}
+.opener .oq div:last-child{border-bottom:none}
+.opener .oq span{flex:0 0 26px;font-family:'Consolas',monospace;font-weight:900;color:var(--accent)}
+.opener .otoc{columns:2;column-gap:24px;margin-top:10px}
+.opener .otoc div{break-inside:avoid;display:flex;justify-content:space-between;font-size:12.5px;padding:5px 0;border-bottom:1px solid var(--line)}
+.opener .otoc b{font-family:'Consolas',monospace;color:var(--muted2)}
+.lvl{border:1px solid var(--line2);margin:11px 0;background:#fff}
+.lvl .lh{display:flex;align-items:center;gap:10px;padding:7px 13px;border-bottom:1px solid var(--line2);background:var(--soft)}
+.lvl .lh b{font-size:11px;font-weight:800;border:1px solid;border-radius:2px;padding:1px 8px}
+.lvl .lh span{font-size:12px;color:var(--muted2)}
+.lvl.l1 .lh b{color:var(--pa);border-color:var(--pab);background:var(--pas)}
+.lvl.l2 .lh b{color:var(--pv);border-color:var(--pvb);background:var(--pvs)}
+.lvl.l3 .lh b{color:var(--px);border-color:var(--pxb);background:var(--pxs)}
+.lvl ol{counter-reset:q;margin:0;padding:6px 13px 9px}
+.lvl ol li{counter-increment:q;padding-left:30px;margin:6px 0;font-size:12.5px}
+.lvl ol li::before{content:"Q" counter(q);position:absolute;left:0;top:1px;font-family:'Consolas',monospace;font-size:11px;font-weight:800;color:var(--muted)}
+.ans{border-top:1.5px dashed var(--line2);margin-top:14px;padding-top:8px;font-size:11px;color:var(--muted2);line-height:1.7}
+.ans b{color:var(--ink)}
+.ans .al{font-size:10px;font-weight:800;letter-spacing:.08em;color:var(--muted);margin-bottom:3px}
+
+tbody td:first-child b{white-space:nowrap}
+
+th.c{white-space:nowrap}
+
+.code .cb2{font-size:10px;line-height:1.5;padding:9px 12px}
+
+.lwhy{margin:0 0 10px;padding:7px 11px;background:var(--soft);border-left:3px solid var(--accent);font-size:11.8px;line-height:1.55;color:var(--ink2)}
+.lwhy b{color:var(--accent);margin-right:8px;font-size:11px}
+.opener.has-why .big{font-size:84px;margin:8mm 0 4mm}
+.oscene{margin:12px 0 4px;border:1.5px solid var(--accent);background:#fff}
+.oscene .osh{padding:5px 12px;font-size:10.5px;font-weight:800;color:#fff;background:var(--accent);letter-spacing:.08em}
+.oscene .osb{padding:10px 13px 6px;font-size:13px;line-height:1.75;color:var(--ink)}
+.oscene table{margin:4px 13px 12px;width:calc(100% - 26px)}
+.opener.has-why .oq{margin:12px 0}
+.opener.has-why .oq div{padding:6px 0;font-size:13px}
+
+table.quiz td.qn{width:26px;font-family:'Consolas',monospace;font-weight:800;color:var(--accent);text-align:center}
+table.quiz td.qb{width:96px;white-space:nowrap;color:var(--muted2);font-family:'Consolas',monospace}
+.inc{border:1.5px solid var(--ink);margin:10px 0;background:#fff}
+.inc .inh{display:flex;align-items:center;gap:10px;padding:7px 12px;background:var(--ink);color:#fff}
+.inc .inh b{font-size:14px;flex:1}
+.inc .inno{font-family:'Consolas',monospace;font-size:11px;font-weight:900;background:var(--accent);padding:2px 7px}
+.inc .inlv{font-size:10.5px;border:1px solid #fff;padding:1px 7px;border-radius:2px}
+.inc .inb{padding:6px 12px 10px}
+.inc .inrow{display:flex;gap:12px;padding:6px 0;border-bottom:1px dotted var(--line2);font-size:12px;line-height:1.6}
+.inc .inrow>span{flex:0 0 64px;font-size:10.5px;font-weight:800;color:var(--accent);padding-top:2px}
+.inc .inrow>div{flex:1}
+.inc .inrow.learn{border-bottom:none}
+.inc .inrow.learn>div{font-weight:700}
+.inc .term{margin:6px 0}
+
+table.cmdt{table-layout:fixed}
+table.cmdt th:nth-child(1){width:27%} table.cmdt th:nth-child(2){width:13%}
+table.cmdt th:nth-child(3){width:17%} table.cmdt th:nth-child(4){width:27%} table.cmdt th:nth-child(5){width:16%}
+table.cmdt td:first-child code{word-break:break-all}
+
+table.quiz th{white-space:nowrap}
+
+.msn{border:1.5px solid var(--ink);margin:10px 0;background:#fff;break-inside:avoid}
+.msn .mh{display:flex;align-items:center;gap:9px;padding:6px 11px;background:var(--soft);border-bottom:1px solid var(--line2)}
+.msn .mh b{flex:1;font-size:13.5px}
+.msn .mid{font-family:'Consolas',monospace;font-size:11.5px;font-weight:900;color:#fff;background:var(--ink);padding:2px 7px;border-radius:2px}
+.msn .mlv{font-size:10.5px;font-weight:800;border:1px solid;border-radius:2px;padding:1px 7px}
+.msn .mlv.l1{color:var(--pa);border-color:var(--pab);background:var(--pas)}
+.msn .mlv.l2{color:var(--pv);border-color:var(--pvb);background:var(--pvs)}
+.msn .mlv.l3{color:var(--px);border-color:var(--pxb);background:var(--pxs)}
+.msn .mlv.l4{color:#fff;border-color:var(--accent);background:var(--accent)}
+.msn .mtm{font-size:10.5px;color:var(--muted2);font-family:'Consolas',monospace}
+.msn .mb{padding:4px 11px 7px}
+.msn .mr{display:flex;gap:10px;padding:4px 0;border-bottom:1px dotted var(--line);font-size:11.8px;line-height:1.55}
+.msn .mr:last-child{border-bottom:none}
+.msn .mr>span{flex:0 0 34px;font-size:10.5px;font-weight:800;color:var(--accent);padding-top:1px}
+.msn .mr>div{flex:1}
+.msn .mr.ref>div{color:var(--muted2)}
+
+/* ── 간지(파트 표지): 배경색 ── */
+.page.opener{background:#1e2638 !important;color:#e9edf5;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.page.opener .rh{border-bottom-color:rgba(255,255,255,.22)}
+.page.opener .rh .l,.page.opener .rh .r{color:#b7c0d3}
+.page.opener .rh .l b{color:#ff9a6b}
+.page.opener .rh .pg{color:#fff;border-color:rgba(255,255,255,.5);background:transparent}
+.page.opener .big{color:#ff9a6b}
+.page.opener h1,.page.opener h1 *{color:#fff}
+.page.opener .kicker{color:#ff9a6b}
+.page.opener .oq{border-top-color:rgba(255,255,255,.7);border-bottom-color:rgba(255,255,255,.25)}
+.page.opener .oq div{border-bottom-color:rgba(255,255,255,.15);color:#e9edf5}
+.page.opener .oq span{color:#ff9a6b}
+.page.opener .otoc div.it{border-bottom-color:rgba(255,255,255,.14);color:#e9edf5}
+.page.opener .otoc b{color:#8f9bb3}
+.page.opener .otoc .och{break-after:avoid;break-inside:avoid;margin:9px 0 2px;font-size:11px;font-weight:800;color:#ff9a6b;letter-spacing:.04em}
+.page.opener .otoc .och:first-child{margin-top:0}
+.page.opener .brand,.page.opener .pagenum{color:#8f9bb3}
+.page.opener .oscene{border-color:#ff9a6b}
+.page.opener .oscene .osh{background:#ff9a6b;color:#1e2638}
+.page.opener .oscene .osb,.page.opener .oscene td,.page.opener .oscene th{color:var(--ink)}
+.opener .otoc div.it{break-inside:avoid;display:flex;justify-content:space-between;font-size:12.5px;padding:4px 0;border-bottom:1px solid var(--line)}
+
+/* ── 장 표시 ── */
+.rh .l .chip{margin-left:2px;padding:1px 7px;border-radius:2px;background:var(--soft);border:1px solid var(--line2);color:var(--ink2);font-weight:700}
+.chap{display:flex;align-items:baseline;gap:10px;margin:-6px 0 14px;padding:8px 14px;background:#1e2638;color:#fff;font-size:15px;font-weight:800;
+  -webkit-print-color-adjust:exact;print-color-adjust:exact;border-left:6px solid #ff9a6b}
+.chap b{font-size:18px;color:#ff9a6b}
+.chap span{font-size:11.5px;font-weight:500;color:#b7c0d3;margin-left:auto}
+
+.page.opener .otoc .och{display:block;border-bottom:none;padding:0}
+
+.page.opener .otoc{columns:2;column-gap:22px;margin-top:6px}
+.page.opener .otoc div.it{font-size:11.2px;padding:2px 0}
+.page.opener .otoc .och{margin:6px 0 1px;font-size:10.5px}
+.page.opener.has-why .oq div{padding:4px 0;font-size:12.5px}
+
+/* ── v5 글꼴 확대 (가독성) ── */
+h1{font-size:25px;line-height:1.35}
+h3{font-size:15.5px}
+.kicker{font-size:11.5px}
+table{font-size:13px}
+thead th{font-size:12px}
+th,td{padding:6px 10px;line-height:1.55}
+.term .tb2{font-size:12px;line-height:1.65}
+.term .th{font-size:11.5px}
+.code .cb2{font-size:11.6px;line-height:1.55}
+.code .ch2{font-size:11.5px}
+.steps>li{font-size:14px}
+.steps>li .ls{font-size:13px;line-height:1.6}
+.lab-head h3{font-size:15.5px}
+.lwhy{font-size:13px}
+.why p,.note,.warn{font-size:13.2px;line-height:1.65}
+.why b{font-size:13.5px}
+.point p{font-size:13.6px;line-height:1.65}
+.mission h3{font-size:14.8px}
+.mission .wy{font-size:13px}
+.deflist .dd{font-size:13.2px;line-height:1.6}
+.deflist .dt{font-size:14px}
+.flow span{font-size:12.3px}
+.tree{font-size:12.2px}
+.cell p{font-size:13px}
+.cell h4{font-size:15px}
+.msn .mr{font-size:13.2px}
+.msn .mh b{font-size:15px}
+.msn .mr>span{font-size:11.5px;flex-basis:38px}
+.inc .inrow{font-size:13.2px}
+.inc .inrow>span{font-size:11.5px}
+.inc .inh b{font-size:15px}
+.lvl ol li{font-size:13.2px}
+.ans{font-size:12.4px}
+.say .sc{font-size:12.4px}
+.anat .col .cp{font-size:11.2px}
+.oscene .osb{font-size:14px}
+.chap{font-size:16px}
+.rh .l,.rh .r{font-size:11.5px}
+.ba .m{font-size:13px}
+.topo .box .bb{font-size:12.4px}
+.road .rq{font-size:12px}
+table.cmdt{font-size:12.4px}
+
+.grid.g1{grid-template-columns:1fr}
+td.ok,td.mid,td.no{white-space:nowrap}
+.pbreak{height:0;margin:0}
+.calc{font-family:'Consolas',monospace;font-size:12px;line-height:1.8;color:var(--ink2);background:var(--soft);padding:10px 12px;border-radius:3px;margin:10px 0}
+.calc b{color:var(--accent)}
+.page.opener .otoc div.it span{flex:1}
+.cover .toc-list li{padding:3px 0}
+.split .term{margin:0}
+.code .cb2{font-size:10.3px;line-height:1.5;white-space:pre-wrap}
+.dia svg{max-height:220px}
+</style></head><body><section class="page cover"><div class="fr"><div class="fr2">
+<div class="ck">청년취업사관학교 동대문4기 · PYTHON for FastAPI → MCP · PART 3</div>
+<h1>백엔드 구조 설계 · Part 3<br>FastAPI로 노출한다</h1>
+<div class="cs">Part 1·2에서 손으로 만든 구조를 프레임워크로 · 데이터는 CSV 그대로<br><b>기업연계형 AI 서비스·클라우드 실무 과정</b></div>
+<div class="hero"><div class="hl">이 교안을 마치면</div><div class="hs">같은 서비스를 <b>사람에게는 REST로, 모델에게는 도구 목록으로</b> 노출하는 서버를 직접 만들 수 있습니다.</div><div class="hd"></div>
+<div class="hrow"><div class="hk">1·2장</div><div class="hv">라우팅 · 경로와 쿼리 · 응답 모델 · 자동 문서가 만들어지는 원리</div></div>
+<div class="hrow"><div class="hk">3장</div><div class="hv">routers / services 분리 · APIRouter · Depends로 공통 처리</div></div>
+<div class="hrow"><div class="hk">4장</div><div class="hv">404와 422 · HTTPException · 예외 핸들러로 오류 모양 통일</div></div>
+<div class="hrow"><div class="hk">5·6장</div><div class="hv">async 라우터 · 같은 서비스를 두 입구로 · 미션 16개 · 평가 10문항</div></div></div>
+<div class="crow"><div class="ci"><div class="cl">선수</div><div class="cv"><b>Part 1 · 2</b></div></div><div class="ci"><div class="cl">준비</div><div class="cv"><code>pip install "fastapi[standard]"</code></div></div><div class="ci"><div class="cl">다음</div><div class="cv"><b>Part 4</b> · MCP</div></div></div>
+<div class="toc" style="margin-top:auto;padding-top:12px"><div class="th">CONTENTS</div><ul class="toc-list"><li><span class="ti">00</span><span class="tt">무엇을 노출하는가</span><span class="tg" data-toc="ch0">00</span></li><li><span class="ti">01</span><span class="tt">요청을 함수로 잇는다</span><span class="tg" data-toc="ch1">04</span></li><li><span class="ti">02</span><span class="tt">주고받을 모양을 선언한다</span><span class="tg" data-toc="ch2">09</span></li><li><span class="ti">03</span><span class="tt">구조를 나눈다</span><span class="tg" data-toc="ch3">14</span></li><li><span class="ti">04</span><span class="tt">실패를 설계한다</span><span class="tg" data-toc="ch4">21</span></li><li><span class="ti">05</span><span class="tt">기다림과 노출 방식</span><span class="tg" data-toc="ch5">26</span></li><li><span class="ti">06</span><span class="tt">설계 정리와 미션</span><span class="tg" data-toc="ch6">33</span></li></ul></div>
+<div class="sig"><div class="n">부성순</div><div class="b">AI SERVICE · CLOUD PRACTICE</div></div></div></div></section>
+<section class="page" data-sec="0.1" data-title="0.1 무엇을 노출하는가" data-ch="0"><div class="rh"><div class="l"><b>FastAPI · PART 3</b> · <span class="sec">시작하기</span></div><div class="r">0.1 무엇을 노출하는가<span class="pg">02</span></div></div><div class="kicker">0 · 설계의 지도</div><h1>Part 1·2의 서비스를<br><em>밖에서 쓰게</em> 만든다</h1>
+<div class="why"><b>왜 배워야 하나?</b><p>Part 1·2에서 만든 집계 함수들은 <strong>같은 프로세스 안에서만</strong> 쓸 수 있었습니다. 다른 컴퓨터의 프로그램이, 브라우저가, 혹은 모델이 쓰게 하려면 <strong>밖으로 내보내는 통로</strong>가 필요합니다. FastAPI는 그 통로를 만드는 도구입니다.</p></div>
+<h3>Part 1·2에서 손으로 만든 것이 여기서는</h3>
+<table class="zebra"><thead><tr><th style="width:30%">직접 만들었던 것</th><th style="width:46%">FastAPI에서는</th><th style="width:24%">어디서</th></tr></thead><tbody><tr><td><code>REGISTRY</code> 딕셔너리</td><td><code>app</code> · <code>APIRouter</code>가 경로를 들고 있다</td><td>1장</td></tr><tr><td><code>@tool</code> 데코레이터</td><td><code>@app.get</code> · <code>@router.post</code></td><td>1장</td></tr><tr><td><code>build_schema()</code></td><td>타입 힌트와 Pydantic으로 <b>자동 생성</b> · <code>/docs</code></td><td>2장</td></tr><tr><td><code>call_tool(name, args)</code></td><td>HTTP 요청이 경로를 찾아 함수를 호출</td><td>1 · 4장</td></tr><tr><td><code>autoload.py</code></td><td><code>include_router()</code>로 조립</td><td>3장</td></tr><tr><td>오류를 결과에 담기</td><td><code>HTTPException</code> · 상태 코드</td><td>4장</td></tr></tbody></table>
+<h3>만들 것</h3>
+<div class="code"><div class="ch2"><span>완성 후</span><span>요청과 응답</span></div><div class="cb2">GET  /health                              {"status": "ok"}
+GET  /sales/summary?top_n=2               집계 결과
+GET  /sales/regions                       ["대구","부산","서울"]
+GET  /sales/regions/서울?min_amount=1000000   한 지역 상세
+GET  /sales/regions/제주                   404 · 그런 지역의 거래가 없습니다
+GET  /sales/summary?top_n=99              422 · less than or equal to 10
+
+GET  /tools                               도구 목록과 입력 명세
+POST /tools/summarize_sales/call          헤더에 X-API-Key 필요
+GET  /docs                                문서가 자동으로 만들어진다</div></div>
+
+
+
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">02</div></section><section class="page" data-sec="0.1" data-title="0.1 무엇을 노출하는가" data-ch="0" data-cont="1"><div class="rh"><div class="l"><b>FastAPI · PART 3</b> · <span class="sec">시작하기</span></div><div class="r">0.1 무엇을 노출하는가 (계속)<span class="pg">03</span></div></div><div class="kicker">0 · 설계의 지도</div><h1>Part 1·2의 서비스를<br><em>밖에서 쓰게</em> 만든다</h1><div class="tree">api_lab/
+├── sales.csv
+└── app/
+    ├── main.py          앱 조립 · 3장
+    ├── schemas.py       주고받을 모양 · 2장
+    ├── deps.py          의존성 · 3장
+    ├── routers/
+    │   ├── sales.py     일반 REST · 1 · 2 · 4장
+    │   ├── tools.py     도구 형태 · 5장
+    │   └── external.py  비동기 · 5장
+    └── services/
+        ├── loader.py    데이터 출처 (CSV)
+        └── sales.py     집계 · HTTP를 모른다</div><div class="note"><strong>데이터는 CSV를 그대로</strong> 씁니다. 나중에 MySQL로 바꿔도 고칠 곳은 <code>services/loader.py</code> 하나입니다. 라우터와 서비스가 데이터 출처를 모르게 짜 두는 것이 이 구조의 목적입니다.</div><div style="display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:start;margin:10px 0;padding:9px 12px;border-left:3px solid #6d28d9;background:#f6f3ff;border-radius:0 4px 4px 0"><b style="font-size:10.5px;color:#6d28d9;white-space:nowrap;letter-spacing:.04em">MCP에서는</b><span style="font-size:11.5px;color:#3b1d82;line-height:1.55">MCP 서버도 <b>도구 목록을 알려 주고 이름으로 호출받는</b> 구조입니다. 5장에서 같은 서비스를 <b>REST와 도구 두 가지 방식</b>으로 노출해 보면, 두 방식이 입구만 다르고 속은 같다는 것이 보입니다.</span></div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">03</div></section>
+<section class="page opener has-why" data-ch="1"><div class="rh"><div class="l"><b>FastAPI · PART 3</b> · 1장</div><div class="r">요청을 함수로 잇는다<span class="pg">04</span></div></div><div class="big">1</div><h1>요청을 함수로 잇는다<br>@app.get은 우리의 @tool과 같다</h1><div class="oscene"><div class="osh">WHY · 현장 장면</div><div class="osb">Part 1에서 이름과 함수를 묶는 표를 직접 만들었다. FastAPI는 같은 일을 <b>경로와 함수</b>로 한다. 입력을 경로에 받을지 쿼리에 받을지가 첫 설계 결정이다.</div><table class="zebra osx"><thead><tr><th>이 장을 모르면</th><th>생기는 일</th></tr></thead><tbody><tr><td>라우팅을 모르면</td><td>요청이 함수까지 오지 못한다</td></tr><tr><td>경로·쿼리를 섞으면</td><td>주소가 뜻을 잃는다</td></tr><tr><td>제약을 안 걸면</td><td>이상한 값이 서비스까지 간다</td></tr></tbody></table></div><div class="oq"><div><span>01</span>@app.get은 무엇을 하는가?</div><div><span>02</span>경로와 쿼리는 어떻게 갈리는가?</div><div><span>03</span>입력 제약은 어디에 거는가?</div></div><div class="kicker">이 장의 구성</div><div class="otoc"><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">1.1</b>요청을 함수로 잇는다</span><span class="pg2" data-sec="1.1">05</span></div><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">1.2</b>경로와 쿼리를 받는다</span><span class="pg2" data-sec="1.2">07</span></div></div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">04</div></section>
+<section class="page" data-sec="1.1" data-title="1.1 요청을 함수로 잇는다" data-ch="1"><div class="rh"><div class="l"><b>FastAPI · PART 3</b> · 1장 · <span class="sec">요청을 함수로 잇는다</span></div><div class="r">1.1 요청을 함수로 잇는다<span class="pg">05</span></div></div><div class="kicker">1.1 · 파이썬이 주는 것 · 데코레이터 라우팅</div><h1><code>@app.get</code>은<br><em>Part 1의 @tool</em>과 같다</h1>
+<div class="why"><b>왜 배워야 하나?</b><p>Part 1에서 <code>@tool</code>을 만들어 <strong>이름 → 함수</strong> 표에 등록했습니다. FastAPI는 똑같은 일을 <strong>경로 → 함수</strong>로 합니다. 문법이 특별한 것이 아니라, 우리가 만든 것과 같은 구조입니다.</p></div>
+<div class="code"><div class="ch2"><span>app/main.py</span><span>가장 작은 앱</span></div><div class="cb2"><span style="color:#86827b"> 1</span>  from fastapi import FastAPI
+<span style="color:#86827b"> 2</span>  
+<span style="color:#86827b"> 3</span>  app = FastAPI(title="Sales API", version="1.0.0")
+<span style="color:#86827b"> 4</span>  
+<span style="color:#86827b"> 5</span>  
+<span style="color:#86827b"> 6</span>  @app.get("/health")
+<span style="color:#86827b"> 7</span>  def health():
+<span style="color:#86827b"> 8</span>      return {"status": "ok"}
+</div></div>
+<table class="zebra"><thead><tr><th>조각</th><th>하는 일</th><th>Part 1에서는</th></tr></thead><tbody><tr><td><code>app = FastAPI()</code></td><td>경로 표를 가진 <b>인스턴스</b></td><td><code>ToolRegistry()</code> (Part 2)</td></tr><tr><td><code>@app.get("/health")</code></td><td>이 경로로 오면 아래 함수를 부르라고 <b>등록</b></td><td><code>@tool</code></td></tr><tr><td>함수가 돌려준 딕셔너리</td><td><b>JSON 응답 본문</b>이 된다</td><td>도구의 반환값</td></tr><tr><td><code>def</code></td><td>동기 함수도 그대로 받는다</td><td>—</td></tr></tbody></table>
+<div class="code"><div class="ch2"><span>실행</span><span>uvicorn으로 띄운다</span></div><div class="cb2">$ pip install "fastapi[standard]" uvicorn
+$ uvicorn app.main:app --reload --port 8000
+
+INFO:     Uvicorn running on http://127.0.0.1:8000
+INFO:     Application startup complete.
+
+$ curl localhost:8000/health
+{"status":"ok"}</div></div>
+<table class="zebra"><thead><tr><th>명령 조각</th><th>뜻</th></tr></thead><tbody><tr><td><code>app.main:app</code></td><td><b>모듈 경로 : 변수 이름</b> · <code>app/main.py</code>의 <code>app</code></td></tr><tr><td><code>--reload</code></td><td>파일이 바뀌면 자동 재시작 · <b>개발용</b></td></tr><tr><td><code>--port 8000</code></td><td>기본값도 8000</td></tr><tr><td><code>--host 0.0.0.0</code></td><td>다른 컴퓨터에서 접속하게 할 때 (VM·컨테이너)</td></tr></tbody></table>
+
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">05</div></section><section class="page" data-sec="1.1" data-title="1.1 요청을 함수로 잇는다" data-ch="1" data-cont="1"><div class="rh"><div class="l"><b>FastAPI · PART 3</b> · 1장 · <span class="sec">요청을 함수로 잇는다</span></div><div class="r">1.1 요청을 함수로 잇는다 (계속)<span class="pg">06</span></div></div><div class="kicker">1.1 · 파이썬이 주는 것 · 데코레이터 라우팅</div><h1><code>@app.get</code>은<br><em>Part 1의 @tool</em>과 같다</h1><div class="note"><code>uvicorn</code>은 <b>ASGI 서버</b>입니다. FastAPI는 요청을 받아 함수로 잇는 규칙을 정할 뿐이고, <b>실제로 포트를 열고 요청을 받는 일</b>은 uvicorn이 합니다. Part 1에서 우리가 만든 <code>main.py</code>의 CLI 자리에 해당합니다.</div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">06</div></section>
+<section class="page" data-sec="1.2" data-title="1.2 경로와 쿼리를 받는다" data-ch="1"><div class="rh"><div class="l"><b>FastAPI · PART 3</b> · 1장 · <span class="sec">요청을 함수로 잇는다</span></div><div class="r">1.2 경로와 쿼리를 받는다<span class="pg">07</span></div></div><div class="kicker">1.2 · 설계 결정 · 입력의 자리</div><h1>어디로 받을지<br><em>내가 정한다</em></h1>
+<div class="why"><b>왜 배워야 하나?</b><p>같은 정보라도 <strong>경로에 넣을지 쿼리에 넣을지</strong>는 설계 결정입니다. FastAPI는 <strong>함수 매개변수 이름이 경로에 있으면 경로 변수로, 없으면 쿼리로</strong> 자동 판단합니다.</p></div>
+<div class="code"><div class="ch2"><span>app/routers/sales.py</span><span>두 가지가 모두 나온다</span></div><div class="cb2"><span style="color:#86827b"> 1</span>  @router.get("/regions/{region}")
+<span style="color:#86827b"> 2</span>  def get_region(region: str, min_amount: int = 0):
+<span style="color:#86827b"> 3</span>      ...
+<span style="color:#86827b"> 4</span>  
+<span style="color:#86827b"> 5</span>  # region     → 경로에 {region} 이 있으니 경로 변수
+<span style="color:#86827b"> 6</span>  # min_amount → 경로에 없으니 쿼리 파라미터
+<span style="color:#86827b"> 7</span>  #
+<span style="color:#86827b"> 8</span>  # GET /sales/regions/서울?min_amount=1000000
+</div></div>
+<table class="zebra"><thead><tr><th style="width:22%">무엇을 정했나</th><th style="width:40%">고를 수 있었던 것</th><th style="width:38%">우리의 선택과 이유</th></tr></thead><tbody><tr><td>지역을 어디로</td><td><b>경로</b> <code>/regions/서울</code> · 쿼리 <code>?region=서울</code></td><td><b>경로</b> · 그 지역이라는 <b>자원</b>을 가리킨다</td></tr><tr><td>최소 금액을 어디로</td><td>경로 · <b>쿼리</b></td><td><b>쿼리</b> · 거르는 <b>조건</b>이지 자원이 아니다</td></tr><tr><td>없을 때</td><td>빈 결과 · <b>404</b></td><td><b>404</b> · HTTP에는 “없음”을 표현하는 자리가 있다 (4장)</td></tr></tbody></table>
+<div class="point"><div class="pl">기준</div><p><strong>무엇을 가리키는가는 경로, 어떻게 거를 것인가는 쿼리.</strong> <code>/sales/regions/서울</code>은 “서울 거래”라는 대상이고, <code>?min_amount=…</code>는 그 대상을 거르는 조건입니다.</p></div>
+<h3>Query로 제약까지 선언한다</h3>
+<div class="code"><div class="ch2"><span>검증을 선언으로</span><span>Part 2의 Field와 같은 자리</span></div><div class="cb2"><span style="color:#86827b"> 1</span>  from fastapi import Query
+<span style="color:#86827b"> 2</span>  
+<span style="color:#86827b"> 3</span>  @router.get("/summary")
+<span style="color:#86827b"> 4</span>  def get_summary(top_n: int = Query(3, ge=1, le=10, description="상위 몇 개 지역")):
+<span style="color:#86827b"> 5</span>      return sales.summarize(top_n)
+</div></div>
+
+
+
+
+
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">07</div></section><section class="page" data-sec="1.2" data-title="1.2 경로와 쿼리를 받는다" data-ch="1" data-cont="1"><div class="rh"><div class="l"><b>FastAPI · PART 3</b> · 1장 · <span class="sec">요청을 함수로 잇는다</span></div><div class="r">1.2 경로와 쿼리를 받는다 (계속)<span class="pg">08</span></div></div><div class="kicker">1.2 · 설계 결정 · 입력의 자리</div><h1>어디로 받을지<br><em>내가 정한다</em></h1><div class="code"><div class="ch2"><span>위반하면</span><span>422가 자동으로 나간다</span></div><div class="cb2">$ curl "localhost:8000/sales/summary?top_n=99"
+{"detail":[{"type":"less_than_equal",
+            "loc":["query","top_n"],
+            "msg":"Input should be less than or equal to 10",
+            "input":"99"}]}</div></div><table class="zebra"><thead><tr><th>Query 옵션</th><th>뜻</th></tr></thead><tbody><tr><td>첫 번째 값</td><td>기본값 · 생략하면 <b>필수</b></td></tr><tr><td><code>ge</code> · <code>le</code> · <code>gt</code> · <code>lt</code></td><td>숫자 범위</td></tr><tr><td><code>min_length</code> · <code>max_length</code></td><td>문자열 길이</td></tr><tr><td><code>pattern</code></td><td>정규식</td></tr><tr><td><code>description</code></td><td><code>/docs</code>에 설명으로 나온다</td></tr><tr><td><code>alias</code></td><td>바깥 이름과 파이썬 변수명을 다르게</td></tr></tbody></table><div style="display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:start;margin:10px 0;padding:9px 12px;border-left:3px solid #0e7490;background:#ecfeff;border-radius:0 4px 4px 0"><b style="font-size:10.5px;color:#0e7490;white-space:nowrap;letter-spacing:.04em">FastAPI에서</b><span style="font-size:11.5px;color:#164e63;line-height:1.55">Part 2에서 <code>Args</code> 모델로 검증하고 <code>{"ok": false, "detail": …}</code>를 직접 만들었습니다. FastAPI는 같은 일을 하고 <b>422 상태 코드</b>로 내보냅니다. 응답 모양도 우리가 만든 것과 거의 같습니다.</span></div><div style="margin:10px 0;padding:8px 10px;border:1px dashed #cfcbc4;border-radius:4px;background:#faf9f7"><div style="font-size:10.5px;font-weight:800;color:#86827b;margin-bottom:4px;letter-spacing:.04em">더 알아보려면 · 검색어</div><table style="width:100%;border-collapse:collapse"><tbody><tr><td style="padding:3px 8px;font-size:11px;width:52%">경로·쿼리 파라미터</td><td style="padding:3px 8px;font-size:11px;font-family:Consolas,monospace;color:#b23c0a">fastapi path query parameters</td></tr><tr><td style="padding:3px 8px;font-size:11px;width:52%">Query 제약</td><td style="padding:3px 8px;font-size:11px;font-family:Consolas,monospace;color:#b23c0a">fastapi query validation</td></tr><tr><td style="padding:3px 8px;font-size:11px;width:52%">ASGI와 uvicorn</td><td style="padding:3px 8px;font-size:11px;font-family:Consolas,monospace;color:#b23c0a">what is asgi uvicorn</td></tr></tbody></table></div><div class="mission"><b>미션 F-01</b><h3>첫 엔드포인트</h3><div class="wy">① <code>app/main.py</code>와 <code>/health</code>를 만들고 <code>uvicorn</code>으로 띄운다<br>② <code>/sales/summary</code>를 만들어 <code>top_n</code>을 <code>Query(3, ge=1, le=10)</code>으로 받는다<br>③ <code>top_n=99</code>로 호출해 <b>422 응답 전문</b>을 기록한다<br>④ <code>/docs</code>를 열어 ②가 어떻게 문서로 나오는지 확인한다</div></div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">08</div></section>
+<section class="page opener has-why" data-ch="2"><div class="rh"><div class="l"><b>FastAPI · PART 3</b> · 2장</div><div class="r">주고받을 모양을 선언한다<span class="pg">09</span></div></div><div class="big">2</div><h1>주고받을 모양을 선언한다<br>계약을 코드에 적는다</h1><div class="oscene"><div class="osh">WHY · 현장 장면</div><div class="osb">Part 1에서 반환 딕셔너리의 모양이 계약이라고 했지만, 그 계약은 코드 어디에도 없었다. 모델로 선언하면 계약이 보장되고 문서까지 따라온다.</div><table class="zebra osx"><thead><tr><th>이 장을 모르면</th><th>생기는 일</th></tr></thead><tbody><tr><td>모양을 안 박으면</td><td>내부 필드가 새고 문서가 비어 있다</td></tr><tr><td>문서를 따로 쓰면</td><td>코드와 어긋난다</td></tr><tr><td>자동 생성을 모르면</td><td>명세를 손으로 관리한다</td></tr></tbody></table></div><div class="oq"><div><span>01</span>응답 모양을 어디에 적을까?</div><div><span>02</span>response_model은 무엇을 하는가?</div><div><span>03</span>문서는 무엇에서 만들어지는가?</div></div><div class="kicker">이 장의 구성</div><div class="otoc"><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">2.1</b>주고받을 모양을 선언한다</span><span class="pg2" data-sec="2.1">10</span></div><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">2.2</b>문서가 저절로 생기는 이유</span><span class="pg2" data-sec="2.2">12</span></div></div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">09</div></section>
+<section class="page" data-sec="2.1" data-title="2.1 주고받을 모양을 선언한다" data-ch="2"><div class="rh"><div class="l"><b>FastAPI · PART 3</b> · 2장 · <span class="sec">주고받을 모양을 선언한다</span></div><div class="r">2.1 주고받을 모양을 선언한다<span class="pg">10</span></div></div><div class="kicker">2.1 · 설계 결정 · 응답 계약</div><h1>딕셔너리를 그냥 돌려줄까<br><em>모양을 못 박을까</em></h1>
+<div class="why"><b>왜 배워야 하나?</b><p>Part 1에서 <strong>반환 딕셔너리의 모양이 곧 계약</strong>이라고 정했습니다. 그런데 계약이 코드 어디에도 적혀 있지 않아, 키를 하나 빼먹어도 아무도 모릅니다. FastAPI에서는 <strong>응답 모델</strong>로 그 계약을 못 박을 수 있습니다.</p></div>
+<table class="zebra"><thead><tr><th style="width:26%">응답 모양을 어떻게</th><th style="width:20%">되는가</th><th style="width:54%">문제 또는 이점</th></tr></thead><tbody><tr><td><b>딕셔너리를 그대로</b></td><td>된다</td><td>빠른 대신 계약이 코드에 없다 · 문서도 비어 있다</td></tr><tr><td><b>response_model 지정</b></td><td><b>우리의 선택</b></td><td>모양이 보장되고 <code>/docs</code>에 그대로 나온다</td></tr><tr><td>문서만 따로 작성</td><td>된다</td><td>코드와 어긋나기 시작한다</td></tr></tbody></table>
+<div class="code"><div class="ch2"><span>app/schemas.py</span><span>주고받을 모양</span></div><div class="cb2"><span style="color:#86827b"> 1</span>  from pydantic import BaseModel, Field
+<span style="color:#86827b"> 2</span>  
+<span style="color:#86827b"> 3</span>  
+<span style="color:#86827b"> 4</span>  class RegionAmount(BaseModel):
+<span style="color:#86827b"> 5</span>      name: str
+<span style="color:#86827b"> 6</span>      amount: int
+<span style="color:#86827b"> 7</span>  
+<span style="color:#86827b"> 8</span>  
+<span style="color:#86827b"> 9</span>  class Summary(BaseModel):
+<span style="color:#86827b">10</span>      count: int = Field(description="거래 건수")
+<span style="color:#86827b">11</span>      total: int = Field(description="총 매출")
+<span style="color:#86827b">12</span>      by_region: list[RegionAmount]        # 중첩도 그대로 표현된다
+<span style="color:#86827b">13</span>  
+<span style="color:#86827b">14</span>  
+<span style="color:#86827b">15</span>  class Item(BaseModel):
+<span style="color:#86827b">16</span>      date: str
+<span style="color:#86827b">17</span>      product: str
+<span style="color:#86827b">18</span>      amount: int
+<span style="color:#86827b">19</span>  
+<span style="color:#86827b">20</span>  
+<span style="color:#86827b">21</span>  class RegionDetail(BaseModel):
+<span style="color:#86827b">22</span>      region: str
+<span style="color:#86827b">23</span>      count: int
+<span style="color:#86827b">24</span>      total: int
+<span style="color:#86827b">25</span>      items: list[Item]
+</div></div>
+<div class="code"><div class="ch2"><span>라우터에 붙이기</span><span>response_model</span></div><div class="cb2"><span style="color:#86827b"> 1</span>  @router.get("/summary", response_model=Summary)
+<span style="color:#86827b"> 2</span>  def get_summary(top_n: int = Query(3, ge=1, le=10)):
+<span style="color:#86827b"> 3</span>      return sales.summarize(top_n)        # 서비스는 그냥 딕셔너리를 준다
+</div></div>
+
+
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">10</div></section><section class="page" data-sec="2.1" data-title="2.1 주고받을 모양을 선언한다" data-ch="2" data-cont="1"><div class="rh"><div class="l"><b>FastAPI · PART 3</b> · 2장 · <span class="sec">주고받을 모양을 선언한다</span></div><div class="r">2.1 주고받을 모양을 선언한다 (계속)<span class="pg">11</span></div></div><div class="kicker">2.1 · 설계 결정 · 응답 계약</div><h1>딕셔너리를 그냥 돌려줄까<br><em>모양을 못 박을까</em></h1><table class="zebra"><thead><tr><th>response_model이 하는 일</th><th>설명</th></tr></thead><tbody><tr><td><b>걸러낸다</b></td><td>모델에 없는 키는 <b>응답에서 빠진다</b> · 내부 필드가 새어 나가지 않는다</td></tr><tr><td><b>변환한다</b></td><td>타입이 맞으면 맞춰 준다</td></tr><tr><td><b>검증한다</b></td><td>모델에 있는 필드가 없으면 <b>서버 오류(500)</b>로 알려 준다</td></tr><tr><td><b>문서가 된다</b></td><td><code>/docs</code>와 <code>/openapi.json</code>에 구조가 그대로</td></tr></tbody></table><div class="point"><div class="pl">서비스는 모르게 둔다</div><p><code>services/sales.py</code>는 여전히 <strong>평범한 딕셔너리</strong>를 돌려줍니다. 모양을 못 박는 일은 <strong>라우터 쪽</strong>에서 합니다. 그래야 같은 서비스를 다른 모양으로도 노출할 수 있습니다(5장).</p></div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">11</div></section>
+<section class="page" data-sec="2.2" data-title="2.2 문서가 저절로 생기는 이유" data-ch="2"><div class="rh"><div class="l"><b>FastAPI · PART 3</b> · 2장 · <span class="sec">주고받을 모양을 선언한다</span></div><div class="r">2.2 문서가 저절로 생기는 이유<span class="pg">12</span></div></div><div class="kicker">2.2 · 파이썬이 주는 것 · 타입 힌트</div><h1>Part 1의 build_schema를<br><em>프레임워크가</em> 한다</h1>
+<div class="why"><b>왜 배워야 하나?</b><p>Part 1에서 <code>inspect.signature</code>로 매개변수를 훑어 명세를 만들었습니다. FastAPI도 <strong>같은 정보를 읽어</strong> OpenAPI 문서를 만듭니다. 우리가 직접 짰던 코드가 프레임워크 안에 들어 있는 셈입니다.</p></div>
+<div class="code"><div class="ch2"><span>자동 생성된 명세</span><span>GET /openapi.json</span></div><div class="cb2">{
+  "paths": {
+    "/sales/summary": { "get": { ... } },
+    "/sales/regions": { "get": { ... } },
+    "/sales/regions/{region}": { "get": { ... } },
+    "/tools": { "get": { ... } },
+    "/tools/{name}/call": { "post": { ... } },
+    "/health": { "get": { ... } }
+  },
+  "components": {
+    "schemas": ["Summary", "RegionDetail", "RegionAmount", "Item",
+                "CallRequest", "ValidationError", "HTTPValidationError"]
+  }
+}</div></div>
+<table class="zebra"><thead><tr><th>무엇에서 왔나</th><th>문서의 어디로</th></tr></thead><tbody><tr><td>함수 이름 · 경로</td><td><code>paths</code>의 키와 <code>operationId</code></td></tr><tr><td>독스트링</td><td>그 엔드포인트의 <b>설명</b></td></tr><tr><td><code>Query(..., description=…)</code></td><td>파라미터 설명과 제약</td></tr><tr><td><code>response_model</code></td><td>응답 스키마 (<code>components/schemas</code>)</td></tr><tr><td><code>tags=["sales"]</code></td><td><code>/docs</code>의 <b>그룹</b></td></tr></tbody></table>
+<table class="zebra"><thead><tr><th>주소</th><th>무엇</th></tr></thead><tbody><tr><td><code>/docs</code></td><td>Swagger UI · <b>직접 호출해 볼 수 있다</b></td></tr><tr><td><code>/redoc</code></td><td>읽기 좋은 문서 형태</td></tr><tr><td><code>/openapi.json</code></td><td>기계가 읽는 원본 · 클라이언트 코드 생성에 쓴다</td></tr></tbody></table>
+<div style="display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:start;margin:10px 0;padding:9px 12px;border-left:3px solid #0e7490;background:#ecfeff;border-radius:0 4px 4px 0"><b style="font-size:10.5px;color:#0e7490;white-space:nowrap;letter-spacing:.04em">FastAPI에서</b><span style="font-size:11.5px;color:#164e63;line-height:1.55">Part 1의 <code>build_schema</code>가 만든 것과 <code>/openapi.json</code>은 <b>같은 종류의 문서</b>입니다. 둘 다 “이 함수는 무엇을 받고 무엇을 주는가”를 기계가 읽을 수 있게 적어 둔 것이죠.</span></div>
+
+
+
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">12</div></section><section class="page" data-sec="2.2" data-title="2.2 문서가 저절로 생기는 이유" data-ch="2" data-cont="1"><div class="rh"><div class="l"><b>FastAPI · PART 3</b> · 2장 · <span class="sec">주고받을 모양을 선언한다</span></div><div class="r">2.2 문서가 저절로 생기는 이유 (계속)<span class="pg">13</span></div></div><div class="kicker">2.2 · 파이썬이 주는 것 · 타입 힌트</div><h1>Part 1의 build_schema를<br><em>프레임워크가</em> 한다</h1><div style="display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:start;margin:10px 0;padding:9px 12px;border-left:3px solid #6d28d9;background:#f6f3ff;border-radius:0 4px 4px 0"><b style="font-size:10.5px;color:#6d28d9;white-space:nowrap;letter-spacing:.04em">MCP에서는</b><span style="font-size:11.5px;color:#3b1d82;line-height:1.55">MCP의 <b>도구 목록 응답</b>도 같은 성격입니다. 이름 · 설명 · 입력 스키마를 담아 모델에게 보냅니다. 모델은 그 명세만 보고 어떤 인자를 넣을지 정합니다.</span></div><div style="margin:10px 0;padding:8px 10px;border:1px dashed #cfcbc4;border-radius:4px;background:#faf9f7"><div style="font-size:10.5px;font-weight:800;color:#86827b;margin-bottom:4px;letter-spacing:.04em">더 알아보려면 · 검색어</div><table style="width:100%;border-collapse:collapse"><tbody><tr><td style="padding:3px 8px;font-size:11px;width:52%">응답 모델</td><td style="padding:3px 8px;font-size:11px;font-family:Consolas,monospace;color:#b23c0a">fastapi response_model</td></tr><tr><td style="padding:3px 8px;font-size:11px;width:52%">OpenAPI 자동 문서</td><td style="padding:3px 8px;font-size:11px;font-family:Consolas,monospace;color:#b23c0a">fastapi automatic docs</td></tr><tr><td style="padding:3px 8px;font-size:11px;width:52%">태그와 설명</td><td style="padding:3px 8px;font-size:11px;font-family:Consolas,monospace;color:#b23c0a">fastapi metadata tags</td></tr></tbody></table></div><div class="mission"><b>미션 F-02</b><h3>응답 계약</h3><div class="wy">① <code>schemas.py</code>에 <code>Summary</code> · <code>RegionDetail</code>을 선언하고 라우터에 붙인다<br>② 서비스가 돌려주는 딕셔너리에 <b>없는 키</b>를 모델에 추가해 보고 어떤 오류가 나는지 기록한다<br>③ 반대로 <b>모델에 없는 키</b>를 서비스가 돌려주면 응답이 어떻게 되는지 확인한다<br>④ <code>/docs</code>에서 두 응답 스키마가 어떻게 보이는지 캡처한다</div></div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">13</div></section>
+<section class="page opener has-why" data-ch="3"><div class="rh"><div class="l"><b>FastAPI · PART 3</b> · 3장</div><div class="r">구조를 나눈다<span class="pg">14</span></div></div><div class="big">3</div><h1>구조를 나눈다<br>HTTP를 아는 곳과 모르는 곳</h1><div class="oscene"><div class="osh">WHY · 현장 장면</div><div class="osb">파일 하나에 다 넣으면 데이터 출처를 바꿀 때 전부 뒤져야 한다. <b>라우터는 HTTP를 알고 서비스는 모르게</b> 나누면, 출처가 바뀌어도 한 파일만 고친다.</div><table class="zebra osx"><thead><tr><th>이 장을 모르면</th><th>생기는 일</th></tr></thead><tbody><tr><td>구조가 없으면</td><td>바꿀 때 전부 뒤진다</td></tr><tr><td>서비스가 HTTP를 알면</td><td>다른 입구로 못 쓴다</td></tr><tr><td>공통을 반복하면</td><td>엔드포인트마다 같은 코드</td></tr></tbody></table></div><div class="oq"><div><span>01</span>폴더를 어떤 기준으로 나누는가?</div><div><span>02</span>APIRouter는 무엇을 묶는가?</div><div><span>03</span>Depends는 무엇을 대신해 주는가?</div></div><div class="kicker">이 장의 구성</div><div class="otoc"><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">3.1</b>폴더를 어떻게 나눌까</span><span class="pg2" data-sec="3.1">15</span></div><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">3.2</b>필요한 것을 밖에서 넣는다</span><span class="pg2" data-sec="3.2">18</span></div></div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">14</div></section>
+<section class="page" data-sec="3.1" data-title="3.1 폴더를 어떻게 나눌까" data-ch="3"><div class="rh"><div class="l"><b>FastAPI · PART 3</b> · 3장 · <span class="sec">구조를 나눈다</span></div><div class="r">3.1 폴더를 어떻게 나눌까<span class="pg">15</span></div></div><div class="kicker">3.1 · 설계 결정 · 구조</div><h1>라우터는 얇게<br><em>서비스는 HTTP를 모르게</em></h1>
+<div class="why"><b>왜 배워야 하나?</b><p>Part 1 4장에서 <code>loader</code> · <code>stats</code> · <code>main</code>으로 나눴습니다. 여기서도 같은 기준입니다. 다만 하나가 더 붙습니다. <strong>HTTP를 아는 코드와 모르는 코드를 섞지 않는다.</strong></p></div>
+<div class="tree">app/
+├── main.py          앱을 만들고 라우터를 붙인다 (조립)
+├── schemas.py       주고받을 모양
+├── deps.py          라우터가 필요로 하는 것
+├── routers/         <i>HTTP를 안다</i> · 경로 · 상태 코드 · 헤더
+│   ├── sales.py
+│   └── tools.py
+└── services/        <i>HTTP를 모른다</i> · 계산과 데이터
+    ├── loader.py
+    └── sales.py</div>
+<table class="zebra"><thead><tr><th>이 파일은</th><th>아는 것</th><th>모르는 것</th></tr></thead><tbody><tr><td><code>routers/sales.py</code></td><td>경로 · 쿼리 · 상태 코드 · 응답 모델</td><td>데이터가 CSV인지 DB인지</td></tr><tr><td><code>services/sales.py</code></td><td>집계 규칙</td><td>요청 · 응답 · 상태 코드</td></tr><tr><td><code>services/loader.py</code></td><td>데이터 출처</td><td>나머지 전부</td></tr><tr><td><code>main.py</code></td><td>무엇을 붙일지</td><td>각자의 내부</td></tr></tbody></table>
+<div class="point"><div class="pl">이렇게 나누면</div><p>데이터 출처를 <strong>CSV에서 MySQL로</strong> 바꿔도 고칠 파일은 <code>services/loader.py</code> 하나입니다. 반대로 같은 서비스를 <strong>다른 입구</strong>로 노출하고 싶으면 라우터만 더 만들면 됩니다(5장).</p></div>
+
+
+
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">15</div></section><section class="page" data-sec="3.1" data-title="3.1 폴더를 어떻게 나눌까" data-ch="3" data-cont="1"><div class="rh"><div class="l"><b>FastAPI · PART 3</b> · 3장 · <span class="sec">구조를 나눈다</span></div><div class="r">3.1 폴더를 어떻게 나눌까 (계속)<span class="pg">16</span></div></div><div class="kicker">3.1 · 설계 결정 · 구조</div><h1>라우터는 얇게<br><em>서비스는 HTTP를 모르게</em></h1><div class="code"><div class="ch2"><span>app/routers/sales.py</span><span>APIRouter로 묶는다</span></div><div class="cb2"><span style="color:#86827b"> 1</span>  from fastapi import APIRouter, HTTPException, Query
+<span style="color:#86827b"> 2</span>  
+<span style="color:#86827b"> 3</span>  from app.schemas import RegionDetail, Summary
+<span style="color:#86827b"> 4</span>  from app.services import sales
+<span style="color:#86827b"> 5</span>  
+<span style="color:#86827b"> 6</span>  router = APIRouter(prefix="/sales", tags=["sales"])
+<span style="color:#86827b"> 7</span>  
+<span style="color:#86827b"> 8</span>  
+<span style="color:#86827b"> 9</span>  @router.get("/summary", response_model=Summary)
+<span style="color:#86827b">10</span>  def get_summary(top_n: int = Query(3, ge=1, le=10, description="상위 몇 개 지역")):
+<span style="color:#86827b">11</span>      """전체 매출 집계."""
+<span style="color:#86827b">12</span>      return sales.summarize(top_n)
+<span style="color:#86827b">13</span>  
+<span style="color:#86827b">14</span>  
+<span style="color:#86827b">15</span>  @router.get("/regions", response_model=list[str])
+<span style="color:#86827b">16</span>  def get_regions():
+<span style="color:#86827b">17</span>      """지역 목록."""
+<span style="color:#86827b">18</span>      return sales.regions()
+<span style="color:#86827b">19</span>  
+<span style="color:#86827b">20</span>  
+<span style="color:#86827b">21</span>  @router.get("/regions/{region}", response_model=RegionDetail)
+<span style="color:#86827b">22</span>  def get_region(region: str, min_amount: int = Query(0, ge=0)):
+<span style="color:#86827b">23</span>      """한 지역의 거래."""
+<span style="color:#86827b">24</span>      result = sales.region_detail(region, min_amount)
+<span style="color:#86827b">25</span>      if result is None:
+<span style="color:#86827b">26</span>          raise HTTPException(status_code=404,
+<span style="color:#86827b">27</span>                              detail=f"그런 지역의 거래가 없습니다: {region}")
+<span style="color:#86827b">28</span>      return result
+</div></div><div class="code"><div class="ch2"><span>app/main.py</span><span>조립</span></div><div class="cb2"><span style="color:#86827b"> 1</span>  from fastapi import FastAPI
+<span style="color:#86827b"> 2</span>  
+<span style="color:#86827b"> 3</span>  from app.routers import sales, tools
+<span style="color:#86827b"> 4</span>  
+<span style="color:#86827b"> 5</span>  app = FastAPI(title="Sales API", version="1.0.0",
+<span style="color:#86827b"> 6</span>                description="Part 1·2에서 만든 서비스를 HTTP로 노출한다.")
+<span style="color:#86827b"> 7</span>  
+<span style="color:#86827b"> 8</span>  app.include_router(sales.router)
+<span style="color:#86827b"> 9</span>  app.include_router(tools.router)
+<span style="color:#86827b">10</span>  
+<span style="color:#86827b">11</span>  
+<span style="color:#86827b">12</span>  @app.get("/health")
+<span style="color:#86827b">13</span>  def health():
+<span style="color:#86827b">14</span>      return {"status": "ok"}
+</div></div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">16</div></section><section class="page" data-sec="3.1" data-title="3.1 폴더를 어떻게 나눌까" data-ch="3" data-cont="1"><div class="rh"><div class="l"><b>FastAPI · PART 3</b> · 3장 · <span class="sec">구조를 나눈다</span></div><div class="r">3.1 폴더를 어떻게 나눌까 (계속)<span class="pg">17</span></div></div><div class="kicker">3.1 · 설계 결정 · 구조</div><h1>라우터는 얇게<br><em>서비스는 HTTP를 모르게</em></h1><table class="zebra"><thead><tr><th>APIRouter 옵션</th><th>하는 일</th></tr></thead><tbody><tr><td><code>prefix="/sales"</code></td><td>이 라우터의 모든 경로 앞에 붙는다</td></tr><tr><td><code>tags=["sales"]</code></td><td><code>/docs</code>에서 묶어 보여 준다</td></tr><tr><td><code>dependencies=[…]</code></td><td>이 라우터 <b>전체</b>에 적용할 의존성 (3.2)</td></tr><tr><td><code>include_router</code></td><td>앱에 붙인다 · Part 1의 <code>autoload</code>가 하던 일</td></tr></tbody></table><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">17</div></section>
+<section class="page" data-sec="3.2" data-title="3.2 필요한 것을 밖에서 넣는다" data-ch="3"><div class="rh"><div class="l"><b>FastAPI · PART 3</b> · 3장 · <span class="sec">구조를 나눈다</span></div><div class="r">3.2 필요한 것을 밖에서 넣는다<span class="pg">18</span></div></div><div class="kicker">3.2 · 파이썬이 주는 것 · Depends</div><h1>의존성 주입은<br><em>인자로 받는 것</em>이다</h1>
+<div class="why"><b>왜 배워야 하나?</b><p>라우터가 <strong>API 키 검사</strong>나 <strong>공통 파라미터</strong>를 매번 직접 쓰면, 엔드포인트마다 같은 코드가 반복됩니다. Part 2에서 공통 동작을 부모 클래스로 올렸던 것과 같은 문제이고, FastAPI는 <strong>함수를 인자로 받아</strong> 해결합니다.</p></div>
+<div class="code"><div class="ch2"><span>app/deps.py</span><span>의존성 두 가지</span></div><div class="cb2"><span style="color:#86827b"> 1</span>  from fastapi import Header, HTTPException, Query
+<span style="color:#86827b"> 2</span>  
+<span style="color:#86827b"> 3</span>  API_KEY = "lab-key"
+<span style="color:#86827b"> 4</span>  
+<span style="color:#86827b"> 5</span>  
+<span style="color:#86827b"> 6</span>  def verify_key(x_api_key: str = Header(default="", alias="X-API-Key")) -&gt; str:
+<span style="color:#86827b"> 7</span>      """헤더의 API 키를 검사한다."""
+<span style="color:#86827b"> 8</span>      if x_api_key != API_KEY:
+<span style="color:#86827b"> 9</span>          raise HTTPException(status_code=401, detail="API 키가 필요합니다")
+<span style="color:#86827b">10</span>      return x_api_key
+<span style="color:#86827b">11</span>  
+<span style="color:#86827b">12</span>  
+<span style="color:#86827b">13</span>  class Paging:
+<span style="color:#86827b">14</span>      """페이지 파라미터를 한 묶음으로."""
+<span style="color:#86827b">15</span>  
+<span style="color:#86827b">16</span>      def __init__(self,
+<span style="color:#86827b">17</span>                   limit: int = Query(10, ge=1, le=100),
+<span style="color:#86827b">18</span>                   offset: int = Query(0, ge=0)) -&gt; None:
+<span style="color:#86827b">19</span>          self.limit = limit
+<span style="color:#86827b">20</span>          self.offset = offset
+</div></div>
+<div class="code"><div class="ch2"><span>쓰는 쪽</span><span>세 가지 방법</span></div><div class="cb2"><span style="color:#86827b"> 1</span>  from fastapi import Depends
+<span style="color:#86827b"> 2</span>  
+<span style="color:#86827b"> 3</span>  # ① 값이 필요할 때
+<span style="color:#86827b"> 4</span>  @router.get("/items")
+<span style="color:#86827b"> 5</span>  def items(paging: Paging = Depends()):
+<span style="color:#86827b"> 6</span>      return {"limit": paging.limit, "offset": paging.offset}
+<span style="color:#86827b"> 7</span>  
+<span style="color:#86827b"> 8</span>  # ② 값은 필요 없고 통과 여부만 볼 때
+<span style="color:#86827b"> 9</span>  @router.post("/{name}/call", dependencies=[Depends(verify_key)])
+<span style="color:#86827b">10</span>  def call_tool(name: str, body: CallRequest):
+<span style="color:#86827b">11</span>      ...
+<span style="color:#86827b">12</span>  
+<span style="color:#86827b">13</span>  # ③ 라우터 전체에 걸 때
+<span style="color:#86827b">14</span>  router = APIRouter(prefix="/admin", dependencies=[Depends(verify_key)])
+</div></div>
+
+
+
+
+
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">18</div></section><section class="page" data-sec="3.2" data-title="3.2 필요한 것을 밖에서 넣는다" data-ch="3" data-cont="1"><div class="rh"><div class="l"><b>FastAPI · PART 3</b> · 3장 · <span class="sec">구조를 나눈다</span></div><div class="r">3.2 필요한 것을 밖에서 넣는다 (계속)<span class="pg">19</span></div></div><div class="kicker">3.2 · 파이썬이 주는 것 · Depends</div><h1>의존성 주입은<br><em>인자로 받는 것</em>이다</h1><table class="zebra"><thead><tr><th>의존성이 하는 일</th><th>설명</th></tr></thead><tbody><tr><td>요청마다 <b>먼저 실행</b></td><td>라우터 함수보다 앞서 돈다</td></tr><tr><td><b>값을 돌려주면</b> 인자로 들어온다</td><td><code>paging</code>처럼 받아서 쓴다</td></tr><tr><td><b>예외를 던지면</b> 거기서 끝</td><td>401이 바로 나가고 라우터는 실행되지 않는다</td></tr><tr><td>중첩된다</td><td>의존성이 또 다른 의존성을 받을 수 있다</td></tr><tr><td>테스트에서 <b>갈아끼운다</b></td><td><code>app.dependency_overrides</code>로 가짜를 넣는다</td></tr></tbody></table><div class="code"><div class="ch2"><span>동작 확인</span><span>API 키 없이 · 있이</span></div><div class="cb2">$ curl -X POST localhost:8000/tools/summarize_sales/call \
+       -H "Content-Type: application/json" -d '{"arguments":{"top_n":1}}'
+{"detail":"API 키가 필요합니다"}            # 401
+
+$ curl -X POST localhost:8000/tools/summarize_sales/call \
+       -H "X-API-Key: lab-key" -H "Content-Type: application/json" \
+       -d '{"arguments":{"top_n":1}}'
+{"ok":true,"result":{"count":15,"total":26955000,...}}</div></div><div class="point"><div class="pl">이름이 거창할 뿐</div><p><strong>의존성 주입</strong>은 “필요한 것을 안에서 만들지 말고 <strong>인자로 받아라</strong>”가 전부입니다. Part 1에서 <code>load_rows(path)</code>에 경로를 인자로 받게 한 것도 같은 생각이었습니다.</p></div><div style="margin:10px 0;padding:8px 10px;border:1px dashed #cfcbc4;border-radius:4px;background:#faf9f7"><div style="font-size:10.5px;font-weight:800;color:#86827b;margin-bottom:4px;letter-spacing:.04em">더 알아보려면 · 검색어</div><table style="width:100%;border-collapse:collapse"><tbody><tr><td style="padding:3px 8px;font-size:11px;width:52%">라우터 분리</td><td style="padding:3px 8px;font-size:11px;font-family:Consolas,monospace;color:#b23c0a">fastapi apirouter include_router</td></tr><tr><td style="padding:3px 8px;font-size:11px;width:52%">의존성 주입</td><td style="padding:3px 8px;font-size:11px;font-family:Consolas,monospace;color:#b23c0a">fastapi dependencies depends</td></tr><tr><td style="padding:3px 8px;font-size:11px;width:52%">테스트에서 교체</td><td style="padding:3px 8px;font-size:11px;font-family:Consolas,monospace;color:#b23c0a">fastapi dependency_overrides</td></tr><tr><td style="padding:3px 8px;font-size:11px;width:52%">설정 관리</td><td style="padding:3px 8px;font-size:11px;font-family:Consolas,monospace;color:#b23c0a">pydantic settings env</td></tr></tbody></table></div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">19</div></section><section class="page" data-sec="3.2" data-title="3.2 필요한 것을 밖에서 넣는다" data-ch="3" data-cont="1"><div class="rh"><div class="l"><b>FastAPI · PART 3</b> · 3장 · <span class="sec">구조를 나눈다</span></div><div class="r">3.2 필요한 것을 밖에서 넣는다 (계속)<span class="pg">20</span></div></div><div class="kicker">3.2 · 파이썬이 주는 것 · Depends</div><h1>의존성 주입은<br><em>인자로 받는 것</em>이다</h1><div class="mission"><b>미션 F-03</b><h3>구조 나누기</h3><div class="wy">① <code>routers/</code>와 <code>services/</code>로 나누고 <code>main.py</code>에서 조립한다<br>② <code>services/sales.py</code>에 <code>fastapi</code> import가 <b>하나도 없는지</b> 확인한다<br>③ <code>deps.py</code>에 <code>verify_key</code>를 만들어 한 엔드포인트에만 건다<br>④ 키 없이 호출해 <b>401</b>, 키를 넣어 <b>200</b>이 나오는 것을 확인한다</div></div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">20</div></section>
+<section class="page opener has-why" data-ch="4"><div class="rh"><div class="l"><b>FastAPI · PART 3</b> · 4장</div><div class="r">실패를 설계한다<span class="pg">21</span></div></div><div class="big">4</div><h1>실패를 설계한다<br>상태 코드라는 자리</h1><div class="oscene"><div class="osh">WHY · 현장 장면</div><div class="osb">Part 1은 예외를 던졌고 Part 2는 결과에 담았다. HTTP에는 실패를 말하는 <b>상태 코드</b>가 따로 있다. 404와 422를 구분하는 것부터 시작한다.</div><table class="zebra osx"><thead><tr><th>이 장을 모르면</th><th>생기는 일</th></tr></thead><tbody><tr><td>상태 코드를 안 쓰면</td><td>클라이언트가 판단할 수 없다</td></tr><tr><td>404와 422를 섞으면</td><td>원인을 알 수 없다</td></tr><tr><td>모양이 제각각이면</td><td>클라이언트가 분기투성이</td></tr></tbody></table></div><div class="oq"><div><span>01</span>실패를 어떤 방식으로 알릴까?</div><div><span>02</span>404와 422는 언제 갈리는가?</div><div><span>03</span>오류 모양을 어떻게 통일하는가?</div></div><div class="kicker">이 장의 구성</div><div class="otoc"><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">4.1</b>실패를 어떻게 돌려줄까</span><span class="pg2" data-sec="4.1">22</span></div><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">4.2</b>오류 모양을 통일한다</span><span class="pg2" data-sec="4.2">24</span></div></div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">21</div></section>
+<section class="page" data-sec="4.1" data-title="4.1 실패를 어떻게 돌려줄까" data-ch="4"><div class="rh"><div class="l"><b>FastAPI · PART 3</b> · 4장 · <span class="sec">실패를 설계한다</span></div><div class="r">4.1 실패를 어떻게 돌려줄까<span class="pg">22</span></div></div><div class="kicker">4.1 · 설계 결정 · 오류 응답</div><h1>HTTP에는<br><em>실패를 말하는 자리</em>가 있다</h1>
+<div class="why"><b>왜 배워야 하나?</b><p>Part 1에서는 예외를 그대로 던졌고, Part 2에서는 <code>{"ok": false, …}</code>로 포장했습니다. HTTP에서는 <strong>상태 코드</strong>라는 자리가 따로 있습니다. 무엇을 쓸지 다시 정합니다.</p></div>
+<table class="zebra"><thead><tr><th style="width:22%">실패를 어떻게</th><th style="width:30%">모양</th><th style="width:48%">문제 또는 이점</th></tr></thead><tbody><tr><td><b>예외를 그대로</b></td><td>500 Internal Server Error</td><td>클라이언트는 원인을 모른다 · 내부 정보가 샐 수도</td></tr><tr><td><b>결과에 담아서</b></td><td>200 + <code>{"ok": false}</code></td><td>HTTP를 안 쓰는 것과 같다 · 캐시·재시도 판단이 안 된다</td></tr><tr><td><b>상태 코드로</b></td><td>404 · 422 · 401</td><td><b>우리의 선택</b> · 중간 장비와 클라이언트가 이해한다</td></tr></tbody></table>
+<div class="code"><div class="ch2"><span>app/routers/sales.py</span><span>없으면 404</span></div><div class="cb2"><span style="color:#86827b"> 1</span>  @router.get("/regions/{region}", response_model=RegionDetail)
+<span style="color:#86827b"> 2</span>  def get_region(region: str, min_amount: int = Query(0, ge=0)):
+<span style="color:#86827b"> 3</span>      result = sales.region_detail(region, min_amount)
+<span style="color:#86827b"> 4</span>      if result is None:
+<span style="color:#86827b"> 5</span>          raise HTTPException(status_code=404,
+<span style="color:#86827b"> 6</span>                              detail=f"그런 지역의 거래가 없습니다: {region}")
+<span style="color:#86827b"> 7</span>      return result
+</div></div>
+<div class="code"><div class="ch2"><span>두 가지 실패</span><span>404와 422</span></div><div class="cb2">$ curl localhost:8000/sales/regions/제주
+{"detail":"그런 지역의 거래가 없습니다: 제주"}              # 404
+
+$ curl "localhost:8000/sales/summary?top_n=99"
+{"detail":[{"type":"less_than_equal",
+            "loc":["query","top_n"],
+            "msg":"Input should be less than or equal to 10",
+            "input":"99"}]}                                # 422</div></div>
+
+
+
+
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">22</div></section><section class="page" data-sec="4.1" data-title="4.1 실패를 어떻게 돌려줄까" data-ch="4" data-cont="1"><div class="rh"><div class="l"><b>FastAPI · PART 3</b> · 4장 · <span class="sec">실패를 설계한다</span></div><div class="r">4.1 실패를 어떻게 돌려줄까 (계속)<span class="pg">23</span></div></div><div class="kicker">4.1 · 설계 결정 · 오류 응답</div><h1>HTTP에는<br><em>실패를 말하는 자리</em>가 있다</h1><table class="zebra"><thead><tr><th>상태 코드</th><th>언제</th><th>누가 만드나</th></tr></thead><tbody><tr><td><b>200</b></td><td>성공</td><td>라우터가 값을 돌려주면</td></tr><tr><td><b>401</b></td><td>인증이 없거나 틀림</td><td>의존성에서 (3.2)</td></tr><tr><td><b>403</b></td><td>인증은 됐지만 권한 없음</td><td>직접</td></tr><tr><td><b>404</b></td><td>그 자원이 없음</td><td>직접 <code>HTTPException</code></td></tr><tr><td><b>422</b></td><td>요청 형식·값이 틀림</td><td><b>FastAPI가 자동</b></td></tr><tr><td><b>500</b></td><td>서버 쪽 오류</td><td>잡지 못한 예외</td></tr></tbody></table><div class="warn"><b>404와 422를 섞지 마세요.</b> 404는 “형식은 맞는데 그런 것이 없다”, 422는 “요청 자체가 틀렸다”입니다. 지역 이름이 없으면 404, <code>top_n=99</code>는 422입니다.</div><h3>Part 1·2의 선택과 비교</h3><table class="zebra"><thead><tr><th></th><th>Part 1</th><th>Part 2</th><th>Part 3</th></tr></thead><tbody><tr><td>없는 대상</td><td>예외를 그대로</td><td>—</td><td><b>404</b></td></tr><tr><td>인자가 틀림</td><td><code>TypeError</code> 그대로</td><td><code>{"ok": false, "detail": […]}</code></td><td><b>422 자동</b></td></tr><tr><td>누가 판단</td><td>호출자가 예외를 잡아서</td><td>결과의 <code>ok</code>를 보고</td><td><b>상태 코드로</b></td></tr></tbody></table><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">23</div></section>
+<section class="page" data-sec="4.2" data-title="4.2 오류 모양을 통일한다" data-ch="4"><div class="rh"><div class="l"><b>FastAPI · PART 3</b> · 4장 · <span class="sec">실패를 설계한다</span></div><div class="r">4.2 오류 모양을 통일한다<span class="pg">24</span></div></div><div class="kicker">4.2 · 설계 결정 · 예외 핸들러</div><h1>한 곳에서<br><em>모양을 맞춘다</em></h1>
+<div class="why"><b>왜 배워야 하나?</b><p>엔드포인트마다 <code>HTTPException</code>을 던지면 <code>detail</code>의 모양이 제각각이 됩니다. <strong>예외 핸들러</strong>를 두면 응답 형식을 한 곳에서 정할 수 있습니다.</p></div>
+<div class="code"><div class="ch2"><span>app/main.py</span><span>핸들러 등록</span></div><div class="cb2"><span style="color:#86827b"> 1</span>  from fastapi import FastAPI, Request
+<span style="color:#86827b"> 2</span>  from fastapi.responses import JSONResponse
+<span style="color:#86827b"> 3</span>  
+<span style="color:#86827b"> 4</span>  app = FastAPI(...)
+<span style="color:#86827b"> 5</span>  
+<span style="color:#86827b"> 6</span>  
+<span style="color:#86827b"> 7</span>  class ToolError(Exception):
+<span style="color:#86827b"> 8</span>      """서비스 계층에서 던지는 우리 예외."""
+<span style="color:#86827b"> 9</span>  
+<span style="color:#86827b">10</span>      def __init__(self, code: str, message: str) -&gt; None:
+<span style="color:#86827b">11</span>          self.code = code
+<span style="color:#86827b">12</span>          self.message = message
+<span style="color:#86827b">13</span>  
+<span style="color:#86827b">14</span>  
+<span style="color:#86827b">15</span>  @app.exception_handler(ToolError)
+<span style="color:#86827b">16</span>  def handle_tool_error(request: Request, exc: ToolError):
+<span style="color:#86827b">17</span>      return JSONResponse(status_code=400,
+<span style="color:#86827b">18</span>                          content={"error": exc.code, "message": exc.message})
+</div></div>
+<table class="zebra"><thead><tr><th>이렇게 두면</th><th>설명</th></tr></thead><tbody><tr><td>서비스는 <b>HTTP를 모른 채</b> 예외만 던진다</td><td><code>raise ToolError("no_region", "그런 지역이 없습니다")</code></td></tr><tr><td>라우터는 <b>그냥 호출</b></td><td>try·except를 반복하지 않는다</td></tr><tr><td>응답 모양은 <b>핸들러 한 곳</b></td><td>나중에 형식을 바꿔도 한 파일만</td></tr></tbody></table>
+<div class="point"><div class="pl">어디까지 할 것인가</div><p>엔드포인트가 몇 개면 <code>HTTPException</code>만으로 충분합니다. <strong>서비스 계층이 커지고 오류 종류가 늘어날 때</strong> 핸들러를 도입하면 됩니다. 처음부터 다 만들 필요는 없습니다.</p></div>
+
+
+
+
+
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">24</div></section><section class="page" data-sec="4.2" data-title="4.2 오류 모양을 통일한다" data-ch="4" data-cont="1"><div class="rh"><div class="l"><b>FastAPI · PART 3</b> · 4장 · <span class="sec">실패를 설계한다</span></div><div class="r">4.2 오류 모양을 통일한다 (계속)<span class="pg">25</span></div></div><div class="kicker">4.2 · 설계 결정 · 예외 핸들러</div><h1>한 곳에서<br><em>모양을 맞춘다</em></h1><h3>422 응답을 내 모양으로</h3><div class="code"><div class="ch2"><span>검증 오류 형식 바꾸기</span><span>필요할 때만</span></div><div class="cb2"><span style="color:#86827b"> 1</span>  from fastapi.exceptions import RequestValidationError
+<span style="color:#86827b"> 2</span>  
+<span style="color:#86827b"> 3</span>  @app.exception_handler(RequestValidationError)
+<span style="color:#86827b"> 4</span>  def handle_validation(request: Request, exc: RequestValidationError):
+<span style="color:#86827b"> 5</span>      return JSONResponse(
+<span style="color:#86827b"> 6</span>          status_code=422,
+<span style="color:#86827b"> 7</span>          content={"error": "invalid_request",
+<span style="color:#86827b"> 8</span>                   "fields": [{"loc": e["loc"], "msg": e["msg"]} for e in exc.errors()]},
+<span style="color:#86827b"> 9</span>      )
+</div></div><div style="display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:start;margin:10px 0;padding:9px 12px;border-left:3px solid #6d28d9;background:#f6f3ff;border-radius:0 4px 4px 0"><b style="font-size:10.5px;color:#6d28d9;white-space:nowrap;letter-spacing:.04em">MCP에서는</b><span style="font-size:11.5px;color:#3b1d82;line-height:1.55">도구 호출이 실패했을 때 <b>모델에게 무엇을 돌려줄지</b>도 같은 결정입니다. 상태 코드만 주면 모델은 이유를 모릅니다. <b>왜 실패했는지 문장으로</b> 담아 주면 모델이 인자를 고쳐 다시 시도할 수 있습니다.</span></div><div style="margin:10px 0;padding:8px 10px;border:1px dashed #cfcbc4;border-radius:4px;background:#faf9f7"><div style="font-size:10.5px;font-weight:800;color:#86827b;margin-bottom:4px;letter-spacing:.04em">더 알아보려면 · 검색어</div><table style="width:100%;border-collapse:collapse"><tbody><tr><td style="padding:3px 8px;font-size:11px;width:52%">예외 처리</td><td style="padding:3px 8px;font-size:11px;font-family:Consolas,monospace;color:#b23c0a">fastapi handling errors</td></tr><tr><td style="padding:3px 8px;font-size:11px;width:52%">커스텀 예외 핸들러</td><td style="padding:3px 8px;font-size:11px;font-family:Consolas,monospace;color:#b23c0a">fastapi exception_handler</td></tr><tr><td style="padding:3px 8px;font-size:11px;width:52%">상태 코드 고르기</td><td style="padding:3px 8px;font-size:11px;font-family:Consolas,monospace;color:#b23c0a">http status code guide</td></tr></tbody></table></div><div class="mission"><b>미션 F-04</b><h3>실패 설계</h3><div class="wy">① 없는 지역에 <b>404</b>, 범위를 벗어난 <code>top_n</code>에 <b>422</b>가 나오게 한다<br>② 두 응답의 <b>본문 전문</b>을 적고 모양이 어떻게 다른지 설명한다<br>③ <code>ToolError</code>와 핸들러를 추가해 서비스에서 던진 예외가 <b>400</b>으로 나가게 한다<br>④ 서비스 파일에 <code>fastapi</code> import가 생기지 않았는지 확인한다</div></div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">25</div></section>
+<section class="page opener has-why" data-ch="5"><div class="rh"><div class="l"><b>FastAPI · PART 3</b> · 5장</div><div class="r">기다림과 노출 방식<span class="pg">26</span></div></div><div class="big">5</div><h1>기다림과 노출 방식<br>같은 서비스, 두 입구</h1><div class="oscene"><div class="osh">WHY · 현장 장면</div><div class="osb">Part 2의 async가 라우터에도 그대로 쓰인다. 그리고 서비스가 입구를 모르게 짜 두었기 때문에, <b>사람에게는 REST로 모델에게는 도구 목록으로</b> 동시에 노출할 수 있다.</div><table class="zebra osx"><thead><tr><th>이 장을 모르면</th><th>생기는 일</th></tr></thead><tbody><tr><td>동기·비동기를 섞어 쓰면</td><td>루프가 막힐 수 있다</td></tr><tr><td>입구를 하나로 두면</td><td>다른 쪽에서 못 쓴다</td></tr><tr><td>명세를 손으로 적으면</td><td>코드와 어긋난다</td></tr></tbody></table></div><div class="oq"><div><span>01</span>라우터를 def로 쓸까 async def로 쓸까?</div><div><span>02</span>같은 서비스를 어떻게 두 방식으로 노출하는가?</div><div><span>03</span>도구 명세를 어떻게 자동으로 만드는가?</div></div><div class="kicker">이 장의 구성</div><div class="otoc"><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">5.1</b>기다리는 라우터</span><span class="pg2" data-sec="5.1">27</span></div><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">5.2</b>같은 서비스, 두 가지 입구</span><span class="pg2" data-sec="5.2">29</span></div></div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">26</div></section>
+<section class="page" data-sec="5.1" data-title="5.1 기다리는 라우터" data-ch="5"><div class="rh"><div class="l"><b>FastAPI · PART 3</b> · 5장 · <span class="sec">기다림과 노출 방식</span></div><div class="r">5.1 기다리는 라우터<span class="pg">27</span></div></div><div class="kicker">5.1 · 파이썬이 주는 것 · async 라우터</div><h1>Part 2의 async가<br><em>그대로</em> 쓰인다</h1>
+<div class="why"><b>왜 배워야 하나?</b><p>Part 2에서 도구가 외부를 부를 때 <code>async</code>로 바꿨습니다. FastAPI 라우터도 <strong>똑같이 <code>async def</code></strong>로 쓸 수 있고, 그래야 한 요청이 기다리는 동안 <strong>다른 요청을 받을 수</strong> 있습니다.</p></div>
+<div class="code"><div class="ch2"><span>app/routers/external.py</span><span>비동기 라우터</span></div><div class="cb2"><span style="color:#86827b"> 1</span>  import asyncio
+<span style="color:#86827b"> 2</span>  
+<span style="color:#86827b"> 3</span>  from fastapi import APIRouter
+<span style="color:#86827b"> 4</span>  
+<span style="color:#86827b"> 5</span>  router = APIRouter(prefix="/external", tags=["external"])
+<span style="color:#86827b"> 6</span>  
+<span style="color:#86827b"> 7</span>  
+<span style="color:#86827b"> 8</span>  @router.get("/slow")
+<span style="color:#86827b"> 9</span>  async def slow(delay: float = 0.3):
+<span style="color:#86827b">10</span>      """기다리는 동안 다른 요청을 받을 수 있다."""
+<span style="color:#86827b">11</span>      await asyncio.sleep(delay)
+<span style="color:#86827b">12</span>      return {"waited": delay}
+<span style="color:#86827b">13</span>  
+<span style="color:#86827b">14</span>  
+<span style="color:#86827b">15</span>  @router.get("/both")
+<span style="color:#86827b">16</span>  async def both():
+<span style="color:#86827b">17</span>      """두 번의 대기를 동시에 처리한다."""
+<span style="color:#86827b">18</span>      a, b = await asyncio.gather(slow(0.3), slow(0.3))
+<span style="color:#86827b">19</span>      return {"a": a, "b": b}
+</div></div>
+<div class="code"><div class="ch2"><span>시간 비교</span><span>순차 호출 vs gather</span></div><div class="cb2">순차로 두 번 호출     0.62초
+/external/both 한 번   0.30초</div></div>
+<table class="zebra"><thead><tr><th>어떤 함수로 쓸까</th><th>FastAPI의 동작</th><th>적합한 경우</th></tr></thead><tbody><tr><td><code>def</code> (동기)</td><td><b>스레드풀</b>에서 실행해 준다</td><td>CSV 읽기 · 가벼운 계산 · 동기 라이브러리</td></tr><tr><td><code>async def</code></td><td>이벤트 루프에서 실행</td><td>외부 API · 비동기 DB 드라이버</td></tr><tr><td><code>async def</code> 안에서 <code>time.sleep</code></td><td><b>전체가 멈춘다</b></td><td>절대 쓰지 않는다</td></tr><tr><td>무거운 CPU 작업</td><td>둘 다 막힌다</td><td><code>run_in_executor</code> · 별도 워커로</td></tr></tbody></table>
+
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">27</div></section><section class="page" data-sec="5.1" data-title="5.1 기다리는 라우터" data-ch="5" data-cont="1"><div class="rh"><div class="l"><b>FastAPI · PART 3</b> · 5장 · <span class="sec">기다림과 노출 방식</span></div><div class="r">5.1 기다리는 라우터 (계속)<span class="pg">28</span></div></div><div class="kicker">5.1 · 파이썬이 주는 것 · async 라우터</div><h1>Part 2의 async가<br><em>그대로</em> 쓰인다</h1><div class="point"><div class="pl">섞어 써도 된다</div><p>FastAPI는 <code>def</code> 라우터를 <strong>알아서 스레드풀로</strong> 돌립니다. 그래서 우리 <code>services/sales.py</code>처럼 동기 코드를 그대로 써도 서버가 멈추지 않습니다. 모르는 채로 <code>async def</code>를 남발하면 오히려 <strong>동기 라이브러리가 루프를 막을</strong> 수 있습니다.</p></div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">28</div></section>
+<section class="page" data-sec="5.2" data-title="5.2 같은 서비스, 두 가지 입구" data-ch="5"><div class="rh"><div class="l"><b>FastAPI · PART 3</b> · 5장 · <span class="sec">기다림과 노출 방식</span></div><div class="r">5.2 같은 서비스, 두 가지 입구<span class="pg">29</span></div></div><div class="kicker">5.2 · 설계 결정 · 노출 방식</div><h1>사람에게는 REST<br>모델에게는 <em>도구 목록</em></h1>
+<div class="why"><b>왜 배워야 하나?</b><p>지금까지 만든 <code>services/sales.py</code>는 <strong>입구를 모릅니다.</strong> 그래서 같은 함수를 <strong>두 가지 방식</strong>으로 노출할 수 있습니다. 이것이 Part 4(MCP)로 가는 다리입니다.</p></div>
+<table class="zebra"><thead><tr><th>노출 방식</th><th>경로 모양</th><th>누가 쓰나</th></tr></thead><tbody><tr><td><b>REST</b></td><td><code>GET /sales/regions/서울</code></td><td>사람 · 프론트엔드 · 다른 서비스</td></tr><tr><td><b>도구 목록 + 호출</b></td><td><code>GET /tools</code> · <code>POST /tools/{name}/call</code></td><td><b>모델</b> · 에이전트</td></tr><tr><td>차이</td><td>경로가 <b>자원</b>을 가리킨다 vs 이름이 <b>기능</b>을 가리킨다</td><td>—</td></tr></tbody></table>
+
+
+
+
+
+
+
+
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">29</div></section><section class="page" data-sec="5.2" data-title="5.2 같은 서비스, 두 가지 입구" data-ch="5" data-cont="1"><div class="rh"><div class="l"><b>FastAPI · PART 3</b> · 5장 · <span class="sec">기다림과 노출 방식</span></div><div class="r">5.2 같은 서비스, 두 가지 입구 (계속)<span class="pg">30</span></div></div><div class="kicker">5.2 · 설계 결정 · 노출 방식</div><h1>사람에게는 REST<br>모델에게는 <em>도구 목록</em></h1><div class="code"><div class="ch2"><span>app/routers/tools.py</span><span>도구 형태로 노출</span></div><div class="cb2"><span style="color:#86827b"> 1</span>  from fastapi import APIRouter, Depends, HTTPException
+<span style="color:#86827b"> 2</span>  
+<span style="color:#86827b"> 3</span>  from app.deps import verify_key
+<span style="color:#86827b"> 4</span>  from app.schemas import CallRequest
+<span style="color:#86827b"> 5</span>  from app.services import sales
+<span style="color:#86827b"> 6</span>  
+<span style="color:#86827b"> 7</span>  router = APIRouter(prefix="/tools", tags=["tools"])
+<span style="color:#86827b"> 8</span>  
+<span style="color:#86827b"> 9</span>  TOOLS = {
+<span style="color:#86827b">10</span>      "summarize_sales": {
+<span style="color:#86827b">11</span>          "func": sales.summarize,
+<span style="color:#86827b">12</span>          "description": "전체 매출을 집계하고 지역별 상위 n개를 돌려준다.",
+<span style="color:#86827b">13</span>          "parameters": {"type": "object",
+<span style="color:#86827b">14</span>                         "properties": {"top_n": {"type": "integer", "default": 3}},
+<span style="color:#86827b">15</span>                         "required": []},
+<span style="color:#86827b">16</span>      },
+<span style="color:#86827b">17</span>      "region_detail": {
+<span style="color:#86827b">18</span>          "func": sales.region_detail,
+<span style="color:#86827b">19</span>          "description": "한 지역의 거래를 돌려준다.",
+<span style="color:#86827b">20</span>          "parameters": {"type": "object",
+<span style="color:#86827b">21</span>                         "properties": {"region": {"type": "string"},
+<span style="color:#86827b">22</span>                                        "min_amount": {"type": "integer", "default": 0}},
+<span style="color:#86827b">23</span>                         "required": ["region"]},
+<span style="color:#86827b">24</span>      },
+<span style="color:#86827b">25</span>  }
+<span style="color:#86827b">26</span>  
+<span style="color:#86827b">27</span>  
+<span style="color:#86827b">28</span>  @router.get("")
+<span style="color:#86827b">29</span>  def list_tools():
+<span style="color:#86827b">30</span>      """도구 목록과 입력 명세."""
+<span style="color:#86827b">31</span>      return [{"name": n, "description": t["description"],
+<span style="color:#86827b">32</span>               "parameters": t["parameters"]} for n, t in TOOLS.items()]
+<span style="color:#86827b">33</span>  
+<span style="color:#86827b">34</span>  
+<span style="color:#86827b">35</span>  @router.post("/{name}/call", dependencies=[Depends(verify_key)])
+<span style="color:#86827b">36</span>  def call_tool(name: str, body: CallRequest):
+<span style="color:#86827b">37</span>      """이름으로 도구를 실행한다."""
+<span style="color:#86827b">38</span>      if name not in TOOLS:
+<span style="color:#86827b">39</span>          raise HTTPException(status_code=404, detail=f"없는 도구: {name}")
+<span style="color:#86827b">40</span>      try:
+<span style="color:#86827b">41</span>          result = TOOLS[name]["func"](**body.arguments)
+<span style="color:#86827b">42</span>      except TypeError as exc:
+<span style="color:#86827b">43</span>          raise HTTPException(status_code=422, detail=str(exc))
+<span style="color:#86827b">44</span>      return {"ok": True, "result": result}
+</div></div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">30</div></section><section class="page" data-sec="5.2" data-title="5.2 같은 서비스, 두 가지 입구" data-ch="5" data-cont="1"><div class="rh"><div class="l"><b>FastAPI · PART 3</b> · 5장 · <span class="sec">기다림과 노출 방식</span></div><div class="r">5.2 같은 서비스, 두 가지 입구 (계속)<span class="pg">31</span></div></div><div class="kicker">5.2 · 설계 결정 · 노출 방식</div><h1>사람에게는 REST<br>모델에게는 <em>도구 목록</em></h1><div class="code"><div class="ch2"><span>호출</span><span>도구 목록과 실행</span></div><div class="cb2">$ curl localhost:8000/tools
+[{"name":"summarize_sales","description":"전체 매출을 집계하고 …",
+  "parameters":{"type":"object","properties":{"top_n":{"type":"integer","default":3}},
+                "required":[]}},
+ {"name":"region_detail", ...}]
+
+$ curl -X POST localhost:8000/tools/summarize_sales/call \
+       -H "X-API-Key: lab-key" -H "Content-Type: application/json" \
+       -d '{"arguments":{"top_n":1}}'
+{"ok":true,"result":{"count":15,"total":26955000,
+                     "by_region":[{"name":"서울","amount":13745000}]}}</div></div><table class="zebra"><thead><tr><th>Part 1과 무엇이 같나</th><th>Part 1</th><th>여기</th></tr></thead><tbody><tr><td>도구 표</td><td><code>REGISTRY</code> 딕셔너리</td><td><code>TOOLS</code> 딕셔너리</td></tr><tr><td>목록</td><td><code>list_tools()</code></td><td><code>GET /tools</code></td></tr><tr><td>호출</td><td><code>call_tool(name, args)</code></td><td><code>POST /tools/{name}/call</code></td></tr><tr><td>명세</td><td><code>build_schema()</code></td><td>손으로 적었다 · <b>미션에서 자동화</b></td></tr></tbody></table><div style="display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:start;margin:10px 0;padding:9px 12px;border-left:3px solid #6d28d9;background:#f6f3ff;border-radius:0 4px 4px 0"><b style="font-size:10.5px;color:#6d28d9;white-space:nowrap;letter-spacing:.04em">MCP에서는</b><span style="font-size:11.5px;color:#3b1d82;line-height:1.55"><b>MCP 서버가 하는 일이 바로 이 두 가지</b>입니다. 도구 목록을 알려 주고(<code>tools/list</code>), 이름과 인자로 호출받습니다(<code>tools/call</code>). 다만 전송 방식이 HTTP가 아니라 <b>stdio나 전용 프로토콜</b>일 수 있고, 명세 형식이 정해져 있습니다. 구조는 지금 만든 것과 같습니다.</span></div><div class="warn">지금 <code>TOOLS</code>의 <code>parameters</code>를 <b>손으로 적었습니다.</b> Part 1의 <code>build_schema</code>를 가져오면 함수에서 자동으로 뽑을 수 있습니다. 미션 F-06에서 직접 바꿔 봅니다.</div><div style="margin:10px 0;padding:8px 10px;border:1px dashed #cfcbc4;border-radius:4px;background:#faf9f7"><div style="font-size:10.5px;font-weight:800;color:#86827b;margin-bottom:4px;letter-spacing:.04em">더 알아보려면 · 검색어</div><table style="width:100%;border-collapse:collapse"><tbody><tr><td style="padding:3px 8px;font-size:11px;width:52%">동기·비동기 라우터</td><td style="padding:3px 8px;font-size:11px;font-family:Consolas,monospace;color:#b23c0a">fastapi async def vs def</td></tr><tr><td style="padding:3px 8px;font-size:11px;width:52%">스레드풀 동작</td><td style="padding:3px 8px;font-size:11px;font-family:Consolas,monospace;color:#b23c0a">fastapi run_in_threadpool</td></tr><tr><td style="padding:3px 8px;font-size:11px;width:52%">OpenAPI에서 클라이언트 생성</td><td style="padding:3px 8px;font-size:11px;font-family:Consolas,monospace;color:#b23c0a">openapi generator python client</td></tr></tbody></table></div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">31</div></section><section class="page" data-sec="5.2" data-title="5.2 같은 서비스, 두 가지 입구" data-ch="5" data-cont="1"><div class="rh"><div class="l"><b>FastAPI · PART 3</b> · 5장 · <span class="sec">기다림과 노출 방식</span></div><div class="r">5.2 같은 서비스, 두 가지 입구 (계속)<span class="pg">32</span></div></div><div class="kicker">5.2 · 설계 결정 · 노출 방식</div><h1>사람에게는 REST<br>모델에게는 <em>도구 목록</em></h1><div class="mission"><b>미션 F-05</b><h3>두 입구</h3><div class="wy">① <code>/tools</code>와 <code>/tools/{name}/call</code>을 만든다<br>② 같은 집계를 <code>/sales/summary</code>와 도구 호출 <b>두 방식</b>으로 불러 결과가 같은지 확인한다<br>③ 두 방식의 <b>차이</b>를 세 가지 적는다 (경로 · 인자 전달 · 문서화)</div></div><div class="mission"><b>미션 F-06</b><h3>명세 자동화</h3><div class="wy">① Part 1의 <code>build_schema</code>를 가져온다<br>② <code>TOOLS</code>의 <code>parameters</code>를 <b>함수에서 자동으로</b> 만들게 바꾼다<br>③ 함수 시그니처를 바꿨을 때 <code>/tools</code> 응답이 <b>따라 바뀌는지</b> 확인한다<br><b>검증</b> <code>region_detail</code>에 인자를 하나 더해도 코드 수정 없이 명세가 갱신될 것</div></div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">32</div></section>
+<section class="page opener has-why" data-ch="6"><div class="rh"><div class="l"><b>FastAPI · PART 3</b> · 6장</div><div class="r">설계 정리와 미션<span class="pg">33</span></div></div><div class="big">6</div><h1>설계 정리와 미션<br>세 파트가 한 구조로</h1><div class="oscene"><div class="osh">WHY · 현장 장면</div><div class="osb">Part 1·2·3에서 같은 문제를 세 번 다르게 풀었다. 그 선택들을 모아 보고, 미션 16개로 직접 확인한다.</div><table class="zebra osx"><thead><tr><th>이 장을 모르면</th><th>생기는 일</th></tr></thead><tbody><tr><td>모아 보지 않으면</td><td>조각으로 남는다</td></tr><tr><td>비교하지 않으면</td><td>왜 바꿨는지 모른다</td></tr><tr><td>미션을 안 풀면</td><td>읽기만 한 것이다</td></tr></tbody></table></div><div class="oq"><div><span>01</span>Part 3에서 무엇을 결정했는가?</div><div><span>02</span>세 파트는 어떻게 이어지는가?</div><div><span>03</span>미션 16개를 통과할 수 있는가?</div></div><div class="kicker">이 장의 구성</div><div class="otoc"><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">6.1</b>설계한 것 모아 보기</span><span class="pg2" data-sec="6.1">34</span></div><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">6.2</b>다음 단계</span><span class="pg2" data-sec="6.2">35</span></div><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">6.3</b>미션 ①~⑧</span><span class="pg2" data-sec="6.3">36</span></div><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">6.4</b>미션 ⑨~⑯</span><span class="pg2" data-sec="6.4">39</span></div><div class="it"><span><b style="color:#ff9a6b;font-family:Consolas,monospace;margin-right:8px">6.5</b>평가</span><span class="pg2" data-sec="6.5">42</span></div></div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">33</div></section>
+<section class="page" data-sec="6.1" data-title="6.1 설계한 것 모아 보기" data-ch="6"><div class="rh"><div class="l"><b>FastAPI · PART 3</b> · 6장 · <span class="sec">설계 정리와 미션</span></div><div class="r">6.1 설계한 것 모아 보기<span class="pg">34</span></div></div><div class="kicker">6.1 · 설계 정리</div><h1>세 파트가<br><em>한 구조</em>로</h1>
+<table class="zebra"><thead><tr><th style="width:16%">결정한 것</th><th style="width:40%">Part 3의 선택</th><th style="width:44%">근거</th></tr></thead><tbody><tr><td>입력의 자리</td><td>자원은 경로 · 조건은 쿼리</td><td>경로는 대상을, 쿼리는 거르는 방법을 가리킨다</td></tr><tr><td>검증</td><td><code>Query</code> 제약과 Pydantic 모델</td><td>명세와 동작이 어긋나지 않는다</td></tr><tr><td>응답 모양</td><td><code>response_model</code>로 못 박음</td><td>내부 필드가 새지 않고 문서가 자동</td></tr><tr><td>구조</td><td>routers(HTTP를 안다) / services(모른다)</td><td>출처를 바꿔도 한 파일만 고친다</td></tr><tr><td>공통 처리</td><td><code>Depends</code>로 주입</td><td>엔드포인트마다 반복하지 않는다</td></tr><tr><td>실패</td><td>상태 코드 + detail</td><td>중간 장비와 클라이언트가 이해한다</td></tr><tr><td>동시성</td><td><code>def</code>는 스레드풀 · 외부 호출만 <code>async</code></td><td>섞어 써도 막히지 않는다</td></tr><tr><td>노출 방식</td><td>REST와 도구 목록 <b>둘 다</b></td><td>서비스가 입구를 모르게 짰기 때문</td></tr></tbody></table>
+<h3>세 파트의 이어짐</h3>
+<table class="zebra"><thead><tr><th></th><th>Part 1</th><th>Part 2</th><th>Part 3</th></tr></thead><tbody><tr><td>등록</td><td><code>@tool</code> + 전역 dict</td><td><code>ToolRegistry</code> 인스턴스</td><td><code>@app.get</code> + <code>APIRouter</code></td></tr><tr><td>명세</td><td><code>build_schema()</code> 직접</td><td><code>model_json_schema()</code></td><td><code>/openapi.json</code> 자동</td></tr><tr><td>검증</td><td>없음</td><td>Pydantic <code>Args</code></td><td><code>Query</code> · 요청 모델 · 422</td></tr><tr><td>실패</td><td>예외 그대로</td><td><code>{"ok": false}</code></td><td>상태 코드</td></tr><tr><td>호출</td><td>함수 직접</td><td><code>await registry.call</code></td><td>HTTP 요청</td></tr><tr><td>공통 처리</td><td>데코레이터</td><td>부모 클래스</td><td><code>Depends</code></td></tr></tbody></table>
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">34</div></section>
+<section class="page" data-sec="6.2" data-title="6.2 다음 단계" data-ch="6"><div class="rh"><div class="l"><b>FastAPI · PART 3</b> · 6장 · <span class="sec">설계 정리와 미션</span></div><div class="r">6.2 다음 단계<span class="pg">35</span></div></div><div class="kicker">6.2 · 다음</div><h1>여기서<br><em>어디로 갈까</em></h1>
+<table class="zebra"><thead><tr><th>다음에 올 것</th><th>무엇</th><th>지금과의 연결</th></tr></thead><tbody><tr><td><b>데이터베이스</b></td><td>MySQL·PostgreSQL에서 읽기</td><td><code>services/loader.py</code>만 바뀐다</td></tr><tr><td><b>인증</b></td><td>토큰 · 사용자별 권한</td><td><code>Depends</code>를 확장</td></tr><tr><td><b>테스트</b></td><td><code>TestClient</code>로 엔드포인트 검증</td><td>의존성을 가짜로 교체</td></tr><tr><td><b>배포</b></td><td>컨테이너에 담아 서버로</td><td>Docker 교재와 이어진다</td></tr><tr><td><b>MCP</b></td><td>같은 서비스를 모델에게</td><td>5.2의 <code>/tools</code>가 출발점</td></tr></tbody></table>
+<div class="point"><div class="pl">지금 상태</div><p><strong>서비스 하나를 사람에게도, 모델에게도 노출할 수 있는 구조</strong>가 섰습니다. Part 4에서는 이 서비스를 MCP 규격에 맞춰 내보내고, 모델이 직접 호출하게 합니다. 바꿀 것은 <strong>입구뿐</strong>입니다.</p></div>
+<div style="margin:10px 0;padding:8px 10px;border:1px dashed #cfcbc4;border-radius:4px;background:#faf9f7"><div style="font-size:10.5px;font-weight:800;color:#86827b;margin-bottom:4px;letter-spacing:.04em">더 알아보려면 · 검색어</div><table style="width:100%;border-collapse:collapse"><tbody><tr><td style="padding:3px 8px;font-size:11px;width:52%">프로젝트 구조</td><td style="padding:3px 8px;font-size:11px;font-family:Consolas,monospace;color:#b23c0a">fastapi project structure best practices</td></tr><tr><td style="padding:3px 8px;font-size:11px;width:52%">테스트</td><td style="padding:3px 8px;font-size:11px;font-family:Consolas,monospace;color:#b23c0a">fastapi testclient pytest</td></tr><tr><td style="padding:3px 8px;font-size:11px;width:52%">설정과 환경변수</td><td style="padding:3px 8px;font-size:11px;font-family:Consolas,monospace;color:#b23c0a">pydantic-settings fastapi</td></tr><tr><td style="padding:3px 8px;font-size:11px;width:52%">배포</td><td style="padding:3px 8px;font-size:11px;font-family:Consolas,monospace;color:#b23c0a">fastapi docker deployment</td></tr><tr><td style="padding:3px 8px;font-size:11px;width:52%">DB 연동</td><td style="padding:3px 8px;font-size:11px;font-family:Consolas,monospace;color:#b23c0a">fastapi sqlalchemy session</td></tr></tbody></table></div>
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">35</div></section>
+<section class="page" data-sec="6.3" data-title="6.3 미션" data-ch="6"><div class="rh"><div class="l"><b>FastAPI · PART 3</b> · 6장 · <span class="sec">설계 정리와 미션</span></div><div class="r">6.3 미션<span class="pg">36</span></div></div><div class="kicker">6.3 · 미션</div><h1>미션 16개 · ①~⑧</h1>
+<div class="why"><b>왜 배워야 하나?</b><p><strong>상황 · 목표 · 조건 · 검증</strong>으로 되어 있습니다.</p></div>
+<div class="msn"><div class="mh"><span class="mid">F-M01</span><span class="mlv l1">기본</span><b>첫 엔드포인트</b><span class="mtm"></span></div><div class="mb"><div class="mr"><span>상황</span><div>서버를 띄워야 한다.</div></div><div class="mr"><span>목표</span><div>/health를 만들고 uvicorn으로 실행한다.</div></div><div class="mr"><span>조건</span><div>--reload 사용</div></div><div class="mr"><span>검증</span><div>curl 응답 {"status":"ok"}</div></div><div class="mr"><span>참고</span><div>1.1</div></div></div></div>
+<div class="msn"><div class="mh"><span class="mid">F-M02</span><span class="mlv l1">기본</span><b>경로와 쿼리</b><span class="mtm"></span></div><div class="mb"><div class="mr"><span>상황</span><div>입력을 어디로 받을지 정해야 한다.</div></div><div class="mr"><span>목표</span><div>/sales/regions/{region}과 min_amount 쿼리를 만든다.</div></div><div class="mr"><span>조건</span><div>경로·쿼리의 선택 이유를 적을 것</div></div><div class="mr"><span>검증</span><div>두 호출 결과</div></div><div class="mr"><span>참고</span><div>1.2</div></div></div></div>
+<div class="msn"><div class="mh"><span class="mid">F-M03</span><span class="mlv l1">기본</span><b>Query 제약</b><span class="mtm"></span></div><div class="mb"><div class="mr"><span>상황</span><div>잘못된 값이 들어온다.</div></div><div class="mr"><span>목표</span><div>top_n에 ge/le를 걸고 위반 응답을 기록한다.</div></div><div class="mr"><span>조건</span><div>422 본문 전문</div></div><div class="mr"><span>검증</span><div>메시지와 loc 기록</div></div><div class="mr"><span>참고</span><div>1.2</div></div></div></div>
+
+
+
+
+
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">36</div></section><section class="page" data-sec="6.3" data-title="6.3 미션" data-ch="6" data-cont="1"><div class="rh"><div class="l"><b>FastAPI · PART 3</b> · 6장 · <span class="sec">설계 정리와 미션</span></div><div class="r">6.3 미션 (계속)<span class="pg">37</span></div></div><div class="kicker">6.3 · 미션</div><h1>미션 16개 · ①~⑧</h1><div class="msn"><div class="mh"><span class="mid">F-M04</span><span class="mlv l2">응용</span><b>응답 모델</b><span class="mtm"></span></div><div class="mb"><div class="mr"><span>상황</span><div>응답 모양을 못 박아야 한다.</div></div><div class="mr"><span>목표</span><div>Summary·RegionDetail을 선언하고 라우터에 붙인다.</div></div><div class="mr"><span>조건</span><div>중첩 모델 포함</div></div><div class="mr"><span>검증</span><div>/docs의 스키마 캡처</div></div><div class="mr"><span>참고</span><div>2.1</div></div></div></div><div class="msn"><div class="mh"><span class="mid">F-M05</span><span class="mlv l2">응용</span><b>모델이 거르는 것</b><span class="mtm"></span></div><div class="mb"><div class="mr"><span>상황</span><div>내부 필드가 새면 안 된다.</div></div><div class="mr"><span>목표</span><div>서비스 반환에 내부용 키를 추가하고 응답에 안 나오는 것을 확인한다.</div></div><div class="mr"><span>조건</span><div>response_model 유지</div></div><div class="mr"><span>검증</span><div>전후 응답 비교</div></div><div class="mr"><span>참고</span><div>2.1</div></div></div></div><div class="msn"><div class="mh"><span class="mid">F-M06</span><span class="mlv l2">응용</span><b>구조 분리</b><span class="mtm"></span></div><div class="mb"><div class="mr"><span>상황</span><div>파일 하나가 길어졌다.</div></div><div class="mr"><span>목표</span><div>routers/와 services/로 나누고 main.py에서 조립한다.</div></div><div class="mr"><span>조건</span><div>services에 fastapi import 금지</div></div><div class="mr"><span>검증</span><div>구조도 + 동작 확인</div></div><div class="mr"><span>참고</span><div>3.1</div></div></div></div><div class="msn"><div class="mh"><span class="mid">F-M07</span><span class="mlv l2">응용</span><b>의존성</b><span class="mtm"></span></div><div class="mb"><div class="mr"><span>상황</span><div>엔드포인트마다 키 검사를 반복한다.</div></div><div class="mr"><span>목표</span><div>verify_key를 만들어 Depends로 건다.</div></div><div class="mr"><span>조건</span><div>라우터 전체 적용도 시험</div></div><div class="mr"><span>검증</span><div>401과 200 두 경우</div></div><div class="mr"><span>참고</span><div>3.2</div></div></div></div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">37</div></section><section class="page" data-sec="6.3" data-title="6.3 미션" data-ch="6" data-cont="1"><div class="rh"><div class="l"><b>FastAPI · PART 3</b> · 6장 · <span class="sec">설계 정리와 미션</span></div><div class="r">6.3 미션 (계속)<span class="pg">38</span></div></div><div class="kicker">6.3 · 미션</div><h1>미션 16개 · ①~⑧</h1><div class="msn"><div class="mh"><span class="mid">F-M08</span><span class="mlv l2">응용</span><b>공통 파라미터</b><span class="mtm"></span></div><div class="mb"><div class="mr"><span>상황</span><div>페이징 인자가 반복된다.</div></div><div class="mr"><span>목표</span><div>Paging 클래스를 만들어 Depends()로 받는다.</div></div><div class="mr"><span>조건</span><div>limit·offset 제약 포함</div></div><div class="mr"><span>검증</span><div>/docs에 두 파라미터가 나올 것</div></div><div class="mr"><span>참고</span><div>3.2</div></div></div></div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">38</div></section>
+<section class="page" data-sec="6.4" data-title="6.4 미션 (계속)" data-ch="6"><div class="rh"><div class="l"><b>FastAPI · PART 3</b> · 6장 · <span class="sec">설계 정리와 미션</span></div><div class="r">6.4 미션 (계속)<span class="pg">39</span></div></div><div class="kicker">6.4 · 미션</div><h1>미션 ⑨~⑯</h1>
+<div class="msn"><div class="mh"><span class="mid">F-M09</span><span class="mlv l2">응용</span><b>404 설계</b><span class="mtm"></span></div><div class="mb"><div class="mr"><span>상황</span><div>없는 지역을 물어본다.</div></div><div class="mr"><span>목표</span><div>HTTPException으로 404를 돌려준다.</div></div><div class="mr"><span>조건</span><div>detail에 이유를 담을 것</div></div><div class="mr"><span>검증</span><div>응답 본문</div></div><div class="mr"><span>참고</span><div>4.1</div></div></div></div>
+<div class="msn"><div class="mh"><span class="mid">F-M10</span><span class="mlv l2">응용</span><b>예외 핸들러</b><span class="mtm"></span></div><div class="mb"><div class="mr"><span>상황</span><div>오류 모양이 제각각이다.</div></div><div class="mr"><span>목표</span><div>ToolError와 핸들러를 만들어 400으로 통일한다.</div></div><div class="mr"><span>조건</span><div>서비스는 HTTP를 모를 것</div></div><div class="mr"><span>검증</span><div>핸들러 전후 응답 비교</div></div><div class="mr"><span>참고</span><div>4.2</div></div></div></div>
+<div class="msn"><div class="mh"><span class="mid">F-M11</span><span class="mlv l2">응용</span><b>비동기 라우터</b><span class="mtm"></span></div><div class="mb"><div class="mr"><span>상황</span><div>외부 호출이 느리다.</div></div><div class="mr"><span>목표</span><div>async 라우터를 만들고 gather로 두 대기를 합친다.</div></div><div class="mr"><span>조건</span><div>시간 측정</div></div><div class="mr"><span>검증</span><div>순차와 동시 시간</div></div><div class="mr"><span>참고</span><div>5.1</div></div></div></div>
+<div class="msn"><div class="mh"><span class="mid">F-M12</span><span class="mlv l2">응용</span><b>도구 입구</b><span class="mtm"></span></div><div class="mb"><div class="mr"><span>상황</span><div>모델이 쓸 입구가 필요하다.</div></div><div class="mr"><span>목표</span><div>/tools와 /tools/{name}/call을 만든다.</div></div><div class="mr"><span>조건</span><div>API 키 적용</div></div><div class="mr"><span>검증</span><div>목록과 호출 결과</div></div><div class="mr"><span>참고</span><div>5.2</div></div></div></div>
+
+
+
+
+
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">39</div></section><section class="page" data-sec="6.4" data-title="6.4 미션 (계속)" data-ch="6" data-cont="1"><div class="rh"><div class="l"><b>FastAPI · PART 3</b> · 6장 · <span class="sec">설계 정리와 미션</span></div><div class="r">6.4 미션 (계속) (계속)<span class="pg">40</span></div></div><div class="kicker">6.4 · 미션</div><h1>미션 ⑨~⑯</h1><div class="msn"><div class="mh"><span class="mid">F-M13</span><span class="mlv l2">응용</span><b>명세 자동화</b><span class="mtm"></span></div><div class="mb"><div class="mr"><span>상황</span><div>손으로 적은 스키마가 코드와 어긋난다.</div></div><div class="mr"><span>목표</span><div>Part 1의 build_schema로 parameters를 생성한다.</div></div><div class="mr"><span>조건</span><div>함수 수정 후 자동 반영 확인</div></div><div class="mr"><span>검증</span><div>수정 전후 /tools 응답</div></div><div class="mr"><span>참고</span><div>5.2</div></div></div></div><div class="msn"><div class="mh"><span class="mid">F-M14</span><span class="mlv l3">장애</span><b>422와 404 구분</b><span class="mtm"></span></div><div class="mb"><div class="mr"><span>상황</span><div>어떤 오류를 언제 쓰나.</div></div><div class="mr"><span>목표</span><div>두 경우를 각각 재현하고 차이를 설명한다.</div></div><div class="mr"><span>조건</span><div>본문 전문 기록</div></div><div class="mr"><span>검증</span><div>구분 기준 세 줄</div></div><div class="mr"><span>참고</span><div>4.1</div></div></div></div><div class="msn"><div class="mh"><span class="mid">F-M15</span><span class="mlv l3">장애</span><b>루프 막기</b><span class="mtm"></span></div><div class="mb"><div class="mr"><span>상황</span><div>async인데 느려진다.</div></div><div class="mr"><span>목표</span><div>async 라우터 안에서 time.sleep을 써 보고 동시 요청이 밀리는 것을 확인한다.</div></div><div class="mr"><span>조건</span><div>asyncio.sleep과 비교</div></div><div class="mr"><span>검증</span><div>두 경우의 시간</div></div><div class="mr"><span>참고</span><div>5.1</div></div></div></div><div class="msn"><div class="mh"><span class="mid">F-M16</span><span class="mlv l4">종합</span><b>데이터 출처 교체</b><span class="mtm"></span></div><div class="mb"><div class="mr"><span>상황</span><div>CSV를 DB로 바꿔야 한다.</div></div><div class="mr"><span>목표</span><div>loader.py만 고쳐 다른 출처에서 읽게 만든다(가짜 데이터도 가능).</div></div><div class="mr"><span>조건</span><div>라우터·서비스 수정 금지</div></div><div class="mr"><span>검증</span><div>고친 파일 목록이 하나일 것</div></div><div class="mr"><span>참고</span><div>3.1</div></div></div></div><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">40</div></section><section class="page" data-sec="6.4" data-title="6.4 미션 (계속)" data-ch="6" data-cont="1"><div class="rh"><div class="l"><b>FastAPI · PART 3</b> · 6장 · <span class="sec">설계 정리와 미션</span></div><div class="r">6.4 미션 (계속) (계속)<span class="pg">41</span></div></div><div class="kicker">6.4 · 미션</div><h1>미션 ⑨~⑯</h1><table class="zebra"><thead><tr><th>ID</th><th>수준</th><th>미션</th><th>참고</th><th>완료</th></tr></thead><tbody><tr><td><code>F-M01</code></td><td>기본</td><td>첫 엔드포인트</td><td>1.1</td><td>□</td></tr><tr><td><code>F-M02</code></td><td>기본</td><td>경로와 쿼리</td><td>1.2</td><td>□</td></tr><tr><td><code>F-M03</code></td><td>기본</td><td>Query 제약</td><td>1.2</td><td>□</td></tr><tr><td><code>F-M04</code></td><td>응용</td><td>응답 모델</td><td>2.1</td><td>□</td></tr><tr><td><code>F-M05</code></td><td>응용</td><td>모델이 거르는 것</td><td>2.1</td><td>□</td></tr><tr><td><code>F-M06</code></td><td>응용</td><td>구조 분리</td><td>3.1</td><td>□</td></tr><tr><td><code>F-M07</code></td><td>응용</td><td>의존성</td><td>3.2</td><td>□</td></tr><tr><td><code>F-M08</code></td><td>응용</td><td>공통 파라미터</td><td>3.2</td><td>□</td></tr><tr><td><code>F-M09</code></td><td>응용</td><td>404 설계</td><td>4.1</td><td>□</td></tr><tr><td><code>F-M10</code></td><td>응용</td><td>예외 핸들러</td><td>4.2</td><td>□</td></tr><tr><td><code>F-M11</code></td><td>응용</td><td>비동기 라우터</td><td>5.1</td><td>□</td></tr><tr><td><code>F-M12</code></td><td>응용</td><td>도구 입구</td><td>5.2</td><td>□</td></tr><tr><td><code>F-M13</code></td><td>응용</td><td>명세 자동화</td><td>5.2</td><td>□</td></tr><tr><td><code>F-M14</code></td><td>장애</td><td>422와 404 구분</td><td>4.1</td><td>□</td></tr><tr><td><code>F-M15</code></td><td>장애</td><td>루프 막기</td><td>5.1</td><td>□</td></tr><tr><td><code>F-M16</code></td><td>종합</td><td>데이터 출처 교체</td><td>3.1</td><td>□</td></tr></tbody></table><div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">41</div></section>
+<section class="page" data-sec="6.5" data-title="6.5 평가" data-ch="6"><div class="rh"><div class="l"><b>FastAPI · PART 3</b> · 6장 · <span class="sec">설계 정리와 미션</span></div><div class="r">6.5 평가<span class="pg">42</span></div></div><div class="kicker">6.5 · 평가</div><h1>10문항</h1>
+<div class="qa"><div class="ql">문제 · 10문항</div><ol><li>경로 변수와 쿼리 파라미터는 어떻게 갈리나?</li><li><code>response_model</code>이 하는 일 세 가지는?</li><li><code>/openapi.json</code>은 무엇에서 만들어지나?</li><li>services 폴더에 fastapi를 import하지 않는 이유는?</li><li><code>Depends</code>는 무엇을 하나?</li><li>404와 422의 차이는?</li><li>422는 누가 만드나?</li><li><code>def</code> 라우터는 어떻게 실행되나?</li><li><code>async def</code> 안에서 <code>time.sleep</code>을 쓰면?</li><li>같은 서비스를 REST와 도구 두 방식으로 노출할 수 있는 이유는?</li></ol></div>
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">42</div></section><section class="page" data-sec="6.5" data-title="6.5 평가" data-ch="6" data-cont="1" data-brk="1"><div class="rh"><div class="l"><b>FastAPI · PART 3</b> · 6장 · <span class="sec">설계 정리와 미션</span></div><div class="r">6.5 평가 (계속)<span class="pg">43</span></div></div><div class="kicker">6.5 · 평가</div><h1>10문항</h1>
+<div class="ans"><div class="al">정답 · 해설</div><b>Q1</b> 함수 매개변수 이름이 경로에 있으면 경로 변수, 없으면 쿼리.<br><b>Q2</b> 모델에 없는 키를 걸러내고, 타입을 맞추고, 문서를 만든다.<br><b>Q3</b> 함수 시그니처·타입 힌트·독스트링·response_model.<br><b>Q4</b> HTTP를 모르게 두어야 출처나 입구가 바뀌어도 그대로 쓸 수 있다.<br><b>Q5</b> 요청마다 먼저 실행해 값을 돌려주거나 예외로 막는다. 공통 처리를 한 곳에 둔다.<br><b>Q6</b> 404는 형식은 맞는데 그런 자원이 없는 것, 422는 요청 값 자체가 틀린 것.<br><b>Q7</b> FastAPI가 Pydantic 검증 실패를 자동으로 변환해 돌려준다.<br><b>Q8</b> 스레드풀에서 실행된다. 그래서 동기 코드를 써도 서버가 막히지 않는다.<br><b>Q9</b> 이벤트 루프가 멈춰 다른 요청까지 밀린다.<br><b>Q10</b> 서비스가 입구(HTTP·프로토콜)를 모르게 작성됐기 때문.</div>
+<div class="brand">청년취업사관학교 동대문4기 · 기업연계형 AI 서비스·클라우드 실무 과정</div><div class="pagenum">43</div></section>
+</body></html>
