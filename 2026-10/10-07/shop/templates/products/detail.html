@@ -1,0 +1,14 @@
+﻿{% extends "base.html" %}
+
+{% block title %}{{ product.name }} | 상품 상세{% endblock %}
+{% block content %}
+<div id="title-area"><h1>상품 상세</h1></div>
+<article class="product-detail">
+    <h2>{{ product.name }}</h2>
+    <dl>
+        <dt>상품 번호</dt><dd>{{ product.id }}</dd>
+        <dt>가격</dt><dd>{{ "{:,}".format(product.price) }}원</dd>
+    </dl>
+</article>
+<p><a href="{{ url_for('product_list') }}">상품 목록으로 돌아가기</a></p>
+{% endblock %}
