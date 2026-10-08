@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>재고 관리</title><link rel="stylesheet" href="/static/style.css">
+  <script src="/static/app.js" defer></script>
+</head>
+<body>
+  <main>
+    <header><div><span class="eyebrow">INVENTORY</span><h1>재고 관리</h1><p>상품과 입출고를 한곳에서 관리하세요.</p></div><a href="/docs">API 문서 ↗</a></header>
+    <section class="cards" aria-label="재고 현황">
+      <article><span>등록 상품</span><strong id="products-count">—</strong></article>
+      <article><span>전체 재고</span><strong id="units-count">—</strong></article>
+      <article><span>재고 금액</span><strong id="value-count">—</strong></article>
+      <article><span>재고 부족</span><strong id="low-count">—</strong></article>
+    </section>
+    <p id="notice" role="status" aria-live="polite"></p>
+    <section class="panel">
+      <div class="toolbar"><h2>상품 목록</h2><button id="new-product">+ 상품 등록</button></div>
+      <form id="search-form" class="filters"><input id="search" aria-label="상품 이름 검색" placeholder="상품 이름 검색" maxlength="100"><label><input id="low-only" type="checkbox"> 재고 부족만</label><button class="secondary">검색</button></form>
+      <div class="table-wrap"><table><thead><tr><th>상품</th><th>가격</th><th>재고</th><th>안전 재고</th><th>상태</th><th>관리</th></tr></thead><tbody id="product-rows"></tbody></table></div>
+      <div class="pagination"><button id="previous" class="secondary">이전</button><span id="page-label">1 페이지</span><button id="next" class="secondary">다음</button></div>
+    </section>
+    <section class="panel"><div class="toolbar"><h2 id="history-title">최근 입출고</h2><button id="all-history" class="secondary">전체 이력</button></div><p class="muted">최근 100건 · 삭제된 상품의 이력도 보존됩니다.</p><div class="table-wrap"><table><thead><tr><th>시간</th><th>상품</th><th>변동</th><th>처리 후 재고</th><th>사유</th></tr></thead><tbody id="history-rows"></tbody></table></div></section>
+  </main>
+  <dialog id="product-dialog"><form id="product-form"><h2 id="product-title">상품 등록</h2><label>상품명<input name="product_name" required maxlength="100"></label><label>가격 (원)<input name="price" type="number" min="0" max="9999999999.99" step="0.01" required></label><label id="initial-stock-label">초기 재고<input name="quantity" type="number" min="0" max="2147483647" step="1" value="0" required></label><label>안전 재고<input name="min_stock" type="number" min="0" max="2147483647" step="1" value="0" required></label><p class="form-error" role="alert"></p><div class="actions"><button type="button" data-close class="secondary">취소</button><button type="submit">저장</button></div></form></dialog>
+  <dialog id="stock-dialog"><form id="stock-form"><h2 id="stock-title">입출고</h2><label>처리<select name="direction"><option value="in">입고</option><option value="out">출고</option></select></label><label>수량<input name="quantity" type="number" min="1" max="2147483647" step="1" required></label><label>사유<input name="reason" maxlength="200" required placeholder="예: 발주 입고, 판매 출고"></label><p class="form-error" role="alert"></p><div class="actions"><button type="button" data-close class="secondary">취소</button><button type="submit">처리</button></div></form></dialog>
+</body>
+</html>
