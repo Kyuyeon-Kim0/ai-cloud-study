@@ -1,0 +1,143 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>LLM 플랫폼 및 API 활용 총정리</title><style>:root{font-family:system-ui,'Malgun Gothic',sans-serif;color:#172033;background:#f5f7fb}*{box-sizing:border-box}body{margin:0}.layout{display:grid;grid-template-columns:250px minmax(0,1fr);max-width:1440px;margin:auto;min-height:100vh}aside{position:sticky;top:0;height:100vh;overflow:auto;background:#fff;border-right:1px solid #dce3ee;padding:26px 18px}aside strong{display:block;font-size:18px;margin-bottom:20px}nav a{display:block;color:#42516b;text-decoration:none;padding:9px 10px;border-radius:8px;font-size:13px}nav a:hover{background:#edf3ff;color:#2458a5}main{padding:48px clamp(20px,5vw,76px);max-width:1100px}h1{font-size:32px;margin:0 0 12px}h2{font-size:23px;margin:0 0 18px;color:#173d75}p{line-height:1.8}section{background:white;border:1px solid #e0e6ef;border-radius:15px;padding:30px;margin:24px 0;box-shadow:0 4px 16px #182d4908}table{width:100%;border-collapse:collapse;font-size:14px;margin:16px 0}th,td{border:1px solid #e0e6ef;padding:11px;text-align:left;vertical-align:top}th{background:#eaf1fc}pre{position:relative;background:#152238;color:#e9f0fa;padding:22px;border-radius:10px;overflow-x:auto;font-size:13px;line-height:1.65}code{font-family:Consolas,monospace}button.copy{float:right;background:#335b9e;color:white;border:0;border-radius:6px;padding:5px 10px;cursor:pointer}a{color:#225bb3}.note{background:#eef5ff;border-left:4px solid #477ec9;padding:12px 16px;border-radius:6px}.flow{display:flex;flex-direction:column;align-items:center;gap:7px}.flow div{background:#eef4ff;padding:12px 25px;border-radius:8px;min-width:260px;text-align:center}.flow span{color:#6483ac}@media(max-width:850px){.layout{display:block}aside{position:static;height:auto;border-right:0;border-bottom:1px solid #ddd}nav{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}main{padding:20px}section{padding:20px;overflow-x:auto}}@media print{aside,button{display:none!important}.layout{display:block}main{padding:0}section{break-inside:avoid;box-shadow:none}}</style></head><body><div class="layout"><aside><strong>LLM 개발 학습 가이드</strong><nav id="toc"></nav></aside><main><h1>LLM 플랫폼 및 API 활용 총정리</h1><p>GPT · Gemini · Claude · Copilot 비교부터 API 호출, 공통 모듈 설계, LangChain 체인, 에이전트 플랫폼까지 총 16개 주제를 단계별로 정리했습니다.</p>
+<section><h2>1. LLM 플랫폼별 특징과 장단점</h2><table><tr><th>플랫폼</th><th>특징</th><th>장점</th><th>단점</th></tr><tr><td>GPT (OpenAI)</td><td>범용 AI, 코딩, 추론, 도구 호출</td><td>API와 개발 생태계 풍부</td><td>사용량에 따른 비용</td></tr><tr><td>Gemini (Google)</td><td>멀티모달, Google 생태계</td><td>긴 문맥과 다양한 입력</td><td>모델별 지원 기능 차이</td></tr><tr><td>Claude (Anthropic)</td><td>문서 분석, 코딩, 장문 작성</td><td>문서 처리와 코드 작성</td><td>모델별 비용과 한도</td></tr><tr><td>Microsoft Copilot</td><td>Microsoft 365 업무 연동</td><td>Word, Excel, Teams 통합</td><td>독립 모델 API보다 업무 제품 중심</td></tr></table><p class="note">GPT, Gemini, Claude는 모델 API를 직접 호출하는 데 적합하고, Copilot은 Microsoft 업무 환경에 강점이 있습니다.</p></section>
+<section><h2>2. LLM API 플랫폼 비교</h2><table><tr><th>구분</th><th>OpenAI</th><th>Gemini</th><th>Anthropic</th></tr><tr><td>SDK</td><td>openai</td><td>google-genai</td><td>anthropic</td></tr><tr><td>환경변수</td><td>OPENAI_API_KEY</td><td>GEMINI_API_KEY</td><td>ANTHROPIC_API_KEY</td></tr><tr><td>기본 호출</td><td>Responses API</td><td>generate_content</td><td>Messages API</td></tr><tr><td>도구 호출</td><td>지원</td><td>지원</td><td>지원</td></tr><tr><td>공식 문서</td><td><a href="https://platform.openai.com/docs">OpenAI</a></td><td><a href="https://ai.google.dev/gemini-api/docs">Gemini</a></td><td><a href="https://docs.anthropic.com/">Claude</a></td></tr></table></section>
+<section><h2>3. GPT API 초간단 호출</h2><pre><code>pip install openai</code></pre><pre><code>from openai import OpenAI
+
+client = OpenAI(api_key="YOUR_OPENAI_API_KEY")
+response = client.responses.create(
+    model="gpt-5.4",
+    input="파이썬이 무엇인가요?"
+)
+print(response.output_text)</code></pre><p><code>responses.create()</code>로 질문을 보내고 <code>output_text</code>로 응답을 읽습니다.</p></section>
+<section><h2>4. Gemini API 호출</h2><pre><code>pip install google-genai</code></pre><pre><code>from google import genai
+
+client = genai.Client(api_key="YOUR_GEMINI_API_KEY")
+response = client.models.generate_content(
+    model="gemini-2.5-flash",
+    contents="파이썬이 무엇인가요?"
+)
+print(response.text)</code></pre></section>
+<section><h2>5. Claude API 호출</h2><pre><code>pip install anthropic</code></pre><pre><code>from anthropic import Anthropic
+
+client = Anthropic(api_key="YOUR_ANTHROPIC_API_KEY")
+response = client.messages.create(
+    model="claude-sonnet-4-5",
+    max_tokens=300,
+    messages=[{"role": "user", "content": "파이썬이 무엇인가요?"}]
+)
+print(response.content[0].text)</code></pre></section>
+<section><h2>6. GPT, Gemini, Claude 중 선택해서 실행</h2><pre><code>from openai import OpenAI
+from google import genai
+from anthropic import Anthropic
+
+def ask_ai(platform: str, key: str, question: str) -&gt; str:
+    if platform == "gpt":
+        client = OpenAI(api_key=key)
+        return client.responses.create(
+            model="gpt-5.4", input=question
+        ).output_text
+    elif platform == "gemini":
+        client = genai.Client(api_key=key)
+        return client.models.generate_content(
+            model="gemini-2.5-flash", contents=question
+        ).text
+    elif platform == "claude":
+        client = Anthropic(api_key=key)
+        result = client.messages.create(
+            model="claude-sonnet-4-5", max_tokens=300,
+            messages=[{"role": "user", "content": question}]
+        )
+        return result.content[0].text
+    raise ValueError("지원하지 않는 플랫폼")
+
+platform = input("플랫폼(gpt/gemini/claude): ")
+key = input("API 키: ")
+question = input("질문: ")
+print(ask_ai(platform, key, question))</code></pre></section>
+<section><h2>7. 재사용 가능한 모듈 구조</h2><pre><code>llm_project/
+├── main.py
+├── llm/
+│   ├── __init__.py
+│   ├── openai_client.py
+│   ├── gemini_client.py
+│   ├── claude_client.py
+│   └── factory.py
+├── .env
+└── requirements.txt</code></pre><table><tr><th>파일</th><th>역할</th></tr><tr><td>main.py</td><td>사용자 입력과 실행</td></tr><tr><td>각 *_client.py</td><td>플랫폼별 API 구현</td></tr><tr><td>factory.py</td><td>선택한 플랫폼의 클라이언트 생성</td></tr><tr><td>.env</td><td>API 키 저장 (Git 제외)</td></tr></table><pre><code>class LLMClient:
+    def ask(self, question: str) -&gt; str:
+        raise NotImplementedError</code></pre><p>플랫폼별 클래스가 동일한 <code>ask()</code> 메서드를 구현하면 호출부를 표준화할 수 있습니다.</p></section>
+<section><h2>8. 플랫폼과 모델명 직접 선택</h2><p>아래 코드는 7번에서 만든 각 클라이언트 클래스가 <code>(model, api_key)</code> 생성자와 <code>ask()</code> 메서드를 구현했다는 전제의 설계 예제입니다.</p><pre><code># main.py
+from llm.factory import create_client
+
+platform = input("플랫폼: ").strip().lower()
+model = input("모델명: ").strip()
+api_key = input("API 키: ").strip()
+question = input("질문: ")
+client = create_client(platform, model, api_key)
+print(client.ask(question))</code></pre><pre><code># llm/factory.py
+from .openai_client import GPTClient
+from .gemini_client import GeminiClient
+from .claude_client import ClaudeClient
+
+def create_client(platform: str, model: str, api_key: str):
+    clients = {
+        "gpt": GPTClient,
+        "gemini": GeminiClient,
+        "claude": ClaudeClient,
+    }
+    if platform not in clients:
+        raise ValueError("지원하지 않는 플랫폼")
+    return clients[platform](model=model, api_key=api_key)</code></pre><p class="note">실제 운영에서는 API 키를 <code>.env</code>에 저장하고 <code>.gitignore</code>로 제외하세요.</p></section>
+<section><h2>9. 이미 존재하는 공통 LLM 패키지</h2><table><tr><th>패키지</th><th>특징</th><th>추천 용도</th></tr><tr><td>LiteLLM</td><td>여러 모델의 호출 인터페이스 통합</td><td>멀티 모델 관리</td></tr><tr><td>LangChain</td><td>모델, 프롬프트, 도구, 체인</td><td>AI 서비스 개발</td></tr><tr><td>LlamaIndex</td><td>데이터 검색, RAG</td><td>문서 검색 AI</td></tr><tr><td>PydanticAI</td><td>타입 검증 중심 에이전트</td><td>구조화된 AI 앱</td></tr></table><pre><code>pip install litellm</code></pre><pre><code>from litellm import completion
+
+response = completion(
+    model="openai/gpt-5.4",
+    messages=[{"role": "user", "content": "안녕하세요"}]
+)
+print(response.choices[0].message.content)</code></pre><p>환경변수에 제공사 API 키를 설정해야 합니다.</p></section>
+<section><h2>10. LangChain + OpenAI API</h2><pre><code>pip install langchain langchain-openai</code></pre><pre><code>from langchain_openai import ChatOpenAI
+
+llm = ChatOpenAI(model="gpt-5.4", api_key="YOUR_OPENAI_API_KEY")
+response = llm.invoke("파이썬 설명해줘")
+print(response.content)</code></pre></section>
+<section><h2>11. LangChain + Gemini API</h2><pre><code>pip install langchain-google-genai</code></pre><pre><code>from langchain_google_genai import ChatGoogleGenerativeAI
+
+llm = ChatGoogleGenerativeAI(
+    model="gemini-2.5-flash",
+    google_api_key="YOUR_GEMINI_API_KEY"
+)
+response = llm.invoke("파이썬 설명해줘")
+print(response.content)</code></pre></section>
+<section><h2>12. LangChain 체인 기본 예제</h2><div class="flow"><div>사용자 질문</div><span>↓</span><div>프롬프트 템플릿</div><span>↓</span><div>LLM</div><span>↓</span><div>문자열 출력</div></div><pre><code>from langchain_openai import ChatOpenAI
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.output_parsers import StrOutputParser
+
+llm = ChatOpenAI(model="gpt-5.4")
+prompt = ChatPromptTemplate.from_template(
+    "{topic}을 초보자에게 설명해줘"
+)
+chain = prompt | llm | StrOutputParser()
+result = chain.invoke({"topic": "Docker"})
+print(result)</code></pre><p><code>|</code>는 앞 단계의 출력을 다음 단계로 전달하는 연결 연산자입니다.</p></section>
+<section><h2>13. LangChain 체인 확장</h2><div class="flow"><div>주제 입력</div><span>↓</span><div>체인 1: 상세 설명</div><span>↓</span><div>체인 2: 3줄 요약</div><span>↓</span><div>최종 결과</div></div><pre><code>from langchain_openai import ChatOpenAI
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.output_parsers import StrOutputParser
+
+llm = ChatOpenAI(model="gpt-5.4")
+parser = StrOutputParser()
+explain = (
+    ChatPromptTemplate.from_template("{topic}을 자세히 설명해줘")
+    | llm | parser
+)
+summary = (
+    ChatPromptTemplate.from_template("다음 내용을 3줄로 요약해줘:\n{text}")
+    | llm | parser
+)
+result = explain.invoke({"topic": "Kubernetes"})
+final = summary.invoke({"text": result})
+print(final)</code></pre><p>체인이 길어지면 API 호출 횟수, 비용, 지연 시간이 증가할 수 있습니다.</p></section>
+<section><h2>14. OpenAI API와 LangChain 장단점</h2><table><tr><th>비교</th><th>OpenAI SDK/API</th><th>LangChain</th></tr><tr><td>종류</td><td>모델 API 및 SDK</td><td>애플리케이션 프레임워크</td></tr><tr><td>학습 난이도</td><td>비교적 쉬움</td><td>구성 요소가 더 많음</td></tr><tr><td>단순 질문</td><td>적합</td><td>가능하지만 복잡할 수 있음</td></tr><tr><td>여러 모델 연동</td><td>직접 통합</td><td>공통 인터페이스</td></tr><tr><td>체인</td><td>직접 작성</td><td>구성 요소 제공</td></tr><tr><td>에이전트</td><td>Agents SDK</td><td>LangChain / LangGraph</td></tr><tr><td>의존성</td><td>상대적으로 적음</td><td>상대적으로 많음</td></tr></table><p>LangChain 자체가 LLM을 제공하는 것은 아니며 실제 모델 제공사의 API를 사용합니다.</p></section>
+<section><h2>15. LangChain이 유용한 경우</h2><table><tr><th>상황</th><th>추천</th></tr><tr><td>단순 챗봇·질의응답</td><td>OpenAI SDK</td></tr><tr><td>여러 LLM 통합</td><td>LiteLLM 또는 LangChain</td></tr><tr><td>프롬프트 단계 연결</td><td>LangChain</td></tr><tr><td>문서 검색·RAG</td><td>LangChain 또는 LlamaIndex</td></tr><tr><td>복잡한 상태 기반 에이전트</td><td>LangGraph</td></tr><tr><td>도구 기반 에이전트</td><td>OpenAI Agents SDK 또는 LangGraph</td></tr></table><p>LangChain은 필수가 아니며 프로젝트 복잡도에 맞게 선택하는 것이 좋습니다.</p></section>
+<section><h2>16. OpenAI API 특징과 에이전트 공식 URL</h2><table><tr><th>기능</th><th>설명</th></tr><tr><td>Responses API</td><td>모델 응답, 도구 호출, 멀티모달</td></tr><tr><td>Structured Outputs</td><td>스키마 기반 구조화 응답</td></tr><tr><td>Function Calling</td><td>외부 함수와 도구 호출</td></tr><tr><td>Built-in Tools</td><td>웹 검색, 파일 검색 등</td></tr><tr><td>Agents SDK</td><td>에이전트 실행, 도구, 핸드오프, 추적</td></tr></table><p>위 기능들은 반드시 OpenAI에만 독점적인 것은 아닙니다. OpenAI 플랫폼에서 공식 지원하고 통합 제공한다는 점이 특징입니다.</p><table><tr><th>플랫폼</th><th>공식 주소</th></tr><tr><td>OpenAI Agents</td><td><a href="https://developers.openai.com/api/docs/guides/agents" target="_blank">공식 가이드 ↗</a></td></tr><tr><td>LangChain Agents</td><td><a href="https://docs.langchain.com/oss/python/langchain/agents" target="_blank">공식 가이드 ↗</a></td></tr><tr><td>LangGraph</td><td><a href="https://docs.langchain.com/oss/python/langgraph/overview" target="_blank">공식 가이드 ↗</a></td></tr><tr><td>LangSmith</td><td><a href="https://smith.langchain.com/" target="_blank">플랫폼 ↗</a></td></tr></table></section>
+<section><h2>추천 학습 순서</h2><div class="flow"><div>① 모델별 기본 SDK 호출</div><span>↓</span><div>② 공통 LLM 모듈 설계</div><span>↓</span><div>③ LiteLLM 통합</div><span>↓</span><div>④ LangChain 체인·RAG</div><span>↓</span><div>⑤ Agents SDK / LangGraph</div><span>↓</span><div>⑥ FastAPI + Docker 배포</div></div><p class="note">예제의 모델 ID는 사용 시점의 공식 모델 목록과 계정 접근 권한을 확인하세요. API 호출은 별도 요금이 발생할 수 있습니다.</p></section>
+<p style="color:#718098;font-size:12px">정리일: 2026-10-12 · 교육용 요약 자료</p></main></div><script>const sections=[...document.querySelectorAll('main section')];document.getElementById('toc').innerHTML=sections.map((s,i)=>{s.id='part-'+(i+1);return '<a href="#'+s.id+'">'+s.querySelector('h2').textContent+'</a>'}).join('');document.querySelectorAll('pre').forEach(pre=>{let b=document.createElement('button');b.className='copy';b.textContent='복사';b.onclick=async()=>{try{await navigator.clipboard.writeText(pre.querySelector('code').innerText);b.textContent='복사됨';setTimeout(()=>b.textContent='복사',1400)}catch(e){b.textContent='복사 실패'}};pre.prepend(b)});</script></body></html>
