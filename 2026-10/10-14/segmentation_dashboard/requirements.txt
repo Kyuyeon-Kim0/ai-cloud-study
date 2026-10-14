@@ -1,0 +1,12 @@
+streamlit>=1.39
+streamlit-webrtc>=0.47
+streamlit-keyup>=0.2
+opencv-python-headless>=4.8
+numpy>=1.26
+pillow>=10
+pandas>=2
+plotly>=5
+python-dotenv>=1
+openai>=1.68
+torch>=2.2
+torchvision>=0.17
