@@ -1,0 +1,191 @@
+{
+  "model": "google/owlv2-base-patch16-ensemble",
+  "image_url": "https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/transformers/tasks/zero-sh-obj-detection_1.png",
+  "image_size": {
+    "width": 512,
+    "height": 512
+  },
+  "threshold": 0.1,
+  "detections": [
+    {
+      "label": "rocket",
+      "score": 0.1528,
+      "box_xyxy": [
+        396.13,
+        -1.08,
+        438.71,
+        184.96
+      ]
+    },
+    {
+      "label": "rocket",
+      "score": 0.1065,
+      "box_xyxy": [
+        355.16,
+        37.45,
+        460.42,
+        267.51
+      ]
+    },
+    {
+      "label": "star-spangled banner",
+      "score": 0.136,
+      "box_xyxy": [
+        1.39,
+        1.47,
+        64.82,
+        168.96
+      ]
+    },
+    {
+      "label": "rocket",
+      "score": 0.1901,
+      "box_xyxy": [
+        430.87,
+        40.06,
+        456.05,
+        227.48
+      ]
+    },
+    {
+      "label": "rocket",
+      "score": 0.123,
+      "box_xyxy": [
+        353.31,
+        53.8,
+        417.31,
+        244.26
+      ]
+    },
+    {
+      "label": "rocket",
+      "score": 0.1383,
+      "box_xyxy": [
+        423.7,
+        40.75,
+        463.81,
+        274.49
+      ]
+    },
+    {
+      "label": "star-spangled banner",
+      "score": 0.2238,
+      "box_xyxy": [
+        5.47,
+        4.04,
+        512.07,
+        508.06
+      ]
+    },
+    {
+      "label": "rocket",
+      "score": 0.3154,
+      "box_xyxy": [
+        353.05,
+        12.55,
+        466.99,
+        289.98
+      ]
+    },
+    {
+      "label": "star-spangled banner",
+      "score": 0.495,
+      "box_xyxy": [
+        0.81,
+        5.27,
+        99.59,
+        510.52
+      ]
+    },
+    {
+      "label": "rocket",
+      "score": 0.1047,
+      "box_xyxy": [
+        354.87,
+        3.71,
+        512.61,
+        488.92
+      ]
+    },
+    {
+      "label": "nasa badge",
+      "score": 0.2218,
+      "box_xyxy": [
+        23.41,
+        330.93,
+        53.12,
+        384.54
+      ]
+    },
+    {
+      "label": "nasa badge",
+      "score": 0.4662,
+      "box_xyxy": [
+        278.03,
+        339.18,
+        329.64,
+        377.49
+      ]
+    },
+    {
+      "label": "human face",
+      "score": 0.1439,
+      "box_xyxy": [
+        296.64,
+        345.06,
+        309.94,
+        366.05
+      ]
+    },
+    {
+      "label": "nasa badge",
+      "score": 0.5898,
+      "box_xyxy": [
+        132.42,
+        347.82,
+        209.04,
+        423.88
+      ]
+    },
+    {
+      "label": "rocket",
+      "score": 0.1507,
+      "box_xyxy": [
+        144.59,
+        384.25,
+        195.71,
+        411.33
+      ]
+    },
+    {
+      "label": "nasa badge",
+      "score": 0.1008,
+      "box_xyxy": [
+        343.79,
+        421.91,
+        373.3,
+        462.67
+      ]
+    },
+    {
+      "label": "nasa badge",
+      "score": 0.1547,
+      "box_xyxy": [
+        481.9,
+        454.79,
+        510.33,
+        511.32
+      ]
+    },
+    {
+      "label": "nasa badge",
+      "score": 0.1062,
+      "box_xyxy": [
+        151.19,
+        461.62,
+        195.96,
+        512.16
+      ]
+    }
+  ]
+}
