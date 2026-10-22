@@ -41,7 +41,8 @@ python 05_evaluate.py
 | [gpt_resnet_freeze.py](gpt_resnet_freeze.py) | 특징 맵 분석 결과를 OpenAI API로 보내 동결·학습 레이어 제안 및 JSON 저장 |
 | [mnist_resnet_project/](mnist_resnet_project/) | MNIST 샘플, 특징 맵 분석, 학습 및 평가 코드 |
 | [gpt_analysis.json](gpt_analysis.json) | 별도 ResNet18 특징 분석 실습에서 저장한 레이어 제안 |
-| [feature_maps.png](feature_maps.png) | 특징 맵 시각화 결과 |
+| [resnet18_features.png](resnet18_features.png) | 쿼카 이미지의 ResNet18 레이어별 특징 요약 시각화 |
+| [feature_maps.png](feature_maps.png) | 쿼카 이미지에서 ResNet18의 conv1·layer1~layer4별 활성도가 높은 채널 4개를 골라 시각화한 결과 |
 | [mnist_resnet_project/outputs/classification_report.csv](mnist_resnet_project/outputs/classification_report.csv) | MNIST 클래스별 정밀도·재현율·F1 보고서 |
 | [mnist_resnet_project/outputs/confusion_matrix.png](mnist_resnet_project/outputs/confusion_matrix.png) | 테스트 혼동 행렬 |
 | [mnist_resnet_project/outputs/misclassified.png](mnist_resnet_project/outputs/misclassified.png) | 오분류 예시 |
