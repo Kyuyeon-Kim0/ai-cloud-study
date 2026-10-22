@@ -1,0 +1,22 @@
+{
+  "analysis": {
+    "conv1": "입력 이미지의 저수준(에지, 색상 등) 특징을 주로 추출한다. feature map이 상대적으로 풍부하고, zero_ratio가 0으로 모든 위치가 활성화됨을 보여준다. 표준편차가 매우 크고(abs_mean 역시 크다), 이는 강한 에지 추출과 저수준 필터의 활발한 반응을 의미한다.",
+    "layer1": "zero_ratio가 0.24로 상당수 활성화가 ReLU에 의해 죽어 있으나, 여전히 feature map이 상세하고 공간적으로 다양한 저수준 패턴(모서리, 질감 등)이 보인다. 표준편차는 줄었으나 활성값 분포는 여전히 넓고 mean, abs_mean은 유사해 ReLU 이후 양수 활성에 편향이 있다.",
+    "layer2": "zero_ratio가 0.49로 절반에 근접하여, 활성화 뉴런의 수가 감소했다. mean과 abs_mean이 더 감소해 정보가 더 응축·선별됨을 시사한다. 공간 해상도 축소로 더 복합적이며 추상적인 중간 구조를 잡아낸다. 일부 채널이 뚜렷하게 활성화되고, 비활성 부분은 많아진다.",
+    "layer3": "zero_ratio가 0.59로 죽은 뉴런 비율이 더 높아지고, feature map은 더욱 뚜렷한 국소적 영역에만 활성된다. 이는 주로 객체의 일부분 또는 중요한 구조만이 활성화되는 고차 특징 추출 단계임을 의미한다.",
+    "layer4": "zero_ratio가 0.37로 감소하였으나, 표준편차와 mean, abs_mean이 크게 증가해 특정 구역의 강한 활성화가 있음을 알 수 있다. feature map의 해상도는 매우 작으며, 특정 부위만 뚜렷하게 활성화되어, 이 단계서 개별 클래스별 구별력 높은 추상적 특징을 포착함을 시사한다."
+  },
+  "freeze_layers": [
+    "conv1",
+    "bn1",
+    "layer1"
+  ],
+  "train_layers": [
+    "layer2",
+    "layer3",
+    "layer4",
+    "fc"
+  ],
+  "reason": "conv1~layer1 구간은 저수준 공통 feature(에지, 질감 등)를 주로 추출하며, 활성값이 넓고 zero_ratio가 낮아 도메인 불변적 성격이 강하다. 반면 layer2부터는 zero_ratio가 급증하고 활성값 분포도 달라져 이미지 내 추상적, 고유 구조를 점진적으로 학습한다. layer4는 target task에 특화된 정보 반영이 가장 용이해, layer2부터 가중치 조정(미세조정)을 해야 도메인 특유 특징을 반영할 수 있다. 단, feature map 및 통계는 한 장의 이미지에서 산출되어 일반화에 한계가 있다.",
+  "experiment": "conv1~layer1, conv1~layer2, conv1~layer3를 각각 동결하고 layer2~fc, layer3~fc, layer4~fc만 학습하는 시나리오로 transfer learning 실험을 한다. validation accuracy 및 fine-tuning 속도를 비교해 적정 동결 범위를 탐색한다. 여러 이미지를 통한 통계적 검증과 추가적인 t-SNE feature embedding 분석을 병행하면 더욱 신뢰성 있는 결과를 얻을 수 있다. Feature map activation만으로 최적 동결 범위를 단정할 수 없음에 유의한다."
+}

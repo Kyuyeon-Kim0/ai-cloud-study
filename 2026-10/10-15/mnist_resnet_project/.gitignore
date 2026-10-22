@@ -1,0 +1,5 @@
+# MNIST is downloaded automatically by torchvision when needed.
+data/
+
+# Trained checkpoints are large; keep code and evaluation artifacts in Git.
+outputs/*.pth
