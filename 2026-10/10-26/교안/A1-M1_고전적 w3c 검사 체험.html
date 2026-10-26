@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<title>A1-M1 | 고전적 W3C 검사 체험</title>
+<!-- Pretendard & JetBrains Mono Font -->
+<link as="style" crossorigin="" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&amp;display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #ffffff;
+    --surface: #f8fafc;
+    --ink: #0f172a;
+    --quiet: #64748b;
+    --line: #e2e8f0;
+    --edge: #cbd5e1;
+    --accent: #FF2E93;
+    --accent-soft: rgba(255, 46, 147, 0.06);
+    --warn: #f59e0b;
+    --warn-soft: rgba(245, 158, 11, 0.08);
+    --good: #10b981;
+    --good-soft: rgba(16, 185, 129, 0.08);
+    --crit: #ef4444;
+    --code-bg: #0f172a;
+    --banner-bg: #ffffff;
+    --banner-ink: #0f172a;
+  }
+  
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: 'Pretendard', sans-serif;
+    font-size: 18px; line-height: 1.75;
+  }
+
+  /* ── 상단 배너 / 타이틀 영역 ── */
+  .banner { 
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); 
+    color: var(--banner-ink); 
+    border-bottom: 1px solid var(--line); 
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.02);
+  }
+  .banner-in { 
+    max-width: 1320px; 
+    margin: 0 auto; 
+    padding: 16px 24px; 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    gap: 24px; 
+  }
+  .banner-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .banner .org { 
+    font-size: 16px; 
+    font-weight: 800; 
+    color: var(--ink); 
+    letter-spacing: -0.01em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .banner .org::before {
+    content: "";
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    background: var(--accent);
+    border-radius: 50%;
+  }
+  .banner .who { 
+    font-size: 15px; 
+    color: var(--quiet); 
+    font-weight: 600;
+  }
+  .banner .who a {
+    color: var(--accent);
+    text-decoration: none;
+  }
+  .banner .who a:hover {
+    text-decoration: underline;
+  }
+  .banner a { color: inherit; }
+  .banner .home-link { 
+    font-size: 15px; 
+    font-weight: 700; 
+    text-decoration: none; 
+    border: 1px solid var(--line); 
+    border-radius: 8px; 
+    padding: 6px 14px; 
+    background: #ffffff; 
+    color: var(--ink);
+    transition: all 0.2s ease; 
+    letter-spacing: 0.02em;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+  }
+  .banner .home-link:hover { 
+    background: var(--accent); 
+    border-color: var(--accent);
+    color: #ffffff;
+  }
+
+  /* ── 레이아웃: 본문 + 목차 ── */
+  .layout { max-width: 1320px; margin: 0 auto; padding: 32px 24px 96px; display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 40px; align-items: start; }
+  .side { position: sticky; top: 24px; order: 2; max-height: calc(100vh - 48px); overflow-y: auto; background: var(--surface); padding: 16px; border-radius: 16px; border: 1px solid var(--line); }
+  .tabs { display: flex; flex-direction: column; gap: 4px; }
+  .tabs .group { font-size: 15px; font-weight: 800; color: var(--quiet); margin: 16px 0 6px 4px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .tabs .group:first-child { margin-top: 0; }
+  .tabs button {
+    all: unset; cursor: pointer; display: block;
+    font-size: 16px; line-height: 1.45; color: var(--ink);
+    padding: 8px 12px; border-radius: 8px; border: 1px solid transparent;
+    transition: all 0.15s ease;
+  }
+  .tabs button .no { color: var(--accent); font-weight: 700; margin-right: 6px; }
+  .tabs button:hover { background: #f1f5f9; border-color: var(--line); }
+  .tabs button[aria-selected="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); font-weight: 700; }
+  .tabs button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* ── 본문 ── */
+  main { min-width: 0; }
+  .panel { display: none; }
+  .panel:not([hidden]) { display: block; }
+  .crumb { font-size: 15px; font-weight: 800; color: var(--accent); letter-spacing: 0.03em; margin-bottom: 6px; text-transform: uppercase; }
+  h1 { font-size: 32px; line-height: 1.3; margin: 4px 0 16px; letter-spacing: -0.02em; font-weight: 800; }
+  .lead { font-size: 19px; margin: 12px 0 0; color: #334155; font-weight: 500; }
+  h2 { font-size: 26px; line-height: 1.35; margin: 0 0 16px; letter-spacing: -0.01em; font-weight: 800; }
+  h2::before { content: "■ "; color: var(--accent); }
+  h3 { font-size: 20px; margin: 32px 0 12px; font-weight: 700; }
+  h3::before { content: "▶ "; color: var(--accent); font-size: 0.8em; }
+  p { margin: 10px 0; }
+  .sub { color: var(--quiet); font-size: 16px; }
+  .key { font-size: 19px; font-weight: 600; padding: 16px 20px; margin: 20px 0 28px; border-left: 4px solid var(--accent); background: var(--accent-soft); border-radius: 0 12px 12px 0; color: #1e293b; }
+  code { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 16px; background: #f1f5f9; color: #0f172a; padding: 2px 6px; border-radius: 4px; border: 1px solid var(--line); }
+  pre { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 16px; background: var(--code-bg); color: #38bdf8; border: 1px solid #334155; border-radius: 12px; padding: 18px; overflow-x: auto; line-height: 1.6; margin: 16px 0; }
+  pre code { background: none; padding: 0; border: none; color: inherit; }
+
+  .badge { display: inline-block; font-size: 15px; font-weight: 700; color: #fff; background: var(--accent); padding: 1px 8px; border-radius: 6px; margin-left: 6px; line-height: 1.4; vertical-align: 1px; }
+  .stage { display: inline-block; font-size: 15px; font-weight: 700; padding: 2px 8px; border-radius: 6px; border: 1px solid var(--accent); color: var(--accent); white-space: nowrap; line-height: 1.4; background: var(--accent-soft); }
+  .stage.later { border-color: var(--edge); color: var(--quiet); background: #f8fafc; }
+  .num { font-weight: 700; color: var(--accent); white-space: nowrap; }
+
+  /* ── 표 ── */
+  .table-wrap { margin: 16px 0; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); overflow: hidden; }
+  table { border-collapse: collapse; width: 100%; font-size: 16px; }
+  th, td { text-align: left; vertical-align: top; padding: 14px 16px; border-bottom: 1px solid var(--line); }
+  th { font-weight: 700; color: var(--quiet); font-size: 15px; white-space: nowrap; background: #f1f5f9; }
+  tr:last-child td { border-bottom: none; }
+  td.nowrap { white-space: nowrap; }
+  td.nowrap .sub { white-space: normal; font-size: 15px; line-height: 1.5; margin-top: 4px; min-width: 150px; max-width: 220px; }
+  tr.new td { background: var(--accent-soft); }
+
+  /* ── HTML 도형 공통 ── */
+  .fig { margin: 24px 0; padding: 24px; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; }
+  .fig-title { font-size: 18px; font-weight: 800; margin: 0 0 16px; color: var(--ink); }
+  .fig-label { font-size: 15px; font-weight: 800; color: var(--quiet); margin: 20px 0 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .fig-label:first-of-type { margin-top: 0; }
+  .node { position: relative; border: 1px solid var(--edge); border-radius: 12px; padding: 14px 16px; background: var(--bg); transition: border-color 0.2s; }
+  .node.main { border-color: var(--accent); border-width: 2px; background: var(--accent-soft); }
+  .node.newb { border-color: var(--accent); border-width: 2px; }
+  .node.bad { border-color: var(--warn); background: var(--warn-soft); }
+  .node .t { font-size: 16px; font-weight: 700; line-height: 1.4; color: var(--ink); }
+  .node .d { font-size: 15px; color: var(--quiet); line-height: 1.5; margin-top: 4px; }
+  .node .tag { position: absolute; top: -10px; right: 12px; font-size: 15px; font-weight: 700; color: #fff; background: var(--accent); border-radius: 4px; padding: 1px 6px; line-height: 1.4; }
+  .node ul { margin: 6px 0 0; padding-left: 20px; font-size: 15px; }
+  .node ul li { margin: 3px 0; color: var(--quiet); }
+  .node .foot { font-size: 15px; color: var(--quiet); margin-top: 10px; }
+  .node.bad .t { color: #d97706; }
+  .node.main .t.acc { color: var(--accent); }
+
+  /* 가로 흐름: 노드 → 노드 */
+  .flow { display: flex; align-items: stretch; gap: 4px; }
+  .flow > .node { flex: 1 1 0; min-width: 0; text-align: center; }
+  .flow.left > .node { text-align: left; }
+  .arr { flex: none; width: 28px; display: grid; place-items: center; color: var(--edge); font-size: 18px; font-weight: 700; }
+  .arr::before { content: "→"; }
+  .band { margin-top: 16px; padding: 12px 16px; border: 1px solid var(--good); background: var(--good-soft); border-radius: 10px; font-size: 15px; font-weight: 600; color: #065f46; text-align: center; }
+
+  /* V-모델 */
+  .vm { display: grid; grid-template-columns: 1fr 170px 1fr; gap: 12px 0; align-items: center; }
+  .vm .node { text-align: center; }
+  .vm .l2 { margin-left: 14%; }
+  .vm .r2 { margin-right: 14%; }
+  .vm .link { text-align: center; font-size: 15px; color: var(--quiet); border-top: 2px dashed var(--edge); padding-top: 4px; margin: 0 8px; font-weight: 600; }
+  .vm .impl { grid-column: 1 / -1; justify-self: center; width: 40%; }
+  .vm-head { display: grid; grid-template-columns: 1fr 170px 1fr; font-size: 15px; font-weight: 800; color: var(--quiet); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .vm-head span:last-child { text-align: right; }
+
+  /* ── 목업 ── */
+  .mock { border: 1px solid var(--line); border-radius: 16px; overflow: hidden; background: var(--bg); margin: 24px 0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+  .mock-bar { display: flex; align-items: center; gap: 8px; padding: 12px 16px; background: #f1f5f9; border-bottom: 1px solid var(--line); }
+  .mock-bar .dot { width: 10px; height: 10px; border-radius: 50%; background: #cbd5e1; flex: none; }
+  .mock-bar .url { flex: 1; min-width: 0; margin-left: 8px; font-size: 15px; color: var(--quiet); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 4px 12px; font-family: "JetBrains Mono", monospace; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .mock-body { padding: 24px; }
+  .mock-title { font-size: 20px; font-weight: 800; margin: 0 0 16px; }
+  .mock-input { display: flex; gap: 8px; margin-bottom: 20px; }
+  .mock-input .field { flex: 1; min-width: 0; border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; font-family: "JetBrains Mono", monospace; font-size: 15px; background: #f8fafc; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .mock-input .btn { background: var(--accent); color: #fff; border-radius: 8px; padding: 10px 20px; font-weight: 700; font-size: 15px; white-space: nowrap; }
+  .mock-summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+  .mock-summary .cell { border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; background: var(--surface); }
+  .mock-summary .k { font-size: 15px; color: var(--quiet); font-weight: 600; }
+  .mock-summary .v { font-size: 20px; font-weight: 800; margin-top: 2px; }
+  .mock-summary .v.small { font-size: 15px; padding-top: 4px; }
+  .mock-tabs { display: flex; gap: 8px; border-bottom: 1px solid var(--line); margin-bottom: 16px; flex-wrap: wrap; }
+  .mock-tabs span { font-size: 15px; padding: 8px 14px; border-bottom: 2px solid transparent; color: var(--quiet); font-weight: 600; cursor: default; }
+  .mock-tabs span.on { border-color: var(--accent); color: var(--accent); font-weight: 800; }
+  .vcard { border: 1px solid var(--line); border-radius: 12px; padding: 16px; margin-bottom: 16px; background: var(--surface); }
+  .vcard .top { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .sev { font-size: 15px; font-weight: 700; padding: 2px 8px; border-radius: 4px; color: #fff; line-height: 1.4; text-transform: uppercase; }
+  .sev.critical { background: var(--crit); }
+  .sev.major { background: var(--warn); color: #fff; }
+  .rid { font-family: "JetBrains Mono", monospace; font-weight: 700; font-size: 15px; color: var(--ink); }
+  .wc { font-size: 15px; color: var(--quiet); font-weight: 600; }
+  .vcard .msg { font-weight: 700; margin: 4px 0 10px; font-size: 16px; }
+  .vcard .el { font-family: "JetBrains Mono", monospace; font-size: 15px; background: #0f172a; color: #38bdf8; border-radius: 8px; padding: 8px 12px; overflow-x: auto; white-space: nowrap; margin-bottom: 12px; }
+  .vgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .vbox { border: 1px solid var(--line); border-radius: 8px; padding: 12px; font-size: 15px; background: var(--bg); }
+  .vbox .h { font-size: 15px; font-weight: 800; color: var(--quiet); margin-bottom: 6px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .vbox.later { opacity: 0.65; }
+  .score { font-family: "JetBrains Mono", monospace; font-size: 15px; color: var(--quiet); font-weight: 600; }
+
+  .roadmap { display: flex; flex-wrap: wrap; gap: 6px; margin: 16px 0; align-items: center; }
+  .roadmap .chip { font-size: 15px; padding: 6px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--quiet); font-weight: 600; }
+  .roadmap .chip.on { border: 2px solid var(--accent); color: var(--accent); font-weight: 800; background: var(--accent-soft); }
+  .roadmap .sep { color: var(--quiet); margin: 0 4px; font-weight: 800; }
+
+  /* ── 태블릿 이하: 목차를 상단 가로 탭으로 ── */
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: minmax(0, 1fr); gap: 16px; padding: 16px 16px 64px; }
+    .side { order: 0; position: sticky; top: 0; z-index: 5; max-height: none; overflow: visible; background: var(--bg); padding: 12px 0; border-bottom: 1px solid var(--line); border-radius: 0; min-width: 0; }
+    .tabs { flex-direction: row; overflow-x: auto; gap: 6px; scrollbar-width: thin; }
+    .tabs .group { display: none; }
+    .tabs button { white-space: nowrap; font-size: 15px; padding: 6px 12px; border-color: var(--line); background: var(--surface); }
+  }
+
+  /* ── 모바일: 도형은 세로로, 표는 카드로 ── */
+  @media (max-width: 760px) {
+    body { font-size: 17px; }
+    .banner-in { flex-direction: column; align-items: flex-start; padding: 12px 16px; gap: 12px; }
+    .banner-left { flex-direction: column; align-items: flex-start; gap: 4px; }
+    .banner .home-link { align-self: stretch; text-align: center; }
+    h1 { font-size: 24px; }
+    h2 { font-size: 21px; }
+    h3 { font-size: 18px; }
+    .lead, .key { font-size: 16px; }
+    .key { padding: 12px 16px; }
+    .fig { padding: 16px; }
+
+    .flow { flex-direction: column; }
+    .flow > .node { flex: none; }
+    .arr { width: auto; height: 24px; }
+    .arr::before { content: "↓"; }
+
+    .vm, .vm-head { grid-template-columns: 1fr; }
+    .vm-head { display: none; }
+    .vm .l2, .vm .r2 { margin: 0; }
+    .vm .impl { width: 100%; }
+    .vm .link { border-top: none; border-left: 2px dashed var(--edge); text-align: left; padding: 2px 0 2px 12px; margin: 0 0 0 24px; }
+    .vm .gap { height: 10px; }
+
+    .mock-body { padding: 16px; }
+    .mock-summary { grid-template-columns: 1fr 1fr; }
+    .vgrid { grid-template-columns: 1fr; }
+
+    table.cards, table.cards tbody, table.cards tr, table.cards td { display: block; width: 100%; }
+    table.cards { font-size: 15px; }
+    table.cards thead { display: none; }
+    table.cards tr { padding: 12px 16px; border-bottom: 1px solid var(--line); }
+    table.cards tr:last-child { border-bottom: none; }
+    table.cards td { border: none; padding: 4px 0; white-space: normal; }
+    table.cards td::before { content: attr(data-label); display: block; font-size: 15px; font-weight: 800; color: var(--quiet); margin-bottom: 2px; text-transform: uppercase; }
+    table.cards td[data-label=""]::before { display: none; }
+    table.cards td:first-child { font-weight: 700; font-size: 15px; color: var(--ink); }
+    table.cards td:first-child::before { display: none; }
+  }
+
+  /* ── 약자 · 링크 ── */
+  abbr[data-full] { text-decoration: underline dotted var(--edge); text-underline-offset: 3px; cursor: help; }
+  .exp { color: var(--quiet); font-size: 0.9em; }
+  a { color: var(--accent); font-weight: 600; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  a.doc { border-bottom: 1px solid var(--accent); }
+  a.doc::after { content: " ↗"; font-size: 0.8em; }
+  .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); max-width: min(560px, calc(100vw - 32px)); background: var(--dark); color: #fff; font-size: 15px; line-height: 1.5; padding: 14px 18px; border-radius: 12px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.15); z-index: 50; border: 1px solid #334155; }
+  .toast[hidden] { display: none; }
+  .toast b { display: block; font-size: 15px; margin-bottom: 2px; color: #38bdf8; }
+
+  @media print {
+    .side { display: none; }
+    .layout { display: block; }
+    .panel[hidden] { display: block; }
+    .panel { margin-bottom: 48px; break-inside: avoid-page; }
+    body { background: #fff; }
+  }
+
+  /* ── 보완 ── */
+  td.nowrap .sub { white-space: normal; }
+  main h4 { font-size: 17px; margin: 24px 0 8px; font-weight: 700; }
+  .flow.tight > .node { padding: 12px 8px; }
+  .flow.tight .t { font-size: 15px; word-break: keep-all; }
+  .flow.tight .d { word-break: keep-all; }
+  .flow.tight .d { font-size: 15px; }
+  .flow.tight .arr { width: 18px; }
+  .make { font-size: 15px; color: var(--quiet); margin: -12px 0 20px; }
+  .make b { color: var(--accent); margin-right: 6px; }
+  :root { --dark: #0f172a; }
+  main ul:not(.tabs), main ol { list-style: disc; padding-left: 22px; margin: 8px 0; }
+  main ol { list-style: decimal; }
+  main li { margin: 4px 0; }
+
+  /* 1.3 절 가독성 보정: 기존 그리드·탭·표 레이아웃 변경 없음 */
+  #s6 { font-size: 18px; line-height: 1.85; }
+  #s6 p, #s6 li { font-size: 18px; line-height: 1.85; }
+  #s6 h2 { font-size: 27px; }
+  #s6 h3 { font-size: 22px; line-height: 1.5; }
+  #s6 .table-wrap table, #s6 .table-wrap td { font-size: 17px; line-height: 1.75; }
+  #s6 .table-wrap th { font-size: 16px; line-height: 1.6; }
+  #s6 p.sub, #s6 .sub { font-size: 16px; line-height: 1.75; }
+  #s6 code { font-size: 16px; }
+  @media (max-width: 760px) {
+    #s6, #s6 p, #s6 li { font-size: 17px; }
+    #s6 .table-wrap table, #s6 .table-wrap td { font-size: 16px; }
+    #s6 .table-wrap th { font-size: 16px; }
+  }
+
+/* A0 Part 1 · 가독성 보강 (레이아웃 변경 없음) */
+body {font-size:18px;line-height:1.78}
+main p, main li {font-size:18px}
+main .sub, main .make, main .exp {font-size:16px}
+main table {font-size:17px}
+main th {font-size:16px}
+main td, main td .sub {font-size:16px;line-height:1.65}
+main code, main pre, main pre code {font-size:16px}
+.tabs button, .banner .who {font-size:16px}
+.tabs .group, .crumb, .banner .home-link {font-size:15px}
+.key {font-size:18px}
+.node .d, .vbox, .fig-label, .mock-bar .url, .fig .foot, .score {font-size:16px}
+@media (max-width:760px){body{font-size:17px}main p,main li{font-size:17px}main table,main td{font-size:16px}main code,main pre,main pre code{font-size:15px}}
+
+/* A1-M1 가독성 보강: 레이아웃과 구조는 그대로 유지 */
+body {font-size:18px;}
+.tabs button, .tabs .group {font-size:16px;}
+main p, main li {font-size:18px;}
+main table, main td {font-size:17px;}
+main th, main .sub, main .crumb, .banner .who {font-size:16px;}
+main code, main pre, main pre code {font-size:16px;}
+main .fig-label, main .node .d, main .node .foot, main .badge, main .stage {font-size:16px;}
+@media(max-width:760px){body, main p, main li {font-size:17px;} main table, main td, main code, main pre, main pre code {font-size:16px;} .tabs button{font-size:16px;} }
+</style>
+</head>
+<body>
+<div class="banner">
+<div class="banner-in">
+<div class="banner-left">
+<div class="org">청년취업사관학교 AI_클라우드과정(2026년)</div>
+<div class="who">강사 부성순 · <a href="mailto:bakpak@empas.com">bakpak@empas.com</a></div>
+</div>
+<a class="home-link" href="/">🏠 홈으로</a>
+</div>
+</div>
+<div class="layout">
+<aside class="side">
+<div aria-label="A1-M1 목차" aria-orientation="vertical" class="tabs" role="tablist"><div class="group">Part A · Article A1 · Module 1</div>
+<button aria-controls="demo" aria-selected="true" id="tab-demo" role="tab" tabindex="0">체험 · 이미지 alt 듣기</button><button aria-controls="s1" aria-selected="false" id="tab-s1" role="tab" tabindex="-1">M1 개념 · 검사 기준</button><button aria-controls="s2" aria-selected="false" id="tab-s2" role="tab" tabindex="-1">M1-01 고전적 판정 개요</button><button aria-controls="s4" aria-selected="false" id="tab-s4" role="tab" tabindex="-1">M1-02 HTML 직접 검사</button><button aria-controls="s6" aria-selected="false" id="tab-s6" role="tab" tabindex="-1">M1-03 결과 해석과 한계</button></div>
+</aside>
+<main>
+<section aria-labelledby="tab-demo" class="panel" id="demo" role="tabpanel"><div class="crumb">A1-M1 · 도입 체험</div>
+<h1>시각장애인은 HTML을 어떻게 읽을까?</h1>
+<p class="lead">웹페이지를 볼 수 없어도 화면 낭독기(스크린리더)를 이용하면 글과 버튼, 링크 등의 정보를 음성으로 들을 수 있습니다. 그런데 이미지 안에 적힌 문구는 어떻게 전달할까요?</p>
+<h3>alt란 무엇인가?</h3><p><strong>alt</strong>는 <strong>alternative text</strong>(대체 텍스트)의 줄임말로, HTML의 <code>&lt;img&gt;</code> 요소에 이미지의 정보나 기능을 글로 제공하는 속성입니다. 화면을 볼 수 없는 사용자는 스크린리더를 통해 이 텍스트를 들을 수 있습니다. 예를 들어 <code>alt="오늘 배송 마감 오후 6시"</code>는 배너의 핵심 안내를 글로 전달합니다.</p><p class="sub">중요: 모든 이미지에 긴 설명을 적는 것은 아닙니다. 정보가 있는 이미지는 목적에 맞는 대체 텍스트를 제공하고, 단순 장식 이미지는 보통 <code>alt=""</code>로 처리합니다.</p><h3>① 이미지에 왜 alt가 필요한가?</h3>
+<p>브라우저는 이미지를 화면에 표시하지만, <strong>이미지 안의 글자나 의미를 HTML 텍스트처럼 자동으로 제공하지는 않습니다.</strong> 화면 낭독기는 이미지 요소에 제공된 접근 가능한 이름, 대표적으로 <code>alt</code> 대체 텍스트를 활용해 정보를 전달합니다.</p>
+<p>예를 들어 배송 배너에 <b>‘오늘 배송 마감 오후 6시’</b>라고 적혀 있다면, 이미지를 직접 보지 않아도 같은 핵심 정보를 알 수 있도록 <code>alt</code>에 해당 내용을 작성합니다.</p>
+<div class="fig" style="max-width:690px"><div class="fig-title">배송 안내 배너</div><img alt="오늘 배송 마감 오후 6시" id="alt-demo-image" src="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22520%22%20height%3D%22180%22%20viewBox%3D%220%200%20520%20180%22%3E%3Crect%20width%3D%22520%22%20height%3D%22180%22%20rx%3D%2218%22%20fill%3D%22%23e9f4ff%22%2F%3E%3Crect%20x%3D%2220%22%20y%3D%2218%22%20width%3D%22480%22%20height%3D%22144%22%20rx%3D%2212%22%20fill%3D%22white%22%20stroke%3D%22%23c7deef%22%2F%3E%3Ccircle%20cx%3D%2282%22%20cy%3D%2288%22%20r%3D%2237%22%20fill%3D%22%23e3f2fd%22%2F%3E%3Cpath%20d%3D%22M58%2092%20L77%20110%20L108%2068%22%20stroke%3D%22%232674ad%22%20stroke-width%3D%229%22%20fill%3D%22none%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3Ctext%20x%3D%22139%22%20y%3D%2280%22%20fill%3D%22%23123554%22%20font-family%3D%22sans-serif%22%20font-size%3D%2223%22%20font-weight%3D%22bold%22%3E%EC%98%A4%EB%8A%98%20%EB%B0%B0%EC%86%A1%20%EB%A7%88%EA%B0%90%3C%2Ftext%3E%3Ctext%20x%3D%22139%22%20y%3D%22117%22%20fill%3D%22%23a83f4a%22%20font-family%3D%22sans-serif%22%20font-size%3D%2227%22%20font-weight%3D%22bold%22%3E%EC%98%A4%ED%9B%84%206%EC%8B%9C%3C%2Ftext%3E%3C%2Fsvg%3E" style="display:block;width:100%;height:auto;border-radius:10px"/><p><code>&lt;img src="delivery.svg" alt="오늘 배송 마감 오후 6시"&gt;</code></p><button id="read-alt" style="cursor:pointer;background:var(--accent);color:#fff;border:0;border-radius:8px;padding:10px 18px;font-size:15px;font-weight:700" type="button">▶ alt 음성으로 듣기</button> <button id="stop-alt" style="cursor:pointer;background:#f1f5f9;color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:10px 18px;font-size:15px" type="button">■ 중지</button><p aria-live="polite" class="sub" id="speech-status" role="status">버튼을 누르면 브라우저가 이미지의 alt 문구를 읽어 줍니다.</p></div>
+<h3>② 체험 결과 해석</h3>
+<p>버튼에서 들리는 <b>‘오늘 배송 마감 오후 6시’</b>는 이미지에 작성한 <code>alt</code> 속성값입니다. 즉, 이미지의 픽셀을 분석해 음성을 생성한 것이 아니라 <strong>HTML에 작성된 대체 텍스트를 읽는 것</strong>입니다.</p>
+<p>이번 버튼은 설치 없는 체험을 위한 <b>Web Speech API 음성 합성</b>으로, 실제 스크린리더를 대신하지 않습니다. 진짜 스크린리더는 웹페이지의 제목·링크·입력 요소·역할·상태 등 접근성 정보까지 해석합니다. 음성 기능은 브라우저와 운영체제의 한국어 음성 지원에 따라 달라질 수 있습니다.</p>
+<h3>③ W3C는 무엇을 요구하는가?</h3>
+<p><a href="https://www.w3.org/WAI/WCAG22/Understanding/non-text-content.html" rel="noopener" target="_blank">WCAG 2.2 성공 기준 1.1.1(비텍스트 콘텐츠)</a>은 의미 있는 이미지 등 비텍스트 콘텐츠에 적절한 텍스트 대안을 제공하도록 요구합니다. 중요한 것은 <code>alt</code>라는 속성을 단순히 넣는 일이 아니라 <strong>이미지의 정보나 기능을 알맞게 전달하는 일</strong>입니다. 장식용 이미지는 일반적으로 <code>alt=""</code>로 처리합니다.</p>
+<div class="key">그렇다면 기존 W3C Validator와 접근성 검사 도구는 <b>대체 텍스트가 제대로 작성됐는지 어디까지 검사</b>할 수 있을까요? 이어지는 본문에서 고전적인 검사 방법과 그 한계를 확인합니다.</div>
+<h3>참고. 웹 접근성은 프론트엔드만의 일이 아니다</h3>
+<p><code>alt</code>는 HTML 속성이지만, 이미지 설명을 누가 입력하고 어디에 저장하며 어떤 화면에 제공할지는 서비스 전체의 설계 문제입니다. 백엔드가 접근성에 필요한 데이터와 동작을 제공하지 않으면 프론트엔드만으로 해결하기 어려운 경우가 있습니다.</p>
+<div class="table-wrap"><table class="cards">
+<thead><tr><th>영역</th><th>백엔드에서 고려할 일</th><th>예시</th></tr></thead><tbody>
+<tr><td data-label="영역"><b>이미지 대체 텍스트</b></td><td data-label="백엔드 역할">이미지 업로드 시 설명 입력·저장·조회 API 제공</td><td data-label="예시"><code>image_url</code>과 <code>alt_text</code>를 함께 전달해 화면에서 <code>alt</code>로 출력</td></tr>
+<tr><td data-label="영역"><b>서버 생성 HTML</b></td><td data-label="백엔드 역할">JSP·PHP·Django 등의 템플릿에서 올바른 문서 구조와 속성 출력</td><td data-label="예시"><code>lang="ko"</code>, 제목·폼의 <code>label</code> 연결</td></tr>
+<tr><td data-label="영역"><b>오류 안내</b></td><td data-label="백엔드 역할">API에서 항목별 오류 원인과 수정 가능한 안내 제공</td><td data-label="예시">‘입력값 오류’보다 ‘비밀번호는 8자 이상이어야 합니다’</td></tr>
+<tr><td data-label="영역"><b>세션 시간 제한</b></td><td data-label="백엔드 역할">시간 만료 정책·연장 API를 마련하고 프론트엔드의 사전 경고와 연동</td><td data-label="예시">세션 종료 전에 알림과 연장 선택지 제공. 보안상 예외가 있는지 함께 검토</td></tr>
+<tr><td data-label="영역"><b>인증·CAPTCHA</b></td><td data-label="백엔드 역할">이미지 판독이나 단일 기기 사용만 강제하지 않는 대체 수단 마련</td><td data-label="예시">접근 가능한 다른 인증 방식 또는 음성·비시각적 대안 지원</td></tr>
+<tr><td data-label="영역"><b>생성 문서·이메일</b></td><td data-label="백엔드 역할">서버가 생성하는 문서와 메시지의 접근성 고려</td><td data-label="예시">태그된 PDF 영수증, 이메일 이미지의 적절한 대체 텍스트</td></tr>
+</tbody></table></div>
+<p><b>역할 구분:</b> 프론트엔드는 정보를 사용자가 <b>인식하고 조작할 수 있게 표현</b>하고, 백엔드는 그 표현에 필요한 <b>데이터·검증·인증 선택지·서버 정책</b>을 제공합니다. 기획·콘텐츠 작성·QA까지 함께 검토해야 실제 접근성이 완성됩니다.</p>
+</section>
+<section aria-labelledby="tab-s1" class="panel" id="s1" role="tabpanel"><div class="crumb">PART A · ARTICLE A1 · MODULE A1-M1</div><h1>A1-M1. 고전적 W3C 검사 체험</h1><p class="key">학습 범위: HTML 문법 검사와 WCAG 접근성 평가는 별개다. 같은 HTML 사례를 실제 검사해 결과를 해석하고, 기존 방식에서 반복되는 불편함을 찾아낸다. 이 모듈에서는 새 탐지기나 RAG를 구현하지 않는다.</p>
+<p class="lead">웹 접근성 검사라는 실무 소재로 기존 도구의 입력·출력과 한계를 이해하고, 이어지는 규칙 기반 탐지와 근거 검색을 준비한다.</p>
+<div class="key">이 Part의 질문은 하나다. <b>“기존 방법으로 어떤 오류를 찾을 수 있고, 무엇은 찾기 어려운가?”</b> 그 답이 다음 단계의 규칙 기반 판정과 근거 검색을 설계하는 출발점이 된다.</div>
+<h3>1. 개념: 정합성 판정이란?</h3><p>정합성(Conformance)은 미리 정한 기준과 실제 결과물이 일치하는지를 확인하는 것이다. 예를 들어 HTML 문서의 구조가 HTML 표준에 맞는지, 이미지·링크·입력창이 웹 콘텐츠 접근성 지침(WCAG)의 요구사항을 충족하는지 검토한다. 다만 <b>HTML 표준 적합성</b>과 <b>WCAG 접근성 적합성</b>은 검사 기준부터 다르므로 같은 판정으로 취급하면 안 된다.</p>
+<div class="table-wrap"><table><thead><tr><th>검사 영역</th><th>기준 문서</th><th>주요 질문</th><th>대표 검사 방법</th></tr></thead><tbody>
+<tr><td><b>HTML 표준</b></td><td>WHATWG HTML Living Standard</td><td>태그 중첩, 필수 속성, 중복 ID 등이 올바른가?</td><td>Nu Html Checker (W3C Validator)</td></tr>
+<tr><td><b>웹 접근성</b></td><td>W3C WCAG 2.2 (국내 적용 시 KWCAG 병행)</td><td>보조기술 사용자를 포함해 콘텐츠와 기능에 접근할 수 있는가?</td><td>Lighthouse·WAVE·axe 등의 자동 점검 + 수동 평가</td></tr>
+<tr><td><b>사용성</b></td><td>사용자 과업·디자인 지침</td><td>문제없이 사용하더라도 이해하고 사용하기 편리한가?</td><td>관찰, 시나리오 및 사용성 테스트</td></tr>
+</tbody></table></div>
+<h3>2. WCAG의 네 가지 원칙</h3><p>WCAG는 접근성을 <b>인식 가능(Perceivable), 운용 가능(Operable), 이해 가능(Understandable), 견고함(Robust)</b>으로 조직한다. 각 원칙 아래에 구체적인 성공 기준이 있고, A·AA·AAA 등급이 정해져 있다. 일반적인 AA 적합성 검토는 A와 AA 성공 기준 모두를 만족해야 한다.</p>
+<div class="table-wrap"><table><thead><tr><th>원칙</th><th>쉽게 설명하면</th><th>대표적인 질문</th></tr></thead><tbody>
+<tr><td>인식 가능</td><td>정보를 감각적으로 받아들일 수 있는가?</td><td>이미지에 의미에 맞는 대체 텍스트가 있는가?</td></tr>
+<tr><td>운용 가능</td><td>마우스 외의 방식으로도 조작할 수 있는가?</td><td>키보드로 링크와 버튼을 사용할 수 있는가?</td></tr>
+<tr><td>이해 가능</td><td>내용과 사용 절차가 명확한가?</td><td>입력 필드의 목적, 오류 원인을 알 수 있는가?</td></tr>
+<tr><td>견고함</td><td>브라우저와 보조기술이 정보를 해석할 수 있는가?</td><td>컨트롤의 이름·역할·상태를 프로그램이 알 수 있는가?</td></tr>
+</tbody></table></div>
+<h3>3. 이번 Module의 범위</h3><p>기존 도구로 <b>이미지의 alt, 링크의 이름·목적, 폼의 레이블, 키보드 접근</b>을 우선 점검한다. 이는 뒤에서 동일한 검사 대상을 규칙 기반 방식으로 구현하고 평가하기 위한 공통 사례다. 이 Part 자체에서 특정 사이트의 WCAG AA 완전 적합성을 선언하지 않는다.</p>
+</section><section aria-labelledby="tab-s2" class="panel" hidden="" id="s2" role="tabpanel"><div class="crumb">A1-M1 · 기존 검사 체계</div>
+<h2>M1-01 고전적 웹 접근성 정합성 판정 개요</h2>
+<p class="lead">웹페이지가 화면에 잘 보이는 것과 모든 사람이 이용할 수 있는 것은 다르다. 웹 접근성 평가는 <b>기준을 정하고, 자동 검사로 확인할 수 있는 항목을 살핀 다음, 맥락과 사용 과정을 사람이 검토</b>하는 방식으로 진행한다.</p>
+<h3>왜 검사하는가?</h3>
+<p>이미지가 전달하는 정보, 링크의 이동 목적, 입력창의 이름과 오류 안내는 화면에 보이는 외형만으로 모두 확인되지 않는다. 특히 키보드나 보조기술로 이용할 때 발생하는 문제는 직접 점검해야 한다. 따라서 웹 접근성 정합성 판정은 <b>WCAG 성공 기준에 비추어 실제 콘텐츠와 동작을 검토하는 과정</b>이다.</p>
+<h3>고전적 검사의 세 가지 축</h3>
+<div class="table-wrap"><table><thead><tr><th>구분</th><th>확인하는 사항</th><th>의미</th></tr></thead><tbody>
+<tr><td><b>① HTML 문법 검사</b></td><td>잘못된 요소 중첩, 중복 ID, 필요한 속성 누락 등</td><td>HTML 표준 적합성 검사이며, WCAG 전체의 합격 판정은 아니다.</td></tr>
+<tr><td><b>② 접근성 자동 검사</b></td><td>프로그램으로 판정 가능한 이름·속성·색 대비 등의 문제</td><td>탐지 가능한 규칙은 빠르게 확인하지만 문맥 판단은 제한된다.</td></tr>
+<tr><td><b>③ 수동 점검</b></td><td>실제 이미지와 alt 내용 비교, 링크 맥락, 키보드 조작 등</td><td>자동 검사로 확인할 수 없는 의미와 사용 경험을 검토한다.</td></tr>
+</tbody></table></div>
+<h3>자동 검사만으로는 충분하지 않다</h3>
+<p>예를 들어 매출 차트의 <code>alt="아름다운 풍경"</code>은 문자열이 존재하므로 일부 자동 검사에서 통과할 수 있다. 하지만 차트 내용을 전달하지 못하므로 사람이 실제 이미지와 비교해야 한다. <code>더보기</code> 링크도 주변 제목이나 표의 행과 연결되는지에 따라 WCAG 2.4.4 평가가 달라질 수 있다.</p>
+<p class="sub">기준 참고: <a href="https://www.w3.org/TR/WCAG22/" rel="noopener" target="_blank">WCAG 2.2</a> · <a href="https://www.w3.org/WAI/test-evaluate/conformance/wcag-em/" rel="noopener" target="_blank">WCAG-EM 평가 방법론</a>. 구체적인 검사 도구 링크는 다음 실습 하단에 모아 두었다.</p></section><section aria-labelledby="tab-s4" class="panel" hidden="" id="s4" role="tabpanel"><div class="crumb">A1-M1 · 실제 HTML 검사</div>
+<h2>M1-02 HTML 검사 적용 실습</h2>
+<p class="lead">W3C Validator에 HTML 코드를 직접 붙여 넣어 문법 오류를 확인한다. 그런 다음 <b>문법 검사에서 문제가 없더라도 접근성 검토가 남는 사례</b>를 구분한다. </p>
+<h3>① W3C 검사기에 HTML 붙여 넣기</h3>
+<ol><li><a href="https://validator.w3.org/#validate_by_input" rel="noopener" target="_blank">W3C Markup Validation Service — Direct Input</a>를 연다.</li><li>아래 코드를 전부 복사해 입력 영역에 붙여 넣는다.</li><li><b>Check</b> 버튼을 눌러 메시지에서 문제가 된 요소를 찾는다.</li><li>검사 메시지와 아래 해설을 대조하고, 검사기가 놓친 접근성 문제를 찾아본다.</li></ol>
+<p class="sub">이미지 파일은 실제로 없어도 HTML 소스의 문법 검사는 수행할 수 있다. 다만 이미지 내용과 alt의 의미가 맞는지 판단하려면 실제 이미지가 필요하다.</p>
+<pre><code>&lt;!doctype html&gt;
+&lt;html lang="ko"&gt;
+&lt;head&gt;
+  &lt;meta charset="utf-8"&gt;
+  &lt;title&gt;웹 접근성 검사 실습&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+  &lt;h1&gt;쇼핑몰 안내&lt;/h1&gt;
+
+  &lt;!-- A: 이미지 대체 텍스트 누락 --&gt;
+  &lt;img src="event.jpg"&gt;
+
+  &lt;!-- B: alt가 있지만 의미가 부족한 사례 --&gt;
+  &lt;img src="sale.jpg" alt="이미지"&gt;
+
+  &lt;!-- C: 주변 맥락을 점검할 링크 --&gt;
+  &lt;a href="/notice"&gt;더보기&lt;/a&gt;
+
+  &lt;!-- D: 보이는 레이블 없이 placeholder만 사용 --&gt;
+  &lt;input type="text" placeholder="이름"&gt;
+
+  &lt;!-- E: 중복된 id --&gt;
+  &lt;label for="email"&gt;이메일&lt;/label&gt;
+  &lt;input id="email" type="email"&gt;
+  &lt;input id="email" type="text"&gt;
+
+  &lt;!-- F: 의미가 적절하다고 가정한 예 --&gt;
+  &lt;img src="logo.png" alt="쇼핑몰 로고"&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+<h3>② 예상되는 차이 이해하기</h3>
+<div class="table-wrap"><table><thead><tr><th>사례</th><th>HTML 문법 검사</th><th>접근성 관점에서 추가로 확인할 점</th></tr></thead><tbody>
+<tr><td><b>A · alt 누락</b></td><td>누락 관련 오류가 보고될 수 있다.</td><td>이미지 정보를 대체할 텍스트가 필요한지, 무엇을 써야 하는지 확인</td></tr>
+<tr><td><b>B · alt="이미지"</b></td><td>속성 자체는 있으므로 해당 누락 오류 없음</td><td>실제 이미지의 목적과 정보를 설명하는가?</td></tr>
+<tr><td><b>C · 더보기</b></td><td>문법상 정상</td><td>링크 자체 또는 프로그램으로 파악 가능한 맥락에서 목적이 드러나는가?</td></tr>
+<tr><td><b>D · placeholder만 있는 input</b></td><td>문법상 정상일 수 있다.</td><td>보이는 안내와 프로그램이 인식하는 이름이 적절한가?</td></tr>
+<tr><td><b>E · 중복 ID</b></td><td>중복 ID 관련 오류</td><td>레이블 연결과 스크립트 참조에 혼동을 주는가?</td></tr>
+<tr><td><b>F · 로고의 alt</b></td><td>문법상 정상</td><td>이미지의 실제 내용·기능과 맞는지 확인</td></tr>
+</tbody></table></div>
+<p class="sub">이 표는 개념을 설명하기 위한 예상 결과다. 실제 메시지 수와 표현은 검사 환경 및 Nu Html Checker 버전에 따라 다를 수 있다.</p>
+<h3>③ 참고: 함께 사용하는 대표 검사 도구</h3>
+<div class="table-wrap"><table><thead><tr><th>도구</th><th>점검 목적</th><th>사용 방법</th></tr></thead><tbody>
+<tr><td><a href="https://validator.w3.org/" rel="noopener" target="_blank"><b>W3C Validator</b></a></td><td>HTML 표준 문법</td><td>Direct Input에 코드 붙여 넣기</td></tr>
+<tr><td><a href="https://developer.chrome.com/docs/lighthouse/overview" rel="noopener" target="_blank"><b>Lighthouse</b></a></td><td>접근성 자동 점검과 개선 항목</td><td>Chrome 개발자 도구에서 실행</td></tr>
+<tr><td><a href="https://wave.webaim.org/" rel="noopener" target="_blank"><b>WAVE</b></a></td><td>오류·경고·구조 시각화</td><td>공개 URL 입력 또는 브라우저 확장 활용</td></tr>
+<tr><td><a href="https://www.deque.com/axe/" rel="noopener" target="_blank"><b>axe-core</b></a></td><td>자동화 가능한 접근성 규칙 검사</td><td>브라우저 개발 도구·프로그램 연동</td></tr>
+<tr><td><a href="https://jigsaw.w3.org/css-validator/" rel="noopener" target="_blank"><b>CSS Validator</b></a></td><td>CSS 표준 문법</td><td>CSS 파일·직접 입력 검사</td></tr>
+<tr><td><b>키보드 수동 점검</b></td><td>초점 이동·조작 가능 여부</td><td>Tab, Shift+Tab, Enter, Space 사용</td></tr>
+</tbody></table></div></section><section aria-labelledby="tab-s6" class="panel" hidden="" id="s6" role="tabpanel"><div class="crumb">A1-M1 · 결과 해석</div>
+<h2>M1-03 방금 검사한 HTML에서 무엇을 알 수 있을까?</h2>
+<p>M1-02에서는 쇼핑몰 안내 페이지의 HTML을 W3C Validator에 붙여 넣었다. 여기서는 <b>그 코드에 표시한 A~F 여섯 사례</b>를 다시 보며 검사기가 찾은 것과 직접 확인해야 하는 것을 구분한다. 새로운 검사나 파일 작성은 하지 않는다.</p>
+<h3>① 먼저, Validator가 확인한 것부터 읽어 보자</h3>
+<p>W3C Validator는 HTML 표준에 맞게 작성됐는지 검사한다. 실습 코드에서 <b>A의 <code>alt</code> 누락</b>과 <b>E의 중복 <code>id</code></b>는 문법 검사 메시지로 확인할 수 있다. 메시지의 행 번호와 원본 코드의 A·E 주석을 대조해 보자.</p>
+<div class="table-wrap"><table><thead><tr><th>M1-02의 코드</th><th>검사에서 확인할 내용</th><th>의미</th></tr></thead><tbody>
+<tr><td><b>A</b> · <code>&lt;img src="event.jpg"&gt;</code></td><td><code>alt</code> 관련 오류 메시지</td><td>이미지에 필요한 대체 텍스트가 빠져 있다. 다만 적절한 대체 문구는 이미지의 용도를 보고 결정해야 한다.</td></tr>
+<tr><td><b>E</b> · <code>id="email"</code> 두 번</td><td>중복 ID 관련 오류 메시지</td><td>같은 문서에서 ID가 중복된다. 특히 <code>label for="email"</code>의 참조 대상이 모호해질 수 있다.</td></tr>
+</tbody></table></div>
+<p class="sub">실제 메시지의 표현과 개수는 검사기 버전에 따라 차이가 있다. 중요한 것은 오류 개수가 아니라 <b>어떤 코드가 왜 지적됐는지</b> 이해하는 것이다.</p>
+<h3>② 그렇다면 메시지가 없던 B·C·D·F는 모두 적합할까?</h3>
+<p>그렇지 않다. <b>HTML 문법상 허용되는 것</b>과 <b>접근성 기준에 맞는 것</b>은 다르다. 같은 실습 코드에서 다음과 같은 질문이 남는다.</p>
+<div class="table-wrap"><table><thead><tr><th>M1-02의 코드</th><th>문법 검사가 놓칠 수 있는 질문</th><th>고전적 확인 방법</th></tr></thead><tbody>
+<tr><td><b>B</b> · <code>alt="이미지"</code></td><td>실제 할인 이미지의 정보나 목적이 이 문장만으로 전달되는가?</td><td>이미지와 대체 텍스트를 사람이 비교</td></tr>
+<tr><td><b>C</b> · <code>더보기</code></td><td>어떤 내용을 더 보는 링크인지 주변 제목이나 문맥에서 알 수 있는가?</td><td>링크와 주변 콘텐츠를 함께 확인</td></tr>
+<tr><td><b>D</b> · <code>placeholder="이름"</code></td><td>입력창의 이름이 보조기술에 전달되는가? 입력 중에도 레이블이 식별되는가?</td><td>접근성 도구로 이름 검사 + 화면·레이블 확인</td></tr>
+<tr><td><b>F</b> · <code>alt="쇼핑몰 로고"</code></td><td>실제 파일이 쇼핑몰 로고인가? 링크라면 기능도 적절히 전달되는가?</td><td>실제 이미지와 사용 맥락을 확인</td></tr>
+</tbody></table></div>
+<p>예를 들어 C의 <code>더보기</code>는 문구만 보면 모호하지만, 표에서 '주문번호 1234' 바로 옆에 있으면 링크 목적을 주변 맥락으로 알 수도 있다. 따라서 <b>문자열 하나만 보고 모든 사례를 동일하게 부적합 판정해서는 안 된다.</b></p>
+<h3>③ 그래서 고전적 방법은 도구 검사와 사람의 검토를 함께 쓴다</h3>
+<p>이번 실습에서 확인한 A·E처럼 기계가 쉽게 찾아내는 문제는 자동화하기 좋다. 반면 B·C·D·F는 자동 접근성 도구의 도움을 받더라도 이미지 내용, 화면 표시, 주변 맥락 등을 사람이 살펴야 할 수 있다. <b>Validator 통과는 웹 접근성 전체 통과가 아니다.</b></p>
+<h3>④ 이 방식만 반복하면 어떤 점이 불편할까?</h3>
+<div class="table-wrap"><table><thead><tr><th>방금 한 실습에서</th><th>실제 작업이 많아지면</th></tr></thead><tbody>
+<tr><td>A·E를 찾으려고 Validator를 실행했다</td><td>화면마다 코드를 검사하고 오류 위치를 다시 확인해야 한다.</td></tr>
+<tr><td>B·C·D·F는 별도 접근성 검사나 맥락 확인이 남았다</td><td>도구를 바꾸거나 사람이 반복해서 확인해야 하고, 판단에 시간이 든다.</td></tr>
+<tr><td>왜 문제인지 해설을 읽어야 이해할 수 있었다</td><td>검사 결과를 해당 WCAG 조항·해설·기법과 연결해 찾는 작업이 반복된다.</td></tr>
+<tr><td>문구가 적절한지 직접 판단했다</td><td>서로 다른 검토자가 다른 결론을 내릴 수 있어 판단 조건과 예외를 명시해야 한다.</td></tr>
+</tbody></table></div>
+<h3>⑤ 이번 단계에서 얻은 결론</h3>
+<p>고전적 검사는 필요하다. HTML 문법과 자동으로 확인할 수 있는 접근성 문제를 빠르게 발견해 주기 때문이다. 하지만 <b>같은 기준으로 반복 판정하는 일</b>과 <b>위반에 연결되는 근거를 바로 찾는 일</b>은 여전히 번거롭다.</p>
+<p>이 두 가지 불편함이 A1-M2 규칙 설계, A1-M3 규칙 검사기, A1-M5 근거 검색으로 이어지는 출발점이다. 판정 가능한 항목은 <b>명시적인 규칙</b>으로 만들고, 관련 W3C 근거 문서는 <b>TF-IDF·BM25 같은 검색 방법</b>으로 찾아본다. 이미지 의미나 주변 맥락처럼 규칙만으로 결론 내리기 어려운 부분은 그 한계를 남겨 두고 이후 RAG 확장의 필요성을 검토한다.</p>
+<p class="sub">이번 단계에서는 정밀도·재현율이나 Recall@k를 계산하지 않는다. 먼저 검사 대상, 발견 가능한 오류, 남는 판단 문제를 구분하는 데 집중한다.</p>
+<h3>⑥ 간단한 이해도 확인 · 다음 모듈로 연결</h3>
+<p>이 실습의 목적은 WCAG 조항을 외우는 것이 아니라 <b>기존 검사 도구의 입력·출력·판정 범위를 구분</b>하는 것이다. M1-02의 HTML을 다시 보면서 다음 질문에 답해 보자.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>질문</th><th>확인할 관점</th></tr></thead><tbody>
+<tr><td><b>Q1.</b> Validator에서 오류가 없으면 그 페이지는 접근성 기준을 모두 충족하는가?</td><td>HTML 표준 적합성 검사와 WCAG 접근성 평가의 범위를 구분한다.</td></tr>
+<tr><td><b>Q2.</b> <code>alt="이미지"</code>가 형식상 유효해도 문제가 남는 이유는?</td><td>속성의 존재와 이미지의 실제 의미 전달 여부는 별개다.</td></tr>
+<tr><td><b>Q3.</b> <code>더보기</code> 링크는 언제 판정이 달라질까?</td><td>주변 제목·표의 행·접근 가능한 이름 등 맥락을 살핀다.</td></tr>
+<tr><td><b>Q4.</b> 여러 페이지에서 같은 누락 패턴이 반복된다면 무엇을 자동화할 수 있을까?</td><td>명확한 조건은 재사용 가능한 Python 규칙으로 정의할 수 있다.</td></tr>
+</tbody></table></div>
+<h4>선택 실습 · GPT에 질문하고 근거 확인하기</h4>
+<p>M1-02의 HTML 코드를 GPT에 붙여 넣고 “HTML 문법 문제, WCAG 접근성 위험, 사람의 추가 확인이 필요한 항목을 <b>서로 나누어</b> 설명해 줘. 관련 공식 조항 URL을 제시하되 확실하지 않으면 불확실하다고 적어 줘.”라고 질문해 보자. 제시된 조항은 반드시 W3C 원문에서 확인한다. <b>GPT의 응답도 확정 판정이나 검증된 정답이 아니다.</b></p>
+<div class="key"><b>A1-M2로 이어지는 질문</b> — A와 E처럼 코드에서 명확히 확인할 수 있는 문제를 매번 사람이 복사해 검사할 필요가 있을까? 조건을 <code>detect_violations()</code> 같은 규칙 기반 함수로 만든다면 어떤 입력·판정 기준·출력이 필요할까?</div>
+<p class="sub">참고: <a class="doc" href="https://www.w3.org/WAI/test-evaluate/tools/selecting/" rel="noopener" target="_blank">W3C · 평가 도구의 가능 범위와 한계</a> · <a class="doc" href="https://www.w3.org/WAI/WCAG22/Understanding/conformance" rel="noopener" target="_blank">W3C · WCAG 적합성 판단</a></p>
+<p class="sub">다음: A1-M2에서는 여기서 확인한 이미지·링크·폼 사례를 W3C 기준과 연결하여 판정 규칙을 설계한다. 이어 A1-M3에서는 Python 함수로 탐지를 구현한다.</p></section></main>
+</div>
+<div class="toast" hidden="" id="toast" role="status"></div>
+<script>(function(){const ts=[...document.querySelectorAll('[role="tab"]')];function set(i,focus){ts.forEach((t,j)=>{let on=i===j;t.setAttribute('aria-selected',String(on));t.tabIndex=on?0:-1;document.getElementById(t.getAttribute('aria-controls')).hidden=!on;});if(focus)ts[i].focus({preventScroll:true});history.replaceState(null,'','#'+ts[i].getAttribute('aria-controls'));window.scrollTo({top:0});}ts.forEach((t,i)=>{t.addEventListener('click',()=>set(i,false));t.addEventListener('keydown',e=>{if(['ArrowDown','ArrowRight','ArrowUp','ArrowLeft'].includes(e.key)){e.preventDefault();set((i+(e.key==='ArrowDown'||e.key==='ArrowRight'?1:-1)+ts.length)%ts.length,true)}})});let n=ts.findIndex(t=>'#'+t.getAttribute('aria-controls')===location.hash);set(n<0?0:n,false);document.querySelectorAll('.table-wrap table').forEach(t=>{let h=[...t.querySelectorAll('th')].map(x=>x.textContent.trim());if(h.length<3)return;t.classList.add('cards');t.querySelectorAll('tbody tr').forEach(tr=>[...tr.children].forEach((td,i)=>td.dataset.label=h[i]||''))})})();</script><script>(function(){
+const img=document.getElementById('alt-demo-image'),status=document.getElementById('speech-status');
+const start=document.getElementById('read-alt'),stop=document.getElementById('stop-alt');
+if(!img||!start||!stop)return;
+const supported=('speechSynthesis' in window)&&('SpeechSynthesisUtterance' in window);
+if(!supported){start.disabled=true;status.textContent='이 브라우저에서는 음성 합성을 지원하지 않습니다.';return;}
+start.addEventListener('click',()=>{
+  window.speechSynthesis.cancel();
+  const speech=new SpeechSynthesisUtterance(img.getAttribute('alt')||'');
+  speech.lang='ko-KR';speech.rate=0.9;
+  const voices=window.speechSynthesis.getVoices();
+  const ko=voices.find(v=>v.lang.toLowerCase().startsWith('ko'));
+  if(ko)speech.voice=ko;
+  speech.onstart=()=>{status.textContent='음성 재생 중: '+img.alt;};
+  speech.onend=()=>{status.textContent='읽기 완료: '+img.alt;};
+  speech.onerror=()=>{status.textContent='음성 재생에 실패했습니다. 운영체제의 한국어 음성 설정을 확인하세요.';};
+  window.speechSynthesis.speak(speech);
+});
+stop.addEventListener('click',()=>{window.speechSynthesis.cancel();status.textContent='읽기를 중지했습니다.';});
+})();</script></body>
+</html>

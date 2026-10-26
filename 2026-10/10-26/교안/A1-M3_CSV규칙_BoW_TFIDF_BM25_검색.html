@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<title>A1-M3 · BoW·TF-IDF·BM25 규칙 CSV 정보검색</title>
+<!-- Pretendard & JetBrains Mono Font -->
+<link as="style" crossorigin="" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&amp;display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #ffffff;
+    --surface: #f8fafc;
+    --ink: #0f172a;
+    --quiet: #64748b;
+    --line: #e2e8f0;
+    --edge: #cbd5e1;
+    --accent: #FF2E93;
+    --accent-soft: rgba(255, 46, 147, 0.06);
+    --warn: #f59e0b;
+    --warn-soft: rgba(245, 158, 11, 0.08);
+    --good: #10b981;
+    --good-soft: rgba(16, 185, 129, 0.08);
+    --crit: #ef4444;
+    --code-bg: #0f172a;
+    --banner-bg: #ffffff;
+    --banner-ink: #0f172a;
+  }
+  
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: 'Pretendard', sans-serif;
+    font-size: 18px; line-height: 1.75;
+  }
+
+  /* ── 상단 배너 / 타이틀 영역 ── */
+  .banner { 
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); 
+    color: var(--banner-ink); 
+    border-bottom: 1px solid var(--line); 
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.02);
+  }
+  .banner-in { 
+    max-width: 1320px; 
+    margin: 0 auto; 
+    padding: 16px 24px; 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    gap: 24px; 
+  }
+  .banner-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .banner .org { 
+    font-size: 16px; 
+    font-weight: 800; 
+    color: var(--ink); 
+    letter-spacing: -0.01em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .banner .org::before {
+    content: "";
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    background: var(--accent);
+    border-radius: 50%;
+  }
+  .banner .who { 
+    font-size: 15px; 
+    color: var(--quiet); 
+    font-weight: 600;
+  }
+  .banner .who a {
+    color: var(--accent);
+    text-decoration: none;
+  }
+  .banner .who a:hover {
+    text-decoration: underline;
+  }
+  .banner a { color: inherit; }
+  .banner .home-link { 
+    font-size: 15px; 
+    font-weight: 700; 
+    text-decoration: none; 
+    border: 1px solid var(--line); 
+    border-radius: 8px; 
+    padding: 6px 14px; 
+    background: #ffffff; 
+    color: var(--ink);
+    transition: all 0.2s ease; 
+    letter-spacing: 0.02em;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+  }
+  .banner .home-link:hover { 
+    background: var(--accent); 
+    border-color: var(--accent);
+    color: #ffffff;
+  }
+
+  /* ── 레이아웃: 본문 + 목차 ── */
+  .layout { max-width: 1320px; margin: 0 auto; padding: 32px 24px 96px; display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 40px; align-items: start; }
+  .side { position: sticky; top: 24px; order: 2; max-height: calc(100vh - 48px); overflow-y: auto; background: var(--surface); padding: 16px; border-radius: 16px; border: 1px solid var(--line); }
+  .tabs { display: flex; flex-direction: column; gap: 4px; }
+  .tabs .group { font-size: 15px; font-weight: 800; color: var(--quiet); margin: 16px 0 6px 4px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .tabs .group:first-child { margin-top: 0; }
+  .tabs button {
+    all: unset; cursor: pointer; display: block;
+    font-size: 16px; line-height: 1.45; color: var(--ink);
+    padding: 8px 12px; border-radius: 8px; border: 1px solid transparent;
+    transition: all 0.15s ease;
+  }
+  .tabs button .no { color: var(--accent); font-weight: 700; margin-right: 6px; }
+  .tabs button:hover { background: #f1f5f9; border-color: var(--line); }
+  .tabs button[aria-selected="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); font-weight: 700; }
+  .tabs button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* ── 본문 ── */
+  main { min-width: 0; }
+  .panel { display: none; }
+  .panel:not([hidden]) { display: block; }
+  .crumb { font-size: 15px; font-weight: 800; color: var(--accent); letter-spacing: 0.03em; margin-bottom: 6px; text-transform: uppercase; }
+  h1 { font-size: 32px; line-height: 1.3; margin: 4px 0 16px; letter-spacing: -0.02em; font-weight: 800; }
+  .lead { font-size: 19px; margin: 12px 0 0; color: #334155; font-weight: 500; }
+  h2 { font-size: 26px; line-height: 1.35; margin: 0 0 16px; letter-spacing: -0.01em; font-weight: 800; }
+  h2::before { content: "■ "; color: var(--accent); }
+  h3 { font-size: 20px; margin: 32px 0 12px; font-weight: 700; }
+  h3::before { content: "▶ "; color: var(--accent); font-size: 0.8em; }
+  p { margin: 10px 0; }
+  .sub { color: var(--quiet); font-size: 16px; }
+  .key { font-size: 19px; font-weight: 600; padding: 16px 20px; margin: 20px 0 28px; border-left: 4px solid var(--accent); background: var(--accent-soft); border-radius: 0 12px 12px 0; color: #1e293b; }
+  code { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 16px; background: #f1f5f9; color: #0f172a; padding: 2px 6px; border-radius: 4px; border: 1px solid var(--line); }
+  pre { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 16px; background: var(--code-bg); color: #38bdf8; border: 1px solid #334155; border-radius: 12px; padding: 18px; overflow-x: auto; line-height: 1.6; margin: 16px 0; }
+  pre code { background: none; padding: 0; border: none; color: inherit; }
+
+  .badge { display: inline-block; font-size: 15px; font-weight: 700; color: #fff; background: var(--accent); padding: 1px 8px; border-radius: 6px; margin-left: 6px; line-height: 1.4; vertical-align: 1px; }
+  .stage { display: inline-block; font-size: 15px; font-weight: 700; padding: 2px 8px; border-radius: 6px; border: 1px solid var(--accent); color: var(--accent); white-space: nowrap; line-height: 1.4; background: var(--accent-soft); }
+  .stage.later { border-color: var(--edge); color: var(--quiet); background: #f8fafc; }
+  .num { font-weight: 700; color: var(--accent); white-space: nowrap; }
+
+  /* ── 표 ── */
+  .table-wrap { margin: 16px 0; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); overflow: hidden; }
+  table { border-collapse: collapse; width: 100%; font-size: 16px; }
+  th, td { text-align: left; vertical-align: top; padding: 14px 16px; border-bottom: 1px solid var(--line); }
+  th { font-weight: 700; color: var(--quiet); font-size: 15px; white-space: nowrap; background: #f1f5f9; }
+  tr:last-child td { border-bottom: none; }
+  td.nowrap { white-space: nowrap; }
+  td.nowrap .sub { white-space: normal; font-size: 15px; line-height: 1.5; margin-top: 4px; min-width: 150px; max-width: 220px; }
+  tr.new td { background: var(--accent-soft); }
+
+  /* ── HTML 도형 공통 ── */
+  .fig { margin: 24px 0; padding: 24px; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; }
+  .fig-title { font-size: 18px; font-weight: 800; margin: 0 0 16px; color: var(--ink); }
+  .fig-label { font-size: 15px; font-weight: 800; color: var(--quiet); margin: 20px 0 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .fig-label:first-of-type { margin-top: 0; }
+  .node { position: relative; border: 1px solid var(--edge); border-radius: 12px; padding: 14px 16px; background: var(--bg); transition: border-color 0.2s; }
+  .node.main { border-color: var(--accent); border-width: 2px; background: var(--accent-soft); }
+  .node.newb { border-color: var(--accent); border-width: 2px; }
+  .node.bad { border-color: var(--warn); background: var(--warn-soft); }
+  .node .t { font-size: 16px; font-weight: 700; line-height: 1.4; color: var(--ink); }
+  .node .d { font-size: 15px; color: var(--quiet); line-height: 1.5; margin-top: 4px; }
+  .node .tag { position: absolute; top: -10px; right: 12px; font-size: 15px; font-weight: 700; color: #fff; background: var(--accent); border-radius: 4px; padding: 1px 6px; line-height: 1.4; }
+  .node ul { margin: 6px 0 0; padding-left: 20px; font-size: 15px; }
+  .node ul li { margin: 3px 0; color: var(--quiet); }
+  .node .foot { font-size: 15px; color: var(--quiet); margin-top: 10px; }
+  .node.bad .t { color: #d97706; }
+  .node.main .t.acc { color: var(--accent); }
+
+  /* 가로 흐름: 노드 → 노드 */
+  .flow { display: flex; align-items: stretch; gap: 4px; }
+  .flow > .node { flex: 1 1 0; min-width: 0; text-align: center; }
+  .flow.left > .node { text-align: left; }
+  .arr { flex: none; width: 28px; display: grid; place-items: center; color: var(--edge); font-size: 18px; font-weight: 700; }
+  .arr::before { content: "→"; }
+  .band { margin-top: 16px; padding: 12px 16px; border: 1px solid var(--good); background: var(--good-soft); border-radius: 10px; font-size: 15px; font-weight: 600; color: #065f46; text-align: center; }
+
+  /* V-모델 */
+  .vm { display: grid; grid-template-columns: 1fr 170px 1fr; gap: 12px 0; align-items: center; }
+  .vm .node { text-align: center; }
+  .vm .l2 { margin-left: 14%; }
+  .vm .r2 { margin-right: 14%; }
+  .vm .link { text-align: center; font-size: 15px; color: var(--quiet); border-top: 2px dashed var(--edge); padding-top: 4px; margin: 0 8px; font-weight: 600; }
+  .vm .impl { grid-column: 1 / -1; justify-self: center; width: 40%; }
+  .vm-head { display: grid; grid-template-columns: 1fr 170px 1fr; font-size: 15px; font-weight: 800; color: var(--quiet); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .vm-head span:last-child { text-align: right; }
+
+  /* ── 목업 ── */
+  .mock { border: 1px solid var(--line); border-radius: 16px; overflow: hidden; background: var(--bg); margin: 24px 0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+  .mock-bar { display: flex; align-items: center; gap: 8px; padding: 12px 16px; background: #f1f5f9; border-bottom: 1px solid var(--line); }
+  .mock-bar .dot { width: 10px; height: 10px; border-radius: 50%; background: #cbd5e1; flex: none; }
+  .mock-bar .url { flex: 1; min-width: 0; margin-left: 8px; font-size: 15px; color: var(--quiet); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 4px 12px; font-family: "JetBrains Mono", monospace; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .mock-body { padding: 24px; }
+  .mock-title { font-size: 20px; font-weight: 800; margin: 0 0 16px; }
+  .mock-input { display: flex; gap: 8px; margin-bottom: 20px; }
+  .mock-input .field { flex: 1; min-width: 0; border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; font-family: "JetBrains Mono", monospace; font-size: 15px; background: #f8fafc; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .mock-input .btn { background: var(--accent); color: #fff; border-radius: 8px; padding: 10px 20px; font-weight: 700; font-size: 15px; white-space: nowrap; }
+  .mock-summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+  .mock-summary .cell { border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; background: var(--surface); }
+  .mock-summary .k { font-size: 15px; color: var(--quiet); font-weight: 600; }
+  .mock-summary .v { font-size: 20px; font-weight: 800; margin-top: 2px; }
+  .mock-summary .v.small { font-size: 15px; padding-top: 4px; }
+  .mock-tabs { display: flex; gap: 8px; border-bottom: 1px solid var(--line); margin-bottom: 16px; flex-wrap: wrap; }
+  .mock-tabs span { font-size: 15px; padding: 8px 14px; border-bottom: 2px solid transparent; color: var(--quiet); font-weight: 600; cursor: default; }
+  .mock-tabs span.on { border-color: var(--accent); color: var(--accent); font-weight: 800; }
+  .vcard { border: 1px solid var(--line); border-radius: 12px; padding: 16px; margin-bottom: 16px; background: var(--surface); }
+  .vcard .top { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .sev { font-size: 15px; font-weight: 700; padding: 2px 8px; border-radius: 4px; color: #fff; line-height: 1.4; text-transform: uppercase; }
+  .sev.critical { background: var(--crit); }
+  .sev.major { background: var(--warn); color: #fff; }
+  .rid { font-family: "JetBrains Mono", monospace; font-weight: 700; font-size: 15px; color: var(--ink); }
+  .wc { font-size: 15px; color: var(--quiet); font-weight: 600; }
+  .vcard .msg { font-weight: 700; margin: 4px 0 10px; font-size: 16px; }
+  .vcard .el { font-family: "JetBrains Mono", monospace; font-size: 15px; background: #0f172a; color: #38bdf8; border-radius: 8px; padding: 8px 12px; overflow-x: auto; white-space: nowrap; margin-bottom: 12px; }
+  .vgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .vbox { border: 1px solid var(--line); border-radius: 8px; padding: 12px; font-size: 15px; background: var(--bg); }
+  .vbox .h { font-size: 15px; font-weight: 800; color: var(--quiet); margin-bottom: 6px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .vbox.later { opacity: 0.65; }
+  .score { font-family: "JetBrains Mono", monospace; font-size: 15px; color: var(--quiet); font-weight: 600; }
+
+  .roadmap { display: flex; flex-wrap: wrap; gap: 6px; margin: 16px 0; align-items: center; }
+  .roadmap .chip { font-size: 15px; padding: 6px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--quiet); font-weight: 600; }
+  .roadmap .chip.on { border: 2px solid var(--accent); color: var(--accent); font-weight: 800; background: var(--accent-soft); }
+  .roadmap .sep { color: var(--quiet); margin: 0 4px; font-weight: 800; }
+
+  /* ── 태블릿 이하: 목차를 상단 가로 탭으로 ── */
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: minmax(0, 1fr); gap: 16px; padding: 16px 16px 64px; }
+    .side { order: 0; position: sticky; top: 0; z-index: 5; max-height: none; overflow: visible; background: var(--bg); padding: 12px 0; border-bottom: 1px solid var(--line); border-radius: 0; min-width: 0; }
+    .tabs { flex-direction: row; overflow-x: auto; gap: 6px; scrollbar-width: thin; }
+    .tabs .group { display: none; }
+    .tabs button { white-space: nowrap; font-size: 15px; padding: 6px 12px; border-color: var(--line); background: var(--surface); }
+  }
+
+  /* ── 모바일: 도형은 세로로, 표는 카드로 ── */
+  @media (max-width: 760px) {
+    body { font-size: 17px; }
+    .banner-in { flex-direction: column; align-items: flex-start; padding: 12px 16px; gap: 12px; }
+    .banner-left { flex-direction: column; align-items: flex-start; gap: 4px; }
+    .banner .home-link { align-self: stretch; text-align: center; }
+    h1 { font-size: 24px; }
+    h2 { font-size: 21px; }
+    h3 { font-size: 18px; }
+    .lead, .key { font-size: 16px; }
+    .key { padding: 12px 16px; }
+    .fig { padding: 16px; }
+
+    .flow { flex-direction: column; }
+    .flow > .node { flex: none; }
+    .arr { width: auto; height: 24px; }
+    .arr::before { content: "↓"; }
+
+    .vm, .vm-head { grid-template-columns: 1fr; }
+    .vm-head { display: none; }
+    .vm .l2, .vm .r2 { margin: 0; }
+    .vm .impl { width: 100%; }
+    .vm .link { border-top: none; border-left: 2px dashed var(--edge); text-align: left; padding: 2px 0 2px 12px; margin: 0 0 0 24px; }
+    .vm .gap { height: 10px; }
+
+    .mock-body { padding: 16px; }
+    .mock-summary { grid-template-columns: 1fr 1fr; }
+    .vgrid { grid-template-columns: 1fr; }
+
+    table.cards, table.cards tbody, table.cards tr, table.cards td { display: block; width: 100%; }
+    table.cards { font-size: 15px; }
+    table.cards thead { display: none; }
+    table.cards tr { padding: 12px 16px; border-bottom: 1px solid var(--line); }
+    table.cards tr:last-child { border-bottom: none; }
+    table.cards td { border: none; padding: 4px 0; white-space: normal; }
+    table.cards td::before { content: attr(data-label); display: block; font-size: 15px; font-weight: 800; color: var(--quiet); margin-bottom: 2px; text-transform: uppercase; }
+    table.cards td[data-label=""]::before { display: none; }
+    table.cards td:first-child { font-weight: 700; font-size: 15px; color: var(--ink); }
+    table.cards td:first-child::before { display: none; }
+  }
+
+  /* ── 약자 · 링크 ── */
+  abbr[data-full] { text-decoration: underline dotted var(--edge); text-underline-offset: 3px; cursor: help; }
+  .exp { color: var(--quiet); font-size: 0.9em; }
+  a { color: var(--accent); font-weight: 600; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  a.doc { border-bottom: 1px solid var(--accent); }
+  a.doc::after { content: " ↗"; font-size: 0.8em; }
+  .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); max-width: min(560px, calc(100vw - 32px)); background: var(--dark); color: #fff; font-size: 15px; line-height: 1.5; padding: 14px 18px; border-radius: 12px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.15); z-index: 50; border: 1px solid #334155; }
+  .toast[hidden] { display: none; }
+  .toast b { display: block; font-size: 15px; margin-bottom: 2px; color: #38bdf8; }
+
+  @media print {
+    .side { display: none; }
+    .layout { display: block; }
+    .panel[hidden] { display: block; }
+    .panel { margin-bottom: 48px; break-inside: avoid-page; }
+    body { background: #fff; }
+  }
+
+  /* ── 보완 ── */
+  td.nowrap .sub { white-space: normal; }
+  main h4 { font-size: 17px; margin: 24px 0 8px; font-weight: 700; }
+  .flow.tight > .node { padding: 12px 8px; }
+  .flow.tight .t { font-size: 15px; word-break: keep-all; }
+  .flow.tight .d { word-break: keep-all; }
+  .flow.tight .d { font-size: 15px; }
+  .flow.tight .arr { width: 18px; }
+  .make { font-size: 15px; color: var(--quiet); margin: -12px 0 20px; }
+  .make b { color: var(--accent); margin-right: 6px; }
+  :root { --dark: #0f172a; }
+  main ul:not(.tabs), main ol { list-style: disc; padding-left: 22px; margin: 8px 0; }
+  main ol { list-style: decimal; }
+  main li { margin: 4px 0; }
+
+  /* 1.3 절 가독성 보정: 기존 그리드·탭·표 레이아웃 변경 없음 */
+  #s6 { font-size: 18px; line-height: 1.85; }
+  #s6 p, #s6 li { font-size: 18px; line-height: 1.85; }
+  #s6 h2 { font-size: 27px; }
+  #s6 h3 { font-size: 22px; line-height: 1.5; }
+  #s6 .table-wrap table, #s6 .table-wrap td { font-size: 17px; line-height: 1.75; }
+  #s6 .table-wrap th { font-size: 16px; line-height: 1.6; }
+  #s6 p.sub, #s6 .sub { font-size: 16px; line-height: 1.75; }
+  #s6 code { font-size: 16px; }
+  @media (max-width: 760px) {
+    #s6, #s6 p, #s6 li { font-size: 17px; }
+    #s6 .table-wrap table, #s6 .table-wrap td { font-size: 16px; }
+    #s6 .table-wrap th { font-size: 16px; }
+  }
+
+/* A0 Part 1 · 가독성 보강 (레이아웃 변경 없음) */
+body {font-size:18px;line-height:1.78}
+main p, main li {font-size:18px}
+main .sub, main .make, main .exp {font-size:16px}
+main table {font-size:17px}
+main th {font-size:16px}
+main td, main td .sub {font-size:16px;line-height:1.65}
+main code, main pre, main pre code {font-size:16px}
+.tabs button, .banner .who {font-size:16px}
+.tabs .group, .crumb, .banner .home-link {font-size:15px}
+.key {font-size:18px}
+.node .d, .vbox, .fig-label, .mock-bar .url, .fig .foot, .score {font-size:16px}
+@media (max-width:760px){body{font-size:17px}main p,main li{font-size:17px}main table,main td{font-size:16px}main code,main pre,main pre code{font-size:15px}}
+
+/* A1-M1 가독성 보강: 레이아웃과 구조는 그대로 유지 */
+body {font-size:18px;}
+.tabs button, .tabs .group {font-size:16px;}
+main p, main li {font-size:18px;}
+main table, main td {font-size:17px;}
+main th, main .sub, main .crumb, .banner .who {font-size:16px;}
+main code, main pre, main pre code {font-size:16px;}
+main .fig-label, main .node .d, main .node .foot, main .badge, main .stage {font-size:16px;}
+@media(max-width:760px){body, main p, main li {font-size:17px;} main table, main td, main code, main pre, main pre code {font-size:16px;} .tabs button{font-size:16px;} }
+
+/* A1-M2 동일 레이아웃·가독성 유지 */
+body{font-size:18px;}main p,main li{font-size:18px;}main table,main td{font-size:17px;} main th, main .sub, main .crumb{font-size:16px;} main code,main pre,main pre code{font-size:16px;} .tabs button,.tabs .group{font-size:16px;} @media(max-width:760px){main p,main li{font-size:17px;} main td,main code,main pre,main pre code{font-size:16px;}}
+/* 가독성: 기존 레이아웃 보존 */
+body {font-size:18px;} .tabs button{font-size:16px;} .tabs .group,.crumb{font-size:15px;} table{font-size:17px;} th{font-size:16px;} .sub,.make,.caption{font-size:16px;} code,pre{font-size:16px;} .node .d,.fig-label,.badge,.stage{font-size:15px;} .key{font-size:18px;} @media(max-width:760px){body{font-size:17px;}table.cards td{font-size:16px;}table.cards td::before{font-size:15px;}}
+  /* 저작권 안내: 원본 레이아웃 변경 없음 */
+  .copyright-footer { max-width:1320px; margin:0 auto; padding:18px 24px 34px; border-top:1px solid var(--line); text-align:center; color:var(--quiet); font-size:16px; line-height:1.7; }
+  .copyright-footer small { display:block; font-size:15px; }
+  @media print { .copyright-footer { margin-top:20px; } }
+
+/* 통합 M2: 기존 레이아웃 보존, 긴 실습 코드 가독성 */
+body {font-size:18px;line-height:1.78}
+.tabs button {font-size:16px}.tabs .group,.crumb{font-size:15px}
+main p,main li{font-size:18px;line-height:1.8}
+table{font-size:17px;line-height:1.6}th{font-size:16px}
+main .sub,main .make,main .exp{font-size:16px}
+pre,pre code,code{font-size:16px}pre{line-height:1.65}
+.node .d,.fig-label,.badge,.stage,.fig .foot{font-size:15px}
+.key{font-size:18px;line-height:1.75}
+.lesson-outline{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 20px;margin:20px 0}
+.lesson-outline p{margin:4px 0}
+.teaching-note{border-left:3px solid var(--edge);padding:8px 16px;margin:18px 0;color:var(--ink);background:var(--surface)}
+.practice{border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin:18px 0;background:white}
+.practice h4{margin:0 0 8px}
+.source-links{border-top:1px solid var(--line);padding-top:16px;margin-top:30px}
+.source-links a{word-break:break-all}
+details.lesson-details{border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:14px 16px;margin:14px 0}
+details.lesson-details summary{cursor:pointer;font-size:17px;font-weight:800;list-style:revert}
+details.lesson-details[open] summary{margin-bottom:12px}
+.trace-box{background:#0f172a;color:#e2e8f0;padding:14px;border-radius:10px;font:16px/1.65 'JetBrains Mono',monospace;overflow-x:auto;white-space:pre}
+small{font-size:15px}
+@media(max-width:760px){body{font-size:17px}main p,main li{font-size:17px}table.cards td{font-size:16px}table.cards td::before{font-size:15px}}
+
+/* A1-M3: 기존 상단 배너·오른쪽 탭 레이아웃 유지 */
+.formula-box {padding:18px 20px;border:1px solid var(--line);background:var(--surface);border-radius:12px;margin:18px 0;font-size:18px;line-height:1.9;overflow-x:auto}
+.search-lab {border:1px solid var(--line);border-radius:14px;padding:18px;background:#fff;margin:18px 0}
+.lab-controls {display:grid;grid-template-columns:2fr 1.15fr 1fr;gap:12px;align-items:end}
+.lab-controls.minor {grid-template-columns:1fr auto;margin-top:12px}
+.lab-controls label {font-size:16px;font-weight:700;display:flex;flex-direction:column;gap:5px;color:var(--ink)}
+.lab-controls input[type=text],.lab-controls select {width:100%;padding:10px;border:1px solid var(--edge);border-radius:8px;font:16px/1.5 'Pretendard',sans-serif;background:white;color:var(--ink)}
+.lab-controls .checkline {display:flex;flex-direction:row;align-items:center;gap:10px;font-weight:500;line-height:1.5}
+.lab-controls input[type=checkbox] {width:18px;height:18px;accent-color:var(--accent)}
+.lab-button {background:var(--accent);border:none;color:white;font:700 16px 'Pretendard',sans-serif;padding:11px 18px;border-radius:8px;cursor:pointer}
+.lab-button:focus-visible,.lab-controls input:focus-visible,.lab-controls select:focus-visible {outline:2px solid var(--accent);outline-offset:2px}
+.lab-results {display:grid;gap:12px;margin-top:12px}
+.lab-result {border:1px solid var(--line);border-radius:10px;background:var(--surface);padding:14px}
+.lab-result .top {display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.lab-result .top strong {font-size:17px;color:var(--ink)}
+.lab-result .tag {font-size:15px;border:1px solid var(--edge);padding:1px 7px;border-radius:5px;color:var(--quiet)}
+.lab-result .explain {font-size:16px;line-height:1.7;margin-top:8px;white-space:pre-wrap}
+.lab-result .meta {font-size:15px;color:var(--quiet);word-break:break-all;line-height:1.65;margin-top:8px}
+.lab-result a {word-break:break-all}
+@media(max-width:800px) {.lab-controls,.lab-controls.minor {grid-template-columns:1fr}.search-lab {padding:12px}.formula-box {font-size:16px}}
+</style>
+<style>
+/* A1-M2 CSV 탐색 화면: 기존 상단 배너·오른쪽 탭·본문 스타일 유지 */
+.csv-workbench{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:white;margin:22px 0}
+.csv-tools,.csv-file-load{display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:14px 18px;border-bottom:1px solid var(--line);background:var(--surface)}
+.csv-tools label,.csv-file-load label{font-size:16px;font-weight:700;color:var(--ink)}
+.csv-tools input,.csv-tools select,.csv-file-load input{margin-left:8px;border:1px solid var(--edge);border-radius:8px;padding:8px 10px;font:16px 'Pretendard',sans-serif;background:white;color:var(--ink);max-width:100%}
+.csv-file-load input{font-size:14px;max-width:235px}
+.csv-file-load .sub{margin:2px 0 0;width:100%;font-size:15px}
+.csv-panels{display:grid;grid-template-columns:minmax(220px,1fr) minmax(0,1.6fr);min-height:380px}
+.csv-tree{padding:16px 12px;border-right:1px solid var(--line);background:var(--surface);overflow-x:auto}
+.csv-detail{padding:18px;min-width:0;overflow-wrap:anywhere}
+.mini-head{font-size:16px;font-weight:800;margin-bottom:10px;color:#334155}
+.csv-tree .tree-button{font:16px/1.5 'Pretendard',sans-serif;text-align:left;display:block;width:100%;cursor:pointer;border:1px solid transparent;background:transparent;border-radius:7px;padding:6px 7px;color:#0f172a}
+.csv-tree .tree-button:hover{border-color:var(--line);background:#f1f5f9}
+.csv-tree .tree-button.selected{border-color:var(--accent);background:var(--accent-soft);font-weight:800}
+.csv-tree .tree-group{font-weight:800;color:#334155;font-size:16px;padding:7px 0 3px}
+.csv-detail .rtitle{font-size:21px;font-weight:800;margin:2px 0 10px}
+.csv-detail .pill{display:inline-block;border:1px solid var(--edge);border-radius:6px;font-size:14px;padding:2px 7px;margin-right:5px;margin-bottom:6px;background:white}
+.csv-detail .pill.proposed{border-color:var(--warn);background:var(--warn-soft)}
+.csv-detail .data-line{border-top:1px solid var(--line);padding:8px 0;font-size:16px}
+.csv-detail .data-line strong{display:inline-block;min-width:125px;color:#475569}
+.csv-detail .tag-label{margin:15px 0 6px;font-size:16px;font-weight:800}
+.csv-detail .data-text{padding:10px 12px;border:1px solid var(--line);background:var(--surface);border-radius:8px;font-size:16px;margin:4px 0}
+.csv-detail .meta-box{border:1px solid var(--line);border-radius:8px;padding:10px;background:#f8fafc;white-space:pre-wrap;overflow-wrap:anywhere;font:14px/1.7 'JetBrains Mono',monospace;color:#334155}
+@media(max-width:780px){.csv-panels{grid-template-columns:1fr}.csv-tree{border-right:0;border-bottom:1px solid var(--line)}.csv-tools label,.csv-file-load label{display:flex;flex-direction:column;align-items:flex-start}.csv-tools input,.csv-tools select,.csv-file-load input{margin-left:0}}
+</style></head>
+<body>
+<div class="banner">
+<div class="banner-in">
+<div class="banner-left">
+<div class="org">청년취업사관학교 AI_클라우드과정(2026년)</div>
+<div class="who">강사 부성순 · <a href="mailto:bakpak@empas.com">bakpak@empas.com</a></div>
+</div>
+<a class="home-link" href="/">🏠 홈으로</a>
+</div>
+</div>
+<div class="layout">
+<aside class="side"><div class="tabs" role="tablist" aria-label="A1-M3 목차" aria-orientation="vertical"><div class="group">Part A · Article A1 · Module A1-M3</div><button role="tab" id="tab-s1" aria-controls="s1" aria-selected="true" tabindex="0"><span class="no">01</span>업무 시나리오·검색 목적</button><button role="tab" id="tab-s2" aria-controls="s2" aria-selected="false" tabindex="-1"><span class="no">02</span>BoW·단어 인덱스</button><button role="tab" id="tab-s3" aria-controls="s3" aria-selected="false" tabindex="-1"><span class="no">03</span>TF-IDF·코사인 유사도</button><button role="tab" id="tab-s4" aria-controls="s4" aria-selected="false" tabindex="-1"><span class="no">04</span>BM25 빈도·길이 보정</button><button role="tab" id="tab-s5" aria-controls="s5" aria-selected="false" tabindex="-1"><span class="no">05</span>M2 CSV·트리 검색 화면</button><button role="tab" id="tab-s6" aria-controls="s6" aria-selected="false" tabindex="-1"><span class="no">06</span>검증·실습·GPT 검토</button></div></aside><main><section id="s1" class="panel" role="tabpanel" aria-labelledby="tab-s1" hidden><div class="crumb">Part A · Article A1 · Module A1-M3</div><h1>A1-M3. BoW·TF-IDF·BM25 정보검색</h1>
+<p class="lead"><b>A1-M2에서 규칙을 직접 검사하는 프로그램을 완성했습니다.</b> 이제 웹 검사 결과에 나타난 <code>rule_id</code>를 보고, 그 규칙의 설명과 관련 근거를 <b>찾아주는 기능</b>을 만들 차례입니다. 이 단계가 A1-M3의 정보검색(Information Retrieval)입니다.</p>
+<div class="key"><b>이번 업무 과제:</b> 개발자가 “더보기 링크의 문제가 뭐야?”라고 질문하면, M2의 <code>rules.csv</code>에서 관련 규칙을 찾아 <b>규칙 ID·설명·출처·적용 상태</b>와 함께 상위 결과를 보여주는 검색기를 구현합니다. 검색이 판정 결과를 바꾸지는 않습니다.</div>
+<h3>01-1. 웹 정합성 검사 업무가 어떻게 이어지는가?</h3>
+<p>신규 웹페이지를 검사한 뒤 개발자가 검사기 결과를 받아 다음과 같이 물었다고 생각해 봅시다.</p>
+<div class="table-wrap"><table><thead><tr><th>업무 순서</th><th>누가·무엇을 하는가?</th><th>입력 또는 출력</th></tr></thead><tbody><tr><td>① 웹페이지 검사</td><td>M2 규칙 검사기가 HTML 구조를 판정</td><td><code>results.json</code>에서 <code>LINK-002: cantTell</code>, <code>COMP-LINK-001: failed</code> 확인</td></tr><tr><td>② 추가 설명 요청</td><td>개발자가 “더보기 링크에 무슨 문제가 있어?” 질문</td><td>자연어 검색어 또는 규칙 ID</td></tr><tr><td>③ 후보 자료 준비</td><td>M2의 현재 유효한 규칙만 선택</td><td><code>rules.csv</code>에서 <code>status=applied</code> 필터</td></tr><tr><td>④ 관련 규칙 검색</td><td>본문에서 단어 출현·가중치·순위를 계산</td><td>BoW → TF-IDF·코사인 → BM25</td></tr><tr><td>⑤ 결과와 출처 제시</td><td>기존 트리와 연결해 규칙의 위치도 보여줌</td><td><code>rule_tree.csv</code> → <code>file</code> + <code>rule_id</code></td></tr><tr><td>⑥ 후속 단계</td><td>M4에서 검색 결과가 적절한지 평가</td><td>질의 ID ↔ 정답 규칙 ID ↔ 검색 순위</td></tr></tbody></table></div>
+<p>이 단계에서는 <b>이미 만들어 놓은 검사기와 CSV를 다시 만들지 않습니다.</b> M2의 규칙은 “조건을 충족하는가”에 답하고, M3 검색기는 “어떤 설명·근거를 먼저 읽어야 하는가”에 답합니다. 예를 들어 회사가 “더보기”라는 단독 문구를 금지했다는 사실을 검색했더라도, 이것이 곧 WCAG의 공식 위반 판정이라는 뜻은 아닙니다.</p>
+<h3>01-2. 왜 단순 문자열 검색이 아니라 정보검색인가?</h3>
+<div class="table-wrap"><table><thead><tr><th>방식</th><th>할 수 있는 일</th><th>한계</th></tr></thead><tbody><tr><td>문자열 포함 검사</td><td><code>"더보기" in description</code></td><td>표현이 조금만 달라도 검색되지 않고 문서 순위가 없음</td></tr><tr><td>BoW (Bag of Words)</td><td>단어 출현 횟수를 벡터로 변환</td><td>단어의 희소성·문맥·순서를 잘 반영하지 못함</td></tr><tr><td>TF-IDF</td><td>문서에서 중요한 단어에 가중치 부여</td><td>단어가 잘 겹치지 않는 질문에는 한계</td></tr><tr><td>BM25</td><td>단어 빈도 포화와 문서 길이 차이를 보정</td><td>관련성의 통계적 근사이며 의미 이해를 보장하지 않음</td></tr></tbody></table></div>
+<h3>01-3. 실제 입력 데이터는 두 개의 CSV</h3>
+<div class="table-wrap"><table><thead><tr><th>파일</th><th>필수 필드</th><th>M3 사용 방식</th></tr></thead><tbody><tr><td><code>rules.csv</code></td><td><code>rule_id, status, scope, title, description, reason, limitation, rule_version, reference_url</code></td><td>규칙 설명 본문과 메타데이터로 분리</td></tr><tr><td><code>rule_tree.csv</code></td><td><code>node_id, parent_id, node_type, label, file, rule_id</code></td><td>검색 결과의 트리 경로·규칙 원본 행 연결</td></tr><tr><td><code>results.json</code></td><td>M2 검사기의 <code>rule_id, outcome</code> 등</td><td>검사 결과의 확정값은 보존하고 관련 설명만 검색</td></tr></tbody></table></div>
+<p class="teaching-note"><b>중요:</b> <code>rules.csv</code>에는 적용 규칙 7건과 제안 상태 1건이 있습니다. 이번 검색은 <b>적용 규칙 7건만 기본 검색</b>합니다. <code>proposed</code>는 현재 정책을 묻는 검색에 섞지 않습니다. 이번 모듈에서는 YAML 변환, 별도 규칙 변경 이력 CSV, Git 명령, LLM, 벡터 DB를 사용하지 않습니다.</p>
+<h3>01-4. 학습·실습 순서</h3>
+<div class="table-wrap"><table><thead><tr><th>순서</th><th>자료</th><th>결과</th></tr></thead><tbody><tr><td>기초</td><td>아주 짧은 3개 문서</td><td>단어 인덱스·빈도 행렬 생성</td></tr><tr><td>확장</td><td>같은 3개 문서와 질문 1개</td><td>TF-IDF IDF·벡터·코사인 값 비교</td></tr><tr><td>비교</td><td>반복 단어를 포함한 3개 문서</td><td>BM25 점수 직접 계산</td></tr><tr><td>프로젝트 적용</td><td>M2의 실제 2개 CSV</td><td>질문 → Top-k 규칙·출처·트리 경로</td></tr></tbody></table></div>
+<p>BoW와 TF-IDF에서 <code>split()</code>으로 단어를 구분하는 것은 <b>원리 설명용 단순 가정</b>입니다. 실제 한국어 문장과 OOV, 형태소 분석은 <b>A1-M5</b>에서 별도로 다룹니다. CSV 검색은 일단 문자 2~3글자 묶음(character n-gram)을 사용해 작은 어휘 차이에 일부 대응합니다.</p>
+</section><section id="s2" class="panel" role="tabpanel" aria-labelledby="tab-s2" hidden><div class="crumb">단어를 숫자 벡터로 바꾸는 첫 단계</div><h1>02. BoW와 단어 빈도</h1>
+<p class="lead"><b>BoW(Bag of Words)</b>는 단어를 세어서 문서를 일정한 길이의 숫자 벡터로 표현합니다. 문장 속 단어의 순서보다 <b>어떤 단어가 몇 번 등장했는가</b>가 중요합니다.</p>
+<h3>02-1. 문서 3개를 직접 벡터로 만들어 보자</h3>
+<div class="table-wrap"><table><thead><tr><th>문서</th><th>내용</th><th>해석</th></tr></thead><tbody><tr><td>D1</td><td>이미지 대체 텍스트</td><td>이미지에 관한 대체 텍스트</td></tr><tr><td>D2</td><td>이미지 설명</td><td>이미지 설명</td></tr><tr><td>D3</td><td>링크 목적</td><td>링크의 목적</td></tr></tbody></table></div>
+<p>중복을 제거한 어휘 집합을 정렬하면 <code>[대체, 링크, 목적, 설명, 이미지, 텍스트]</code>가 됩니다. 문서를 벡터로 변환할 때는 <b>모든 문서에서 같은 단어가 같은 열에 있어야 합니다.</b></p>
+<div class="table-wrap"><table><thead><tr><th>문서</th><th>대체</th><th>링크</th><th>목적</th><th>설명</th><th>이미지</th><th>텍스트</th></tr></thead><tbody><tr><td>D1</td><td>1</td><td>0</td><td>0</td><td>0</td><td>1</td><td>1</td></tr><tr><td>D2</td><td>0</td><td>0</td><td>0</td><td>1</td><td>1</td><td>0</td></tr><tr><td>D3</td><td>0</td><td>1</td><td>1</td><td>0</td><td>0</td><td>0</td></tr></tbody></table></div>
+<p>D1의 <code>[1,0,0,0,1,1]</code>은 1·5·6번째 단어가 한 번 등장한다는 뜻입니다. 각 숫자의 위치에 대응하는 <b>어휘 사전</b>을 잃어버리면 숫자의 의미도 사라집니다.</p>
+<h3>02-2. 순수 Python으로 단어 인덱스와 DataFrame 만들기</h3>
+<pre><code>from collections import Counter
+
+corpus = ["이미지 대체 텍스트", "이미지 설명", "링크 목적"]
+tokenized = [sentence.split() for sentence in corpus]
+vocab = sorted({word for words in tokenized for word in words})
+
+rows = []
+for words in tokenized:
+    count = Counter(words)                # 단어별 출현 횟수
+    rows.append([count[word] for word in vocab])
+
+import pandas as pd
+print(pd.DataFrame(rows, columns=vocab, index=["D1", "D2", "D3"]))</code></pre>
+<p><code>Counter</code>는 단어를 빈도 딕셔너리로 바꿉니다. <code>sorted(...)</code>로 열 순서를 고정해 둔 뒤 <code>columns=vocab</code>으로 DataFrame을 만드는 것이 핵심입니다. 복잡한 표 출력 패키지 없이도 결과를 확인할 수 있습니다.</p>
+<pre><code>    대체  링크  목적  설명  이미지  텍스트
+D1   1   0   0   0    1    1
+D2   0   0   0   1    1    0
+D3   0   1   1   0    0    0</code></pre>
+<h3>02-3. 바로 확인할 한계</h3>
+<p>BoW는 <b>이미지</b>라는 공통 단어를 찾는 데는 유용하지만, <b>대체</b>와 <b>목적</b>의 문서 내 중요도를 구분하지 못합니다. 또 <code>규칙 위반이 있다</code>와 <code>규칙 위반이 없다</code> 같은 문맥을 충분히 표현하지 못합니다. 단어의 통계적 중요도를 추가한 TF-IDF가 필요한 이유입니다.</p>
+</section><section id="s3" class="panel" role="tabpanel" aria-labelledby="tab-s3" hidden><div class="crumb">단어 중요도와 검색 유사도</div><h1>03. TF-IDF와 코사인 유사도</h1>
+<p class="lead"><b>TF-IDF(Term Frequency–Inverse Document Frequency)</b>는 특정 문서에서 자주 등장하지만 여러 문서에서는 상대적으로 드문 단어를 강조합니다. 문서와 질문을 같은 어휘 좌표계에서 벡터화한 뒤, <b>코사인 유사도</b>로 방향의 유사성을 비교합니다.</p>
+<h3>03-1. TF·DF·IDF를 숫자로 구분</h3>
+<div class="table-wrap"><table><thead><tr><th>기호</th><th>뜻</th><th>3개 문서 예시</th></tr></thead><tbody><tr><td>TF(t,d)</td><td>문서 d에서 단어 t의 등장 횟수</td><td>D1에서 <b>이미지</b> TF = 1</td></tr><tr><td>DF(t)</td><td>단어 t가 한 번 이상 등장한 문서 개수</td><td>이미지 DF = 2, 대체 DF = 1</td></tr><tr><td>IDF(t)</td><td>드문 단어에 상대적으로 더 큰 가중치</td><td>같은 문서 집합에서 대체 IDF &gt; 이미지 IDF</td></tr></tbody></table></div>
+<p>여기서는 scikit-learn의 기본 <code>smooth_idf=True</code> 정의를 사용합니다.</p>
+<div class="formula-box"><b>IDF(t) = ln[(N+1) / (DF(t)+1)] + 1</b><p class="sub">N = 전체 문서 수. 자연로그 ln을 사용하며, 마지막 +1을 빼면 라이브러리 결과와 다릅니다.</p></div>
+<div class="table-wrap"><table><thead><tr><th>단어</th><th>DF</th><th>직접 계산</th><th>IDF</th></tr></thead><tbody><tr><td>이미지</td><td>2</td><td>ln(4/3)+1</td><td><b>1.288</b></td></tr><tr><td>대체</td><td>1</td><td>ln(4/2)+1</td><td><b>1.693</b></td></tr><tr><td>텍스트</td><td>1</td><td>ln(4/2)+1</td><td><b>1.693</b></td></tr></tbody></table></div>
+<h3>03-2. TF-IDF 벡터를 L2 정규화한다</h3>
+<p>기본 가중치는 <code>TF × IDF</code>입니다. D1의 가중치 벡터에는 이미지 1.288, 대체 1.693, 텍스트 1.693이 들어갑니다. <b>L2 정규화</b>는 벡터 길이를 1로 맞추어 각 단어 가중치의 상대적인 비중을 비교하기 쉽게 합니다.</p>
+<div class="formula-box">D1의 길이 = √(1.288² + 1.693² + 1.693²) ≈ 2.719<br/>정규화된 이미지 = 1.288 / 2.719 ≈ 0.474<br/>정규화된 대체·텍스트 ≈ 0.623</div>
+<h3>03-3. 질문 “이미지 대체”와 비교</h3>
+<p>질의도 문서와 <b>같은 IDF·어휘 인덱스</b>로 변환합니다. 코사인 유사도는 두 벡터의 내적을 각각의 길이로 나눈 값입니다.</p>
+<div class="formula-box">cos(q,d) = (q · d) / (‖q‖ × ‖d‖)</div>
+<div class="table-wrap"><table><thead><tr><th>문서</th><th>코사인 유사도</th><th>순위의 의미</th></tr></thead><tbody><tr><td>D1</td><td><b>0.7824</b></td><td>이미지와 대체가 모두 일치</td></tr><tr><td>D2</td><td><b>0.3664</b></td><td>이미지만 일치</td></tr><tr><td>D3</td><td><b>0.0000</b></td><td>공유 어휘가 없음</td></tr></tbody></table></div>
+<p>이 값은 <b>접근성 적합률</b>도 <b>정답 확률</b>도 아닙니다. 단지 지금 정의한 TF-IDF 공간에서 두 텍스트 벡터가 비슷하다는 뜻입니다.</p>
+<h3>03-4. 코드에서 반드시 구분해야 할 fit과 transform</h3>
+<pre><code>from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+
+corpus = ["이미지 대체 텍스트", "이미지 설명", "링크 목적"]
+model = TfidfVectorizer(tokenizer=str.split,
+                        token_pattern=None, lowercase=False)
+X = model.fit_transform(corpus)           # 문서에서 어휘와 IDF 학습
+q = model.transform(["이미지 대체"])     # 동일한 어휘·IDF 재사용
+print(cosine_similarity(q, X)[0].round(4))</code></pre>
+<pre><code>[0.7824 0.3664 0.    ]</code></pre>
+<p>질의에 <code>fit_transform()</code>을 다시 호출하면 질문에 맞추어 새로운 단어 사전을 만드는 잘못된 비교가 됩니다. <b>문서에는 fit, 질의에는 transform</b>이라는 구분이 중요합니다.</p>
+<p class="teaching-note"><b>이후 연결:</b> 지금은 세 문서의 점수를 직접 계산하지만, 나중에는 A1-M2의 규칙 설명 7개를 문서로 넣어 Top-k를 구합니다. M4에서는 이 순위가 얼마나 좋은지를 별도 정답셋으로 평가합니다.</p>
+</section><section id="s4" class="panel" role="tabpanel" aria-labelledby="tab-s4" hidden><div class="crumb">검색 점수의 빈도 포화와 길이 보정</div><h1>04. BM25 검색 점수</h1>
+<p class="lead"><b>BM25(Best Matching 25)</b>는 검색어가 반복될 때 점수 증가가 무한히 비례하지 않도록 <b>빈도 포화</b>를 적용하고, 문서 길이 차이를 보정하여 관련 문서를 순위화합니다.</p>
+<h3>04-1. 왜 TF-IDF 외에 BM25가 필요한가?</h3>
+<p>“링크 링크 링크”를 반복한 긴 문서가 항상 가장 좋은 근거가 되지는 않습니다. 반대로 짧은 규칙 제목과 긴 규칙 해설을 같은 검색어로 비교할 때는 문서 길이도 고려해야 합니다.</p>
+<div class="formula-box">BM25(q,d) = Σ<sub>t∈q</sub> IDF(t) × [ TF(t,d) × (k₁ + 1) ] / [ TF(t,d) + k₁ × (1 − b + b × |d| / avgdl) ]<br/><span class="sub">이 교안의 IDF(t) = ln[1 + (N − DF(t) + 0.5)/(DF(t) + 0.5)]</span></div>
+<div class="table-wrap"><table><thead><tr><th>변수</th><th>의미</th><th>조절하는 요소</th></tr></thead><tbody><tr><td>k₁</td><td>단어 빈도 효과를 조절하는 양수</td><td>검색어 반복에 따른 점수 포화</td></tr><tr><td>b</td><td>문서 길이 보정 계수(보통 0~1)</td><td>b=0이면 길이 보정 제외</td></tr><tr><td>|d| / avgdl</td><td>문서 길이 / 전체 문서의 평균 길이</td><td>긴 문서와 짧은 문서의 점수 균형</td></tr></tbody></table></div>
+<h3>04-2. 직접 계산하는 3개 문서</h3>
+<div class="table-wrap"><table><thead><tr><th>문서</th><th>내용</th><th>길이</th><th>“링크” 등장</th></tr></thead><tbody><tr><td>D1</td><td>링크 목적</td><td>2</td><td>1회</td></tr><tr><td>D2</td><td>링크 링크 목적</td><td>3</td><td>2회</td></tr><tr><td>D3</td><td>이미지 설명</td><td>2</td><td>0회</td></tr></tbody></table></div>
+<p><code>N=3</code>, <code>DF(링크)=2</code>, <code>avgdl=7/3≈2.333</code>, <code>k₁=1.5</code>, <code>b=0.75</code>라면 <code>IDF≈0.470</code>입니다.</p>
+<div class="table-wrap"><table><thead><tr><th>문서</th><th>길이 보정</th><th>최종 BM25 점수</th></tr></thead><tbody><tr><td>D1</td><td>0.25 + 0.75 × 2 / 2.333 ≈ 0.893</td><td><b>0.5023</b></td></tr><tr><td>D2</td><td>0.25 + 0.75 × 3 / 2.333 ≈ 1.214</td><td><b>0.6150</b></td></tr><tr><td>D3</td><td>링크 등장 0회</td><td><b>0.0000</b></td></tr></tbody></table></div>
+<p>D2는 단어가 2번 나오지만 점수는 D1의 2배가 아닙니다. <b>반복 빈도 포화</b>와 <b>문서 길이 보정</b>이 동시에 적용되기 때문입니다.</p>
+<h3>04-3. 순수 Python 검산</h3>
+<pre><code>from math import log
+from collections import Counter
+
+corpus = ["링크 목적", "링크 링크 목적", "이미지 설명"]
+docs = [text.split() for text in corpus]
+N = len(docs)
+df = sum("링크" in words for words in docs)
+avgdl = sum(len(words) for words in docs) / N
+k1, b = 1.5, 0.75
+idf = log(1 + (N - df + 0.5) / (df + 0.5))
+
+for i, words in enumerate(docs, start=1):
+    tf = Counter(words)["링크"]
+    length_factor = 1 - b + b * len(words) / avgdl
+    score = idf * tf * (k1 + 1) / (tf + k1 * length_factor) if tf else 0
+    print(f"D{i}: {score:.4f}")</code></pre><pre><code>D1: 0.5023
+D2: 0.6150
+D3: 0.0000</code></pre>
+<h3>04-4. 선택 실습 — BM25 라이브러리로 확인하기</h3>
+<p>원리를 이해했다면 <code>rank-bm25</code>의 <code>BM25Okapi</code>로 동일 문서를 점수화합니다. <b>설치는 선택</b>이며, 패키지 구현과 손계산에서 IDF 정의가 달라 수치도 다를 수 있다는 점을 직접 확인합니다.</p>
+<pre><code>python -m pip install rank-bm25</code></pre>
+<pre><code>from rank_bm25 import BM25Okapi
+
+corpus = ["링크 목적", "링크 링크 목적", "이미지 설명"]
+model = BM25Okapi([text.split() for text in corpus], k1=1.5, b=0.75)
+print(model.get_scores(["링크"]))</code></pre>
+<p class="sub">실행 파일: <code>05_bm25_library_optional.py</code>. 기본 코드와 자동 테스트에는 이 라이브러리가 필요하지 않습니다.</p>
+<h3>04-5. BM25 라이브러리와 점수가 달라질 수 있다</h3>
+<p>BM25는 하나의 고정된 소프트웨어가 아니라 알고리즘 계열입니다. <code>rank-bm25</code>의 BM25Okapi, 검색 엔진의 BM25, 이 교안의 양수 IDF 구현은 <b>IDF 보정과 세부 구현이 다를 수 있습니다.</b> 점수값 자체를 동일시하지 말고, 사용한 공식·토큰 단위·파라미터를 기록하고 순위와 평가 결과를 비교해야 합니다.</p>
+<p class="teaching-note">M3에서는 BM25를 손계산과 작은 함수로 이해합니다. OpenSearch의 실제 인덱스 운영과 하이브리드·벡터 검색은 A2에서 다룹니다.</p>
+</section><section id="s5" class="panel" role="tabpanel" aria-labelledby="tab-s5" hidden><div class="crumb">CSV 규칙·트리의 원본 연결</div><h1>05. A1-M2 CSV·트리 기반 근거 검색</h1>
+<p class="lead">이제 <b>A1-M2의 실제 데이터 두 개</b>를 그대로 사용합니다. <code>rules.csv</code>의 설명 문장을 검색하되, <code>rule_tree.csv</code>의 부모·자식 정보를 통해 규칙이 어느 분류에 속하는지 확인합니다. 이것이 이후 RAG 데이터 설계의 기초가 됩니다.</p>
+<h3>05-1. 같은 CSV에서 검색 본문과 메타데이터 분리하기</h3>
+<div class="table-wrap"><table><thead><tr><th>분류</th><th>M2 CSV 필드</th><th>역할</th></tr></thead><tbody><tr><td><b>검색 본문</b></td><td><code>title, description, reason, limitation</code></td><td>질문과 비교할 자연어 문장</td></tr><tr><td><b>검색·필터 메타데이터</b></td><td><code>rule_id, rule_version, status, scope, policy_id</code></td><td>식별, 적용 규칙만 검색, 표준/회사 분리</td></tr><tr><td><b>출처 메타데이터</b></td><td><code>wcag_ref, kwcag_ref, reference_url, effective_from</code></td><td>어느 규칙·조항에 관한 설명인지 출처 확인</td></tr><tr><td><b>계층 메타데이터</b></td><td><code>node_id, parent_id, tree_path, source_file</code></td><td>트리 탐색·원본 CSV 행으로 돌아가기</td></tr><tr><td><b>판정 엔진용</b></td><td><code>selector, operator, attribute, values</code></td><td>M2 검사기의 검사 조건. 이번 검색 본문에 무조건 넣지는 않음</td></tr></tbody></table></div>
+<p>규칙 ID 검색은 일반 문장 유사도보다 <b>정확한 식별자 일치</b>가 우선일 수 있습니다. 자연어 문장은 검색 점수로 정렬하고, 규칙 ID를 알고 있으면 원본 행을 직접 조회하는 두 경로를 나눕니다.</p>
+<h3>05-2. 검색기 처리 순서</h3>
+<div class="table-wrap"><table><thead><tr><th>순서</th><th>처리</th><th>핵심 질문</th></tr></thead><tbody><tr><td>① 읽기</td><td>CSV DictReader로 <code>rules.csv</code> 읽기</td><td>현재 유효한 규칙만 추릴 수 있나?</td></tr><tr><td>② 본문 생성</td><td>네 가지 텍스트 필드를 묶음</td><td>무엇을 검색 가능한 설명으로 만들 것인가?</td></tr><tr><td>③ 메타데이터 보존</td><td>ID·버전·출처·적용 상태 별도 저장</td><td>근거의 출처를 되찾을 수 있나?</td></tr><tr><td>④ 트리 연결</td><td>트리 노드의 <code>file</code>과 <code>rule_id</code>로 원본 규칙 조회</td><td>정확히 어느 규칙을 찾았나?</td></tr><tr><td>⑤ 점수 계산</td><td>TF-IDF·BM25로 질문과의 관련성 정렬</td><td>어느 규칙을 먼저 읽으면 좋나?</td></tr><tr><td>⑥ 결과 반환</td><td>점수·규칙 ID·출처·트리 위치 출력</td><td>검색 결과가 왜 보였는지 설명 가능한가?</td></tr></tbody></table></div>
+<h3>05-3. 샘플 검색 화면 — 실제 M2 CSV를 내장</h3>
+<p>아래 검색기는 M2의 <b>실제 rules.csv 8행</b>과 <b>rule_tree.csv</b>를 교안 안에 내장해 보여줍니다. 인터넷 연결 없이도 질의와 Top-k 결과를 확인할 수 있습니다. <b>별도 파일을 다운로드하여 변경했다면 ZIP의 Python 예제로 다시 실행</b>합니다.</p>
+<div class="search-lab" id="m3-search-lab">
+  <div class="lab-controls">
+    <label>검색어<input id="m3-query" type="text" value="더보기 링크 목적이 모호한 경우" placeholder="예: 이미지 alt 속성 / 링크 레이블"/></label>
+    <label>검색 방식<select id="m3-method"><option value="tfidf">TF-IDF + 코사인</option><option value="bm25">BM25 (양수 IDF)</option></select></label>
+    <label>범위<select id="m3-scope"><option value="all">표준 + 사내 규칙</option><option value="standard">표준 관련 검사</option><option value="company">사내 정책만</option></select></label>
+  </div>
+  <div class="lab-controls minor">
+    <label class="checkline"><input id="m3-proposed" type="checkbox"/> 검토 중 규칙(proposed)도 포함 (현재 정책과 반드시 구분)</label>
+    <button id="m3-search" type="button" class="lab-button">관련 규칙 검색</button>
+  </div>
+  <p id="m3-message" class="sub" role="status" aria-live="polite"></p>
+  <div id="m3-results" class="lab-results" aria-live="polite"></div>
+</div>
+<p class="sub">이 미리보기는 CSV의 본문 필드를 문자 2~3글자 단위로 분해해 브라우저에서 점수를 계산하는 교육용 구현입니다. 수치가 검색 엔진의 모든 구현과 같다는 뜻은 아닙니다.</p>
+<h3>05-4. CSV 원본 트리 직접 조회</h3>
+<p>부모·자식 관계를 저장한 트리 CSV의 규칙 노드는 <code>file=rules.csv</code>와 <code>rule_id=COMP-LINK-001</code> 같은 연결 정보를 가집니다. <b>트리는 규칙 내용을 복제하지 않고 원본의 위치만 가리킵니다.</b></p>
+<pre><code>from search_engine import lookup_by_tree_node
+
+# rule_tree.csv에서 node_id로 규칙 노드를 찾아,
+# file=rules.csv / rule_id=COMP-LINK-001인 원본 행으로 이동
+result = lookup_by_tree_node("N_COMP_LINK_001")
+print(result.document_id)               # COMP-LINK-001
+print(result.metadata["tree_path"])    # 규칙이 속한 전체 트리 경로
+print(result.metadata["reference_url"])</code></pre>
+<p>실행할 때 <code>file</code>은 무조건 임의의 경로를 열어서는 안 됩니다. 이번 교육용 코드에서는 <code>rules.csv</code>만 허용하고, 트리의 연결 ID와 중복도 검사합니다.</p>
+<h3>05-5. Python 검색 코드와 결과</h3>
+<pre><code>from search_engine import build_documents, rank_tfidf, rank_bm25
+
+docs = build_documents()  # M2 rules.csv 중 status=applied 7건
+question = "더보기 링크 목적이 모호한 경우"
+
+for engine in (rank_tfidf, rank_bm25):
+    print(engine.__name__)
+    for document, score in engine(question, docs, top_k=3):
+        print(document.document_id, round(score, 4))
+        print(document.metadata["source_file"],
+              document.metadata["tree_path"])</code></pre>
+<p>실제 실행에서는 두 방식 모두 <code>LINK-002</code>가 상위에 나왔습니다. 그러나 사내 규칙과 표준 관련 검사 순위는 방식에 따라 달라질 수 있습니다. <b>원래 검사 결과의 <code>failed</code>나 <code>cantTell</code>는 검색 점수에 의해 변경되지 않습니다.</b></p>
+<div class="table-wrap"><table><thead><tr><th>구분</th><th>검색 순위 예시</th><th>주의점</th></tr></thead><tbody><tr><td>TF-IDF</td><td>LINK-002 → COMP-LINK-001 → COMP-LINK-002</td><td>단어 조각의 상대적 중요도와 벡터 방향</td></tr><tr><td>BM25</td><td>LINK-002 → COMP-LINK-002 → COMP-LINK-001</td><td>빈도 포화·문서 길이 보정</td></tr><tr><td>정확 ID 조회</td><td>COMP-LINK-001 → 원본 행</td><td>검색 점수가 아닌 식별자 정확 일치</td></tr></tbody></table></div>
+<p class="teaching-note"><b>운영 분리:</b> M2 검사 결과를 API나 MySQL에 저장하는 일은 검사 서비스의 책임입니다. M3는 CSV에서 찾은 관련 문서와 출처를 반환합니다. 검색된 문서는 <b>근거 후보</b>이며, 최종 적합 판정 자체가 아닙니다.</p>
+</section><section id="s6" class="panel" role="tabpanel" aria-labelledby="tab-s6" hidden><div class="crumb">검증과 이후 RAG 확장</div><h1>06. 이해도 테스트·실습·GPT 검토</h1>
+<p class="lead">이번 모듈의 산출물은 <b>질의 → 문서 ID의 순위 목록 + 근거 메타데이터</b>입니다. 성능 평가 지표(Recall@k·MRR·Precision)는 다음 <b>A1-M4</b>에서 학습합니다.</p>
+<h3>06-1. 자주 발생하는 오류와 해석</h3>
+<div class="table-wrap"><table><thead><tr><th>현상</th><th>원인</th><th>해결</th></tr></thead><tbody><tr><td>질의 벡터의 차원이 다름</td><td>질의에 별도로 <code>fit_transform</code> 수행</td><td>문서 <code>fit</code> → 질의 <code>transform</code></td></tr><tr><td>한국어 조사만 달라져 검색되지 않음</td><td>공백 단위 키워드가 달라짐</td><td>기초 실습에서는 문자 n-gram 선택; M5에서 형태소 분석 비교</td></tr><tr><td>검색 결과에 초안 정책이 나옴</td><td><code>status</code> 적용 필터 누락</td><td>현행 규칙 질의는 <code>applied</code>만 사용</td></tr><tr><td>규칙이 검색되는데 트리 경로가 없음</td><td>트리 CSV에 해당 <code>rule_id</code> 노드 미연결</td><td>원본 ID 검색은 유지하고 트리 연결 상태 검증</td></tr><tr><td>점수는 높은데 엉뚱한 근거</td><td>빈도 기반 순위와 실제 관련성은 다름</td><td>규칙 ID·출처 확인; 평가 데이터로 M4에서 비교</td></tr><tr><td>BM25 점수가 다른 패키지와 다름</td><td>서로 다른 IDF 방식·분할 정책</td><td>같은 공식·토큰화·버전에서 비교</td></tr><tr><td>CSV를 수정했지만 이전 결과가 나옴</td><td>인덱스를 재생성하지 않음</td><td>문서 변경 후 fit/색인 재구축; 운영 자동화는 A2에서 확장</td></tr></tbody></table></div>
+<h3>06-2. 이해도 테스트 — 정답 펼쳐보기</h3>
+<details class="lesson-details"><summary>문제 1. CSV에 이미 열이 있는데 BoW가 필요한 이유는?</summary><p>CSV는 <b>규칙의 필드</b>를 구분합니다. BoW는 <b>필드 안의 설명 문장</b>을 검색할 수 있도록 단어 빈도를 수치화합니다.</p></details>
+<details class="lesson-details"><summary>문제 2. IDF에서 왜 DF가 작을수록 값이 커질까요?</summary><p>전체 문서에서 덜 흔한 단어일수록 문서를 구분하는 통계적 정보가 더 많다고 가정하기 때문입니다. 드물다는 것이 곧 정답을 보장하지는 않습니다.</p></details>
+<details class="lesson-details"><summary>문제 3. TF-IDF 점수 0.78이면 표준 준수율 78%인가요?</summary><p>아닙니다. 질의와 문서의 텍스트 벡터가 유사하다는 뜻이며, HTML 접근성 적합성 판정은 M2 검사기 책임입니다.</p></details>
+<details class="lesson-details"><summary>문제 4. BM25의 k₁과 b는 각각 어떤 문제를 해결하나요?</summary><p><code>k₁</code>은 단어 반복에 따른 점수 증가가 포화되도록 조절하고, <code>b</code>는 문서 길이 보정을 조절합니다.</p></details>
+<details class="lesson-details"><summary>문제 5. M2의 proposed 규칙을 기본 검색에서 빼야 하는 이유는?</summary><p>승인·시행되지 않은 규칙을 현재 적용되는 정책으로 잘못 인용하지 않기 위해서입니다. 제안 내역 조사에서는 별도로 포함할 수 있지만 상태가 함께 보여야 합니다.</p></details>
+<details class="lesson-details"><summary>문제 6. 검색 결과가 COMP-LINK-001이면 어떤 필드로 원본을 찾을까요?</summary><p><code>rule_id</code>가 정확한 식별자이고 <code>source_file=rules.csv</code>를 사용합니다. 트리에서는 <code>node_id</code>로 해당 노드의 <code>file</code>·<code>rule_id</code>를 얻고, 이를 원본 행과 연결합니다.</p></details>
+<h3>06-3. 추가 실습</h3>
+<ol><li><b>가중치 실험:</b> BM25의 <code>k1</code>과 <code>b</code>를 변경해 세 문서의 점수가 어떻게 달라지는지 비교합니다. 순위가 바뀌지 않아도 이유를 설명해 보세요.</li>
+<li><b>필터 실험:</b> 샘플 검색 화면에서 표준 관련 규칙만 선택하고 “링크 목적”을 검색합니다. 이후 사내 규칙만 검색하여 결과가 다른 이유를 설명합니다.</li>
+<li><b>트리 연결 실험:</b> <code>rule_tree.csv</code>에서 <code>COMP-LINK-001</code>의 부모 노드를 따라 올라가 분류 경로를 확인하고, 최종 출처 URL까지 표시합니다.</li>
+<li><b>승인 상태 실험:</b> 기본 검색의 7건과 proposed 포함 8건의 차이를 비교하되 검토 중인 규칙을 현재 정책으로 안내하지 않습니다.</li></ol>
+<h3>06-4. GPT 검색·검토 프롬프트</h3>
+<pre><code>프로젝트 A1-M3에서 rules.csv(규칙 조건·설명·근거)와
+rule_tree.csv(부모·자식·file·rule_id 연결)를 사용합니다.
+TF-IDF와 BM25로 rule_id가 있는 규칙 문서를 검색합니다.
+
+1. title/description/reason/limitation을 검색 본문으로 선택한 이유를 검토하세요.
+2. status=applied, scope=standard|company 메타데이터 필터의 목적을 설명하세요.
+3. 어떤 질문은 TF-IDF·BM25 검색보다 rule_id 정확 일치가 적절한가요?
+4. 검색된 규칙의 회사 정책과 WCAG 관련 조항을 혼동하지 않도록 검토하세요.
+5. 실제 데이터로 확인되지 않은 규칙·출처·승인 상태는 만들어내지 마세요.
+
+LLM 답변 생성, 벡터 DB, LangChain 구현은 이번 학습 범위에서 제외하세요.</code></pre>
+<h3>06-5. 다음 모듈로 넘기는 결과 계약</h3>
+<div class="table-wrap"><table><thead><tr><th>출력</th><th>의미</th><th>다음 활용</th></tr></thead><tbody><tr><td><code>query</code></td><td>검색에 사용한 질문</td><td>A1-M4 검색 정답셋 구축</td></tr><tr><td><code>results[]</code></td><td>상위 문서 목록·순서·점수</td><td>A1-M4 검색 성능 평가</td></tr><tr><td><code>rule_id, scope, status, version</code></td><td>근거의 식별자와 유효성</td><td>A1-M6 검사 결과 연계</td></tr><tr><td><code>reference_url, source_file, tree_path</code></td><td>원문 확인과 계층 탐색</td><td>A1-M6 출처 포함 결과 JSON</td></tr><tr><td><code>text</code></td><td>규칙 설명 본문</td><td>A2 벡터 검색·RAG 입력으로 재사용</td></tr></tbody></table></div>
+<p class="teaching-note"><b>이번 모듈의 완료 기준:</b> M2의 두 CSV를 읽고, <code>applied</code> 규칙을 필터링해, 사용자의 질문에 따라 TF-IDF/BM25 상위 규칙을 찾은 다음 <b>원본 규칙 ID·출처·트리 위치</b>를 함께 출력할 수 있어야 합니다.</p>
+<div class="source-links"><h3>참고 자료</h3><p><a href="https://scikit-learn.org/stable/modules/feature_extraction.html#text-feature-extraction" target="_blank" rel="noopener">scikit-learn 텍스트 특성 추출</a> · <a href="https://scikit-learn.org/stable/modules/generated/sklearn.feature_extraction.text.TfidfVectorizer.html" target="_blank" rel="noopener">TfidfVectorizer</a> · <a href="https://github.com/dorianbrown/rank_bm25" target="_blank" rel="noopener">rank-bm25 구현 참고</a> · <a href="https://www.w3.org/TR/WCAG22/" target="_blank" rel="noopener">WCAG 2.2</a></p><p class="sub">라이브러리·표준 원문은 각 권리자가 소유합니다. 규칙 샘플은 별도의 공식 WCAG 인증 기준을 의미하지 않습니다.</p></div>
+</section></main>
+</div>
+<footer aria-label="저작권 및 출처 안내" class="copyright-footer" style="max-width:1320px;margin:0 auto;padding:24px;color:#64748b;font-size:15px;border-top:1px solid #e2e8f0">
+<div>© 2026 부성순. All rights reserved.</div>
+<small>본 교안의 구성·해설·실습 자료에 대한 저작권 표시입니다. WCAG 등 외부 표준, 인용 자료 및 제3자 콘텐츠의 권리는 각 원저작자에게 있으며, 원문 출처와 이용 조건을 따릅니다.</small>
+</footer>
+<div class="toast" hidden="" id="toast" role="status"></div>
+<script>(function(){const ts=[...document.querySelectorAll('[role="tab"]')];function set(i,focus){ts.forEach((t,j)=>{let on=i===j;t.setAttribute('aria-selected',String(on));t.tabIndex=on?0:-1;document.getElementById(t.getAttribute('aria-controls')).hidden=!on;});if(focus)ts[i].focus({preventScroll:true});history.replaceState(null,'','#'+ts[i].getAttribute('aria-controls'));window.scrollTo({top:0});}ts.forEach((t,i)=>{t.addEventListener('click',()=>set(i,false));t.addEventListener('keydown',e=>{if(['ArrowDown','ArrowRight','ArrowUp','ArrowLeft'].includes(e.key)){e.preventDefault();set((i+(e.key==='ArrowDown'||e.key==='ArrowRight'?1:-1)+ts.length)%ts.length,true)}})});let n=ts.findIndex(t=>'#'+t.getAttribute('aria-controls')===location.hash);set(n<0?0:n,false);document.querySelectorAll('.table-wrap table').forEach(t=>{let h=[...t.querySelectorAll('th')].map(x=>x.textContent.trim());if(h.length<3)return;t.classList.add('cards');t.querySelectorAll('tbody tr').forEach(tr=>[...tr.children].forEach((td,i)=>td.dataset.label=h[i]||''))})})();</script><script type="application/json" id="m3-corpus">{"rules": [{"rule_id": "IMG-001", "rule_version": "1.0.0", "status": "applied", "scope": "standard", "policy_id": "", "title": "이미지 alt 속성 확인", "selector": "img", "operator": "has_attribute", "attribute": "alt", "values": "", "description": "img 요소에 alt 속성이 존재하는지 확인한다.", "reason": "텍스트 대안 검토의 첫 단계로 속성 누락 여부를 탐지한다.", "limitation": "alt 존재가 내용의 적절함 또는 WCAG 1.1.1 전체 적합성을 확정하지 않는다.", "wcag_ref": "1.1.1", "kwcag_ref": "1.1.1", "reference_url": "https://www.w3.org/WAI/WCAG22/Understanding/non-text-content.html", "effective_from": "2026-10-22"}, {"rule_id": "LINK-001", "rule_version": "1.0.0", "status": "applied", "scope": "standard", "policy_id": "", "title": "링크 이름 후보 확인", "selector": "a[href]", "operator": "link_name_candidate", "attribute": "", "values": "", "description": "링크의 텍스트·aria-label·이미지 대체 텍스트 후보를 확인한다.", "reason": "이름 후보가 없는 링크를 초기에 발견해 후속 검토 대상으로 분류한다.", "limitation": "접근 가능한 이름 계산 전체를 구현하지 않는다.", "wcag_ref": "4.1.2|2.4.4", "kwcag_ref": "4.2.1|2.4.3", "reference_url": "https://www.w3.org/WAI/WCAG22/Understanding/name-role-value.html", "effective_from": "2026-10-22"}, {"rule_id": "LINK-002", "rule_version": "1.0.0", "status": "applied", "scope": "standard", "policy_id": "", "title": "모호한 링크 목적 검토", "selector": "a[href]", "operator": "link_purpose_review", "attribute": "", "values": "더보기|보기|여기|클릭", "description": "단독 링크 문구가 모호할 때 맥락 검토를 요청한다.", "reason": "더보기 링크 등은 주변 맥락에 따라 WCAG 판단이 달라질 수 있다.", "limitation": "문구만으로 표준 위반을 자동 확정하지 않는다.", "wcag_ref": "2.4.4", "kwcag_ref": "2.4.3", "reference_url": "https://www.w3.org/WAI/WCAG22/Understanding/link-purpose-in-context.html", "effective_from": "2026-10-22"}, {"rule_id": "FORM-001", "rule_version": "1.0.0", "status": "applied", "scope": "standard", "policy_id": "", "title": "입력 필드 이름 후보 확인", "selector": "input", "operator": "field_name_candidate", "attribute": "", "values": "", "description": "label 및 aria-label 등의 입력 필드 이름 후보를 검사한다.", "reason": "입력 요소가 무엇을 입력받는지 식별 가능한지 1차 점검한다.", "limitation": "완전한 접근 가능한 이름 및 렌더링 상태는 판정하지 않는다.", "wcag_ref": "3.3.2|1.3.1", "kwcag_ref": "3.3.2", "reference_url": "https://www.w3.org/WAI/WCAG22/Understanding/labels-or-instructions.html", "effective_from": "2026-10-22"}, {"rule_id": "COMP-LINK-001", "rule_version": "1.0.0", "status": "applied", "scope": "company", "policy_id": "UX-LINK-01", "title": "사내 단독 링크 문구 제한", "selector": "a[href]", "operator": "clear_link_text", "attribute": "", "values": "더보기|보기|여기|클릭", "description": "회사 정책에서 금지한 단독 링크 문구를 검사한다.", "reason": "링크 텍스트만 읽어도 이동 목적이 명료해야 한다는 사내 작성 정책이다.", "limitation": "회사 정책 위반을 WCAG 2.4.4 위반으로 단정하지 않는다.", "wcag_ref": "2.4.4", "kwcag_ref": "2.4.3", "reference_url": "https://www.w3.org/WAI/WCAG22/Understanding/link-purpose-in-context.html", "effective_from": "2026-10-22"}, {"rule_id": "COMP-FORM-001", "rule_version": "1.0.0", "status": "applied", "scope": "company", "policy_id": "UX-FORM-01", "title": "사내 화면 표시 레이블 정책", "selector": "input", "operator": "visible_label", "attribute": "", "values": "", "description": "input 요소에 화면에 보이는 label이 연결됐는지 확인한다.", "reason": "회사 내부 품질 기준으로 명시적인 레이블 작성을 요구한다.", "limitation": "aria-label만 있어도 접근 가능한 이름이 있을 수 있으나 사내 정책과 구분한다.", "wcag_ref": "3.3.2", "kwcag_ref": "3.3.2", "reference_url": "https://www.w3.org/WAI/WCAG22/Understanding/labels-or-instructions.html", "effective_from": "2026-10-22"}, {"rule_id": "COMP-LINK-002", "rule_version": "1.0.0", "status": "applied", "scope": "company", "policy_id": "UX-LINK-02", "title": "사내 자세히 문구 제한", "selector": "a[href]", "operator": "clear_link_text", "attribute": "", "values": "자세히", "description": "자세히 단독 링크 문구를 금지한다.", "reason": "목적이 구체적으로 드러나는 링크 이름을 권장하기 때문이다.", "limitation": "사내 강화 규칙이며 표준 위반을 자동 확정하지 않는다.", "wcag_ref": "2.4.4", "kwcag_ref": "2.4.3", "reference_url": "https://www.w3.org/WAI/WCAG22/Understanding/link-purpose-in-context.html", "effective_from": "2026-10-22"}, {"rule_id": "COMP-LINK-003", "rule_version": "1.1.0", "status": "proposed", "scope": "company", "policy_id": "UX-LINK-03", "title": "바로가기 문구 제한 제안", "selector": "a[href]", "operator": "clear_link_text", "attribute": "", "values": "바로가기", "description": "바로가기 단독 링크 문구 제한을 제안한다.", "reason": "정책 변경을 검토 중이며 승인 전에는 검사에 반영하지 않는다.", "limitation": "검토 중인 규칙을 현재 적용된 정책으로 검색하거나 판정하지 않는다.", "wcag_ref": "2.4.4", "kwcag_ref": "2.4.3", "reference_url": "https://www.w3.org/WAI/WCAG22/Understanding/link-purpose-in-context.html", "effective_from": ""}], "tree": [{"node_id": "ROOT", "parent_id": "", "node_type": "group", "label": "웹 정합성 검사 규칙", "file": "", "rule_id": "", "sort_order": "1", "description": "업무 규칙 전체 루트"}, {"node_id": "STD", "parent_id": "ROOT", "node_type": "group", "label": "표준 관련 검사", "file": "", "rule_id": "", "sort_order": "1", "description": "WCAG/KWCAG 관련 검토 항목(공식 인증 규칙 아님)"}, {"node_id": "STD_IMG", "parent_id": "STD", "node_type": "group", "label": "이미지", "file": "", "rule_id": "", "sort_order": "1", "description": "이미지 관련 검사"}, {"node_id": "STD_LINK", "parent_id": "STD", "node_type": "group", "label": "링크", "file": "", "rule_id": "", "sort_order": "2", "description": "링크 관련 검사"}, {"node_id": "STD_FORM", "parent_id": "STD", "node_type": "group", "label": "입력창", "file": "", "rule_id": "", "sort_order": "3", "description": "폼 요소 관련 검사"}, {"node_id": "COMP", "parent_id": "ROOT", "node_type": "group", "label": "회사 작성 정책", "file": "", "rule_id": "", "sort_order": "2", "description": "회사 자체 기준"}, {"node_id": "COMP_LINK", "parent_id": "COMP", "node_type": "group", "label": "링크 작성 규칙", "file": "", "rule_id": "", "sort_order": "1", "description": "회사 링크 표기 정책"}, {"node_id": "COMP_FORM", "parent_id": "COMP", "node_type": "group", "label": "폼 작성 규칙", "file": "", "rule_id": "", "sort_order": "2", "description": "회사 입력창 정책"}, {"node_id": "N_IMG_001", "parent_id": "STD_IMG", "node_type": "rule", "label": "이미지 alt 확인", "file": "rules.csv", "rule_id": "IMG-001", "sort_order": "1", "description": "원본 파일의 해당 규칙 ID를 조회"}, {"node_id": "N_LINK_001", "parent_id": "STD_LINK", "node_type": "rule", "label": "링크 이름 후보", "file": "rules.csv", "rule_id": "LINK-001", "sort_order": "1", "description": "링크 이름 후보 탐지"}, {"node_id": "N_LINK_002", "parent_id": "STD_LINK", "node_type": "rule", "label": "모호한 링크 검토", "file": "rules.csv", "rule_id": "LINK-002", "sort_order": "2", "description": "cantTell 샘플"}, {"node_id": "N_FORM_001", "parent_id": "STD_FORM", "node_type": "rule", "label": "입력 필드 이름 후보", "file": "rules.csv", "rule_id": "FORM-001", "sort_order": "1", "description": "입력 이름 후보 탐지"}, {"node_id": "N_COMP_LINK_001", "parent_id": "COMP_LINK", "node_type": "rule", "label": "사내 더보기 문구 제한", "file": "rules.csv", "rule_id": "COMP-LINK-001", "sort_order": "1", "description": "사내 failed 샘플"}, {"node_id": "N_COMP_LINK_002", "parent_id": "COMP_LINK", "node_type": "rule", "label": "사내 자세히 문구 제한", "file": "rules.csv", "rule_id": "COMP-LINK-002", "sort_order": "2", "description": "사내 작성 정책"}, {"node_id": "N_COMP_LINK_003", "parent_id": "COMP_LINK", "node_type": "rule", "label": "바로가기 제한 제안", "file": "rules.csv", "rule_id": "COMP-LINK-003", "sort_order": "3", "description": "status=proposed는 실행 제외"}, {"node_id": "N_COMP_FORM_001", "parent_id": "COMP_FORM", "node_type": "rule", "label": "사내 화면 레이블 정책", "file": "rules.csv", "rule_id": "COMP-FORM-001", "sort_order": "1", "description": "사내 레이블 정책"}]}</script>
+<script>
+(function(){
+  const el=document.getElementById('m3-corpus');
+  if(!el)return;
+  const data=JSON.parse(el.textContent);
+  const lookup=Object.fromEntries(data.tree.map(x=>[x.node_id,x]));
+  const leaf=Object.fromEntries(data.tree.filter(x=>x.node_type==='rule').map(x=>[x.rule_id,x]));
+  const $=id=>document.getElementById(id);
+  const textFields=['title','description','reason','limitation'];
+  const normalize=t=>String(t||'').trim().replace(/\s+/g,' ').toLowerCase();
+  function tokens(s){
+    s=normalize(s); let a=[];
+    for(let n=2;n<=3;n++){for(let i=0;i<=s.length-n;i++)a.push(s.slice(i,i+n));}
+    return a;
+  }
+  function pathOf(leafNode){
+    let arr=[],seen=new Set(); let n=leafNode;
+    while(n){if(seen.has(n.node_id))return '순환 오류';seen.add(n.node_id);arr.unshift(n.label);n=lookup[n.parent_id];}
+    return arr.join(' > ');
+  }
+  function scoreTFIDF(q,rows){
+    const docs=rows.map(x=>tokens(x._text)); const qt=tokens(q);
+    const df=new Map(); const N=rows.length;
+    docs.forEach(a=>new Set(a).forEach(w=>df.set(w,(df.get(w)||0)+1)));
+    const idf=w=>Math.log((N+1)/((df.get(w)||0)+1))+1;
+    function vec(a){const c=new Map();a.forEach(w=>{if(df.has(w))c.set(w,(c.get(w)||0)+1)});let norm=0;
+      for(const [w,k] of c){const v=k*idf(w);c.set(w,v);norm+=v*v;}
+      norm=Math.sqrt(norm); if(norm)for(const [w,v] of c)c.set(w,v/norm);return c;}
+    const qv=vec(qt); return docs.map(d=>{const dv=vec(d);let s=0;for(const [w,v] of qv)s+=v*(dv.get(w)||0);return s;});
+  }
+  function scoreBM25(q,rows){
+    const docs=rows.map(x=>tokens(x._text));const N=rows.length;
+    const avg=docs.reduce((s,a)=>s+a.length,0)/N;
+    const df=new Map();docs.forEach(a=>new Set(a).forEach(w=>df.set(w,(df.get(w)||0)+1)));
+    const qt=new Set(tokens(q));const k1=1.5,b=0.75;
+    return docs.map(a=>{let s=0;let c=new Map();a.forEach(w=>c.set(w,(c.get(w)||0)+1));
+      const factor=1-b+b*a.length/avg;
+      qt.forEach(w=>{const f=c.get(w)||0,d=df.get(w)||0;if(!f||!d)return;
+        const idf=Math.log(1+(N-d+0.5)/(d+0.5));s+=idf*f*(k1+1)/(f+k1*factor);});return s;});
+  }
+  function addText(parent,tag,value,classname){let n=document.createElement(tag);if(classname)n.className=classname;n.textContent=value;parent.appendChild(n);return n;}
+  function run(){
+    let q=$('m3-query').value.trim(),method=$('m3-method').value,scope=$('m3-scope').value,proposed=$('m3-proposed').checked;
+    const results=$('m3-results');results.replaceChildren();
+    if(!q){$('m3-message').textContent='검색어를 입력하세요.';return;}
+    let current=data.rules.filter(x=>(proposed||x.status==='applied')&&(scope==='all'||x.scope===scope));
+    const docs=current.map(x=>({...x,_text:textFields.map(k=>k+': '+(x[k]||'')).join('\n')}));
+    if(!docs.length){$('m3-message').textContent='해당 조건의 문서가 없습니다.';return;}
+    const scores=method==='bm25'?scoreBM25(q,docs):scoreTFIDF(q,docs);
+    const ranking=docs.map((x,i)=>({...x,_score:scores[i]})).filter(x=>x._score>0).sort((a,b)=>b._score-a._score||a.rule_id.localeCompare(b.rule_id)).slice(0,3);
+    $('m3-message').textContent=`검색 대상 ${docs.length}건 · 상위 ${ranking.length}건 · ${method==='bm25'?'BM25':'TF-IDF'} · 점수는 적합률이 아님`;
+    if(!ranking.length){addText(results,'p','일치하는 단어 조각이 없습니다. 질문 표현이나 검색 범위를 바꿔 보세요.','sub');return;}
+    ranking.forEach((row,i)=>{
+      const card=document.createElement('article');card.className='lab-result';
+      let top=document.createElement('div');top.className='top';card.appendChild(top);
+      addText(top,'strong',`${i+1}위 · ${row.rule_id}`);
+      addText(top,'span',row.scope==='company'?'사내 규칙':'표준 관련 검사','tag');
+      addText(top,'span',row.status,'tag');
+      addText(top,'span',`점수 ${row._score.toFixed(4)}`,'tag');
+      addText(card,'div',row.title+' — '+row.reason,'explain');
+      const node=leaf[row.rule_id];
+      addText(card,'div',`버전 ${row.rule_version} · 출처 rules.csv · ${node?pathOf(node):'트리 미연결'} `,'meta');
+      if(/^https:\/\//.test(row.reference_url)){let link=document.createElement('a');link.href=row.reference_url;link.target='_blank';link.rel='noopener noreferrer';link.textContent='관련 공식 문서 열기';card.appendChild(link);}
+      results.appendChild(card);
+    });
+  }
+  $('m3-search').addEventListener('click',run);
+  $('m3-query').addEventListener('keydown',e=>{if(e.key==='Enter')run();});
+  ['m3-method','m3-scope','m3-proposed'].forEach(id=>$(id).addEventListener('change',run));
+  run();
+})();
+</script>
+</body>
+</html>
