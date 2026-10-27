@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<!DOCTYPE html>
+
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<title>A1-M4 · 탐지·검색 성능 평가 (M2·M3 CSV 연동)</title>
+<!-- Pretendard & JetBrains Mono Font -->
+<link as="style" crossorigin="" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&amp;display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #ffffff;
+    --surface: #f8fafc;
+    --ink: #0f172a;
+    --quiet: #64748b;
+    --line: #e2e8f0;
+    --edge: #cbd5e1;
+    --accent: #FF2E93;
+    --accent-soft: rgba(255, 46, 147, 0.06);
+    --warn: #f59e0b;
+    --warn-soft: rgba(245, 158, 11, 0.08);
+    --good: #10b981;
+    --good-soft: rgba(16, 185, 129, 0.08);
+    --crit: #ef4444;
+    --code-bg: #0f172a;
+    --banner-bg: #ffffff;
+    --banner-ink: #0f172a;
+  }
+  
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: 'Pretendard', sans-serif;
+    font-size: 18px; line-height: 1.75;
+  }
+
+  /* ── 상단 배너 / 타이틀 영역 ── */
+  .banner { 
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); 
+    color: var(--banner-ink); 
+    border-bottom: 1px solid var(--line); 
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.02);
+  }
+  .banner-in { 
+    max-width: 1320px; 
+    margin: 0 auto; 
+    padding: 16px 24px; 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    gap: 24px; 
+  }
+  .banner-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .banner .org { 
+    font-size: 16px; 
+    font-weight: 800; 
+    color: var(--ink); 
+    letter-spacing: -0.01em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .banner .org::before {
+    content: "";
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    background: var(--accent);
+    border-radius: 50%;
+  }
+  .banner .who { 
+    font-size: 15px; 
+    color: var(--quiet); 
+    font-weight: 600;
+  }
+  .banner .who a {
+    color: var(--accent);
+    text-decoration: none;
+  }
+  .banner .who a:hover {
+    text-decoration: underline;
+  }
+  .banner a { color: inherit; }
+  .banner .home-link { 
+    font-size: 15px; 
+    font-weight: 700; 
+    text-decoration: none; 
+    border: 1px solid var(--line); 
+    border-radius: 8px; 
+    padding: 6px 14px; 
+    background: #ffffff; 
+    color: var(--ink);
+    transition: all 0.2s ease; 
+    letter-spacing: 0.02em;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+  }
+  .banner .home-link:hover { 
+    background: var(--accent); 
+    border-color: var(--accent);
+    color: #ffffff;
+  }
+
+  /* ── 레이아웃: 본문 + 목차 ── */
+  .layout { max-width: 1320px; margin: 0 auto; padding: 32px 24px 96px; display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 40px; align-items: start; }
+  .side { position: sticky; top: 24px; order: 2; max-height: calc(100vh - 48px); overflow-y: auto; background: var(--surface); padding: 16px; border-radius: 16px; border: 1px solid var(--line); }
+  .tabs { display: flex; flex-direction: column; gap: 4px; }
+  .tabs .group { font-size: 15px; font-weight: 800; color: var(--quiet); margin: 16px 0 6px 4px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .tabs .group:first-child { margin-top: 0; }
+  .tabs button {
+    all: unset; cursor: pointer; display: block;
+    font-size: 16px; line-height: 1.45; color: var(--ink);
+    padding: 8px 12px; border-radius: 8px; border: 1px solid transparent;
+    transition: all 0.15s ease;
+  }
+  .tabs button .no { color: var(--accent); font-weight: 700; margin-right: 6px; }
+  .tabs button:hover { background: #f1f5f9; border-color: var(--line); }
+  .tabs button[aria-selected="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); font-weight: 700; }
+  .tabs button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* ── 본문 ── */
+  main { min-width: 0; }
+  .panel { display: none; }
+  .panel:not([hidden]) { display: block; }
+  .crumb { font-size: 15px; font-weight: 800; color: var(--accent); letter-spacing: 0.03em; margin-bottom: 6px; text-transform: uppercase; }
+  h1 { font-size: 32px; line-height: 1.3; margin: 4px 0 16px; letter-spacing: -0.02em; font-weight: 800; }
+  .lead { font-size: 19px; margin: 12px 0 0; color: #334155; font-weight: 500; }
+  h2 { font-size: 26px; line-height: 1.35; margin: 0 0 16px; letter-spacing: -0.01em; font-weight: 800; }
+  h2::before { content: "■ "; color: var(--accent); }
+  h3 { font-size: 20px; margin: 32px 0 12px; font-weight: 700; }
+  h3::before { content: "▶ "; color: var(--accent); font-size: 0.8em; }
+  p { margin: 10px 0; }
+  .sub { color: var(--quiet); font-size: 16px; }
+  .key { font-size: 19px; font-weight: 600; padding: 16px 20px; margin: 20px 0 28px; border-left: 4px solid var(--accent); background: var(--accent-soft); border-radius: 0 12px 12px 0; color: #1e293b; }
+  code { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 16px; background: #f1f5f9; color: #0f172a; padding: 2px 6px; border-radius: 4px; border: 1px solid var(--line); }
+  pre { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 16px; background: var(--code-bg); color: #38bdf8; border: 1px solid #334155; border-radius: 12px; padding: 18px; overflow-x: auto; line-height: 1.6; margin: 16px 0; }
+  pre code { background: none; padding: 0; border: none; color: inherit; }
+
+  .badge { display: inline-block; font-size: 15px; font-weight: 700; color: #fff; background: var(--accent); padding: 1px 8px; border-radius: 6px; margin-left: 6px; line-height: 1.4; vertical-align: 1px; }
+  .stage { display: inline-block; font-size: 15px; font-weight: 700; padding: 2px 8px; border-radius: 6px; border: 1px solid var(--accent); color: var(--accent); white-space: nowrap; line-height: 1.4; background: var(--accent-soft); }
+  .stage.later { border-color: var(--edge); color: var(--quiet); background: #f8fafc; }
+  .num { font-weight: 700; color: var(--accent); white-space: nowrap; }
+
+  /* ── 표 ── */
+  .table-wrap { margin: 16px 0; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); overflow: hidden; }
+  table { border-collapse: collapse; width: 100%; font-size: 16px; }
+  th, td { text-align: left; vertical-align: top; padding: 14px 16px; border-bottom: 1px solid var(--line); }
+  th { font-weight: 700; color: var(--quiet); font-size: 15px; white-space: nowrap; background: #f1f5f9; }
+  tr:last-child td { border-bottom: none; }
+  td.nowrap { white-space: nowrap; }
+  td.nowrap .sub { white-space: normal; font-size: 15px; line-height: 1.5; margin-top: 4px; min-width: 150px; max-width: 220px; }
+  tr.new td { background: var(--accent-soft); }
+
+  /* ── HTML 도형 공통 ── */
+  .fig { margin: 24px 0; padding: 24px; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; }
+  .fig-title { font-size: 18px; font-weight: 800; margin: 0 0 16px; color: var(--ink); }
+  .fig-label { font-size: 15px; font-weight: 800; color: var(--quiet); margin: 20px 0 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .fig-label:first-of-type { margin-top: 0; }
+  .node { position: relative; border: 1px solid var(--edge); border-radius: 12px; padding: 14px 16px; background: var(--bg); transition: border-color 0.2s; }
+  .node.main { border-color: var(--accent); border-width: 2px; background: var(--accent-soft); }
+  .node.newb { border-color: var(--accent); border-width: 2px; }
+  .node.bad { border-color: var(--warn); background: var(--warn-soft); }
+  .node .t { font-size: 16px; font-weight: 700; line-height: 1.4; color: var(--ink); }
+  .node .d { font-size: 15px; color: var(--quiet); line-height: 1.5; margin-top: 4px; }
+  .node .tag { position: absolute; top: -10px; right: 12px; font-size: 15px; font-weight: 700; color: #fff; background: var(--accent); border-radius: 4px; padding: 1px 6px; line-height: 1.4; }
+  .node ul { margin: 6px 0 0; padding-left: 20px; font-size: 15px; }
+  .node ul li { margin: 3px 0; color: var(--quiet); }
+  .node .foot { font-size: 15px; color: var(--quiet); margin-top: 10px; }
+  .node.bad .t { color: #d97706; }
+  .node.main .t.acc { color: var(--accent); }
+
+  /* 가로 흐름: 노드 → 노드 */
+  .flow { display: flex; align-items: stretch; gap: 4px; }
+  .flow > .node { flex: 1 1 0; min-width: 0; text-align: center; }
+  .flow.left > .node { text-align: left; }
+  .arr { flex: none; width: 28px; display: grid; place-items: center; color: var(--edge); font-size: 18px; font-weight: 700; }
+  .arr::before { content: "→"; }
+  .band { margin-top: 16px; padding: 12px 16px; border: 1px solid var(--good); background: var(--good-soft); border-radius: 10px; font-size: 15px; font-weight: 600; color: #065f46; text-align: center; }
+
+  /* V-모델 */
+  .vm { display: grid; grid-template-columns: 1fr 170px 1fr; gap: 12px 0; align-items: center; }
+  .vm .node { text-align: center; }
+  .vm .l2 { margin-left: 14%; }
+  .vm .r2 { margin-right: 14%; }
+  .vm .link { text-align: center; font-size: 15px; color: var(--quiet); border-top: 2px dashed var(--edge); padding-top: 4px; margin: 0 8px; font-weight: 600; }
+  .vm .impl { grid-column: 1 / -1; justify-self: center; width: 40%; }
+  .vm-head { display: grid; grid-template-columns: 1fr 170px 1fr; font-size: 15px; font-weight: 800; color: var(--quiet); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .vm-head span:last-child { text-align: right; }
+
+  /* ── 목업 ── */
+  .mock { border: 1px solid var(--line); border-radius: 16px; overflow: hidden; background: var(--bg); margin: 24px 0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+  .mock-bar { display: flex; align-items: center; gap: 8px; padding: 12px 16px; background: #f1f5f9; border-bottom: 1px solid var(--line); }
+  .mock-bar .dot { width: 10px; height: 10px; border-radius: 50%; background: #cbd5e1; flex: none; }
+  .mock-bar .url { flex: 1; min-width: 0; margin-left: 8px; font-size: 15px; color: var(--quiet); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 4px 12px; font-family: "JetBrains Mono", monospace; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .mock-body { padding: 24px; }
+  .mock-title { font-size: 20px; font-weight: 800; margin: 0 0 16px; }
+  .mock-input { display: flex; gap: 8px; margin-bottom: 20px; }
+  .mock-input .field { flex: 1; min-width: 0; border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; font-family: "JetBrains Mono", monospace; font-size: 15px; background: #f8fafc; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .mock-input .btn { background: var(--accent); color: #fff; border-radius: 8px; padding: 10px 20px; font-weight: 700; font-size: 15px; white-space: nowrap; }
+  .mock-summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+  .mock-summary .cell { border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; background: var(--surface); }
+  .mock-summary .k { font-size: 15px; color: var(--quiet); font-weight: 600; }
+  .mock-summary .v { font-size: 20px; font-weight: 800; margin-top: 2px; }
+  .mock-summary .v.small { font-size: 15px; padding-top: 4px; }
+  .mock-tabs { display: flex; gap: 8px; border-bottom: 1px solid var(--line); margin-bottom: 16px; flex-wrap: wrap; }
+  .mock-tabs span { font-size: 15px; padding: 8px 14px; border-bottom: 2px solid transparent; color: var(--quiet); font-weight: 600; cursor: default; }
+  .mock-tabs span.on { border-color: var(--accent); color: var(--accent); font-weight: 800; }
+  .vcard { border: 1px solid var(--line); border-radius: 12px; padding: 16px; margin-bottom: 16px; background: var(--surface); }
+  .vcard .top { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .sev { font-size: 15px; font-weight: 700; padding: 2px 8px; border-radius: 4px; color: #fff; line-height: 1.4; text-transform: uppercase; }
+  .sev.critical { background: var(--crit); }
+  .sev.major { background: var(--warn); color: #fff; }
+  .rid { font-family: "JetBrains Mono", monospace; font-weight: 700; font-size: 15px; color: var(--ink); }
+  .wc { font-size: 15px; color: var(--quiet); font-weight: 600; }
+  .vcard .msg { font-weight: 700; margin: 4px 0 10px; font-size: 16px; }
+  .vcard .el { font-family: "JetBrains Mono", monospace; font-size: 15px; background: #0f172a; color: #38bdf8; border-radius: 8px; padding: 8px 12px; overflow-x: auto; white-space: nowrap; margin-bottom: 12px; }
+  .vgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .vbox { border: 1px solid var(--line); border-radius: 8px; padding: 12px; font-size: 15px; background: var(--bg); }
+  .vbox .h { font-size: 15px; font-weight: 800; color: var(--quiet); margin-bottom: 6px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .vbox.later { opacity: 0.65; }
+  .score { font-family: "JetBrains Mono", monospace; font-size: 15px; color: var(--quiet); font-weight: 600; }
+
+  .roadmap { display: flex; flex-wrap: wrap; gap: 6px; margin: 16px 0; align-items: center; }
+  .roadmap .chip { font-size: 15px; padding: 6px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--quiet); font-weight: 600; }
+  .roadmap .chip.on { border: 2px solid var(--accent); color: var(--accent); font-weight: 800; background: var(--accent-soft); }
+  .roadmap .sep { color: var(--quiet); margin: 0 4px; font-weight: 800; }
+
+  /* ── 태블릿 이하: 목차를 상단 가로 탭으로 ── */
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: minmax(0, 1fr); gap: 16px; padding: 16px 16px 64px; }
+    .side { order: 0; position: sticky; top: 0; z-index: 5; max-height: none; overflow: visible; background: var(--bg); padding: 12px 0; border-bottom: 1px solid var(--line); border-radius: 0; min-width: 0; }
+    .tabs { flex-direction: row; overflow-x: auto; gap: 6px; scrollbar-width: thin; }
+    .tabs .group { display: none; }
+    .tabs button { white-space: nowrap; font-size: 15px; padding: 6px 12px; border-color: var(--line); background: var(--surface); }
+  }
+
+  /* ── 모바일: 도형은 세로로, 표는 카드로 ── */
+  @media (max-width: 760px) {
+    body { font-size: 17px; }
+    .banner-in { flex-direction: column; align-items: flex-start; padding: 12px 16px; gap: 12px; }
+    .banner-left { flex-direction: column; align-items: flex-start; gap: 4px; }
+    .banner .home-link { align-self: stretch; text-align: center; }
+    h1 { font-size: 24px; }
+    h2 { font-size: 21px; }
+    h3 { font-size: 18px; }
+    .lead, .key { font-size: 16px; }
+    .key { padding: 12px 16px; }
+    .fig { padding: 16px; }
+
+    .flow { flex-direction: column; }
+    .flow > .node { flex: none; }
+    .arr { width: auto; height: 24px; }
+    .arr::before { content: "↓"; }
+
+    .vm, .vm-head { grid-template-columns: 1fr; }
+    .vm-head { display: none; }
+    .vm .l2, .vm .r2 { margin: 0; }
+    .vm .impl { width: 100%; }
+    .vm .link { border-top: none; border-left: 2px dashed var(--edge); text-align: left; padding: 2px 0 2px 12px; margin: 0 0 0 24px; }
+    .vm .gap { height: 10px; }
+
+    .mock-body { padding: 16px; }
+    .mock-summary { grid-template-columns: 1fr 1fr; }
+    .vgrid { grid-template-columns: 1fr; }
+
+    table.cards, table.cards tbody, table.cards tr, table.cards td { display: block; width: 100%; }
+    table.cards { font-size: 15px; }
+    table.cards thead { display: none; }
+    table.cards tr { padding: 12px 16px; border-bottom: 1px solid var(--line); }
+    table.cards tr:last-child { border-bottom: none; }
+    table.cards td { border: none; padding: 4px 0; white-space: normal; }
+    table.cards td::before { content: attr(data-label); display: block; font-size: 15px; font-weight: 800; color: var(--quiet); margin-bottom: 2px; text-transform: uppercase; }
+    table.cards td[data-label=""]::before { display: none; }
+    table.cards td:first-child { font-weight: 700; font-size: 15px; color: var(--ink); }
+    table.cards td:first-child::before { display: none; }
+  }
+
+  /* ── 약자 · 링크 ── */
+  abbr[data-full] { text-decoration: underline dotted var(--edge); text-underline-offset: 3px; cursor: help; }
+  .exp { color: var(--quiet); font-size: 0.9em; }
+  a { color: var(--accent); font-weight: 600; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  a.doc { border-bottom: 1px solid var(--accent); }
+  a.doc::after { content: " ↗"; font-size: 0.8em; }
+  .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); max-width: min(560px, calc(100vw - 32px)); background: var(--dark); color: #fff; font-size: 15px; line-height: 1.5; padding: 14px 18px; border-radius: 12px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.15); z-index: 50; border: 1px solid #334155; }
+  .toast[hidden] { display: none; }
+  .toast b { display: block; font-size: 15px; margin-bottom: 2px; color: #38bdf8; }
+
+  @media print {
+    .side { display: none; }
+    .layout { display: block; }
+    .panel[hidden] { display: block; }
+    .panel { margin-bottom: 48px; break-inside: avoid-page; }
+    body { background: #fff; }
+  }
+
+  /* ── 보완 ── */
+  td.nowrap .sub { white-space: normal; }
+  main h4 { font-size: 17px; margin: 24px 0 8px; font-weight: 700; }
+  .flow.tight > .node { padding: 12px 8px; }
+  .flow.tight .t { font-size: 15px; word-break: keep-all; }
+  .flow.tight .d { word-break: keep-all; }
+  .flow.tight .d { font-size: 15px; }
+  .flow.tight .arr { width: 18px; }
+  .make { font-size: 15px; color: var(--quiet); margin: -12px 0 20px; }
+  .make b { color: var(--accent); margin-right: 6px; }
+  :root { --dark: #0f172a; }
+  main ul:not(.tabs), main ol { list-style: disc; padding-left: 22px; margin: 8px 0; }
+  main ol { list-style: decimal; }
+  main li { margin: 4px 0; }
+
+  /* 1.3 절 가독성 보정: 기존 그리드·탭·표 레이아웃 변경 없음 */
+  #s6 { font-size: 18px; line-height: 1.85; }
+  #s6 p, #s6 li { font-size: 18px; line-height: 1.85; }
+  #s6 h2 { font-size: 27px; }
+  #s6 h3 { font-size: 22px; line-height: 1.5; }
+  #s6 .table-wrap table, #s6 .table-wrap td { font-size: 17px; line-height: 1.75; }
+  #s6 .table-wrap th { font-size: 16px; line-height: 1.6; }
+  #s6 p.sub, #s6 .sub { font-size: 16px; line-height: 1.75; }
+  #s6 code { font-size: 16px; }
+  @media (max-width: 760px) {
+    #s6, #s6 p, #s6 li { font-size: 17px; }
+    #s6 .table-wrap table, #s6 .table-wrap td { font-size: 16px; }
+    #s6 .table-wrap th { font-size: 16px; }
+  }
+
+/* A0 Part 1 · 가독성 보강 (레이아웃 변경 없음) */
+body {font-size:18px;line-height:1.78}
+main p, main li {font-size:18px}
+main .sub, main .make, main .exp {font-size:16px}
+main table {font-size:17px}
+main th {font-size:16px}
+main td, main td .sub {font-size:16px;line-height:1.65}
+main code, main pre, main pre code {font-size:16px}
+.tabs button, .banner .who {font-size:16px}
+.tabs .group, .crumb, .banner .home-link {font-size:15px}
+.key {font-size:18px}
+.node .d, .vbox, .fig-label, .mock-bar .url, .fig .foot, .score {font-size:16px}
+@media (max-width:760px){body{font-size:17px}main p,main li{font-size:17px}main table,main td{font-size:16px}main code,main pre,main pre code{font-size:15px}}
+
+/* A1-M1 가독성 보강: 레이아웃과 구조는 그대로 유지 */
+body {font-size:18px;}
+.tabs button, .tabs .group {font-size:16px;}
+main p, main li {font-size:18px;}
+main table, main td {font-size:17px;}
+main th, main .sub, main .crumb, .banner .who {font-size:16px;}
+main code, main pre, main pre code {font-size:16px;}
+main .fig-label, main .node .d, main .node .foot, main .badge, main .stage {font-size:16px;}
+@media(max-width:760px){body, main p, main li {font-size:17px;} main table, main td, main code, main pre, main pre code {font-size:16px;} .tabs button{font-size:16px;} }
+
+/* A1-M2 동일 레이아웃·가독성 유지 */
+body{font-size:18px;}main p,main li{font-size:18px;}main table,main td{font-size:17px;} main th, main .sub, main .crumb{font-size:16px;} main code,main pre,main pre code{font-size:16px;} .tabs button,.tabs .group{font-size:16px;} @media(max-width:760px){main p,main li{font-size:17px;} main td,main code,main pre,main pre code{font-size:16px;}}
+/* 가독성: 기존 레이아웃 보존 */
+body {font-size:18px;} .tabs button{font-size:16px;} .tabs .group,.crumb{font-size:15px;} table{font-size:17px;} th{font-size:16px;} .sub,.make,.caption{font-size:16px;} code,pre{font-size:16px;} .node .d,.fig-label,.badge,.stage{font-size:15px;} .key{font-size:18px;} @media(max-width:760px){body{font-size:17px;}table.cards td{font-size:16px;}table.cards td::before{font-size:15px;}}
+  /* 저작권 안내: 원본 레이아웃 변경 없음 */
+  .copyright-footer { max-width:1320px; margin:0 auto; padding:18px 24px 34px; border-top:1px solid var(--line); text-align:center; color:var(--quiet); font-size:16px; line-height:1.7; }
+  .copyright-footer small { display:block; font-size:15px; }
+  @media print { .copyright-footer { margin-top:20px; } }
+
+/* 통합 M2: 기존 레이아웃 보존, 긴 실습 코드 가독성 */
+body {font-size:18px;line-height:1.78}
+.tabs button {font-size:16px}.tabs .group,.crumb{font-size:15px}
+main p,main li{font-size:18px;line-height:1.8}
+table{font-size:17px;line-height:1.6}th{font-size:16px}
+main .sub,main .make,main .exp{font-size:16px}
+pre,pre code,code{font-size:16px}pre{line-height:1.65}
+.node .d,.fig-label,.badge,.stage,.fig .foot{font-size:15px}
+.key{font-size:18px;line-height:1.75}
+.lesson-outline{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 20px;margin:20px 0}
+.lesson-outline p{margin:4px 0}
+.teaching-note{border-left:3px solid var(--edge);padding:8px 16px;margin:18px 0;color:var(--ink);background:var(--surface)}
+.practice{border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin:18px 0;background:white}
+.practice h4{margin:0 0 8px}
+.source-links{border-top:1px solid var(--line);padding-top:16px;margin-top:30px}
+.source-links a{word-break:break-all}
+details.lesson-details{border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:14px 16px;margin:14px 0}
+details.lesson-details summary{cursor:pointer;font-size:17px;font-weight:800;list-style:revert}
+details.lesson-details[open] summary{margin-bottom:12px}
+.trace-box{background:#0f172a;color:#e2e8f0;padding:14px;border-radius:10px;font:16px/1.65 'JetBrains Mono',monospace;overflow-x:auto;white-space:pre}
+small{font-size:15px}
+@media(max-width:760px){body{font-size:17px}main p,main li{font-size:17px}table.cards td{font-size:16px}table.cards td::before{font-size:15px}}
+
+/* A1-M3: 기존 상단 배너·오른쪽 탭 레이아웃 유지 */
+.formula-box {padding:18px 20px;border:1px solid var(--line);background:var(--surface);border-radius:12px;margin:18px 0;font-size:18px;line-height:1.9;overflow-x:auto}
+.search-lab {border:1px solid var(--line);border-radius:14px;padding:18px;background:#fff;margin:18px 0}
+.lab-controls {display:grid;grid-template-columns:2fr 1.15fr 1fr;gap:12px;align-items:end}
+.lab-controls.minor {grid-template-columns:1fr auto;margin-top:12px}
+.lab-controls label {font-size:16px;font-weight:700;display:flex;flex-direction:column;gap:5px;color:var(--ink)}
+.lab-controls input[type=text],.lab-controls select {width:100%;padding:10px;border:1px solid var(--edge);border-radius:8px;font:16px/1.5 'Pretendard',sans-serif;background:white;color:var(--ink)}
+.lab-controls .checkline {display:flex;flex-direction:row;align-items:center;gap:10px;font-weight:500;line-height:1.5}
+.lab-controls input[type=checkbox] {width:18px;height:18px;accent-color:var(--accent)}
+.lab-button {background:var(--accent);border:none;color:white;font:700 16px 'Pretendard',sans-serif;padding:11px 18px;border-radius:8px;cursor:pointer}
+.lab-button:focus-visible,.lab-controls input:focus-visible,.lab-controls select:focus-visible {outline:2px solid var(--accent);outline-offset:2px}
+.lab-results {display:grid;gap:12px;margin-top:12px}
+.lab-result {border:1px solid var(--line);border-radius:10px;background:var(--surface);padding:14px}
+.lab-result .top {display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.lab-result .top strong {font-size:17px;color:var(--ink)}
+.lab-result .tag {font-size:15px;border:1px solid var(--edge);padding:1px 7px;border-radius:5px;color:var(--quiet)}
+.lab-result .explain {font-size:16px;line-height:1.7;margin-top:8px;white-space:pre-wrap}
+.lab-result .meta {font-size:15px;color:var(--quiet);word-break:break-all;line-height:1.65;margin-top:8px}
+.lab-result a {word-break:break-all}
+@media(max-width:800px) {.lab-controls,.lab-controls.minor {grid-template-columns:1fr}.search-lab {padding:12px}.formula-box {font-size:16px}}
+
+/* A1-M4 추가 평가 위젯: 원본 폰트/배너/탭 디자인은 유지 */
+.eval-lab{padding:18px 20px;border-radius:14px;border:1px solid var(--line);background:var(--surface);margin:22px 0}
+.eval-toolbar{display:flex;flex-wrap:wrap;gap:16px;margin-bottom:16px}
+.eval-toolbar label{display:flex;flex-direction:column;gap:6px;font-size:16px;font-weight:700}
+.eval-toolbar select{min-width:160px;padding:9px 12px;font-size:16px;border:1px solid var(--edge);border-radius:8px;color:var(--ink);background:#fff}
+.eval-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.eval-kpi{padding:14px 12px;border:1px solid var(--line);border-radius:12px;background:#fff}
+.eval-kpi .cap{font-size:15px;color:var(--quiet);font-weight:700}
+.eval-kpi .val{font-size:24px;color:var(--ink);font-weight:800}
+#s4 .table-wrap{overflow-x:auto}#s4 table{min-width:690px}
+#s4 td small{display:block;color:var(--quiet)}
+@media(max-width:800px){.eval-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+</style>
+<style>
+/* A1-M2 CSV 탐색 화면: 기존 상단 배너·오른쪽 탭·본문 스타일 유지 */
+.csv-workbench{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:white;margin:22px 0}
+.csv-tools,.csv-file-load{display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:14px 18px;border-bottom:1px solid var(--line);background:var(--surface)}
+.csv-tools label,.csv-file-load label{font-size:16px;font-weight:700;color:var(--ink)}
+.csv-tools input,.csv-tools select,.csv-file-load input{margin-left:8px;border:1px solid var(--edge);border-radius:8px;padding:8px 10px;font:16px 'Pretendard',sans-serif;background:white;color:var(--ink);max-width:100%}
+.csv-file-load input{font-size:14px;max-width:235px}
+.csv-file-load .sub{margin:2px 0 0;width:100%;font-size:15px}
+.csv-panels{display:grid;grid-template-columns:minmax(220px,1fr) minmax(0,1.6fr);min-height:380px}
+.csv-tree{padding:16px 12px;border-right:1px solid var(--line);background:var(--surface);overflow-x:auto}
+.csv-detail{padding:18px;min-width:0;overflow-wrap:anywhere}
+.mini-head{font-size:16px;font-weight:800;margin-bottom:10px;color:#334155}
+.csv-tree .tree-button{font:16px/1.5 'Pretendard',sans-serif;text-align:left;display:block;width:100%;cursor:pointer;border:1px solid transparent;background:transparent;border-radius:7px;padding:6px 7px;color:#0f172a}
+.csv-tree .tree-button:hover{border-color:var(--line);background:#f1f5f9}
+.csv-tree .tree-button.selected{border-color:var(--accent);background:var(--accent-soft);font-weight:800}
+.csv-tree .tree-group{font-weight:800;color:#334155;font-size:16px;padding:7px 0 3px}
+.csv-detail .rtitle{font-size:21px;font-weight:800;margin:2px 0 10px}
+.csv-detail .pill{display:inline-block;border:1px solid var(--edge);border-radius:6px;font-size:14px;padding:2px 7px;margin-right:5px;margin-bottom:6px;background:white}
+.csv-detail .pill.proposed{border-color:var(--warn);background:var(--warn-soft)}
+.csv-detail .data-line{border-top:1px solid var(--line);padding:8px 0;font-size:16px}
+.csv-detail .data-line strong{display:inline-block;min-width:125px;color:#475569}
+.csv-detail .tag-label{margin:15px 0 6px;font-size:16px;font-weight:800}
+.csv-detail .data-text{padding:10px 12px;border:1px solid var(--line);background:var(--surface);border-radius:8px;font-size:16px;margin:4px 0}
+.csv-detail .meta-box{border:1px solid var(--line);border-radius:8px;padding:10px;background:#f8fafc;white-space:pre-wrap;overflow-wrap:anywhere;font:14px/1.7 'JetBrains Mono',monospace;color:#334155}
+@media(max-width:780px){.csv-panels{grid-template-columns:1fr}.csv-tree{border-right:0;border-bottom:1px solid var(--line)}.csv-tools label,.csv-file-load label{display:flex;flex-direction:column;align-items:flex-start}.csv-tools input,.csv-tools select,.csv-file-load input{margin-left:0}}
+</style></head>
+<body>
+<div class="banner">
+<div class="banner-in">
+<div class="banner-left">
+<div class="org">청년취업사관학교 AI_클라우드과정(2026년)</div>
+<div class="who">강사 부성순 · <a href="mailto:bakpak@empas.com">bakpak@empas.com</a></div>
+</div>
+<a class="home-link" href="/">🏠 홈으로</a>
+</div>
+</div>
+<div class="layout">
+<aside class="side"><div aria-label="A1-M4 목차" aria-orientation="vertical" class="tabs" role="tablist"><div class="group">Part A · Article A1 · Module A1-M4</div><button aria-controls="s1" aria-selected="true" id="tab-s1" role="tab" tabindex="0"><span class="no">01</span>평가 목적과 정답셋</button><button aria-controls="s2" aria-selected="false" id="tab-s2" role="tab" tabindex="-1"><span class="no">02</span>탐지 평가·혼동행렬</button><button aria-controls="s3" aria-selected="false" id="tab-s3" role="tab" tabindex="-1"><span class="no">03</span>검색 평가·Recall@k</button><button aria-controls="s4" aria-selected="false" id="tab-s4" role="tab" tabindex="-1"><span class="no">04</span>실제 CSV 평가 화면</button><button aria-controls="s5" aria-selected="false" id="tab-s5" role="tab" tabindex="-1"><span class="no">05</span>결과 해석·트러블슈팅</button><button aria-controls="s6" aria-selected="false" id="tab-s6" role="tab" tabindex="-1"><span class="no">06</span>이해도·실습·GPT 검토</button></div></aside><main><section aria-labelledby="tab-s1" class="panel" id="s1" role="tabpanel">
+<div class="crumb">Part A · Article A1 · Module A1-M4 · 업무 시나리오</div>
+<h1>A1-M4. 탐지·검색 성능 평가</h1><p class="lead"><b>“동작한다”와 “정확하다”는 다릅니다.</b> A1-M2가 판정한 결과와 A1-M3가 찾은 규칙 문서를 어떻게 객관적으로 검증할지 배웁니다.</p>
+<div class="key">이 모듈에서 새 규칙이나 새 검색기를 만들지 않는다. <b>A1-M2의 규칙 판정 결과</b>가 얼마나 맞는지와 <b>A1-M3의 근거 검색 순위</b>가 얼마나 유용한지를 각각 평가한다.</div>
+<h3>실제 업무: 검사 결과가 나왔는데, 믿고 배포해도 될까?</h3>
+<p>개발팀은 <code>sample.html</code>을 전달했다. A1-M2 검사기가 <code>rules.csv</code>의 적용 규칙 7개를 실행했고, A1-M3 검색기가 관련 규칙 설명을 순위로 반환했다. 하지만 프로그램이 JSON을 만들었다는 사실만으로 “문제가 정확히 발견되었다”, “첫 번째 근거 문서가 정답이다”라고 주장할 수는 없다. <strong>두 종류의 품질을 독립적인 정답셋으로 확인</strong>해야 한다.</p>
+<div class="table-wrap"><table><thead><tr><th>업무 단계</th><th>이미 만든 자산</th><th>M4에서 새로 하는 일</th></tr></thead><tbody><tr><td>① 판정</td><td><code>rules.csv</code> · M2 <code>checker.py</code></td><td><code>(target, rule_id)</code>로 결과를 찾아 검토 정답과 비교</td></tr><tr><td>② 근거 검색</td><td><code>rule_tree.csv</code> · M3 <code>search_engine.py</code></td><td>질문마다 관련 규칙 ID 목록을 정하고 검색 순위를 평가</td></tr><tr><td>③ 문제 발견</td><td><code>failed</code> · <code>cantTell</code> / Top-k 검색 결과</td><td>오탐·미탐·판단 보류·검색 누락을 따로 기록</td></tr><tr><td>④ 개선 준비</td><td>검사·검색 결과 JSON</td><td>같은 정답셋·같은 데이터 버전으로 다음 개선안을 비교</td></tr></tbody></table></div>
+<h3>두 가지 평가를 섞으면 안 된다</h3>
+<div class="table-wrap"><table><thead><tr><th>평가 구분</th><th>평가 단위</th><th>정답은 무엇인가?</th><th>대표 질문</th></tr></thead><tbody><tr><td><b>탐지 평가</b></td><td>HTML 요소 × 규칙 ID</td><td>규칙의 적용 조건에 대한 검토 결과</td><td>이 이미지가 해당 검사 조건에 실패한 게 맞나?</td></tr><tr><td><b>검색 평가</b></td><td>질문 × 관련 규칙 ID 집합</td><td>해당 질문에 필요한 규칙 문서 목록</td><td>“더보기” 사내 정책이 상위 2건 안에 있나?</td></tr></tbody></table></div>
+<h3>이번에 추가되는 파일은 ‘지식 원본’이 아닌 평가용 정답셋이다</h3>
+<p><code>rules.csv</code>와 <code>rule_tree.csv</code>는 변경하지 않는다. 새로 만드는 <code>gold/detection_gold.csv</code>와 <code>gold/search_gold.csv</code>는 사람의 판단을 흉내 낸 <strong>교육용 평가 정답</strong>을 기록하기 위한 작은 데이터다. <b>새 규칙 데이터베이스나 새로운 RAG 지식 CSV를 만들자는 뜻이 아니다.</b></p>
+<div class="table-wrap"><table><thead><tr><th>입력 파일</th><th>의미</th><th>A1-M4에서 사용 방식</th></tr></thead><tbody><tr><td><code>data/rules.csv</code></td><td>M2 원본 8건: 적용 7 / 검토 중 1</td><td>규칙 엔진과 검색 본문에 재사용; 변경 금지</td></tr><tr><td><code>data/rule_tree.csv</code></td><td>규칙 계층·파일·규칙 ID 연결</td><td>근거 출처와 트리 경로 확인</td></tr><tr><td><code>data/sample.html</code></td><td>M2에서 사용했던 같은 HTML</td><td>검사 대상 재사용</td></tr><tr><td><code>gold/detection_gold.csv</code></td><td>요소×규칙의 검토 정답 22건</td><td>탐지·보류 결과 비교</td></tr><tr><td><code>gold/search_gold.csv</code></td><td>7개 질문과 관련 규칙 ID</td><td>TF-IDF / BM25 순위 비교</td></tr></tbody></table></div>
+<div class="practice"><h4>완료 기준</h4><p>정밀도·재현율 계산 자체가 목표는 아니다. <b>어느 오류를 무엇과 비교하여 측정했는지</b>, <b>판단을 보류한 경우를 어떻게 처리했는지</b>, <b>검색 상위 순위와 실제 관련 문서가 일치하는지</b>를 설명할 수 있어야 한다.</p></div>
+<p class="sub"><strong>중요:</strong> M2는 WCAG 인증 도구가 아니라 제한된 자체 검사기다. 이 모듈의 정답도 “검사 조건”을 평가하는 교육용 표본이며, 공식 웹 접근성 적합성이나 실서비스 정확도를 증명하지 않는다.</p>
+</section><section aria-labelledby="tab-s2" class="panel" hidden="" id="s2" role="tabpanel">
+<div class="crumb">Part A · Article A1 · Module A1-M4 · 판정 평가</div>
+<h1>02. 탐지 성능 — 혼동행렬·Precision·Recall·F1</h1><p class="lead">작은 숫자를 직접 계산한 후, <code>passed</code>·<code>failed</code>·<code>cantTell</code>을 어떻게 취급할지 명확히 정합니다.</p>
+<div class="key">탐지 평가의 양성(Positive)은 <b>해당 규칙상 조치가 필요한 <code>failed</code></b>이다. <code>passed</code>는 음성(Negative)이다. 표준 관련 검사와 사내 정책의 결과를 섞어 “WCAG 위반 확률”로 해석하지 않는다.</div>
+<h3>먼저 10건을 손으로 분류해 본다</h3>
+<p>가상의 검사 10건 중 실제로 조치가 필요한 건이 5건이라고 가정한다. 검사기가 그중 4건을 정확히 발견했지만, 조치가 필요하지 않은 2건도 잘못 경고했다.</p>
+<div class="table-wrap"><table><thead><tr><th>구분</th><th>정답: 조치 필요</th><th>정답: 조치 불필요</th><th>의미</th></tr></thead><tbody><tr><td>검사기: 문제 발견</td><td><b>TP = 4</b></td><td><b>FP = 2</b></td><td>발견한 6건 중 2건은 오탐</td></tr><tr><td>검사기: 문제 없음</td><td><b>FN = 1</b></td><td><b>TN = 3</b></td><td>실제 문제 1건은 놓침</td></tr></tbody></table></div>
+<h3>TP·FP·FN·TN은 어떤 관점의 약자인가?</h3>
+<p><b>True/False</b>는 예측이 정답과 일치하는지, <b>Positive/Negative</b>는 문제를 발견했다고 판단했는지를 나타낸다. 따라서 <code>FN</code>은 “문제가 실제로 있었지만 놓친 사건”, <code>FP</code>는 “문제가 없는데 있다고 경고한 사건”이다. 취업 전 검사처럼 누락이 치명적인 업무는 FN을, 검토 인력이 부족한 업무는 FP를 특히 관리한다.</p>
+<h3>숫자로 지표를 계산한다</h3>
+<div class="table-wrap"><table><thead><tr><th>지표</th><th>계산 과정</th><th>결과·해석</th></tr></thead><tbody><tr><td><b>Precision(정밀도)</b></td><td>TP / (TP + FP) = 4 / 6</td><td><b>0.6667</b> · 경고한 6건 중 약 66.7%가 실제 문제</td></tr><tr><td><b>Recall(재현율)</b></td><td>TP / (TP + FN) = 4 / 5</td><td><b>0.8000</b> · 실제 문제 5건 중 4건 발견</td></tr><tr><td><b>F1</b></td><td>2 × Precision × Recall / (Precision + Recall)</td><td><b>0.7273</b> · 정밀도·재현율의 조화평균</td></tr><tr><td><b>Accuracy(정확도)</b></td><td>(TP + TN) / 전체 = 7 / 10</td><td><b>0.7000</b> · 불균형 데이터에서는 착시 가능</td></tr></tbody></table></div><pre><code># 01_basics_detection.py
+from metrics import binary_scores
+truth = [1]*5 + [0]*5
+prediction = [1,1,1,1,0, 1,1,0,0,0]
+s = binary_scores(truth, prediction)
+print(s.tp, s.fp, s.fn, s.tn)  # 4 2 1 3
+print(round(s.precision,4),round(s.recall,4),round(s.f1,4))
+# 0.6667 0.8 0.7273</code></pre>
+<h3>문제: <code>cantTell</code>을 무조건 빼면?</h3>
+<p>현재 M2는 <code>passed / failed / cantTell / inapplicable</code> 네 가지 결과를 출력한다. <b>판단 보류가 많아도 분류 결과가 좋아 보이는 오류</b>를 피하려면, “이진 지표를 계산한 건수”와 “검토 대상 전체 건수”를 분리해서 보여줘야 한다.</p>
+<div class="table-wrap"><table><thead><tr><th>상태</th><th>평가 처리</th><th>별도 확인할 내용</th></tr></thead><tbody><tr><td><code>passed</code> · <code>failed</code></td><td>사전 검토된 정답도 확정일 때 TP/FP/FN/TN 계산</td><td>규칙 범위(scope)와 판정 단위 일치 여부</td></tr><tr><td><code>cantTell</code></td><td>강제로 passed/failed로 바꾸지 않음</td><td>보류 건수·사유·전문가 검토 필요성</td></tr><tr><td><code>inapplicable</code></td><td>적용 대상이 아닌 사례로 별도 집계</td><td>모든 HTML 요소를 분모에 넣지 않음</td></tr><tr><td>정답은 확정인데 예측이 보류</td><td>이진 지표에서 제외하더라도 숨기지 않음</td><td><b>판정 커버리지</b> 저하로 별도 표시</td></tr></tbody></table></div>
+<p><code>decision_coverage = 확정 정답 중 검사기가 확정 결과를 낸 건수 ÷ 확정 정답 전체 건수</code>. 예를 들어 확정 정답 20건 중 15건만 확정한 경우 커버리지는 75%다. 나머지를 빼고 계산한 F1만 제시하면 안 된다.</p>
+<div class="practice"><h4>실습 질문</h4><p>FP가 2건에서 1건으로 줄면 Precision은 얼마나 바뀌는가? FN을 1건 줄이면 Recall은 어떻게 달라지는가? 지표 변화가 업무에 어떤 이득을 주는지 먼저 예상하고 코드를 변경해 보자.</p></div>
+</section><section aria-labelledby="tab-s3" class="panel" hidden="" id="s3" role="tabpanel">
+<div class="crumb">Part A · Article A1 · Module A1-M4 · 검색 평가</div>
+<h1>03. 근거 검색 — Recall@k·Hit@k·MRR</h1><p class="lead">M3의 검색 점수가 아니라 <b>정답 규칙 ID가 몇 위에 나타났는지</b> 평가합니다.</p>
+<div class="key">탐지에서의 <b>Recall</b>은 누락된 <em>위반 건수</em>를 세지만, 검색의 <b>Recall@k</b>는 질문에 관련된 <em>문서 ID</em>가 상위 k위 안에 얼마나 들어왔는지 본다. 이름이 같아도 평가 대상이 다르다.</div>
+<h3>질문과 정답 규칙 ID를 먼저 정한다</h3>
+<p>예를 들어 사용자가 “더보기 링크의 목적과 회사 작성 정책을 설명해 줘”라고 질문했다면, 관련 문서는 <code>LINK-002</code>(표준 관련 맥락 검토), <code>COMP-LINK-001</code>(사내 금칙어) 두 건일 수 있다. <b>검색 점수 자체가 정답은 아니므로 평가 전에 관련 문서 목록을 만들어야 한다.</b></p>
+<h3>상위 검색 결과를 이용해 직접 계산한다</h3>
+<p>교육용 가상 검색에서 관련 문서가 <code>{A,B,C}</code> 세 개이고, 검색된 순서가 <code>[X, A, B, C]</code>라고 가정한다. <code>X</code>는 관련 없는 문서다.</p>
+<div class="table-wrap"><table><thead><tr><th>지표</th><th>k=3일 때 계산</th><th>업무적 의미</th></tr></thead><tbody><tr><td><b>Recall@3</b></td><td>상위 3개 중 정답 2개 / 전체 정답 3개 = <b>2/3</b></td><td>필요한 근거 중 얼마나 확보했나</td></tr><tr><td><b>Hit@3</b></td><td>상위 3개 안에 정답이 한 개라도 있으므로 <b>1</b></td><td>관련 근거가 하나라도 검색됐나</td></tr><tr><td><b>RR@3</b></td><td>첫 관련 문서 A의 순위 2 → <b>1/2</b></td><td>첫 번째 유용한 근거를 얼마나 빨리 만나나</td></tr><tr><td><b>nDCG@3</b></td><td>상위 순위의 관련성에 더 큰 가중치를 둠</td><td>관련 문서가 앞에 배치됐는지</td></tr></tbody></table></div>
+<p><b>MRR@k(Mean Reciprocal Rank)</b>은 질문 여러 개에 대한 <code>RR@k</code>의 평균이며, <b>Hit@k</b> 평균도 질문 단위의 적중률이 된다. <code>nDCG@k</code>는 관련도 등급까지 반영할 수 있는 지표지만 이 실습에서는 정답/비정답 이진 관련도로 계산한다. A2-M4에서 더 깊게 다룬다.</p>
+<pre><code># 02_basics_retrieval.py
+relevant = {'IMG-001', 'LINK-002', 'COMP-LINK-001'}
+ranked = ['FORM-001', 'IMG-001', 'LINK-002', 'COMP-LINK-001']
+s = retrieval_scores(relevant, ranked, k=3)
+print(round(s['recall'],4))  # 0.6667
+print(round(s['hit'],4))     # 1.0000
+print(round(s['rr'],4))      # 0.5000</code></pre>
+<h3>검색 결과가 2위여도 충분한가?</h3>
+<p>다음 질문을 살펴보자. <code>Q02: 더보기 사내 링크 금지</code>의 정답은 <code>COMP-LINK-001</code>이다. 실제 M3 검색기는 TF-IDF와 BM25 모두에서 <code>COMP-LINK-002</code>(“자세히” 제한)를 1위로, 진짜 정답을 2위로 반환한다. 그래서 <b>Recall@1은 0이지만 Recall@2는 1</b>이다. 이 사례는 M4에서 평가가 왜 필요한지 보여준다.</p>
+<div class="table-wrap"><table><thead><tr><th>검색 평가의 함정</th><th>잘못된 방식</th><th>올바른 방식</th></tr></thead><tbody><tr><td>점수 비교</td><td>TF-IDF 0.25 vs BM25 14.1 → BM25가 더 정확</td><td>각 알고리즘의 <b>순위</b>와 정답 ID로 비교</td></tr><tr><td>관련 문서 수가 다른 질문</td><td>관련 문서 1건과 3건을 원점수로 비교</td><td>Recall@k 등 질문별 비율 계산 후 평균</td></tr><tr><td>검토 중 규칙</td><td><code>proposed</code>를 현행 정답으로 취급</td><td><code>applied</code> 규칙을 기본 평가 대상으로 사용</td></tr><tr><td>평가셋 재사용</td><td>계속 질문을 고쳐 최고 점수를 최종 성능으로 보고</td><td>연습·튜닝용과 최종 확인용 질문을 분리</td></tr></tbody></table></div>
+</section><section aria-labelledby="tab-s4" class="panel" hidden="" id="s4" role="tabpanel">
+<div class="crumb">Part A · Article A1 · Module A1-M4 · 실제 CSV 평가</div>
+<h1>04. M2 판정과 M3 검색 결과 직접 평가</h1><p class="lead">기존 규칙 CSV를 다시 작성하지 않고 <b>동일한 데이터·동일한 검색기</b>로 실제 평가합니다.</p>
+<div class="key"><b>새 검색기나 새 규칙 데이터는 없다.</b> 프로젝트 ZIP의 <code>checker.py</code>는 M2와, <code>search_engine.py</code>는 M3와 동일하다. 실제 <code>data/rules.csv</code>와 <code>data/rule_tree.csv</code>를 읽은 결과를 평가한다.</div>
+<h3>이번 실습의 자료 연결</h3>
+<div class="table-wrap"><table><thead><tr><th>파일</th><th>용도</th><th>실행·확인</th></tr></thead><tbody><tr><td><code>checker.py</code> / <code>data/sample.html</code></td><td>M2 규칙 검사</td><td>적용 7개 규칙에 대한 판정 29건</td></tr><tr><td><code>search_engine.py</code> / <code>data/rules.csv</code></td><td>M3 검색</td><td>7개 현행 규칙 본문에 대한 TF-IDF·BM25 순위</td></tr><tr><td><code>gold/detection_gold.csv</code></td><td>(대상, 규칙 ID)의 상태 정답</td><td>22건(그중 보류 예상 4건)</td></tr><tr><td><code>gold/search_gold.csv</code></td><td>질문 7개와 관련 규칙 ID</td><td>Top-1/2/3에서 Recall·Hit·MRR·nDCG</td></tr><tr><td><code>report.json</code></td><td>평가 결과와 입력 파일 해시</td><td>재현 가능한 평가 요약·규칙 버전 확인</td></tr></tbody></table></div>
+<h3>실행 순서</h3>
+<pre><code>python -m pip install -r requirements.txt
+python 01_basics_detection.py
+python 02_basics_retrieval.py
+python 03_eval_m2_checker.py
+python 04_eval_m3_search.py
+python 05_generate_report.py
+python -m unittest discover -s tests -v</code></pre>
+<h3>실제 CSV 검색 성능을 화면에서 비교</h3>
+<p>아래 값은 제공한 동일한 CSV와 7개 평가 질문을 Python으로 실행하여 만든 <strong>고정 결과 스냅샷</strong>이다. 검색 방법과 k를 바꾸면 Macro 평균과 질문별 검색 순위가 달라진다. 원본 CSV를 수정했다면 Python 코드를 다시 실행하여 <code>report.json</code>을 새로 생성해야 한다.</p>
+<div class="eval-lab" id="m4-lab">
+<div class="eval-toolbar"><label>검색 방식 <select id="m4-engine"><option value="tfidf">TF-IDF · 코사인</option><option value="bm25">BM25</option></select></label>
+<label>상위 검색 개수 k <select id="m4-k"><option value="1">Top-1</option><option selected="" value="2">Top-2</option><option value="3">Top-3</option></select></label></div>
+<div aria-live="polite" class="eval-grid" id="m4-metrics"></div>
+<p class="sub" id="m4-caption">실제 7개 질문 평가 결과를 표시합니다.</p>
+<div class="table-wrap"><table><thead><tr><th>평가 질문</th><th>정답 규칙 ID</th><th>검색된 상위 문서</th><th>Recall@k</th><th>첫 정답 순위</th></tr></thead><tbody id="m4-queries"><tr><td>데이터 로딩 중</td><td></td><td></td><td></td><td></td></tr></tbody></table></div>
+</div>
+<h3>검사 결과는 어떻게 평가하는가?</h3>
+<p>22건의 교육용 검토 정답과 M2의 실제 검사 결과를 비교하면 <b>상태 완전 일치 22/22, 보류 4건</b>이다. 확정 정답 18건에 한정해 이진 지표를 계산하면 TP 7·FP 0·FN 0·TN 11이다. <strong>이는 실제 웹페이지에 대한 객관적 정확도 100%가 아니라, 샘플과 해당 규칙의 한정된 검사 조건이 잘 맞는다는 의미</strong>다. 더 다양한 데이터·독립 검토자·경계 사례로 평가해야 한다.</p>
+<div class="table-wrap"><table><thead><tr><th>구분</th><th>실행 결과</th><th>반드시 붙일 해석</th></tr></thead><tbody><tr><td>M2 교육용 검사 정답 일치</td><td>22건 중 22건</td><td>교안용 검토셋에 대한 일치율, 실제 WCAG 적합률 아님</td></tr><tr><td>M2 판단 보류</td><td>4건</td><td>보류를 감추거나 강제로 실패/통과로 바꾸지 않음</td></tr><tr><td>M3 현행 규칙 문서</td><td>7건</td><td><code>proposed</code> 1건은 기본 검색·평가 제외</td></tr><tr><td>M3 검색 질문</td><td>7건</td><td>질문당 관련 문서가 하나 또는 여러 개</td></tr></tbody></table></div>
+</section><section aria-labelledby="tab-s5" class="panel" hidden="" id="s5" role="tabpanel">
+<div class="crumb">Part A · Article A1 · Module A1-M4 · 평가 해석</div>
+<h1>05. 결과 해석·정답셋·트러블슈팅</h1><p class="lead">점수가 높거나 낮을 때 무엇부터 확인해야 하는지, 높은 점수를 오해하지 않으려면 무엇을 기록해야 하는지 살펴봅니다.</p>
+<h3>실제 오류를 진단하는 질문을 먼저 만든다</h3>
+<p>평가 점수가 낮으면 곧바로 알고리즘을 바꾸기보다 <b>정답셋이 맞는지 → 검색 대상이 맞는지 → 질문 표현이 맞는지 → 인덱스/버전이 최신인지</b> 순서로 살펴보자.</p>
+<div class="table-wrap"><table><thead><tr><th>증상</th><th>가능한 원인</th><th>확인 방법</th></tr></thead><tbody><tr><td>같은 질문인데 새 규칙이 검색되지 않음</td><td>CSV는 변경됐는데 기존 검색 인덱스를 재사용</td><td>규칙 파일 해시·status 확인, 인덱스 재생성</td></tr><tr><td><code>COMP-LINK-003</code>이 현행 근거로 노출됨</td><td><code>status=proposed</code> 필터 누락</td><td>적용 규칙 7건만 기본 검색인지 확인</td></tr><tr><td>검사 F1이 높지만 사람이 검토할 일이 많음</td><td><code>cantTell</code>을 제외하고 보고</td><td>보류 건수·판정 커버리지·보류 재검토율 함께 표시</td></tr><tr><td>M3 검색 Recall은 높으나 첫 결과가 엉뚱함</td><td>Top-k가 커서 뒤늦게 정답 포함</td><td>MRR·Top-1도 확인. Q02 사례로 검증</td></tr><tr><td>TF-IDF/BM25 점수 차이가 큼</td><td>서로 다른 점수 척도</td><td>원시 점수가 아닌 ID·순위 기반 지표로 비교</td></tr><tr><td>같은 HTML에서 어떤 규칙은 실패 어떤 규칙은 보류</td><td>표준 관련 검사와 사내 정책의 범위가 다름</td><td><code>scope</code>를 유지해 평가 집계 분리</td></tr><tr><td>평가에 쓴 질문을 자꾸 수정함</td><td>정답셋에 과적합/평가 누출</td><td>튜닝용 세트와 고정 최종 평가셋을 나누고 별도 기록</td></tr></tbody></table></div>
+<h3>정답셋은 어디에서 나와야 하나?</h3>
+<p>프로젝트에는 실제 독립 검토자 결과가 없으므로 본 실습의 검토 정답은 샘플 HTML과 규칙 조건을 읽어 만든 <b>교육용 기준표</b>다. 현업으로 확장하려면 규칙 조건별로 다양한 HTML 사례를 수집하고, 가능한 한 검사기 결과를 보기 전에 제3자가 판단하도록 해야 한다. 의견이 갈리는 사례는 정답을 억지로 확정하지 않고 <code>cantTell</code>과 검토 사유를 보존한다.</p>
+<h3>기준선을 저장해 두는 이유</h3>
+<p>다음 모듈에서 텍스트 전처리를 바꾸거나 A2에서 임베딩·벡터 DB를 추가하면 검색 결과는 달라진다. <code>report.json</code>에는 규칙 CSV, 트리 CSV, 샘플 HTML, 정답셋의 SHA-256 축약 해시를 기록한다. 이것이 같은 조건에서 비교했는지 확인하는 가장 간단한 출발점이다. 실제 배포에서는 검사기·인덱스·모델 버전도 함께 관리한다.</p>
+<div class="practice"><h4>개선 실험의 책임 구분</h4><p>A1-M4는 <b>어떻게 측정할지</b> 배우는 단계다. 벡터 DB·LLM 답변 품질 평가는 A2-M4에서, 검색 품질을 운영 데이터로 체계적으로 개선하는 작업은 후속 고도화 과정에서 수행한다. 이 모듈에서는 성능 개선을 과도하게 주장하지 않는다.</p></div>
+</section><section aria-labelledby="tab-s6" class="panel" hidden="" id="s6" role="tabpanel">
+<div class="crumb">Part A · Article A1 · Module A1-M4 · 종합 점검</div>
+<h1>06. 이해도 테스트·추가 실습·GPT 검토</h1><p class="lead">계산·해석·데이터 일관성을 스스로 확인하고, 다음 모듈에서 재사용할 평가 기준을 정리합니다.</p>
+<h3>이해도 테스트 — 먼저 예상한 뒤 해설을 펼친다</h3>
+<details class="lesson-details"><summary>문제 1. TP=4, FP=2, FN=1일 때 정밀도·재현율·F1은?</summary><p><strong>해설:</strong> Precision=4/6=0.6667, Recall=4/5=0.8, F1=8/11≈0.7273. TN은 이 세 지표의 계산식에 직접 들어가지 않는다.</p></details><details class="lesson-details"><summary>문제 2. M2 검사기의 failed를 “WCAG 위반 확정”으로 불러도 되나?</summary><p><strong>해설:</strong> 안 된다. M2는 자체 정의한 검사 조건만 평가한다. 표준 관련 조건 실패와 인증 여부는 별도다.</p></details><details class="lesson-details"><summary>문제 3. 판단 보류 30건을 제외한 F1이 1이라면 검사가 완벽한가?</summary><p><strong>해설:</strong> 아니다. 커버리지와 보류 사유를 반드시 함께 제시해야 하며, 보류 제외는 성능을 왜곡할 수 있다.</p></details><details class="lesson-details"><summary>문제 4. 관련 규칙 2개 중 Top-2에서 1개만 찾았다면 Recall@2는?</summary><p><strong>해설:</strong> 1/2 = 0.5다. Hit@2는 하나 이상 찾았으므로 1이다.</p></details><details class="lesson-details"><summary>문제 5. 첫 관련 문서가 3위이고 다른 관련 문서는 검색되지 않았다면 RR@3은?</summary><p><strong>해설:</strong> 1/3≈0.3333이다. MRR은 이런 reciprocal rank를 여러 질문에 대해 평균 낸다.</p></details><details class="lesson-details"><summary>문제 6. TF-IDF 점수 0.2, BM25 점수 10 중 더 정확한 검색은?</summary><p><strong>해설:</strong> 원시 점수의 절대값만으로 비교할 수 없다. 질문별 정답 규칙 ID와 순위 기반 지표를 사용해야 한다.</p></details><details class="lesson-details"><summary>문제 7. status=proposed인 규칙을 평가 정답에 섞으면?</summary><p><strong>해설:</strong> 아직 유효하지 않은 규칙이 현재 정책 근거로 취급될 위험이 생긴다. 적용 상태·시점을 보존해 필터링한다.</p></details><details class="lesson-details"><summary>문제 8. 교육용 22건 검사 정답 일치율 100%는 현업 완전 정확도인가?</summary><p><strong>해설:</strong> 아니다. 동일한 샘플 기반의 한정된 규칙 조건 결과일 뿐이며 독립적인 실제 데이터에서 별도 검증이 필요하다.</p></details>
+<h3>추가 실습 1. 검사 결과에 잘못된 예측 하나를 넣어 본다</h3>
+<p><code>01_basics_detection.py</code>에서 정상 항목에 대한 예측 0 하나를 1로 바꾸어 FP를 증가시켜 본다. Precision과 F1 변화가 계산식과 일치하는지 확인한다. 기존 M2 규칙 원본은 고치지 않는다.</p>
+<h3>추가 실습 2. Q02에서 Top-1과 Top-2를 비교한다</h3>
+<p>화면에서 <code>Q02: 더보기 사내 링크 금지</code>를 찾고 k를 1에서 2로 바꾼다. 두 검색기에서 정답 문서가 몇 위에 있는지, Recall@k와 RR@k가 왜 달라지는지 설명한다.</p>
+<h3>추가 실습 3. 평가 질문을 늘릴 때 무엇을 기록해야 할까?</h3>
+<p><code>gold/search_gold.csv</code>에 새로운 질문 1건을 추가한다. 검색 결과를 먼저 확인하고 정답을 맞추는 대신, <b>질문의 목적을 읽고 관련 규칙을 먼저 지정</b>한 후 검색을 실행한다. 이 질문을 튜닝과 최종 보고에 동시에 사용하지 않는 이유를 토론한다.</p>
+<h3>GPT 활용 — 평가 함수 검토 프롬프트</h3>
+<pre><code>지금 작성한 검사·검색 평가 코드를 점검해 줘.
+1. TP/FP/FN/TN의 양성 정의가 규칙의 failed와 일치하는지
+2. cantTell·inapplicable을 숨기지 않고 별도로 기록하는지
+3. Recall@k와 MRR이 관련 문서 ID 집합을 기준으로 계산되는지
+4. proposed 규칙이 현행 검색과 평가에서 제외되는지
+5. CSV·트리·검사기 결과의 규칙 ID가 일치하는지
+6. 교육용 정답셋에 대한 높은 점수를 실무 성능으로 과장했는지
+실제 코드/CSV에 없는 성능 값은 만들지 말고, 오류가 있으면 최소 수정안을 제시해 줘.</code></pre>
+<div class="source-links"><h3>참고와 다음 단계</h3>
+<p>A1-M2 <code>rules.csv</code>·<code>rule_tree.csv</code>·<code>checker.py</code>, A1-M3 <code>search_engine.py</code>를 그대로 사용한다. A1-M5에서는 한국어 정제·형태소 분석, A1-M6에서는 검사·검색 결과 통합, A2에서는 벡터·LLM 검색 품질 평가를 확장한다.</p>
+<p class="sub">이 교안의 데이터·계산 예제는 교육용이며, W3C·KWCAG 공식 인증 또는 제품 성능 보증을 의미하지 않는다.</p></div>
+</section></main>
+</div>
+<footer aria-label="저작권 및 출처 안내" class="copyright-footer" style="max-width:1320px;margin:0 auto;padding:24px;color:#64748b;font-size:15px;border-top:1px solid #e2e8f0">
+<div>© 2026 부성순. All rights reserved.</div>
+<small>본 교안의 구성·해설·실습 자료에 대한 저작권 표시입니다. WCAG 등 외부 표준, 인용 자료 및 제3자 콘텐츠의 권리는 각 원저작자에게 있으며, 원문 출처와 이용 조건을 따릅니다.</small>
+</footer>
+<div class="toast" hidden="" id="toast" role="status"></div>
+<script>(function(){const ts=[...document.querySelectorAll('[role="tab"]')];function set(i,focus){ts.forEach((t,j)=>{let on=i===j;t.setAttribute('aria-selected',String(on));t.tabIndex=on?0:-1;document.getElementById(t.getAttribute('aria-controls')).hidden=!on;});if(focus)ts[i].focus({preventScroll:true});history.replaceState(null,'','#'+ts[i].getAttribute('aria-controls'));window.scrollTo({top:0});}ts.forEach((t,i)=>{t.addEventListener('click',()=>set(i,false));t.addEventListener('keydown',e=>{if(['ArrowDown','ArrowRight','ArrowUp','ArrowLeft'].includes(e.key)){e.preventDefault();set((i+(e.key==='ArrowDown'||e.key==='ArrowRight'?1:-1)+ts.length)%ts.length,true)}})});let n=ts.findIndex(t=>'#'+t.getAttribute('aria-controls')===location.hash);set(n<0?0:n,false);document.querySelectorAll('.table-wrap table').forEach(t=>{let h=[...t.querySelectorAll('th')].map(x=>x.textContent.trim());if(h.length<3)return;t.classList.add('cards');t.querySelectorAll('tbody tr').forEach(tr=>[...tr.children].forEach((td,i)=>td.dataset.label=h[i]||''))})})();</script>
+
+<script id="m4-report" type="application/json">{"retrieval": {"tfidf": {"k1": {"k": 1, "queries": 7, "macro": {"recall": 0.7857142857142857, "hit": 0.8571428571428571, "rr": 0.8571428571428571, "ndcg": 0.8571428571428571}, "rows": [{"qid": "Q01", "query": "이미지 alt 속성 누락", "relevant": ["IMG-001"], "ranking": ["IMG-001", "LINK-001", "COMP-FORM-001", "FORM-001", "COMP-LINK-001", "COMP-LINK-002", "LINK-002"], "topk": ["IMG-001"], "recall": 1.0, "hit": 1.0, "rr": 1.0, "ndcg": 1.0, "note": "대체 텍스트 속성 존재 검사"}, {"qid": "Q02", "query": "더보기 사내 링크 금지", "relevant": ["COMP-LINK-001"], "ranking": ["COMP-LINK-002", "COMP-LINK-001", "LINK-002", "COMP-FORM-001", "LINK-001"], "topk": ["COMP-LINK-002"], "recall": 0.0, "hit": 0.0, "rr": 0.0, "ndcg": 0.0, "note": "사내 더보기 정책만 정답"}, {"qid": "Q03", "query": "링크 목적 주변 맥락", "relevant": ["LINK-002"], "ranking": ["LINK-002", "COMP-LINK-001", "COMP-LINK-002", "LINK-001"], "topk": ["LINK-002"], "recall": 1.0, "hit": 1.0, "rr": 1.0, "ndcg": 1.0, "note": "WCAG 링크 목적 검토로 연결"}, {"qid": "Q04", "query": "화면에 보이는 label", "relevant": ["COMP-FORM-001"], "ranking": ["COMP-FORM-001", "FORM-001", "LINK-001", "IMG-001", "LINK-002", "COMP-LINK-002", "COMP-LINK-001"], "topk": ["COMP-FORM-001"], "recall": 1.0, "hit": 1.0, "rr": 1.0, "ndcg": 1.0, "note": "회사 표시 레이블 정책"}, {"qid": "Q05", "query": "입력 필드 이름 후보", "relevant": ["FORM-001"], "ranking": ["FORM-001", "LINK-001", "COMP-LINK-002", "COMP-FORM-001", "COMP-LINK-001", "IMG-001"], "topk": ["FORM-001"], "recall": 1.0, "hit": 1.0, "rr": 1.0, "ndcg": 1.0, "note": "표준 관련 입력 이름 후보"}, {"qid": "Q06", "query": "자세히 단독 문구 제한", "relevant": ["COMP-LINK-002"], "ranking": ["COMP-LINK-002", "COMP-LINK-001", "LINK-002", "IMG-001"], "topk": ["COMP-LINK-002"], "recall": 1.0, "hit": 1.0, "rr": 1.0, "ndcg": 1.0, "note": "회사 자세히 제한 정책"}, {"qid": "Q07", "query": "더보기 링크 목적과 회사 정책", "relevant": ["COMP-LINK-001", "LINK-002"], "ranking": ["COMP-LINK-001", "LINK-002", "COMP-FORM-001", "COMP-LINK-002", "LINK-001"], "topk": ["COMP-LINK-001"], "recall": 0.5, "hit": 1.0, "rr": 1.0, "ndcg": 1.0, "note": "표준 검토와 회사 금칙어 둘 다 관련"}]}, "k2": {"k": 2, "queries": 7, "macro": {"recall": 1.0, "hit": 1.0, "rr": 0.9285714285714286, "ndcg": 0.9472756790816368}, "rows": [{"qid": "Q01", "query": "이미지 alt 속성 누락", "relevant": ["IMG-001"], "ranking": ["IMG-001", "LINK-001", "COMP-FORM-001", "FORM-001", "COMP-LINK-001", "COMP-LINK-002", "LINK-002"], "topk": ["IMG-001", "LINK-001"], "recall": 1.0, "hit": 1.0, "rr": 1.0, "ndcg": 1.0, "note": "대체 텍스트 속성 존재 검사"}, {"qid": "Q02", "query": "더보기 사내 링크 금지", "relevant": ["COMP-LINK-001"], "ranking": ["COMP-LINK-002", "COMP-LINK-001", "LINK-002", "COMP-FORM-001", "LINK-001"], "topk": ["COMP-LINK-002", "COMP-LINK-001"], "recall": 1.0, "hit": 1.0, "rr": 0.5, "ndcg": 0.6309297535714575, "note": "사내 더보기 정책만 정답"}, {"qid": "Q03", "query": "링크 목적 주변 맥락", "relevant": ["LINK-002"], "ranking": ["LINK-002", "COMP-LINK-001", "COMP-LINK-002", "LINK-001"], "topk": ["LINK-002", "COMP-LINK-001"], "recall": 1.0, "hit": 1.0, "rr": 1.0, "ndcg": 1.0, "note": "WCAG 링크 목적 검토로 연결"}, {"qid": "Q04", "query": "화면에 보이는 label", "relevant": ["COMP-FORM-001"], "ranking": ["COMP-FORM-001", "FORM-001", "LINK-001", "IMG-001", "LINK-002", "COMP-LINK-002", "COMP-LINK-001"], "topk": ["COMP-FORM-001", "FORM-001"], "recall": 1.0, "hit": 1.0, "rr": 1.0, "ndcg": 1.0, "note": "회사 표시 레이블 정책"}, {"qid": "Q05", "query": "입력 필드 이름 후보", "relevant": ["FORM-001"], "ranking": ["FORM-001", "LINK-001", "COMP-LINK-002", "COMP-FORM-001", "COMP-LINK-001", "IMG-001"], "topk": ["FORM-001", "LINK-001"], "recall": 1.0, "hit": 1.0, "rr": 1.0, "ndcg": 1.0, "note": "표준 관련 입력 이름 후보"}, {"qid": "Q06", "query": "자세히 단독 문구 제한", "relevant": ["COMP-LINK-002"], "ranking": ["COMP-LINK-002", "COMP-LINK-001", "LINK-002", "IMG-001"], "topk": ["COMP-LINK-002", "COMP-LINK-001"], "recall": 1.0, "hit": 1.0, "rr": 1.0, "ndcg": 1.0, "note": "회사 자세히 제한 정책"}, {"qid": "Q07", "query": "더보기 링크 목적과 회사 정책", "relevant": ["COMP-LINK-001", "LINK-002"], "ranking": ["COMP-LINK-001", "LINK-002", "COMP-FORM-001", "COMP-LINK-002", "LINK-001"], "topk": ["COMP-LINK-001", "LINK-002"], "recall": 1.0, "hit": 1.0, "rr": 1.0, "ndcg": 1.0, "note": "표준 검토와 회사 금칙어 둘 다 관련"}]}, "k3": {"k": 3, "queries": 7, "macro": {"recall": 1.0, "hit": 1.0, "rr": 0.9285714285714286, "ndcg": 0.9472756790816368}, "rows": [{"qid": "Q01", "query": "이미지 alt 속성 누락", "relevant": ["IMG-001"], "ranking": ["IMG-001", "LINK-001", "COMP-FORM-001", "FORM-001", "COMP-LINK-001", "COMP-LINK-002", "LINK-002"], "topk": ["IMG-001", "LINK-001", "COMP-FORM-001"], "recall": 1.0, "hit": 1.0, "rr": 1.0, "ndcg": 1.0, "note": "대체 텍스트 속성 존재 검사"}, {"qid": "Q02", "query": "더보기 사내 링크 금지", "relevant": ["COMP-LINK-001"], "ranking": ["COMP-LINK-002", "COMP-LINK-001", "LINK-002", "COMP-FORM-001", "LINK-001"], "topk": ["COMP-LINK-002", "COMP-LINK-001", "LINK-002"], "recall": 1.0, "hit": 1.0, "rr": 0.5, "ndcg": 0.6309297535714575, "note": "사내 더보기 정책만 정답"}, {"qid": "Q03", "query": "링크 목적 주변 맥락", "relevant": ["LINK-002"], "ranking": ["LINK-002", "COMP-LINK-001", "COMP-LINK-002", "LINK-001"], "topk": ["LINK-002", "COMP-LINK-001", "COMP-LINK-002"], "recall": 1.0, "hit": 1.0, "rr": 1.0, "ndcg": 1.0, "note": "WCAG 링크 목적 검토로 연결"}, {"qid": "Q04", "query": "화면에 보이는 label", "relevant": ["COMP-FORM-001"], "ranking": ["COMP-FORM-001", "FORM-001", "LINK-001", "IMG-001", "LINK-002", "COMP-LINK-002", "COMP-LINK-001"], "topk": ["COMP-FORM-001", "FORM-001", "LINK-001"], "recall": 1.0, "hit": 1.0, "rr": 1.0, "ndcg": 1.0, "note": "회사 표시 레이블 정책"}, {"qid": "Q05", "query": "입력 필드 이름 후보", "relevant": ["FORM-001"], "ranking": ["FORM-001", "LINK-001", "COMP-LINK-002", "COMP-FORM-001", "COMP-LINK-001", "IMG-001"], "topk": ["FORM-001", "LINK-001", "COMP-LINK-002"], "recall": 1.0, "hit": 1.0, "rr": 1.0, "ndcg": 1.0, "note": "표준 관련 입력 이름 후보"}, {"qid": "Q06", "query": "자세히 단독 문구 제한", "relevant": ["COMP-LINK-002"], "ranking": ["COMP-LINK-002", "COMP-LINK-001", "LINK-002", "IMG-001"], "topk": ["COMP-LINK-002", "COMP-LINK-001", "LINK-002"], "recall": 1.0, "hit": 1.0, "rr": 1.0, "ndcg": 1.0, "note": "회사 자세히 제한 정책"}, {"qid": "Q07", "query": "더보기 링크 목적과 회사 정책", "relevant": ["COMP-LINK-001", "LINK-002"], "ranking": ["COMP-LINK-001", "LINK-002", "COMP-FORM-001", "COMP-LINK-002", "LINK-001"], "topk": ["COMP-LINK-001", "LINK-002", "COMP-FORM-001"], "recall": 1.0, "hit": 1.0, "rr": 1.0, "ndcg": 1.0, "note": "표준 검토와 회사 금칙어 둘 다 관련"}]}}, "bm25": {"k1": {"k": 1, "queries": 7, "macro": {"recall": 0.7857142857142857, "hit": 0.8571428571428571, "rr": 0.8571428571428571, "ndcg": 0.8571428571428571}, "rows": [{"qid": "Q01", "query": "이미지 alt 속성 누락", "relevant": ["IMG-001"], "ranking": ["IMG-001", "LINK-001", "COMP-FORM-001", "COMP-LINK-001", "FORM-001", "COMP-LINK-002", "LINK-002"], "topk": ["IMG-001"], "recall": 1.0, "hit": 1.0, "rr": 1.0, "ndcg": 1.0, "note": "대체 텍스트 속성 존재 검사"}, {"qid": "Q02", "query": "더보기 사내 링크 금지", "relevant": ["COMP-LINK-001"], "ranking": ["COMP-LINK-002", "COMP-LINK-001", "LINK-002", "COMP-FORM-001", "LINK-001"], "topk": ["COMP-LINK-002"], "recall": 0.0, "hit": 0.0, "rr": 0.0, "ndcg": 0.0, "note": "사내 더보기 정책만 정답"}, {"qid": "Q03", "query": "링크 목적 주변 맥락", "relevant": ["LINK-002"], "ranking": ["LINK-002", "COMP-LINK-001", "COMP-LINK-002", "LINK-001"], "topk": ["LINK-002"], "recall": 1.0, "hit": 1.0, "rr": 1.0, "ndcg": 1.0, "note": "WCAG 링크 목적 검토로 연결"}, {"qid": "Q04", "query": "화면에 보이는 label", "relevant": ["COMP-FORM-001"], "ranking": ["COMP-FORM-001", "FORM-001", "LINK-001", "IMG-001", "LINK-002", "COMP-LINK-002", "COMP-LINK-001"], "topk": ["COMP-FORM-001"], "recall": 1.0, "hit": 1.0, "rr": 1.0, "ndcg": 1.0, "note": "회사 표시 레이블 정책"}, {"qid": "Q05", "query": "입력 필드 이름 후보", "relevant": ["FORM-001"], "ranking": ["FORM-001", "LINK-001", "COMP-LINK-002", "COMP-FORM-001", "COMP-LINK-001", "IMG-001"], "topk": ["FORM-001"], "recall": 1.0, "hit": 1.0, "rr": 1.0, "ndcg": 1.0, "note": "표준 관련 입력 이름 후보"}, {"qid": "Q06", "query": "자세히 단독 문구 제한", "relevant": ["COMP-LINK-002"], "ranking": ["COMP-LINK-002", "COMP-LINK-001", "LINK-002", "IMG-001"], "topk": ["COMP-LINK-002"], "recall": 1.0, "hit": 1.0, "rr": 1.0, "ndcg": 1.0, "note": "회사 자세히 제한 정책"}, {"qid": "Q07", "query": "더보기 링크 목적과 회사 정책", "relevant": ["COMP-LINK-001", "LINK-002"], "ranking": ["COMP-LINK-001", "LINK-002", "COMP-FORM-001", "COMP-LINK-002", "LINK-001"], "topk": ["COMP-LINK-001"], "recall": 0.5, "hit": 1.0, "rr": 1.0, "ndcg": 1.0, "note": "표준 검토와 회사 금칙어 둘 다 관련"}]}, "k2": {"k": 2, "queries": 7, "macro": {"recall": 1.0, "hit": 1.0, "rr": 0.9285714285714286, "ndcg": 0.9472756790816368}, "rows": [{"qid": "Q01", "query": "이미지 alt 속성 누락", "relevant": ["IMG-001"], "ranking": ["IMG-001", "LINK-001", "COMP-FORM-001", "COMP-LINK-001", "FORM-001", "COMP-LINK-002", "LINK-002"], "topk": ["IMG-001", "LINK-001"], "recall": 1.0, "hit": 1.0, "rr": 1.0, "ndcg": 1.0, "note": "대체 텍스트 속성 존재 검사"}, {"qid": "Q02", "query": "더보기 사내 링크 금지", "relevant": ["COMP-LINK-001"], "ranking": ["COMP-LINK-002", "COMP-LINK-001", "LINK-002", "COMP-FORM-001", "LINK-001"], "topk": ["COMP-LINK-002", "COMP-LINK-001"], "recall": 1.0, "hit": 1.0, "rr": 0.5, "ndcg": 0.6309297535714575, "note": "사내 더보기 정책만 정답"}, {"qid": "Q03", "query": "링크 목적 주변 맥락", "relevant": ["LINK-002"], "ranking": ["LINK-002", "COMP-LINK-001", "COMP-LINK-002", "LINK-001"], "topk": ["LINK-002", "COMP-LINK-001"], "recall": 1.0, "hit": 1.0, "rr": 1.0, "ndcg": 1.0, "note": "WCAG 링크 목적 검토로 연결"}, {"qid": "Q04", "query": "화면에 보이는 label", "relevant": ["COMP-FORM-001"], "ranking": ["COMP-FORM-001", "FORM-001", "LINK-001", "IMG-001", "LINK-002", "COMP-LINK-002", "COMP-LINK-001"], "topk": ["COMP-FORM-001", "FORM-001"], "recall": 1.0, "hit": 1.0, "rr": 1.0, "ndcg": 1.0, "note": "회사 표시 레이블 정책"}, {"qid": "Q05", "query": "입력 필드 이름 후보", "relevant": ["FORM-001"], "ranking": ["FORM-001", "LINK-001", "COMP-LINK-002", "COMP-FORM-001", "COMP-LINK-001", "IMG-001"], "topk": ["FORM-001", "LINK-001"], "recall": 1.0, "hit": 1.0, "rr": 1.0, "ndcg": 1.0, "note": "표준 관련 입력 이름 후보"}, {"qid": "Q06", "query": "자세히 단독 문구 제한", "relevant": ["COMP-LINK-002"], "ranking": ["COMP-LINK-002", "COMP-LINK-001", "LINK-002", "IMG-001"], "topk": ["COMP-LINK-002", "COMP-LINK-001"], "recall": 1.0, "hit": 1.0, "rr": 1.0, "ndcg": 1.0, "note": "회사 자세히 제한 정책"}, {"qid": "Q07", "query": "더보기 링크 목적과 회사 정책", "relevant": ["COMP-LINK-001", "LINK-002"], "ranking": ["COMP-LINK-001", "LINK-002", "COMP-FORM-001", "COMP-LINK-002", "LINK-001"], "topk": ["COMP-LINK-001", "LINK-002"], "recall": 1.0, "hit": 1.0, "rr": 1.0, "ndcg": 1.0, "note": "표준 검토와 회사 금칙어 둘 다 관련"}]}, "k3": {"k": 3, "queries": 7, "macro": {"recall": 1.0, "hit": 1.0, "rr": 0.9285714285714286, "ndcg": 0.9472756790816368}, "rows": [{"qid": "Q01", "query": "이미지 alt 속성 누락", "relevant": ["IMG-001"], "ranking": ["IMG-001", "LINK-001", "COMP-FORM-001", "COMP-LINK-001", "FORM-001", "COMP-LINK-002", "LINK-002"], "topk": ["IMG-001", "LINK-001", "COMP-FORM-001"], "recall": 1.0, "hit": 1.0, "rr": 1.0, "ndcg": 1.0, "note": "대체 텍스트 속성 존재 검사"}, {"qid": "Q02", "query": "더보기 사내 링크 금지", "relevant": ["COMP-LINK-001"], "ranking": ["COMP-LINK-002", "COMP-LINK-001", "LINK-002", "COMP-FORM-001", "LINK-001"], "topk": ["COMP-LINK-002", "COMP-LINK-001", "LINK-002"], "recall": 1.0, "hit": 1.0, "rr": 0.5, "ndcg": 0.6309297535714575, "note": "사내 더보기 정책만 정답"}, {"qid": "Q03", "query": "링크 목적 주변 맥락", "relevant": ["LINK-002"], "ranking": ["LINK-002", "COMP-LINK-001", "COMP-LINK-002", "LINK-001"], "topk": ["LINK-002", "COMP-LINK-001", "COMP-LINK-002"], "recall": 1.0, "hit": 1.0, "rr": 1.0, "ndcg": 1.0, "note": "WCAG 링크 목적 검토로 연결"}, {"qid": "Q04", "query": "화면에 보이는 label", "relevant": ["COMP-FORM-001"], "ranking": ["COMP-FORM-001", "FORM-001", "LINK-001", "IMG-001", "LINK-002", "COMP-LINK-002", "COMP-LINK-001"], "topk": ["COMP-FORM-001", "FORM-001", "LINK-001"], "recall": 1.0, "hit": 1.0, "rr": 1.0, "ndcg": 1.0, "note": "회사 표시 레이블 정책"}, {"qid": "Q05", "query": "입력 필드 이름 후보", "relevant": ["FORM-001"], "ranking": ["FORM-001", "LINK-001", "COMP-LINK-002", "COMP-FORM-001", "COMP-LINK-001", "IMG-001"], "topk": ["FORM-001", "LINK-001", "COMP-LINK-002"], "recall": 1.0, "hit": 1.0, "rr": 1.0, "ndcg": 1.0, "note": "표준 관련 입력 이름 후보"}, {"qid": "Q06", "query": "자세히 단독 문구 제한", "relevant": ["COMP-LINK-002"], "ranking": ["COMP-LINK-002", "COMP-LINK-001", "LINK-002", "IMG-001"], "topk": ["COMP-LINK-002", "COMP-LINK-001", "LINK-002"], "recall": 1.0, "hit": 1.0, "rr": 1.0, "ndcg": 1.0, "note": "회사 자세히 제한 정책"}, {"qid": "Q07", "query": "더보기 링크 목적과 회사 정책", "relevant": ["COMP-LINK-001", "LINK-002"], "ranking": ["COMP-LINK-001", "LINK-002", "COMP-FORM-001", "COMP-LINK-002", "LINK-001"], "topk": ["COMP-LINK-001", "LINK-002", "COMP-FORM-001"], "recall": 1.0, "hit": 1.0, "rr": 1.0, "ndcg": 1.0, "note": "표준 검토와 회사 금칙어 둘 다 관련"}]}}}, "inspection": {"labeled_total": 22, "review_expected": 4, "binary": {"tp": 7, "fp": 0, "fn": 0, "tn": 11, "precision": 1.0, "recall": 1.0, "f1": 1.0, "accuracy": 1.0}}}</script><script>
+(function(){
+const data=JSON.parse(document.getElementById('m4-report').textContent);
+const engine=document.getElementById('m4-engine');
+const kcontrol=document.getElementById('m4-k');
+const metrics=document.getElementById('m4-metrics');
+const tbody=document.getElementById('m4-queries');
+const caption=document.getElementById('m4-caption');
+const fmt=value=>(100*value).toFixed(1)+'%';
+function el(tag,text,cls){const n=document.createElement(tag); if(text!==undefined) n.textContent=text; if(cls)n.className=cls;return n;}
+function draw(){
+ const name=engine.value;
+ const k=Number(kcontrol.value);
+ const report=data.retrieval[name]['k'+k];
+ metrics.replaceChildren();
+ [['Recall@'+k,report.macro.recall],['Hit@'+k,report.macro.hit],['MRR@'+k,report.macro.rr],['nDCG@'+k,report.macro.ndcg]].forEach(([label,value])=>{
+   const card=el('div',undefined,'eval-kpi');card.append(el('div',label,'cap'),el('div',fmt(value),'val'));metrics.append(card);
+ });
+ caption.textContent=`${name==='tfidf'?'TF-IDF':'BM25'} · 질문 ${report.queries}건의 Macro 평균 · Top-${k} 평가 · applied 규칙만 포함`;
+ tbody.replaceChildren();
+ report.rows.forEach(row=>{
+   const tr=document.createElement('tr');
+   const doc=el('td',row.qid+' · '+row.query);
+   const relevant=el('td',row.relevant.join(', '));
+   const ranking=el('td',row.topk.length?row.topk.join(' → '):'(검색 없음)');
+   const recall=el('td',fmt(row.recall));
+   const firstRank=row.ranking.findIndex(id=>row.relevant.includes(id));
+   const rank=el('td',firstRank<0?'미검색':`${firstRank+1}위${firstRank>=k?' (k 범위 밖)':''}`);
+   tr.append(doc,relevant,ranking,recall,rank);tbody.append(tr);
+ });
+}
+engine.addEventListener('change',draw);
+kcontrol.addEventListener('change',draw);
+draw();
+})();
+</script></body>
+</html>

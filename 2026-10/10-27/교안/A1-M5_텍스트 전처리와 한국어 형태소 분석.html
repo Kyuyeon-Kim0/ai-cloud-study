@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<!DOCTYPE html>
+
+<html lang="ko"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1" name="viewport"/><title>A1-M5 · 텍스트 전처리·한국어 형태소 분석 — CSV 규칙 연계 개정</title><link as="style" crossorigin="" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&amp;display=swap" rel="stylesheet"/><style>
+  :root {
+    --bg: #ffffff;
+    --surface: #f8fafc;
+    --ink: #0f172a;
+    --quiet: #64748b;
+    --line: #e2e8f0;
+    --edge: #cbd5e1;
+    --accent: #FF2E93;
+    --accent-soft: rgba(255, 46, 147, 0.06);
+    --warn: #f59e0b;
+    --warn-soft: rgba(245, 158, 11, 0.08);
+    --good: #10b981;
+    --good-soft: rgba(16, 185, 129, 0.08);
+    --crit: #ef4444;
+    --code-bg: #0f172a;
+    --banner-bg: #ffffff;
+    --banner-ink: #0f172a;
+  }
+  
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: 'Pretendard', sans-serif;
+    font-size: 18px; line-height: 1.75;
+  }
+
+  /* ── 상단 배너 / 타이틀 영역 ── */
+  .banner { 
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); 
+    color: var(--banner-ink); 
+    border-bottom: 1px solid var(--line); 
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.02);
+  }
+  .banner-in { 
+    max-width: 1320px; 
+    margin: 0 auto; 
+    padding: 16px 24px; 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    gap: 24px; 
+  }
+  .banner-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .banner .org { 
+    font-size: 16px; 
+    font-weight: 800; 
+    color: var(--ink); 
+    letter-spacing: -0.01em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .banner .org::before {
+    content: "";
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    background: var(--accent);
+    border-radius: 50%;
+  }
+  .banner .who { 
+    font-size: 15px; 
+    color: var(--quiet); 
+    font-weight: 600;
+  }
+  .banner .who a {
+    color: var(--accent);
+    text-decoration: none;
+  }
+  .banner .who a:hover {
+    text-decoration: underline;
+  }
+  .banner a { color: inherit; }
+  .banner .home-link { 
+    font-size: 15px; 
+    font-weight: 700; 
+    text-decoration: none; 
+    border: 1px solid var(--line); 
+    border-radius: 8px; 
+    padding: 6px 14px; 
+    background: #ffffff; 
+    color: var(--ink);
+    transition: all 0.2s ease; 
+    letter-spacing: 0.02em;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+  }
+  .banner .home-link:hover { 
+    background: var(--accent); 
+    border-color: var(--accent);
+    color: #ffffff;
+  }
+
+  /* ── 레이아웃: 본문 + 목차 ── */
+  .layout { max-width: 1320px; margin: 0 auto; padding: 32px 24px 96px; display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 40px; align-items: start; }
+  .side { position: sticky; top: 24px; order: 2; max-height: calc(100vh - 48px); overflow-y: auto; background: var(--surface); padding: 16px; border-radius: 16px; border: 1px solid var(--line); }
+  .tabs { display: flex; flex-direction: column; gap: 4px; }
+  .tabs .group { font-size: 15px; font-weight: 800; color: var(--quiet); margin: 16px 0 6px 4px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .tabs .group:first-child { margin-top: 0; }
+  .tabs button {
+    all: unset; cursor: pointer; display: block;
+    font-size: 16px; line-height: 1.45; color: var(--ink);
+    padding: 8px 12px; border-radius: 8px; border: 1px solid transparent;
+    transition: all 0.15s ease;
+  }
+  .tabs button .no { color: var(--accent); font-weight: 700; margin-right: 6px; }
+  .tabs button:hover { background: #f1f5f9; border-color: var(--line); }
+  .tabs button[aria-selected="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); font-weight: 700; }
+  .tabs button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* ── 본문 ── */
+  main { min-width: 0; }
+  .panel { display: none; }
+  .panel:not([hidden]) { display: block; }
+  .crumb { font-size: 15px; font-weight: 800; color: var(--accent); letter-spacing: 0.03em; margin-bottom: 6px; text-transform: uppercase; }
+  h1 { font-size: 32px; line-height: 1.3; margin: 4px 0 16px; letter-spacing: -0.02em; font-weight: 800; }
+  .lead { font-size: 19px; margin: 12px 0 0; color: #334155; font-weight: 500; }
+  h2 { font-size: 26px; line-height: 1.35; margin: 0 0 16px; letter-spacing: -0.01em; font-weight: 800; }
+  h2::before { content: "■ "; color: var(--accent); }
+  h3 { font-size: 20px; margin: 32px 0 12px; font-weight: 700; }
+  h3::before { content: "▶ "; color: var(--accent); font-size: 0.8em; }
+  p { margin: 10px 0; }
+  .sub { color: var(--quiet); font-size: 16px; }
+  .key { font-size: 19px; font-weight: 600; padding: 16px 20px; margin: 20px 0 28px; border-left: 4px solid var(--accent); background: var(--accent-soft); border-radius: 0 12px 12px 0; color: #1e293b; }
+  code { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 16px; background: #f1f5f9; color: #0f172a; padding: 2px 6px; border-radius: 4px; border: 1px solid var(--line); }
+  pre { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 16px; background: var(--code-bg); color: #38bdf8; border: 1px solid #334155; border-radius: 12px; padding: 18px; overflow-x: auto; line-height: 1.6; margin: 16px 0; }
+  pre code { background: none; padding: 0; border: none; color: inherit; }
+
+  .badge { display: inline-block; font-size: 15px; font-weight: 700; color: #fff; background: var(--accent); padding: 1px 8px; border-radius: 6px; margin-left: 6px; line-height: 1.4; vertical-align: 1px; }
+  .stage { display: inline-block; font-size: 15px; font-weight: 700; padding: 2px 8px; border-radius: 6px; border: 1px solid var(--accent); color: var(--accent); white-space: nowrap; line-height: 1.4; background: var(--accent-soft); }
+  .stage.later { border-color: var(--edge); color: var(--quiet); background: #f8fafc; }
+  .num { font-weight: 700; color: var(--accent); white-space: nowrap; }
+
+  /* ── 표 ── */
+  .table-wrap { margin: 16px 0; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); overflow: hidden; }
+  table { border-collapse: collapse; width: 100%; font-size: 16px; }
+  th, td { text-align: left; vertical-align: top; padding: 14px 16px; border-bottom: 1px solid var(--line); }
+  th { font-weight: 700; color: var(--quiet); font-size: 15px; white-space: nowrap; background: #f1f5f9; }
+  tr:last-child td { border-bottom: none; }
+  td.nowrap { white-space: nowrap; }
+  td.nowrap .sub { white-space: normal; font-size: 15px; line-height: 1.5; margin-top: 4px; min-width: 150px; max-width: 220px; }
+  tr.new td { background: var(--accent-soft); }
+
+  /* ── HTML 도형 공통 ── */
+  .fig { margin: 24px 0; padding: 24px; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; }
+  .fig-title { font-size: 18px; font-weight: 800; margin: 0 0 16px; color: var(--ink); }
+  .fig-label { font-size: 15px; font-weight: 800; color: var(--quiet); margin: 20px 0 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .fig-label:first-of-type { margin-top: 0; }
+  .node { position: relative; border: 1px solid var(--edge); border-radius: 12px; padding: 14px 16px; background: var(--bg); transition: border-color 0.2s; }
+  .node.main { border-color: var(--accent); border-width: 2px; background: var(--accent-soft); }
+  .node.newb { border-color: var(--accent); border-width: 2px; }
+  .node.bad { border-color: var(--warn); background: var(--warn-soft); }
+  .node .t { font-size: 16px; font-weight: 700; line-height: 1.4; color: var(--ink); }
+  .node .d { font-size: 15px; color: var(--quiet); line-height: 1.5; margin-top: 4px; }
+  .node .tag { position: absolute; top: -10px; right: 12px; font-size: 15px; font-weight: 700; color: #fff; background: var(--accent); border-radius: 4px; padding: 1px 6px; line-height: 1.4; }
+  .node ul { margin: 6px 0 0; padding-left: 20px; font-size: 15px; }
+  .node ul li { margin: 3px 0; color: var(--quiet); }
+  .node .foot { font-size: 15px; color: var(--quiet); margin-top: 10px; }
+  .node.bad .t { color: #d97706; }
+  .node.main .t.acc { color: var(--accent); }
+
+  /* 가로 흐름: 노드 → 노드 */
+  .flow { display: flex; align-items: stretch; gap: 4px; }
+  .flow > .node { flex: 1 1 0; min-width: 0; text-align: center; }
+  .flow.left > .node { text-align: left; }
+  .arr { flex: none; width: 28px; display: grid; place-items: center; color: var(--edge); font-size: 18px; font-weight: 700; }
+  .arr::before { content: "→"; }
+  .band { margin-top: 16px; padding: 12px 16px; border: 1px solid var(--good); background: var(--good-soft); border-radius: 10px; font-size: 15px; font-weight: 600; color: #065f46; text-align: center; }
+
+  /* V-모델 */
+  .vm { display: grid; grid-template-columns: 1fr 170px 1fr; gap: 12px 0; align-items: center; }
+  .vm .node { text-align: center; }
+  .vm .l2 { margin-left: 14%; }
+  .vm .r2 { margin-right: 14%; }
+  .vm .link { text-align: center; font-size: 15px; color: var(--quiet); border-top: 2px dashed var(--edge); padding-top: 4px; margin: 0 8px; font-weight: 600; }
+  .vm .impl { grid-column: 1 / -1; justify-self: center; width: 40%; }
+  .vm-head { display: grid; grid-template-columns: 1fr 170px 1fr; font-size: 15px; font-weight: 800; color: var(--quiet); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .vm-head span:last-child { text-align: right; }
+
+  /* ── 목업 ── */
+  .mock { border: 1px solid var(--line); border-radius: 16px; overflow: hidden; background: var(--bg); margin: 24px 0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+  .mock-bar { display: flex; align-items: center; gap: 8px; padding: 12px 16px; background: #f1f5f9; border-bottom: 1px solid var(--line); }
+  .mock-bar .dot { width: 10px; height: 10px; border-radius: 50%; background: #cbd5e1; flex: none; }
+  .mock-bar .url { flex: 1; min-width: 0; margin-left: 8px; font-size: 15px; color: var(--quiet); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 4px 12px; font-family: "JetBrains Mono", monospace; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .mock-body { padding: 24px; }
+  .mock-title { font-size: 20px; font-weight: 800; margin: 0 0 16px; }
+  .mock-input { display: flex; gap: 8px; margin-bottom: 20px; }
+  .mock-input .field { flex: 1; min-width: 0; border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; font-family: "JetBrains Mono", monospace; font-size: 15px; background: #f8fafc; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .mock-input .btn { background: var(--accent); color: #fff; border-radius: 8px; padding: 10px 20px; font-weight: 700; font-size: 15px; white-space: nowrap; }
+  .mock-summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+  .mock-summary .cell { border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; background: var(--surface); }
+  .mock-summary .k { font-size: 15px; color: var(--quiet); font-weight: 600; }
+  .mock-summary .v { font-size: 20px; font-weight: 800; margin-top: 2px; }
+  .mock-summary .v.small { font-size: 15px; padding-top: 4px; }
+  .mock-tabs { display: flex; gap: 8px; border-bottom: 1px solid var(--line); margin-bottom: 16px; flex-wrap: wrap; }
+  .mock-tabs span { font-size: 15px; padding: 8px 14px; border-bottom: 2px solid transparent; color: var(--quiet); font-weight: 600; cursor: default; }
+  .mock-tabs span.on { border-color: var(--accent); color: var(--accent); font-weight: 800; }
+  .vcard { border: 1px solid var(--line); border-radius: 12px; padding: 16px; margin-bottom: 16px; background: var(--surface); }
+  .vcard .top { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .sev { font-size: 15px; font-weight: 700; padding: 2px 8px; border-radius: 4px; color: #fff; line-height: 1.4; text-transform: uppercase; }
+  .sev.critical { background: var(--crit); }
+  .sev.major { background: var(--warn); color: #fff; }
+  .rid { font-family: "JetBrains Mono", monospace; font-weight: 700; font-size: 15px; color: var(--ink); }
+  .wc { font-size: 15px; color: var(--quiet); font-weight: 600; }
+  .vcard .msg { font-weight: 700; margin: 4px 0 10px; font-size: 16px; }
+  .vcard .el { font-family: "JetBrains Mono", monospace; font-size: 15px; background: #0f172a; color: #38bdf8; border-radius: 8px; padding: 8px 12px; overflow-x: auto; white-space: nowrap; margin-bottom: 12px; }
+  .vgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .vbox { border: 1px solid var(--line); border-radius: 8px; padding: 12px; font-size: 15px; background: var(--bg); }
+  .vbox .h { font-size: 15px; font-weight: 800; color: var(--quiet); margin-bottom: 6px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .vbox.later { opacity: 0.65; }
+  .score { font-family: "JetBrains Mono", monospace; font-size: 15px; color: var(--quiet); font-weight: 600; }
+
+  .roadmap { display: flex; flex-wrap: wrap; gap: 6px; margin: 16px 0; align-items: center; }
+  .roadmap .chip { font-size: 15px; padding: 6px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--quiet); font-weight: 600; }
+  .roadmap .chip.on { border: 2px solid var(--accent); color: var(--accent); font-weight: 800; background: var(--accent-soft); }
+  .roadmap .sep { color: var(--quiet); margin: 0 4px; font-weight: 800; }
+
+  /* ── 태블릿 이하: 목차를 상단 가로 탭으로 ── */
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: minmax(0, 1fr); gap: 16px; padding: 16px 16px 64px; }
+    .side { order: 0; position: sticky; top: 0; z-index: 5; max-height: none; overflow: visible; background: var(--bg); padding: 12px 0; border-bottom: 1px solid var(--line); border-radius: 0; min-width: 0; }
+    .tabs { flex-direction: row; overflow-x: auto; gap: 6px; scrollbar-width: thin; }
+    .tabs .group { display: none; }
+    .tabs button { white-space: nowrap; font-size: 15px; padding: 6px 12px; border-color: var(--line); background: var(--surface); }
+  }
+
+  /* ── 모바일: 도형은 세로로, 표는 카드로 ── */
+  @media (max-width: 760px) {
+    body { font-size: 17px; }
+    .banner-in { flex-direction: column; align-items: flex-start; padding: 12px 16px; gap: 12px; }
+    .banner-left { flex-direction: column; align-items: flex-start; gap: 4px; }
+    .banner .home-link { align-self: stretch; text-align: center; }
+    h1 { font-size: 24px; }
+    h2 { font-size: 21px; }
+    h3 { font-size: 18px; }
+    .lead, .key { font-size: 16px; }
+    .key { padding: 12px 16px; }
+    .fig { padding: 16px; }
+
+    .flow { flex-direction: column; }
+    .flow > .node { flex: none; }
+    .arr { width: auto; height: 24px; }
+    .arr::before { content: "↓"; }
+
+    .vm, .vm-head { grid-template-columns: 1fr; }
+    .vm-head { display: none; }
+    .vm .l2, .vm .r2 { margin: 0; }
+    .vm .impl { width: 100%; }
+    .vm .link { border-top: none; border-left: 2px dashed var(--edge); text-align: left; padding: 2px 0 2px 12px; margin: 0 0 0 24px; }
+    .vm .gap { height: 10px; }
+
+    .mock-body { padding: 16px; }
+    .mock-summary { grid-template-columns: 1fr 1fr; }
+    .vgrid { grid-template-columns: 1fr; }
+
+    table.cards, table.cards tbody, table.cards tr, table.cards td { display: block; width: 100%; }
+    table.cards { font-size: 15px; }
+    table.cards thead { display: none; }
+    table.cards tr { padding: 12px 16px; border-bottom: 1px solid var(--line); }
+    table.cards tr:last-child { border-bottom: none; }
+    table.cards td { border: none; padding: 4px 0; white-space: normal; }
+    table.cards td::before { content: attr(data-label); display: block; font-size: 15px; font-weight: 800; color: var(--quiet); margin-bottom: 2px; text-transform: uppercase; }
+    table.cards td[data-label=""]::before { display: none; }
+    table.cards td:first-child { font-weight: 700; font-size: 15px; color: var(--ink); }
+    table.cards td:first-child::before { display: none; }
+  }
+
+  /* ── 약자 · 링크 ── */
+  abbr[data-full] { text-decoration: underline dotted var(--edge); text-underline-offset: 3px; cursor: help; }
+  .exp { color: var(--quiet); font-size: 0.9em; }
+  a { color: var(--accent); font-weight: 600; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  a.doc { border-bottom: 1px solid var(--accent); }
+  a.doc::after { content: " ↗"; font-size: 0.8em; }
+  .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); max-width: min(560px, calc(100vw - 32px)); background: var(--dark); color: #fff; font-size: 15px; line-height: 1.5; padding: 14px 18px; border-radius: 12px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.15); z-index: 50; border: 1px solid #334155; }
+  .toast[hidden] { display: none; }
+  .toast b { display: block; font-size: 15px; margin-bottom: 2px; color: #38bdf8; }
+
+  @media print {
+    .side { display: none; }
+    .layout { display: block; }
+    .panel[hidden] { display: block; }
+    .panel { margin-bottom: 48px; break-inside: avoid-page; }
+    body { background: #fff; }
+  }
+
+  /* ── 보완 ── */
+  td.nowrap .sub { white-space: normal; }
+  main h4 { font-size: 17px; margin: 24px 0 8px; font-weight: 700; }
+  .flow.tight > .node { padding: 12px 8px; }
+  .flow.tight .t { font-size: 15px; word-break: keep-all; }
+  .flow.tight .d { word-break: keep-all; }
+  .flow.tight .d { font-size: 15px; }
+  .flow.tight .arr { width: 18px; }
+  .make { font-size: 15px; color: var(--quiet); margin: -12px 0 20px; }
+  .make b { color: var(--accent); margin-right: 6px; }
+  :root { --dark: #0f172a; }
+  main ul:not(.tabs), main ol { list-style: disc; padding-left: 22px; margin: 8px 0; }
+  main ol { list-style: decimal; }
+  main li { margin: 4px 0; }
+
+  /* 1.3 절 가독성 보정: 기존 그리드·탭·표 레이아웃 변경 없음 */
+  #s6 { font-size: 18px; line-height: 1.85; }
+  #s6 p, #s6 li { font-size: 18px; line-height: 1.85; }
+  #s6 h2 { font-size: 27px; }
+  #s6 h3 { font-size: 22px; line-height: 1.5; }
+  #s6 .table-wrap table, #s6 .table-wrap td { font-size: 17px; line-height: 1.75; }
+  #s6 .table-wrap th { font-size: 16px; line-height: 1.6; }
+  #s6 p.sub, #s6 .sub { font-size: 16px; line-height: 1.75; }
+  #s6 code { font-size: 16px; }
+  @media (max-width: 760px) {
+    #s6, #s6 p, #s6 li { font-size: 17px; }
+    #s6 .table-wrap table, #s6 .table-wrap td { font-size: 16px; }
+    #s6 .table-wrap th { font-size: 16px; }
+  }
+
+/* A0 Part 1 · 가독성 보강 (레이아웃 변경 없음) */
+body {font-size:18px;line-height:1.78}
+main p, main li {font-size:18px}
+main .sub, main .make, main .exp {font-size:16px}
+main table {font-size:17px}
+main th {font-size:16px}
+main td, main td .sub {font-size:16px;line-height:1.65}
+main code, main pre, main pre code {font-size:16px}
+.tabs button, .banner .who {font-size:16px}
+.tabs .group, .crumb, .banner .home-link {font-size:15px}
+.key {font-size:18px}
+.node .d, .vbox, .fig-label, .mock-bar .url, .fig .foot, .score {font-size:16px}
+@media (max-width:760px){body{font-size:17px}main p,main li{font-size:17px}main table,main td{font-size:16px}main code,main pre,main pre code{font-size:15px}}
+
+/* A1-M1 가독성 보강: 레이아웃과 구조는 그대로 유지 */
+body {font-size:18px;}
+.tabs button, .tabs .group {font-size:16px;}
+main p, main li {font-size:18px;}
+main table, main td {font-size:17px;}
+main th, main .sub, main .crumb, .banner .who {font-size:16px;}
+main code, main pre, main pre code {font-size:16px;}
+main .fig-label, main .node .d, main .node .foot, main .badge, main .stage {font-size:16px;}
+@media(max-width:760px){body, main p, main li {font-size:17px;} main table, main td, main code, main pre, main pre code {font-size:16px;} .tabs button{font-size:16px;} }
+
+/* A1-M2 동일 레이아웃·가독성 유지 */
+body{font-size:18px;}main p,main li{font-size:18px;}main table,main td{font-size:17px;} main th, main .sub, main .crumb{font-size:16px;} main code,main pre,main pre code{font-size:16px;} .tabs button,.tabs .group{font-size:16px;} @media(max-width:760px){main p,main li{font-size:17px;} main td,main code,main pre,main pre code{font-size:16px;}}
+/* 가독성: 기존 레이아웃 보존 */
+body {font-size:18px;} .tabs button{font-size:16px;} .tabs .group,.crumb{font-size:15px;} table{font-size:17px;} th{font-size:16px;} .sub,.make,.caption{font-size:16px;} code,pre{font-size:16px;} .node .d,.fig-label,.badge,.stage{font-size:15px;} .key{font-size:18px;} @media(max-width:760px){body{font-size:17px;}table.cards td{font-size:16px;}table.cards td::before{font-size:15px;}}
+  /* 저작권 안내: 원본 레이아웃 변경 없음 */
+  .copyright-footer { max-width:1320px; margin:0 auto; padding:18px 24px 34px; border-top:1px solid var(--line); text-align:center; color:var(--quiet); font-size:16px; line-height:1.7; }
+  .copyright-footer small { display:block; font-size:15px; }
+  @media print { .copyright-footer { margin-top:20px; } }
+
+/* 통합 M2: 기존 레이아웃 보존, 긴 실습 코드 가독성 */
+body {font-size:18px;line-height:1.78}
+.tabs button {font-size:16px}.tabs .group,.crumb{font-size:15px}
+main p,main li{font-size:18px;line-height:1.8}
+table{font-size:17px;line-height:1.6}th{font-size:16px}
+main .sub,main .make,main .exp{font-size:16px}
+pre,pre code,code{font-size:16px}pre{line-height:1.65}
+.node .d,.fig-label,.badge,.stage,.fig .foot{font-size:15px}
+.key{font-size:18px;line-height:1.75}
+.lesson-outline{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 20px;margin:20px 0}
+.lesson-outline p{margin:4px 0}
+.teaching-note{border-left:3px solid var(--edge);padding:8px 16px;margin:18px 0;color:var(--ink);background:var(--surface)}
+.practice{border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin:18px 0;background:white}
+.practice h4{margin:0 0 8px}
+.source-links{border-top:1px solid var(--line);padding-top:16px;margin-top:30px}
+.source-links a{word-break:break-all}
+details.lesson-details{border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:14px 16px;margin:14px 0}
+details.lesson-details summary{cursor:pointer;font-size:17px;font-weight:800;list-style:revert}
+details.lesson-details[open] summary{margin-bottom:12px}
+.trace-box{background:#0f172a;color:#e2e8f0;padding:14px;border-radius:10px;font:16px/1.65 'JetBrains Mono',monospace;overflow-x:auto;white-space:pre}
+small{font-size:15px}
+@media(max-width:760px){body{font-size:17px}main p,main li{font-size:17px}table.cards td{font-size:16px}table.cards td::before{font-size:15px}}
+
+/* A1-M3: 기존 오른쪽 탭 레이아웃 · 큰 글자 기준 유지 */
+.eval-emphasis{font-weight:800;color:var(--accent)}
+main .table-wrap{overflow-x:auto}
+main .table-wrap th,main .table-wrap td{vertical-align:top;word-break:keep-all}
+main .lesson-details{font-size:17px}
+main .lesson-details summary{font-size:18px}
+main .lesson-details p{font-size:17px}
+main pre{white-space:pre;tab-size:4}
+main p{word-break:keep-all}
+@media (max-width:760px){main .lesson-details summary{font-size:17px}}
+
+
+/* A1-M3: 18px 읽기 기준, 동일 상단 배너·오른쪽 목차 */
+body{font-size:18px;line-height:1.8} main p, main li{font-size:18px;line-height:1.82;word-break:keep-all}
+main table,main td{font-size:17px;line-height:1.65} main th{font-size:16px}
+main code,main pre,main pre code{font-size:16px} main .sub,main .exp{font-size:16px}
+.tabs button{font-size:16px}.tabs .group{font-size:15px}
+main .table-wrap{overflow-x:auto} main .table-wrap th,main .table-wrap td{vertical-align:top;word-break:keep-all}
+main pre{white-space:pre;tab-size:4} main .key{font-size:18px}
+main .lesson-details summary{font-size:18px} main .lesson-details p{font-size:17px}
+@media(max-width:760px){body,main p,main li{font-size:17px}main table.cards td,main code,main pre,main pre code{font-size:16px}main table.cards td::before{font-size:15px}}
+
+/* A1-M5: 동일 레이아웃 유지, 설명 텍스트 가독성만 보완 */
+main .practice p{margin:5px 0 0}main .practice h4{font-size:18px}main .teaching-note{font-size:17px;line-height:1.75}main .table-wrap{overflow-x:auto}main .table-wrap code{white-space:normal;overflow-wrap:anywhere}
+
+/* A1-M5 인터랙티브 CSV 전처리 시연: 기존 레이아웃 유지 */
+#m5-demo label{font-weight:700;font-size:16px}
+.m5-control-row{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin:12px 0}
+.m5-control-row select{max-width:100%;flex:1 1 220px;min-width:180px}
+#m5-demo select,#m5-demo textarea{border:1px solid var(--edge);border-radius:8px;font:16px/1.6 'Pretendard',sans-serif;padding:10px 12px;background:#fff;color:var(--ink)}
+#m5-demo textarea{width:100%;resize:vertical;margin:8px 0 4px;font-family:'JetBrains Mono',monospace;font-size:15px}
+.m5-check{display:flex;gap:7px;align-items:center}
+.m5-small-button{background:var(--accent);color:#fff;border:0;padding:10px 14px;border-radius:8px;font-size:15px;cursor:pointer;font-weight:700}
+.m5-demo-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+#m5-demo h4{font-size:17px;margin:12px 0 8px}
+.m5-preview{white-space:pre-wrap;overflow-wrap:anywhere;font-size:15px!important;line-height:1.65;min-height:80px;max-height:240px;overflow:auto;margin:8px 0;padding:12px}
+.m5-token-wrap{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 16px}
+.m5-token{font-size:14px;border:1px solid var(--line);border-radius:6px;padding:4px 8px;background:var(--surface);font-family:'JetBrains Mono',monospace;overflow-wrap:anywhere}
+@media(max-width:760px){.m5-demo-grid{grid-template-columns:1fr}#m5-demo select{min-width:100%}}
+</style></head><body><div class="banner">
+<div class="banner-in">
+<div class="banner-left">
+<div class="org">청년취업사관학교 AI_클라우드과정(2026년)</div>
+<div class="who">강사 부성순 · <a href="mailto:bakpak@empas.com">bakpak@empas.com</a></div>
+</div>
+<a class="home-link" href="/">🏠 홈으로</a>
+</div>
+</div><div class="layout"><aside class="side"><div aria-label="A1-M5 목차" aria-orientation="vertical" class="tabs" role="tablist"><div class="group">Part A · Article A1 · Module A1-M5</div><button aria-controls="s1" aria-selected="true" id="tab-s1" role="tab"><span class="no">01</span>업무 시나리오·M2/M3 연계</button><button aria-controls="s2" aria-selected="false" id="tab-s2" role="tab" tabindex="-1"><span class="no">02</span>정제·정규화·원본 보존</button><button aria-controls="s3" aria-selected="false" id="tab-s3" role="tab" tabindex="-1"><span class="no">03</span>OOV·단어 분할 방식</button><button aria-controls="s4" aria-selected="false" id="tab-s4" role="tab" tabindex="-1"><span class="no">04</span>형태소·품사·Kiwi</button><button aria-controls="s5" aria-selected="false" id="tab-s5" role="tab" tabindex="-1"><span class="no">05</span>M2 CSV 전처리 미리보기</button><button aria-controls="s6" aria-selected="false" id="tab-s6" role="tab" tabindex="-1"><span class="no">06</span>이해도·실습·GPT 검토</button></div></aside><main><section aria-labelledby="tab-s1" class="panel" id="s1" role="tabpanel">
+<div class="crumb">Part A · Article A1 · Module A1-M5</div>
+<h1>A1-M5. 텍스트 전처리와 한국어 형태소 분석</h1>
+<p class="lead">A1-M2에서 <code>rules.csv</code>로 검사를 정의했고, A1-M3에서는 같은 CSV의 <code>title</code>·<code>description</code>·<code>reason</code>·<code>limitation</code>을 TF-IDF·BM25로 검색했다. A1-M4에서는 그 판정과 검색을 평가했다. 이제 <b>검색할 한국어 문장의 품질</b>을 살펴본다.</p>
+<div class="key">이번 업무 질문: <b>원본 규칙과 메타데이터를 훼손하지 않으면서, 표현이 조금 다른 질문도 검색할 수 있도록 텍스트를 어떻게 다룰까?</b> 전처리가 항상 성능을 올리는 것은 아니며, 원본과 비교·검증할 수 있어야 한다.</div>
+<h3>01-1. 실제 업무 시나리오: 검색이 왜 흔들릴까?</h3>
+<p>개발자가 “<code>aria-label</code>이 있는 링크의 이름 후보는 어떻게 검사하나요?”라고 묻는다. 그런데 규칙 문서에는 <code>aria-label</code>, “링크 이름 후보”, “대체 텍스트 후보” 등 다른 표현이 들어 있다. 동일한 내용을 가리켜도 띄어쓰기, 기호, 한국어 조사·어미, 새 사내 용어 때문에 단어가 서로 다르게 처리될 수 있다.</p>
+<p><b>우리의 목표는 규칙 판정을 다시 만드는 일이 아니다.</b> M2 검사기와 M3 검색기에는 손대지 않고, 검색용 텍스트 복사본을 어떻게 정제하고 어떤 경우에 형태소 분석이 필요한지 판단하는 것이다.</p>
+<div class="table-wrap"><table><thead><tr><th>순서</th><th>실제 업무</th><th>대상 데이터</th><th>확인할 것</th></tr></thead><tbody><tr><td>①</td><td>A1-M2에서 규칙을 작성하고 검사</td><td><code>rules.csv</code> + <code>rule_tree.csv</code></td><td>검사 조건과 지식 원본은 그대로 유지</td></tr><tr><td>②</td><td>A1-M3에서 근거를 검색</td><td>규칙 설명 네 필드</td><td>문장/띄어쓰기/기술 식별자의 차이 관찰</td></tr><tr><td>③</td><td>A1-M5에서 <b>복사본</b>을 정제</td><td><code>raw_text</code> → <code>clean_text</code></td><td>WCAG 번호·aria-label·부정 표현 보존</td></tr><tr><td>④</td><td>OOV·형태소·사용자 사전의 선택 기준 검토</td><td>업무 고유명사·일반 한국어</td><td>문제를 해결하는지, 의미를 잃는지 비교</td></tr><tr><td>⑤</td><td>A1-M4 기준으로 필요할 때만 품질 확인</td><td>기존 질문/정답 규칙 ID</td><td>검색이 실제 개선되었는지 측정 — 점수 추측 금지</td></tr></tbody></table></div>
+<h3>01-2. 텍스트 분석과 CSV 구조는 서로 다른 층이다</h3>
+<p><b>CSV</b>는 규칙의 필드와 행을 구분하는 저장 형식이고, <b>전처리</b>는 <code>reason</code> 등의 <i>필드 안에 들어 있는 한국어 텍스트</i>를 다룬다. 즉 CSV로 저장됐다는 이유만으로 형태소 분석이 끝난 것은 아니다.</p>
+<div class="table-wrap"><table><thead><tr><th>구분</th><th>A1-M2/3에서의 값</th><th>A1-M5 처리 방침</th></tr></thead><tbody><tr><td>검색 본문</td><td><code>title</code>, <code>description</code>, <code>reason</code>, <code>limitation</code></td><td>원본 보존 + 검색용 정제본 생성</td></tr><tr><td>고유 식별자</td><td><code>rule_id</code>, <code>rule_version</code>, <code>policy_id</code></td><td>원형 유지, 필요하면 정확 일치 검색</td></tr><tr><td>판정/활성 상태</td><td><code>scope</code>, <code>status</code>, <code>effective_from</code></td><td>전처리하지 않고 필터 메타데이터 유지</td></tr><tr><td>근거/트리</td><td><code>reference_url</code>, <code>node_id</code>, <code>parent_id</code>, <code>tree_path</code></td><td>출처·계층 관계 유지; 트리 원본도 변경 금지</td></tr></tbody></table></div>
+<h3>01-3. 현재 모듈과 후속 모듈의 경계</h3>
+<p>여기서는 <b>정제, 유니코드·공백, OOV, 공백/문자/n-gram/형태소 분할, 품사·사용자 사전</b>을 배운다. 형태소 분석기 Kiwi 실습은 선택형이다. 임베딩·LLM 토크나이저나 벡터 검색은 이 모듈의 실습 범위에 넣지 않는다. A1-M6에서는 검사·검색을 통합하고, 이후 A2에서 모델 기반 처리를 별도로 진행한다.</p>
+<h3>01-4. 이번 실습 파일</h3>
+<div class="table-wrap"><table><thead><tr><th>파일</th><th>역할</th></tr></thead><tbody><tr><td><code>data/rules.csv</code></td><td>A1-M2 원본 그대로 재사용, 적용 중 7건·검토 중 1건</td></tr><tr><td><code>data/rule_tree.csv</code></td><td>계층·출처 참조 원본 그대로 유지</td></tr><tr><td><code>cleaner.py</code></td><td>NFC+공백 정리, OOV 실습용 분할 함수</td></tr><tr><td><code>05_prepare_m2_documents.py</code></td><td>검색 본문 정제 미리보기와 메타데이터 분리 — 원본 파일 미수정</td></tr><tr><td><code>03_kiwi_pos_optional.py</code> / <code>04_kiwi_dictionary_optional.py</code></td><td>선택 실습: 형태소·품사 분석, 사용자 사전</td></tr><tr><td><code>06_compare_m3_search_optional.py</code></td><td>M3 검색기 재사용: 정제 전후 순위 확인 — 개선을 가정하지 않음</td></tr></tbody></table></div></section><section aria-labelledby="tab-s2" class="panel" hidden="" id="s2" role="tabpanel"><div class="crumb">Part A · Article A1 · Module A1-M5</div>
+<h2>02. 정제와 정규화</h2>
+<p>정제(Cleaning)는 분석에 방해되는 잡음이나 불필요한 요소를 다루고, 정규화(Normalization)는 서로 다른 표기를 일정한 규칙으로 통일하는 일이다. 두 과정이 겹치기도 하지만 <b>무조건 삭제하는 것이 핵심은 아니다.</b></p>
+<h3>02-1. 실제 입력에서 먼저 관찰할 문제</h3><div class="table-wrap"><table><thead><tr><th>문제</th><th>입력 예시</th><th>접근 방법</th><th>주의</th></tr></thead><tbody><tr><td>공백·줄바꿈</td><td><code>배송   빠름
+</code></td><td>연속 공백을 하나로</td><td>표·코드의 줄바꿈은 유지해야 할 수 있음</td></tr><tr><td>HTML 마크업</td><td><code>&amp;lt;p&amp;gt;공지&amp;lt;/p&amp;gt;</code></td><td>텍스트 노드와 속성 추출을 구분</td><td><code>alt</code>·<code>aria-label</code>은 화면 글자가 아님</td></tr><tr><td>유니코드 표기</td><td>완성형·조합형 한글</td><td>NFC 등 정책 선택</td><td>NFKC는 ① 등을 1로 바꿀 수 있음</td></tr><tr><td>기술 식별자</td><td><code>IMG-001</code>, <code>WCAG 1.1.1</code></td><td>원형 보존 또는 보존 예외 설정</td><td>무분별한 정규식 삭제 금지</td></tr><tr><td>개인정보</td><td>이메일·전화번호가 포함된 로그</td><td>수집·검색 목적에 맞게 비식별화</td><td>삭제·마스킹 정책을 별도로 정의</td></tr></tbody></table></div><h3>02-2. 최소 Python 실습: 공백과 유니코드</h3>
+<p>기초 실습은 별도 문장을 이용한다. <code>unicodedata.normalize("NFC", ...)</code>는 유니코드 표현을 표준적으로 정리하고, <code>re.sub(r"\s+", " ", ...)</code>는 줄바꿈·탭을 포함한 연속 공백을 하나로 바꾼다. <code>repr()</code>을 사용하면 보이지 않는 공백도 확인할 수 있다.</p><pre><code class="language-python">import re
+import unicodedata
+
+raw = "  [공지]   WCAG 2.4.4\n aria-label 을  확인하세요.  "
+text = unicodedata.normalize("NFC", raw)
+clean = re.sub(r"\s+", " ", text).strip()
+
+print("원본:", repr(raw))
+print("정제:", repr(clean))
+print("보존:", "2.4.4" in clean, "aria-label" in clean)</code></pre><h4>실행 결과와 해석</h4><pre><code class="language-text">원본: '  [공지]   WCAG 2.4.4\n aria-label 을  확인하세요.  '
+정제: '[공지] WCAG 2.4.4 aria-label 을 확인하세요.'
+보존: True True</code></pre><p>여기서는 불필요한 공백만 다뤘으므로 규칙 ID와 하이픈이 그대로 남아 있다. 숫자·기호 삭제를 추가해도 된다는 뜻이 아니다. <b>전처리 전후의 의미 보존 여부</b>를 확인해야 한다.</p>
+<h3>02-3. NFC와 NFKC를 무조건 같은 것으로 보면 안 된다</h3>
+<p>NFC는 표준적인 정규형 중 하나이고, NFKC는 호환 문자를 변환하는 경우가 있다. 예를 들어 원문 <code>①</code>가 NFKC에서 <code>1</code>로 바뀔 수 있다. 번호·코드·브랜드명·법령 텍스트에 어떤 정규형을 쓸지는 목적에 따라 결정해야 한다.</p>
+<pre><code class="language-python">import unicodedata
+print(unicodedata.normalize("NFC", "①"))    # ①
+print(unicodedata.normalize("NFKC", "①"))   # 1</code></pre><h3>02-4. HTML에서 글자만 추출하면 끝일까?</h3>
+<p>HTML에서 <code>get_text()</code>는 보이는 텍스트 노드를 모으는 데 유용하지만 이미지의 <code>alt</code>나 요소의 <code>aria-label</code>처럼 <b>속성값으로 존재하는 접근성 정보</b>는 별도로 추출해야 한다. 화면 텍스트와 속성 텍스트를 구분해 남겨야 규칙 검사·검색·향후 재검증에 활용할 수 있다.</p><pre><code class="language-python">from bs4 import BeautifulSoup
+
+html = '&lt;img src="a.png" alt="결제 안내"&gt;&lt;a href="/ship" aria-label="배송 정책 자세히 보기"&gt;더보기&lt;/a&gt;'
+soup = BeautifulSoup(html, "html.parser")
+print("화면 텍스트:", soup.get_text(" ", strip=True))
+print("alt:", [x.get("alt") for x in soup.select("img[alt]")])
+print("aria-label:", [x.get("aria-label") for x in soup.select("[aria-label]")])</code></pre><p><b>결과 읽기:</b> 화면 텍스트에는 <code>더보기</code>만 나올 수 있지만, 별도 목록에는 <code>결제 안내</code>, <code>배송 정책 자세히 보기</code>가 남는다. 이 정보를 합칠지, 필드로 분리할지는 검색·판정 목적에 따라 결정한다.</p>
+<div class="practice"><h4>기초 확인</h4><p><code>"  오류   없음\nWCAG 2.4.4  "</code>를 정제한 뒤 조항 번호가 보존되었는지 확인한다. “왜 숫자를 제거하지 않았나?”를 한 문장으로 설명한다.</p></div><p class="teaching-note">트러블슈팅: 코드 블록이나 표 형태의 문서는 공백을 무조건 하나로 합치면 구조가 깨진다. <b>문서 종류별 전처리 정책을 다르게</b> 두고, 원본은 그대로 보관한다.</p><div class="practice"><h4>02-5. 실제 rules.csv에는 무엇을 적용할까?</h4><p><code>rule_id=LINK-001</code>을 예로 들면, <code>description</code>에 포함된 <code>aria-label</code>과 <code>reason</code>의 서술문에서 <b>반복 공백과 NFC만</b> 우선 적용한다. <code>rule_id</code>, <code>wcag_ref</code>, <code>status</code>는 원래 값으로 유지한다. 전체 코드의 실행 예는 <code>05_prepare_m2_documents.py</code>를 참조한다.</p><p class="sub">M2의 규칙 판정에는 정제 텍스트를 다시 입력하지 않는다. 검사 조건인 <code>operator</code>, <code>values</code>를 임의로 바꾸면 규칙 자체가 달라진다.</p></div></section><section aria-labelledby="tab-s3" class="panel" hidden="" id="s3" role="tabpanel"><div class="crumb">Part A · Article A1 · Module A1-M5</div>
+<h2>03. OOV와 토큰 분할 방식</h2>
+<h3>03-1. OOV는 왜 생기나?</h3>
+<p><b>OOV(Out-of-Vocabulary, 미등록 어휘)</b>는 사용하는 사전이나 어휘 목록에 없는 단어를 뜻한다. 문제는 절대적인 단어의 종류가 아니라 <b>어떤 사전·분석기·업무 도메인을 기준으로 하느냐</b>에 따라 달라진다. 신제품명·신조어·내부 시스템 코드·기술 이름은 일반 사전에 없거나 기대와 다른 단위로 분리될 수 있다.</p>
+<p>예를 들어 <code>메타정합검증</code>이라는 새 사내 기술명을 입력했을 때, 분석기가 이를 통째로 인식하지 못하고 여러 단위로 나누거나 불확실하게 해석할 수 있다. 이것이 반드시 <code>[UNK]</code>라는 하나의 토큰으로 출력된다는 뜻은 아니다. <b>분석기의 처리 방식에 따라 결과가 달라진다.</b></p>
+<div class="table-wrap"><table><thead><tr><th>상황</th><th>예시</th><th>실제 영향</th></tr></thead><tbody><tr><td>새로운 사내 용어</td><td>메타정합검증</td><td>하나의 개념이 쪼개져 검색이 불안정할 수 있음</td></tr><tr><td>영문과 기호가 결합</td><td>aria-label, COMP-LINK-001</td><td>하이픈 삭제나 분리가 식별자 검색을 훼손할 수 있음</td></tr><tr><td>띄어쓰기 변형</td><td>규칙 검사기 / 규칙검사기</td><td>같은 개념을 서로 다르게 취급할 수 있음</td></tr><tr><td>오탈자·구어 표현</td><td>배쏭, 좋아용</td><td>정규화·교정이 필요할 수도, 원문 보존이 필요할 수도 있음</td></tr></tbody></table></div><h3>03-2. 분할 단위를 선택할 때의 장단점</h3><div class="table-wrap"><table><thead><tr><th>방법</th><th>실제 처리 단위</th><th>장점</th><th>한계</th></tr></thead><tbody><tr><td>공백 기준</td><td><code>"배송이 빠르다"</code> → 배송이 / 빠르다</td><td>간단하고 빠름</td><td>조사·어미 변형을 별도 단어로 취급</td></tr><tr><td>문자 단위</td><td>배 / 송 / 이</td><td>새 단어에도 기본 적용 가능</td><td>문맥·단어 경계 정보 약함, 길이 증가</td></tr><tr><td>문자 n-gram</td><td>"배송이" → 배송 / 송이 (2-gram)</td><td>부분 문자열·오탈자에 비교적 강함</td><td>불필요한 조합과 오탐 가능성</td></tr><tr><td>사전 기반 단어 분할</td><td>사전에 있는 어휘 단위</td><td>정해진 업무 용어에 일관성</td><td>사전 미등록·갱신 문제</td></tr><tr><td>형태소 분석</td><td>배송/명사 + 이/조사</td><td>품사·어미·조사 해석에 유리</td><td>사전·문맥·오분석·속도 비용 고려</td></tr></tbody></table></div><p><b>선택 근거:</b> OOV가 있다고 해서 반드시 한 가지 분석기를 도입해야 하는 것은 아니다. ID 검색이라면 원문 보존·정확한 문자열 처리가 우선일 수 있고, 한국어 일반 문장을 분석한다면 형태소와 품사 정보가 유용할 수 있다.</p>
+<h3>03-3. 독립 기초 실습: 같은 문장을 다르게 분리하기</h3><pre><code class="language-python">text = "배송이 빠르지 않습니다"
+print("공백:", text.split())
+print("문자:", list(text.replace(" ", ""))[:8])
+
+word = "배송이"
+print("2-gram:", [word[i:i+2] for i in range(len(word)-1)])</code></pre><p>출력에서 공백 분할은 두 단어를, 문자 분할은 더 작은 단위를, 2-gram은 겹치는 문자 조합을 만든다. <b>분할이 더 잘게 된다고 의미 분석이 자동으로 좋아지는 것은 아니다.</b> 어떤 질문을 해결하려는지 먼저 정해야 한다.</p>
+<h3>03-4. OOV 대응 전략을 설계로 선택한다</h3><div class="table-wrap"><table><thead><tr><th>목적</th><th>우선 검토할 방법</th><th>추가 판단</th></tr></thead><tbody><tr><td>규칙 ID·표준 번호의 정확한 검색</td><td>원문 보존, 구조화 필드, 일치 검색</td><td>코드 변형을 금지할지?</td></tr><tr><td>일반 한국어의 어휘 통일</td><td>형태소 분석·용어 사전</td><td>품사 제거로 문맥이 훼손되는지?</td></tr><tr><td>오타가 포함된 고객 문장</td><td>교정 후보, 원본 유지, n-gram</td><td>자동 교정으로 의미가 바뀌지 않는지?</td></tr><tr><td>자주 바뀌는 신조어·도메인 명칭</td><td>검토 후 사용자 사전 갱신</td><td>사전 버전을 어떻게 재현할지?</td></tr></tbody></table></div><p class="teaching-note">OOV 여부는 고정된 정답이 아니라 <b>어휘 목록·도메인·분석기 버전</b>에 의존한다. 따라서 “미등록 어휘가 발견됐다”는 현상과 “검색 품질이 떨어졌다”는 결과를 구분해야 한다.</p><h3>03-5. 우리 CSV의 OOV를 어디서 찾을까?</h3><p>규칙 ID인 <code>COMP-LINK-001</code>, HTML 속성인 <code>aria-label</code>, 업무용어인 <code>메타정합검증</code>은 성격이 서로 다르다. 코드·속성 이름은 <b>정확히 보존해서 필터/문자열 일치</b>가 우선이고, 사전에 없는 한국어 업무용어는 <b>형태소 분석기·업무 사전 보완</b> 여부를 판단한다. 분석기의 미등록 어휘와 M3 검색기의 미등록 특징(어휘)은 같은 말처럼 다루지 않는다.</p><p><code>[UNK]</code> 등 특수 표식은 특정 토큰화 체계에서 쓰일 수 있지만, <b>모든 형태소 분석기가 OOV를 한 토큰으로 처리한다는 뜻은 아니다.</b></p></section><section aria-labelledby="tab-s4" class="panel" hidden="" id="s4" role="tabpanel"><div class="crumb">Part A · Article A1 · Module A1-M5</div>
+<h2>04. 한국어 형태소·품사와 Kiwi</h2>
+<h3>04-1. 한국어는 왜 형태소 분석이 유용할까?</h3>
+<p>한국어는 <b>교착어(agglutinative language)</b>의 성격이 강해, 어근·어간 등에 조사와 어미 같은 문법 요소가 결합해 다양한 표현을 만든다. 공백 기준 분할만으로는 <code>배송이</code>와 <code>배송은</code>이 같은 명사 <code>배송</code>에서 나온 표현이라는 점을 직접 알려주지 않는다.</p>
+<p><b>형태소(morpheme)</b>는 뜻이나 문법 기능을 갖는 최소 언어 단위이다. <b>품사(part of speech)</b>는 단어의 문법적 종류다. 형태소 분석기는 문장을 분석하여 각 단위의 형태와 품사 등을 반환한다.</p>
+<div class="table-wrap"><table><thead><tr><th>구분</th><th>예시</th><th>설명</th></tr></thead><tbody><tr><td>어근·어간</td><td>먹-, 빠르-</td><td>활용 과정에서 중심 의미를 담당</td></tr><tr><td>조사</td><td>이/가, 은/는, 을/를</td><td>체언 뒤에서 문법 관계 등을 나타냄</td></tr><tr><td>어미</td><td>-다, -습니다</td><td>서술어의 활용과 문장 끝 형태를 나타냄</td></tr><tr><td>형태소</td><td>배송 / 이</td><td>품사·문법 정보 단위로 더 잘게 분석</td></tr></tbody></table></div><h3>04-2. 자주 볼 품사 태그</h3><div class="table-wrap"><table><thead><tr><th>태그</th><th>품사</th><th>예시·활용 시 주의</th></tr></thead><tbody><tr><td><code>NNG</code></td><td>일반명사</td><td>배송, 서비스: 검색 키워드 후보</td></tr><tr><td><code>NNP</code></td><td>고유명사</td><td>고유한 명칭: 도메인 사전 등록 대상</td></tr><tr><td><code>VV</code></td><td>동사</td><td>확인하다: 동작 표현을 잃지 않도록</td></tr><tr><td><code>VA</code></td><td>형용사</td><td>빠르다: 상태·평가 표현</td></tr><tr><td><code>JKS/JKO/JX</code></td><td>조사</td><td>이·을·은: 무조건 제거할 때 문맥 확인</td></tr><tr><td><code>EF/EC</code></td><td>어미</td><td>-다·-고: 문장 기능을 표현</td></tr><tr><td><code>MAG</code></td><td>일반부사</td><td>매우·안: 감정·부정 정보를 포함할 수 있음</td></tr></tbody></table></div><h3>04-3. 선택 실습: Kiwi로 형태소 출력 확인</h3>
+<p>Kiwi는 Python에서 사용할 수 있는 한국어 형태소 분석기로 <code>kiwipiepy</code> 패키지를 통해 실행한다. 형태소의 <code>form</code>(형태), <code>tag</code>(품사), <code>start</code>(시작 위치), <code>len</code>(길이) 등을 확인할 수 있다. 결과는 사전·버전에 따라 달라질 수 있으므로 <b>항상 실제 출력과 원문을 나란히 보며 해석</b>한다.</p><pre><code class="language-python"># 설치: python -m pip install kiwipiepy
+from kiwipiepy import Kiwi
+
+kiwi = Kiwi()
+text = "배송이 빠르지 않습니다."
+
+for token in kiwi.tokenize(text):
+    print(token.form, token.tag, token.start, token.len)</code></pre><h4>코드에서 처음 보는 부분 설명</h4><div class="table-wrap"><table><thead><tr><th>구문</th><th>역할</th><th>결과에서 확인할 점</th></tr></thead><tbody><tr><td><code>Kiwi()</code></td><td>형태소 분석기를 초기화</td><td>반복 호출 시 객체 재사용 가능</td></tr><tr><td><code>tokenize(text)</code></td><td>문장을 형태소 단위로 분석</td><td>단어가 분리되는 방식</td></tr><tr><td><code>token.form</code></td><td>분석된 형태</td><td>원문에 어떤 부분이 대응되는지</td></tr><tr><td><code>token.tag</code></td><td>품사 정보</td><td>명사·동사·어미·조사 구분</td></tr><tr><td><code>start</code> / <code>len</code></td><td>원문 위치 정보</td><td>전처리로 글자 위치가 달라지면 주의</td></tr></tbody></table></div><h3>04-4. 명사만 추출하면 왜 위험할까?</h3>
+<p>많은 텍스트 실습이 명사 추출부터 시작하지만, 모든 업무에 적합한 방법은 아니다. <code>"배송이 빠르지 않습니다"</code>에서 명사만 남기면 <code>배송</code>처럼 결과가 지나치게 짧아져 <b>부정과 평가 정보</b>를 잃는다. 따라서 형태소 분석은 단순한 단어 추출이 아니라 품사를 포함한 <b>정보 선택의 문제</b>로 이해해야 한다.</p><pre><code class="language-python">from kiwipiepy import Kiwi
+kiwi = Kiwi()
+text = "배송이 빠르지 않습니다."
+
+nouns = [t.form for t in kiwi.tokenize(text) if t.tag in {"NNG", "NNP"}]
+print("명사만:", nouns)
+print("원본:", text)</code></pre><p class="teaching-note">트러블슈팅: <b>형태소 분석 결과가 기대와 달라도 곧바로 오류로 보지 않는다.</b> 사전·문맥·입력 표기를 점검하고, 입력 텍스트가 원본과 달라졌는지 확인한다.</p><h3>04-5. 형태소 분석 실습과 검색 성능은 분리한다</h3><p>Kiwi가 <code>메타정합검증</code>을 원하는 단위로 분리했다는 사실만으로 검색 품질이 향상되지는 않는다. 색인 문서와 질의에 동일한 분할 정책을 적용했는지, 부정 표현과 규칙 식별자가 유지되는지 확인해야 한다. 이후 A1-M4 정답 질문으로 다시 측정할 수 있으나 M5에서 새 성능 수치를 임의로 만들지는 않는다.</p></section><section aria-labelledby="tab-s5" class="panel" hidden="" id="s5" role="tabpanel">
+<div class="crumb">A1-M2 규칙 원본을 그대로 사용</div>
+<h1>05. 규칙 CSV의 검색 본문 전처리·미리보기</h1>
+<p class="lead">M2에서 만든 규칙을 다시 작성하지 않는다. <b>원본 CSV의 네 검색 본문 필드를 읽어서 정제본을 만들고, 식별자·적용 상태·출처·트리 계층은 메타데이터로 그대로 보존</b>한다.</p>
+<h3>05-1. 규칙 CSV의 본문과 메타데이터 구분</h3>
+<div class="table-wrap"><table><thead><tr><th>유형</th><th>필드</th><th>M5의 처리</th></tr></thead><tbody><tr><td>검색 본문</td><td><code>title</code>, <code>description</code>, <code>reason</code>, <code>limitation</code></td><td>원본 문자열 <code>raw_text</code>, 최소 정제 <code>clean_text</code> 나란히 보관</td></tr><tr><td>식별/상태</td><td><code>rule_id</code>, <code>rule_version</code>, <code>scope</code>, <code>status</code>, <code>policy_id</code></td><td>메타데이터, 정제 금지</td></tr><tr><td>출처</td><td><code>wcag_ref</code>, <code>kwcag_ref</code>, <code>reference_url</code>, <code>effective_from</code></td><td>메타데이터, 번호·URL 원형 유지</td></tr><tr><td>규칙 트리</td><td><code>node_id</code>, <code>parent_id</code>, <code>tree_path</code>, <code>source_file</code></td><td><code>rule_tree.csv</code>와 규칙 ID로 조인해서 생성</td></tr><tr><td>전처리 정책</td><td><code>preprocess_version</code></td><td><code>nfc-ws-v1</code> — 검색 정제본의 재현 조건</td></tr></tbody></table></div>
+<h3>05-2. Python 코드는 무엇을 하는가?</h3>
+<p>다음은 실제 코드에서 중요한 부분이다. <code>row</code>는 기존 M2 CSV 한 행이며 <code>row["rule_id"]</code>를 검색할 때까지 변형하지 않는다.</p>
+<pre><code>TEXT_FIELDS = ("title", "description", "reason", "limitation")
+raw_text = "\n".join(f"{name}: {row[name]}" for name in TEXT_FIELDS if row[name])
+clean_text_value = clean_text(raw_text)
+metadata = {"rule_id": row["rule_id"], "status": row["status"],
+            "rule_version": row["rule_version"], "preprocess_version": "nfc-ws-v1"}
+# 원본 row 변경 X, 기존 rules.csv 덮어쓰기 X</code></pre><p>전처리는 데이터 정합성을 위한 <b>검색용 파생 표현</b>이다. 원본 규칙을 승인하거나 상태를 변경하는 처리가 아니다. 따라서 <code>proposed</code>는 기본 검색 대상에서 제외한다.</p>
+<h3>05-3. 실제 rules.csv 탐색: 원문과 정제본 비교</h3>
+<p class="sub">다음 화면의 초기 8개 규칙은 A1-M2의 원본 CSV와 트리 CSV를 내장한 것이다. HTML 파일만 열어도 시연 가능하며, 브라우저에서 바꾼 내용은 <b>원본 CSV를 수정하지 않는다.</b></p>
+<div class="practice" id="m5-demo" style="margin-top:16px">
+<div class="m5-control-row">
+<label for="m5-rule">규칙 선택</label><select id="m5-rule"></select>
+<label class="m5-check"><input id="m5-proposed" type="checkbox"/> 검토 중(proposed)도 보기</label>
+</div>
+<p aria-live="polite" class="sub" id="m5-current-rule"></p>
+<label for="m5-input">검색 본문 실험 — 공백이나 줄바꿈을 추가해 비교</label>
+<textarea id="m5-input" rows="5" spellcheck="false"></textarea>
+<div class="m5-control-row">
+<label for="m5-token-method">분할 방식</label>
+<select id="m5-token-method"><option value="whitespace">공백 기준 단어</option><option value="chars">문자 단위</option><option value="bigrams">문자 2-gram</option></select>
+<button class="m5-small-button" id="m5-reset-text" type="button">선택한 규칙 원문 복구</button>
+</div>
+<div class="m5-demo-grid"><div><h4>원문 (현재 입력)</h4><pre class="m5-preview" id="m5-raw-view"></pre></div><div><h4>NFC·공백 정리 결과</h4><pre class="m5-preview" id="m5-clean-view"></pre></div></div>
+<h4>분할 결과 — <span id="m5-token-count"></span></h4><div class="m5-token-wrap" id="m5-tokens"></div>
+<h4>메타데이터 (전처리 대상 아님)</h4><pre class="m5-preview" id="m5-meta"></pre>
+<p aria-live="polite" class="sub" id="m5-check-line"></p>
+<p class="sub"><b>주의:</b> 이 화면의 분할 결과는 JavaScript로 만든 공백·문자 예시이며, Kiwi 형태소 분석 결과가 아니다. 형태소 분석은 별도 선택형 Python 실습에서 수행한다.</p>
+</div>
+<h3>05-4. CSV 트리 구조를 변경하지 않는 이유</h3>
+<p><code>rule_tree.csv</code>의 <code>file</code> 필드는 <code>rules.csv</code>를, <code>rule_id</code>는 실제 규칙 행을 가리킨다. 전처리된 본문은 바뀔 수 있지만 <code>node_id</code>·<code>parent_id</code>·규칙 ID는 <b>같은 규칙을 다시 찾는 연결 키</b>이므로 정제해서는 안 된다.</p>
+<h3>05-5. M3 검색기 비교는 선택형</h3>
+<p><code>06_compare_m3_search_optional.py</code>는 M3의 <code>search_engine.py</code>를 재사용하여 검색 순위가 전처리 전후에 어떻게 나타나는지 확인한다. 단, M3의 문자 n-gram 방식은 이미 일부 공백 정리를 하므로 <b>결과가 같을 수 있다.</b> 결과가 같다면 그 또한 중요한 관찰이다. 실제 효과는 M4의 별도 정답셋으로 판단한다.</p>
+</section><section aria-labelledby="tab-s6" class="panel" hidden="" id="s6" role="tabpanel">
+<div class="crumb">확인·선택 실습·RAG 준비</div>
+<h1>06. 이해도 테스트·추가 실습·GPT 검토</h1>
+<p class="lead">형태소 분석기를 의무적으로 적용하는 것이 목표가 아니다. <b>원본을 유지하고, 텍스트 전처리 정책을 선택한 이유와 예상 위험을 설명할 수 있는가</b>를 확인한다.</p>
+<h3>06-1. 이해도 테스트 — 먼저 답한 후 펼쳐보기</h3>
+<details class="lesson-details"><summary>1. CSV 규칙을 이미 저장했는데 텍스트 전처리가 왜 필요한가?</summary><p><b>해설:</b> CSV는 행·열 구조이고 전처리는 description·reason 등 필드 내부 문장의 표현을 다루는 별개 작업이다.</p></details><details class="lesson-details"><summary>2. WCAG 2.4.4에서 구두점·숫자를 제거하면 어떤 문제가 생기나?</summary><p><b>해설:</b> 정확한 조항 식별자를 잃어 관련 문서의 정확 검색·검증이 어려워질 수 있다.</p></details><details class="lesson-details"><summary>3. OOV라면 반드시 [UNK]라는 값으로 처리되는가?</summary><p><b>해설:</b> 아니다. 어떤 어휘 목록에 없느냐에 따라 발생하고, 분석기/분할 방식마다 처리 방법이 다르다.</p></details><details class="lesson-details"><summary>4. 한국어에서 명사만 남기면 위험한 문장을 들어보라.</summary><p><b>해설:</b> 예: “접근성이 좋지 않다”. 명사만 남기면 부정·판단 정보가 빠질 수 있다.</p></details><details class="lesson-details"><summary>5. status=proposed 규칙을 현재 적용 중인 것처럼 검색해도 되는가?</summary><p><b>해설:</b> 안 된다. 승인·적용 여부는 메타데이터로 확인하고 기본 검색에서 제외한다.</p></details><details class="lesson-details"><summary>6. 전처리된 결과로 M2의 rules.csv 원본을 덮어써도 되는가?</summary><p><b>해설:</b> 안 된다. 판정 조건은 원본을 유지하고, 검색용 파생 텍스트를 별도로 만든다.</p></details><details class="lesson-details"><summary>7. Kiwi 사용자 사전 등록이 검색 성능 향상을 보장하는가?</summary><p><b>해설:</b> 아니다. 실제 분할 결과를 확인하고 동일 평가셋으로 검색 품질을 검증해야 한다.</p></details><details class="lesson-details"><summary>8. M2의 트리와 RAG 메타데이터 연결을 어떻게 보존하나?</summary><p><b>해설:</b> 규칙 ID를 기준으로 rule_tree.csv의 file·node_id·parent_id·tree_path를 조인하고 그 값을 변경하지 않는다.</p></details><h3>06-2. 순수 Python 필수 실습</h3><div class="practice"><h4>실습 A — 변형을 최소화한다</h4><p><code>01_cleaning_basics.py</code>를 실행해 NFC와 반복 공백 정리를 확인한다. <code>WCAG 2.4.4</code>, <code>aria-label</code>, 부정 표현이 보존되는지 확인하고, NFKC가 일부 문자를 다르게 만드는 이유를 설명한다.</p></div>
+<div class="practice"><h4>실습 B — 작은 어휘 목록으로 OOV를 경험한다</h4><p><code>02_oov_and_units.py</code>를 실행해 <code>메타정합검증</code>을 미등록 어휘로 표시하고 공백/문자 2-gram의 차이를 설명한다. 프로그램이 실제 LLM 토큰 ID를 만든다고 오해하지 않는다.</p></div>
+<div class="practice"><h4>실습 C — M2 CSV 재사용</h4><p><code>05_prepare_m2_documents.py</code>를 실행한다. 기본 7건, <code>proposed</code> 포함 8건이 나오는 이유를 확인하고 각 레코드의 검색 본문·메타데이터·트리 경로를 구분한다. <b>CSV 원본은 수정하지 않는다.</b></p></div>
+<h3>06-3. 형태소·검색 비교 선택 실습</h3>
+<p>Kiwi를 설치한 환경에서 <code>03_kiwi_pos_optional.py</code>와 <code>04_kiwi_dictionary_optional.py</code>를 실행해 조사·어미·부정 표현과 사용자 사전 등록 전후를 비교한다. 추가로 <code>06_compare_m3_search_optional.py</code>를 사용해 M3 검색 순위 차이를 확인할 수 있다.</p>
+<pre><code># 표준 라이브러리로 바로 실행
+python 01_cleaning_basics.py
+python 02_oov_and_units.py
+python 05_prepare_m2_documents.py
+python -m unittest discover -s tests -v
+
+# 선택: Kiwi 실습
+python -m pip install kiwipiepy
+python 03_kiwi_pos_optional.py
+python 04_kiwi_dictionary_optional.py
+
+# 선택: M3 TF-IDF 검색 전후 비교
+python -m pip install scikit-learn
+python 06_compare_m3_search_optional.py</code></pre>
+<h3>06-4. 검색 성능이 나빠졌을 때 무엇을 점검할까?</h3>
+<div class="table-wrap"><table><thead><tr><th>증상</th><th>가능한 원인</th><th>확인할 항목</th></tr></thead><tbody><tr><td>규칙 ID로 검색이 안 됨</td><td>기호·숫자를 삭제했음</td><td>전처리 전후 <code>COMP-LINK-001</code> 보존</td></tr><tr><td>“좋지 않다”가 긍정으로 해석됨</td><td>명사만 추출해 부정 표현이 탈락</td><td>원문·분할 결과·부정 어미 보존</td></tr><tr><td>검토 중 규칙이 검색됨</td><td><code>status</code> 필터 누락</td><td><code>applied</code> 7건 기본 유지</td></tr><tr><td>규칙 트리가 깨짐</td><td><code>rule_id</code>/<code>parent_id</code> 정제 또는 변형</td><td>트리 조인 키는 원형 유지</td></tr><tr><td>검색 성능이 개선되지 않음</td><td>이미 M3 검색기가 정규화 수행</td><td>M4 평가 질문으로 차이 유무·부작용 점검</td></tr><tr><td>형태소 결과가 예와 다름</td><td>Kiwi 사전·버전·분석 옵션 차이</td><td>실제 출력을 보며 해석하고 버전 기록</td></tr></tbody></table></div>
+<h3>06-5. GPT로 전처리 설계 검토</h3>
+<pre><code>우리는 웹 정합성 검사 시스템에서 A1-M2의 rules.csv와
+rule_tree.csv를 원본으로 사용합니다. 새 지식 CSV를 만들지 않습니다.
+
+검색 본문: title, description, reason, limitation
+메타데이터: rule_id, rule_version, status, scope, policy_id,
+wcag_ref, kwcag_ref, reference_url, effective_from,
+node_id, parent_id, tree_path
+
+전처리 후보: 원본 보존 / NFC / 연속 공백 정리 / 버전 기록.
+
+1) 규칙 ID, WCAG 2.4.4, aria-label, 부정 표현이 보존되는지 검토
+2) 형태소 분석을 반드시 써야 하는 상황과 불필요한 상황 분리
+3) 검색 용어 OOV 예시와 사용자 사전 사용의 위험 비교
+4) proposed 규칙의 현행 검색 제외 조건 점검
+5) M4 평가셋으로 전처리 변경 효과를 검증할 테스트 5개 제안
+
+실제 실행하지 않은 결과나 검색 품질 수치는 만들지 말아주세요.
+표준 관련 검사와 사내 규칙을 구별해 설명해주세요.</code></pre>
+<div class="key"><b>이 모듈의 최종 산출물:</b> <code>rules.csv</code>와 <code>rule_tree.csv</code>는 그대로 유지한다. 원본/검색용 정제본·전처리 버전·메타데이터 연결 원칙을 정하고, 선택적으로 Kiwi를 사용해 OOV 대응 효과를 확인한다. 다음 M6에서는 이 정책을 검사·검색 통합 서비스의 데이터·캐시 버전 관리에 연결할 수 있다.</div>
+<div class="source-links"><h3>참고 자료</h3><p><a class="doc" href="https://github.com/bab2min/kiwipiepy" rel="noopener" target="_blank">Kiwi 공식 문서·사용자 사전</a> · <a class="doc" href="https://docs.python.org/3/library/unicodedata.html" rel="noopener" target="_blank">Python unicodedata</a> · <a class="doc" href="https://docs.python.org/3/library/re.html" rel="noopener" target="_blank">Python 정규표현식</a></p><p class="sub">본 교안의 규칙 데이터와 전처리는 프로젝트 학습용이며 WCAG 전체 적합성이나 공식 인증을 대신하지 않는다. 외부 기준·라이브러리·문서의 저작권은 해당 권리자에게 있다.</p></div>
+</section></main></div><footer aria-label="저작권 및 출처 안내" class="copyright-footer" style="max-width:1320px;margin:0 auto;padding:24px;color:#64748b;font-size:15px;border-top:1px solid #e2e8f0">
+<div>© 2026 부성순. All rights reserved.</div>
+<small>본 교안의 구성·해설·실습 자료에 대한 저작권 표시입니다. WCAG 등 외부 표준, 인용 자료 및 제3자 콘텐츠의 권리는 각 원저작자에게 있으며, 원문 출처와 이용 조건을 따릅니다.</small>
+</footer><script>(function(){const ts=[...document.querySelectorAll('[role="tab"]')];function set(i,focus){ts.forEach((t,j)=>{let on=i===j;t.setAttribute('aria-selected',String(on));t.tabIndex=on?0:-1;document.getElementById(t.getAttribute('aria-controls')).hidden=!on;});if(focus)ts[i].focus({preventScroll:true});history.replaceState(null,'','#'+ts[i].getAttribute('aria-controls'));window.scrollTo({top:0});}ts.forEach((t,i)=>{t.addEventListener('click',()=>set(i,false));t.addEventListener('keydown',e=>{if(['ArrowDown','ArrowRight','ArrowUp','ArrowLeft'].includes(e.key)){e.preventDefault();set((i+(e.key==='ArrowDown'||e.key==='ArrowRight'?1:-1)+ts.length)%ts.length,true)}})});let n=ts.findIndex(t=>'#'+t.getAttribute('aria-controls')===location.hash);set(n<0?0:n,false);document.querySelectorAll('.table-wrap table').forEach(t=>{let h=[...t.querySelectorAll('th')].map(x=>x.textContent.trim());if(h.length<3)return;t.classList.add('cards');t.querySelectorAll('tbody tr').forEach(tr=>[...tr.children].forEach((td,i)=>td.dataset.label=h[i]||''))})})();</script><script id="m5-sample-data" type="application/json">{"rules": [{"rule_id": "IMG-001", "rule_version": "1.0.0", "status": "applied", "scope": "standard", "policy_id": "", "title": "이미지 alt 속성 확인", "selector": "img", "operator": "has_attribute", "attribute": "alt", "values": "", "description": "img 요소에 alt 속성이 존재하는지 확인한다.", "reason": "텍스트 대안 검토의 첫 단계로 속성 누락 여부를 탐지한다.", "limitation": "alt 존재가 내용의 적절함 또는 WCAG 1.1.1 전체 적합성을 확정하지 않는다.", "wcag_ref": "1.1.1", "kwcag_ref": "1.1.1", "reference_url": "https://www.w3.org/WAI/WCAG22/Understanding/non-text-content.html", "effective_from": "2026-10-22"}, {"rule_id": "LINK-001", "rule_version": "1.0.0", "status": "applied", "scope": "standard", "policy_id": "", "title": "링크 이름 후보 확인", "selector": "a[href]", "operator": "link_name_candidate", "attribute": "", "values": "", "description": "링크의 텍스트·aria-label·이미지 대체 텍스트 후보를 확인한다.", "reason": "이름 후보가 없는 링크를 초기에 발견해 후속 검토 대상으로 분류한다.", "limitation": "접근 가능한 이름 계산 전체를 구현하지 않는다.", "wcag_ref": "4.1.2|2.4.4", "kwcag_ref": "4.2.1|2.4.3", "reference_url": "https://www.w3.org/WAI/WCAG22/Understanding/name-role-value.html", "effective_from": "2026-10-22"}, {"rule_id": "LINK-002", "rule_version": "1.0.0", "status": "applied", "scope": "standard", "policy_id": "", "title": "모호한 링크 목적 검토", "selector": "a[href]", "operator": "link_purpose_review", "attribute": "", "values": "더보기|보기|여기|클릭", "description": "단독 링크 문구가 모호할 때 맥락 검토를 요청한다.", "reason": "더보기 링크 등은 주변 맥락에 따라 WCAG 판단이 달라질 수 있다.", "limitation": "문구만으로 표준 위반을 자동 확정하지 않는다.", "wcag_ref": "2.4.4", "kwcag_ref": "2.4.3", "reference_url": "https://www.w3.org/WAI/WCAG22/Understanding/link-purpose-in-context.html", "effective_from": "2026-10-22"}, {"rule_id": "FORM-001", "rule_version": "1.0.0", "status": "applied", "scope": "standard", "policy_id": "", "title": "입력 필드 이름 후보 확인", "selector": "input", "operator": "field_name_candidate", "attribute": "", "values": "", "description": "label 및 aria-label 등의 입력 필드 이름 후보를 검사한다.", "reason": "입력 요소가 무엇을 입력받는지 식별 가능한지 1차 점검한다.", "limitation": "완전한 접근 가능한 이름 및 렌더링 상태는 판정하지 않는다.", "wcag_ref": "3.3.2|1.3.1", "kwcag_ref": "3.3.2", "reference_url": "https://www.w3.org/WAI/WCAG22/Understanding/labels-or-instructions.html", "effective_from": "2026-10-22"}, {"rule_id": "COMP-LINK-001", "rule_version": "1.0.0", "status": "applied", "scope": "company", "policy_id": "UX-LINK-01", "title": "사내 단독 링크 문구 제한", "selector": "a[href]", "operator": "clear_link_text", "attribute": "", "values": "더보기|보기|여기|클릭", "description": "회사 정책에서 금지한 단독 링크 문구를 검사한다.", "reason": "링크 텍스트만 읽어도 이동 목적이 명료해야 한다는 사내 작성 정책이다.", "limitation": "회사 정책 위반을 WCAG 2.4.4 위반으로 단정하지 않는다.", "wcag_ref": "2.4.4", "kwcag_ref": "2.4.3", "reference_url": "https://www.w3.org/WAI/WCAG22/Understanding/link-purpose-in-context.html", "effective_from": "2026-10-22"}, {"rule_id": "COMP-FORM-001", "rule_version": "1.0.0", "status": "applied", "scope": "company", "policy_id": "UX-FORM-01", "title": "사내 화면 표시 레이블 정책", "selector": "input", "operator": "visible_label", "attribute": "", "values": "", "description": "input 요소에 화면에 보이는 label이 연결됐는지 확인한다.", "reason": "회사 내부 품질 기준으로 명시적인 레이블 작성을 요구한다.", "limitation": "aria-label만 있어도 접근 가능한 이름이 있을 수 있으나 사내 정책과 구분한다.", "wcag_ref": "3.3.2", "kwcag_ref": "3.3.2", "reference_url": "https://www.w3.org/WAI/WCAG22/Understanding/labels-or-instructions.html", "effective_from": "2026-10-22"}, {"rule_id": "COMP-LINK-002", "rule_version": "1.0.0", "status": "applied", "scope": "company", "policy_id": "UX-LINK-02", "title": "사내 자세히 문구 제한", "selector": "a[href]", "operator": "clear_link_text", "attribute": "", "values": "자세히", "description": "자세히 단독 링크 문구를 금지한다.", "reason": "목적이 구체적으로 드러나는 링크 이름을 권장하기 때문이다.", "limitation": "사내 강화 규칙이며 표준 위반을 자동 확정하지 않는다.", "wcag_ref": "2.4.4", "kwcag_ref": "2.4.3", "reference_url": "https://www.w3.org/WAI/WCAG22/Understanding/link-purpose-in-context.html", "effective_from": "2026-10-22"}, {"rule_id": "COMP-LINK-003", "rule_version": "1.1.0", "status": "proposed", "scope": "company", "policy_id": "UX-LINK-03", "title": "바로가기 문구 제한 제안", "selector": "a[href]", "operator": "clear_link_text", "attribute": "", "values": "바로가기", "description": "바로가기 단독 링크 문구 제한을 제안한다.", "reason": "정책 변경을 검토 중이며 승인 전에는 검사에 반영하지 않는다.", "limitation": "검토 중인 규칙을 현재 적용된 정책으로 검색하거나 판정하지 않는다.", "wcag_ref": "2.4.4", "kwcag_ref": "2.4.3", "reference_url": "https://www.w3.org/WAI/WCAG22/Understanding/link-purpose-in-context.html", "effective_from": ""}], "tree": [{"node_id": "ROOT", "parent_id": "", "node_type": "group", "label": "웹 정합성 검사 규칙", "file": "", "rule_id": "", "sort_order": "1", "description": "업무 규칙 전체 루트"}, {"node_id": "STD", "parent_id": "ROOT", "node_type": "group", "label": "표준 관련 검사", "file": "", "rule_id": "", "sort_order": "1", "description": "WCAG/KWCAG 관련 검토 항목(공식 인증 규칙 아님)"}, {"node_id": "STD_IMG", "parent_id": "STD", "node_type": "group", "label": "이미지", "file": "", "rule_id": "", "sort_order": "1", "description": "이미지 관련 검사"}, {"node_id": "STD_LINK", "parent_id": "STD", "node_type": "group", "label": "링크", "file": "", "rule_id": "", "sort_order": "2", "description": "링크 관련 검사"}, {"node_id": "STD_FORM", "parent_id": "STD", "node_type": "group", "label": "입력창", "file": "", "rule_id": "", "sort_order": "3", "description": "폼 요소 관련 검사"}, {"node_id": "COMP", "parent_id": "ROOT", "node_type": "group", "label": "회사 작성 정책", "file": "", "rule_id": "", "sort_order": "2", "description": "회사 자체 기준"}, {"node_id": "COMP_LINK", "parent_id": "COMP", "node_type": "group", "label": "링크 작성 규칙", "file": "", "rule_id": "", "sort_order": "1", "description": "회사 링크 표기 정책"}, {"node_id": "COMP_FORM", "parent_id": "COMP", "node_type": "group", "label": "폼 작성 규칙", "file": "", "rule_id": "", "sort_order": "2", "description": "회사 입력창 정책"}, {"node_id": "N_IMG_001", "parent_id": "STD_IMG", "node_type": "rule", "label": "이미지 alt 확인", "file": "rules.csv", "rule_id": "IMG-001", "sort_order": "1", "description": "원본 파일의 해당 규칙 ID를 조회"}, {"node_id": "N_LINK_001", "parent_id": "STD_LINK", "node_type": "rule", "label": "링크 이름 후보", "file": "rules.csv", "rule_id": "LINK-001", "sort_order": "1", "description": "링크 이름 후보 탐지"}, {"node_id": "N_LINK_002", "parent_id": "STD_LINK", "node_type": "rule", "label": "모호한 링크 검토", "file": "rules.csv", "rule_id": "LINK-002", "sort_order": "2", "description": "cantTell 샘플"}, {"node_id": "N_FORM_001", "parent_id": "STD_FORM", "node_type": "rule", "label": "입력 필드 이름 후보", "file": "rules.csv", "rule_id": "FORM-001", "sort_order": "1", "description": "입력 이름 후보 탐지"}, {"node_id": "N_COMP_LINK_001", "parent_id": "COMP_LINK", "node_type": "rule", "label": "사내 더보기 문구 제한", "file": "rules.csv", "rule_id": "COMP-LINK-001", "sort_order": "1", "description": "사내 failed 샘플"}, {"node_id": "N_COMP_LINK_002", "parent_id": "COMP_LINK", "node_type": "rule", "label": "사내 자세히 문구 제한", "file": "rules.csv", "rule_id": "COMP-LINK-002", "sort_order": "2", "description": "사내 작성 정책"}, {"node_id": "N_COMP_LINK_003", "parent_id": "COMP_LINK", "node_type": "rule", "label": "바로가기 제한 제안", "file": "rules.csv", "rule_id": "COMP-LINK-003", "sort_order": "3", "description": "status=proposed는 실행 제외"}, {"node_id": "N_COMP_FORM_001", "parent_id": "COMP_FORM", "node_type": "rule", "label": "사내 화면 레이블 정책", "file": "rules.csv", "rule_id": "COMP-FORM-001", "sort_order": "1", "description": "사내 레이블 정책"}]}</script><script>
+(function(){
+const payload=JSON.parse(document.getElementById('m5-sample-data').textContent);
+const rows=payload.rules, nodes=payload.tree;
+const byNode=Object.fromEntries(nodes.map(n=>[n.node_id,n]));
+const links=Object.fromEntries(nodes.filter(n=>n.node_type==='rule').map(n=>[n.rule_id,n]));
+const sel=document.getElementById('m5-rule');
+const proposed=document.getElementById('m5-proposed');
+const input=document.getElementById('m5-input');
+const method=document.getElementById('m5-token-method');
+const raw=document.getElementById('m5-raw-view');
+const clean=document.getElementById('m5-clean-view');
+const meta=document.getElementById('m5-meta');
+const tokens=document.getElementById('m5-tokens');
+const count=document.getElementById('m5-token-count');
+const status=document.getElementById('m5-check-line');
+const current=document.getElementById('m5-current-rule');
+const original=(row)=>['title','description','reason','limitation'].filter(k=>row[k]).map(k=>`${k}: ${row[k]}`).join('\n');
+function treePath(ruleId){let n=links[ruleId], parts=[], seen=new Set();while(n){if(seen.has(n.node_id))return '(잘못된 트리)';seen.add(n.node_id);parts.unshift(n.label);n=n.parent_id?byNode[n.parent_id]:null;}return parts.join(' > ')}
+function normalize(t){return t.normalize('NFC').replace(/\s+/gu,' ').trim();}
+function cut(t){const v=normalize(t);if(method.value==='whitespace')return v?v.split(/\s+/u):[];if(method.value==='chars')return Array.from(v);const c=Array.from(v),a=[];for(let i=0;i<c.length-1;i++)a.push(c[i]+c[i+1]);return a;}
+function options(){const old=sel.value;sel.replaceChildren();rows.filter(r=>proposed.checked||r.status==='applied').forEach(r=>{const o=document.createElement('option');o.value=r.rule_id;o.textContent=`${r.rule_id} · ${r.title} (${r.status})`;sel.appendChild(o);});if([...sel.options].some(o=>o.value===old))sel.value=old;changed();}
+function changed(){const row=rows.find(r=>r.rule_id===sel.value);if(!row)return;input.value=original(row);current.textContent=`${row.scope==='company'?'사내 규칙':'표준 관련 자체 검사'} · ${row.rule_version} · ${row.status} · ${row.rule_id}`;render();}
+function render(){const row=rows.find(r=>r.rule_id===sel.value);if(!row)return;const t=input.value;const cleaned=normalize(t);raw.textContent=t;clean.textContent=cleaned;const arr=cut(t);count.textContent=arr.length+'개';tokens.replaceChildren();arr.slice(0,90).forEach(x=>{const el=document.createElement('span');el.className='m5-token';el.textContent=x===' '?'␠':x;tokens.appendChild(el);});if(arr.length>90){const o=document.createElement('span');o.textContent='… (처음 90개만 표시)';tokens.appendChild(o)}
+meta.textContent=JSON.stringify({rule_id:row.rule_id,rule_version:row.rule_version,status:row.status,scope:row.scope,policy_id:row.policy_id,wcag_ref:row.wcag_ref,kwcag_ref:row.kwcag_ref,reference_url:row.reference_url,effective_from:row.effective_from,source_file:'rules.csv',node_id:links[row.rule_id]?.node_id||'',parent_id:links[row.rule_id]?.parent_id||'',tree_path:treePath(row.rule_id),preprocess_version:'nfc-ws-v1'},null,2);
+const keep=['WCAG 2.4.4','aria-label','COMP-LINK-001'].filter(x=>t.includes(x));status.textContent=`원본 문자열 ${t.length}자 / 정제 후 ${cleaned.length}자 · 업무 식별자 확인: ${keep.length?keep.join(', '):'현재 입력에 검사 대상 식별자 없음'} · CSV 원본과 메타데이터는 변경되지 않음.`;}
+sel.addEventListener('change',changed);proposed.addEventListener('change',options);method.addEventListener('change',render);input.addEventListener('input',render);document.getElementById('m5-reset-text').addEventListener('click',changed);options();
+})();
+</script></body></html>

@@ -1,0 +1,1205 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VOC 분석 Step 1 — 문장을 쪼개면 데이터가 된다</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1c1b19;
+  --paper:#ffffff;
+  --soft:#f6f5f2;
+  --soft2:#efedea;
+  --line:#e3e0db;
+  --line2:#d4d0c9;
+  --muted:#86827b;
+  --muted2:#5f5b54;
+  --accent:#c2410c;
+  --accent-soft:#fbf0e9;
+  --ink2:#2f2d2a;
+  /* 품사 색 */
+  --pn:#c2410c; --pnb:#f0cdb8; --pns:#fdf4ef;
+  --pv:#1d4ed8; --pvb:#c3d0f2; --pvs:#f1f4fd;
+  --pa:#15803d; --pab:#bcdcc8; --pas:#f0f7f2;
+  --pd:#7c3aed; --pdb:#d4c6f5; --pds:#f6f2fe;
+  --px:#b91c1c; --pxb:#f0c3c3; --pxs:#fdf1f1;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+body{
+  font-family:'Noto Sans KR',sans-serif;color:var(--ink);
+  background:#e8e6e1;line-height:1.65;font-weight:400;
+  letter-spacing:-.003em;
+}
+
+.page{
+  width:210mm;min-height:297mm;background:var(--paper);
+  margin:8mm auto;padding:20mm 19mm 18mm;position:relative;
+  box-shadow:0 1px 16px rgba(0,0,0,.08);
+}
+@page{size:A4 portrait;margin:0}
+@media print{
+  body{background:none}
+  .page{margin:0;box-shadow:none;page-break-after:always}
+}
+
+/* 러닝헤드 */
+.rh{display:flex;justify-content:space-between;align-items:baseline;
+  margin-bottom:30px;padding-bottom:9px;border-bottom:1px solid var(--line)}
+.rh .l{font-size:11px;font-weight:700;letter-spacing:.08em;color:var(--muted2)}
+.rh .l b{color:var(--accent)}
+.rh .r{font-size:10.5px;color:var(--muted);letter-spacing:.04em;display:flex;align-items:baseline;gap:12px}
+.rh .r .pg{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:500;
+  color:var(--accent);letter-spacing:.06em}
+
+/* 제목 */
+.kicker{font-size:12px;font-weight:700;letter-spacing:.14em;color:var(--accent);
+  text-transform:uppercase;margin-bottom:11px}
+h1{font-size:33px;font-weight:900;line-height:1.18;letter-spacing:-.02em;margin-bottom:14px}
+.lede{font-size:15px;color:var(--muted2);font-weight:400;line-height:1.75;
+  margin-bottom:30px;max-width:88%}
+.lede em{font-style:normal;color:var(--ink);font-weight:700}
+
+h2{font-size:13px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--accent);margin:30px 0 14px;padding-bottom:0;
+  display:flex;align-items:center;gap:10px}
+h2::after{content:"";flex:1;height:1px;background:var(--line)}
+h3{font-size:16px;font-weight:700;margin:16px 0 6px}
+
+p{font-size:13.5px;line-height:1.75;margin:9px 0;color:var(--ink2)}
+strong{font-weight:700;color:var(--ink)}
+em{font-style:normal;color:var(--accent);font-weight:700}
+.mn{font-size:12px;color:var(--muted);margin-top:6px}
+code{font-family:'JetBrains Mono',monospace;background:var(--soft2);
+  padding:1px 6px;border-radius:4px;font-size:12.5px;color:var(--accent)}
+
+ul,ol{margin:10px 0;padding-left:0;list-style:none}
+li{font-size:13.5px;line-height:1.7;margin:11px 0;padding-left:26px;position:relative;color:var(--ink2)}
+ul li::before{content:"";position:absolute;left:4px;top:11px;width:6px;height:6px;
+  background:var(--accent);border-radius:50%}
+li strong{color:var(--ink)}
+
+.deflist{margin:14px 0}
+.deflist .d{display:flex;gap:18px;padding:14px 0;border-bottom:1px solid var(--line)}
+.deflist .d:last-child{border-bottom:none}
+.deflist .dt{flex:0 0 28%;font-weight:700;font-size:14px}
+.deflist .dt small{display:block;font-weight:400;color:var(--muted);font-size:11.5px;margin-top:2px;letter-spacing:.02em}
+.deflist .dd{flex:1;font-size:13px;color:var(--muted2);line-height:1.7}
+
+.grid{display:grid;gap:1px;background:var(--line);border:1px solid var(--line);margin:16px 0}
+.grid.g3{grid-template-columns:repeat(3,1fr)}
+.grid.g2{grid-template-columns:repeat(2,1fr)}
+.cell{background:var(--paper);padding:18px 16px}
+.cell .num{font-size:11px;font-weight:700;letter-spacing:.1em;color:var(--accent);text-transform:uppercase}
+.cell h4{font-size:14.5px;font-weight:700;margin:7px 0 4px;line-height:1.35}
+.cell p{font-size:12px;color:var(--muted2);margin:0;line-height:1.6}
+
+table{width:100%;border-collapse:collapse;margin:16px 0;font-size:13px}
+th,td{padding:11px 14px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line)}
+thead th{border-bottom:2px solid var(--ink);font-weight:700;font-size:12px;
+  letter-spacing:.04em;color:var(--ink)}
+tbody td{color:var(--muted2)}
+tbody td b{color:var(--ink);font-weight:700}
+td:first-child,th:first-child{padding-left:0}
+.cmp-accent{color:var(--accent)!important}
+
+.point{border-left:2px solid var(--accent);padding:4px 0 4px 18px;margin:18px 0}
+.point .pl{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:5px}
+.point p{margin:0;font-size:13.5px;color:var(--ink2)}
+
+.analogy{margin:14px 0}
+.analogy .a{display:flex;gap:16px;align-items:baseline;padding:11px 0;border-bottom:1px solid var(--line)}
+.analogy .a:last-child{border-bottom:none}
+.analogy .ak{flex:0 0 30%;font-weight:700;font-size:14px}
+.analogy .av{flex:1;font-size:13px;color:var(--muted2)}
+
+/* ============ 실습 ============ */
+.lab{margin:18px 0;border:1px solid var(--ink);background:var(--soft)}
+.lab-head{background:var(--ink);color:var(--paper);padding:12px 22px;display:flex;align-items:center;gap:14px}
+.lab-head .badge{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  border:1px solid rgba(255,255,255,.4);padding:3px 11px;border-radius:3px}
+.lab-head h3{font-size:18px;margin:0;color:#fff;font-weight:700}
+.lab-body{padding:18px 22px 20px}
+.lab-intro{font-size:13px;color:var(--muted2);margin-bottom:16px;line-height:1.7}
+.steps{counter-reset:st;list-style:none;padding:0;margin:0}
+.steps>li{counter-increment:st;position:relative;padding:0 0 15px 46px;margin:0;font-size:14.5px;
+  line-height:1.55;border-left:1px solid var(--line2);margin-left:15px}
+.steps.tight>li{padding-bottom:11px}
+.steps.tight .say{margin-top:7px;padding:9px 14px}
+.steps>li:last-child{border-left:1px solid transparent;padding-bottom:0}
+.steps>li::before{content:counter(st);position:absolute;left:-15px;top:-2px;width:30px;height:30px;
+  background:var(--paper);border:1.5px solid var(--ink);color:var(--ink);border-radius:50%;
+  display:grid;place-items:center;font-weight:700;font-size:14px}
+.steps>li::marker{content:none}
+.steps>li .lt{font-weight:700;color:var(--ink)}
+.steps>li .ls{display:block;font-size:12.5px;color:var(--muted);font-weight:400;margin-top:2px}
+.say{margin-top:9px;background:var(--paper);border:1px solid var(--line2);border-left:3px solid var(--accent);
+  border-radius:4px;padding:11px 14px}
+.say .sl{font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--accent);text-transform:uppercase;
+  margin-bottom:5px;display:flex;align-items:center;gap:6px}
+.say .sc{font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.65;color:var(--ink);font-weight:500}
+.copybtn{margin-left:auto;font-family:'Noto Sans KR',sans-serif;font-size:10.5px;font-weight:700;
+  letter-spacing:0;text-transform:none;color:var(--muted2);background:var(--paper);
+  border:1px solid var(--line2);border-radius:3px;padding:3px 11px;cursor:pointer;line-height:1.4}
+.copybtn:hover{border-color:var(--accent);color:var(--accent)}
+.copybtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.copybtn.done{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+@media print{.copybtn{display:none}}
+
+.note{background:var(--soft);border-radius:6px;padding:14px 18px;margin:16px 0;font-size:13px;color:var(--muted2);line-height:1.7}
+.note strong{color:var(--accent)}
+
+/* ============ 품사 칩 ============ */
+.chip{display:inline-flex;align-items:baseline;gap:5px;font-size:12.5px;font-weight:700;
+  padding:4px 9px;border-radius:3px;border:1px solid;margin:3px 4px 3px 0;line-height:1.3}
+.chip s{text-decoration:none;font-size:9.5px;font-weight:500;opacity:.8;letter-spacing:.04em}
+.c-n{color:var(--pn);border-color:var(--pnb);background:var(--pns)}
+.c-v{color:var(--pv);border-color:var(--pvb);background:var(--pvs)}
+.c-a{color:var(--pa);border-color:var(--pab);background:var(--pas)}
+.c-d{color:var(--pd);border-color:var(--pdb);background:var(--pds)}
+.c-x{color:var(--px);border-color:var(--pxb);background:var(--pxs)}
+.c-o{color:var(--muted);border-color:var(--line2);background:var(--soft);font-weight:400}
+
+/* 문장 분해 목업 */
+.parse{border:1px solid var(--line2);background:var(--paper);margin:14px 0}
+.parse .ph{background:var(--soft);border-bottom:1px solid var(--line);padding:7px 16px;
+  font-size:10.5px;font-weight:700;letter-spacing:.08em;color:var(--muted2);
+  display:flex;justify-content:space-between}
+.parse .pb{padding:14px 16px 16px}
+.parse .src{font-size:15px;font-weight:500;color:var(--ink);line-height:1.7}
+.parse .arw{font-size:10.5px;color:var(--muted);letter-spacing:.06em;
+  margin:12px 0 8px;display:flex;align-items:center;gap:10px}
+.parse .arw::after{content:"";flex:1;height:1px;background:var(--line)}
+.parse .out{margin-top:2px}
+.parse .row{display:flex;align-items:baseline;gap:12px;padding:5px 0}
+.parse .rk{flex:0 0 62px;font-size:11px;font-weight:700;color:var(--muted2);text-align:right;padding-top:5px}
+.parse .rv{flex:1}
+
+/* 스프레드시트 목업 */
+.sheet{border:1px solid var(--line2);margin:15px 0;background:#fff}
+.sheet .bar{background:var(--soft2);border-bottom:1px solid var(--line2);padding:6px 12px;
+  font-size:10.5px;color:var(--muted2);display:flex;align-items:center;gap:8px;
+  font-family:'JetBrains Mono',monospace;letter-spacing:.02em}
+.sheet .bar i{width:8px;height:8px;border-radius:50%;background:#cfcbc4;display:block}
+.sheet table{margin:0;table-layout:fixed;font-size:10.5px;border-collapse:collapse}
+.sheet th,.sheet td{border:1px solid var(--line);padding:6px 7px;vertical-align:top;
+  letter-spacing:0;line-height:1.45;word-break:keep-all}
+.sheet thead th{background:var(--soft);font-size:10px;font-weight:700;color:var(--ink);
+  border-bottom:1px solid var(--line2);text-align:left;text-transform:none}
+.sheet tbody td{color:var(--ink2);font-size:10.5px}
+.sheet td.id{font-family:'JetBrains Mono',monospace;color:var(--muted);text-align:center;
+  background:var(--soft);font-size:10px}
+.sheet .ai th{background:var(--accent-soft);color:var(--accent)}
+.sheet .mk{color:var(--accent);font-weight:700}
+.sheet .dim{color:var(--muted)}
+.sheetcap{font-size:11px;color:var(--muted);margin:-8px 0 16px}
+
+/* before / after */
+.ba{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);
+  border:1px solid var(--line);margin:15px 0}
+.ba>div{background:var(--paper);padding:13px 15px}
+.ba .h{font-size:10.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;margin-bottom:9px}
+.ba .bad .h{color:var(--muted)}
+.ba .good .h{color:var(--accent)}
+.ba .m{font-family:'JetBrains Mono',monospace;font-size:11.5px;line-height:1.7;color:var(--ink2)}
+.ba .m u{text-decoration:none;background:var(--pxs);color:var(--px);padding:0 3px;border-radius:2px}
+.ba .m b{background:var(--pas);color:var(--pa);padding:0 3px;border-radius:2px;font-weight:500}
+.ba .why{font-size:11.5px;color:var(--muted);margin-top:9px;line-height:1.6}
+
+/* 막대 */
+.bars{margin:14px 0}
+.bars .b{display:flex;align-items:center;gap:12px;margin:8px 0}
+.bars .bl{flex:0 0 24%;font-size:12.5px;font-weight:700;color:var(--ink)}
+.bars .bt{flex:1;height:15px;background:var(--soft2)}
+.bars .bf{height:100%;background:var(--accent)}
+.bars .bf.q{background:var(--line2)}
+.bars .bv{flex:0 0 46px;text-align:right;font-family:'JetBrains Mono',monospace;
+  font-size:11.5px;color:var(--muted2)}
+
+/* ============ 표지 ============ */
+.cover{padding:0;background:var(--ink);display:flex;flex-direction:column;color:#fff}
+.cover-inner{flex:1;padding:26mm 19mm 16mm;display:flex;flex-direction:column}
+.cover .ck{font-size:11.5px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;
+  color:#e8895f;display:flex;align-items:center;gap:12px}
+.cover .ck::after{content:"";flex:1;height:1px;background:rgba(255,255,255,.22)}
+.cover h1{font-size:52px;line-height:1.1;margin:20px 0 14px;letter-spacing:-.03em;color:#fff}
+.cover .cs{font-size:16px;color:rgba(255,255,255,.66);font-weight:400;max-width:78%;line-height:1.65}
+.cover .cs b{color:#fff;font-weight:500}
+
+/* 표지 히어로 — 문장 분해 */
+.hero{margin:26px 0 0;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.04);padding:20px 22px}
+.hero .hl{font-size:10.5px;letter-spacing:.1em;color:rgba(255,255,255,.45);font-weight:700;margin-bottom:12px}
+.hero .hs{font-size:17px;color:#fff;font-weight:500;line-height:1.6;letter-spacing:-.01em}
+.hero .hd{margin:16px 0 13px;height:1px;background:rgba(255,255,255,.16)}
+.hero .hrow{display:flex;align-items:baseline;gap:12px;padding:3px 0}
+.hero .hk{flex:0 0 52px;font-size:10.5px;font-weight:700;color:rgba(255,255,255,.42);text-align:right;padding-top:5px}
+.hero .hv{flex:1}
+.hero .chip{background:transparent;font-size:12px;padding:3px 8px}
+.hero .c-n{color:#f0a077;border-color:rgba(240,160,119,.45)}
+.hero .c-v{color:#8fb0f5;border-color:rgba(143,176,245,.45)}
+.hero .c-a{color:#7dc79a;border-color:rgba(125,199,154,.45)}
+.hero .c-d{color:#b79df5;border-color:rgba(183,157,245,.45)}
+.hero .c-x{color:#ef9494;border-color:rgba(239,148,148,.45)}
+
+.cover .crow{margin-top:22px;display:flex;border-top:1px solid rgba(255,255,255,.18);
+  border-bottom:1px solid rgba(255,255,255,.18)}
+.cover .ci{flex:1;padding:16px 0;border-right:1px solid rgba(255,255,255,.18)}
+.cover .ci:last-child{border-right:none;padding-left:22px}
+.cover .ci:first-child{padding-right:22px}
+.cover .ci .cl{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.45);font-weight:700}
+.cover .ci .cv{font-size:13px;margin-top:6px;color:rgba(255,255,255,.85);font-weight:400;line-height:1.55}
+.cover .ci .cv b{color:#e8895f;font-weight:700}
+.cover .toc{margin-top:auto}
+.cover .toc .th{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#e8895f;margin-bottom:2px}
+.toc-list{list-style:none;padding:0;margin:0}
+.toc-list li{display:flex;align-items:baseline;gap:16px;padding:10px 0;
+  border-bottom:1px solid rgba(255,255,255,.13);
+  font-size:14px;font-weight:400;color:rgba(255,255,255,.88);margin:0}
+.toc-list li::before{display:none}
+.toc-list li .ti{font-family:'JetBrains Mono',monospace;font-size:12px;color:#e8895f;flex:0 0 24px}
+.toc-list li .tt{flex:1}
+.toc-list li .tg{font-size:10.5px;color:rgba(255,255,255,.4);letter-spacing:.05em}
+.cover .sig{padding:0 19mm 14mm;display:flex;justify-content:space-between;align-items:baseline}
+.cover .sig .n{font-size:12.5px;color:rgba(255,255,255,.9);font-weight:500}
+.cover .sig .n span{color:rgba(255,255,255,.45);font-family:'JetBrains Mono',monospace;font-size:11px;margin-left:8px}
+.cover .sig .b{font-size:11px;color:rgba(255,255,255,.4);letter-spacing:.08em}
+
+.pagenum{position:absolute;bottom:13mm;right:19mm;font-size:10.5px;color:var(--muted);
+  font-family:'JetBrains Mono',monospace;letter-spacing:.05em}
+.brand{position:absolute;bottom:13mm;left:19mm;font-size:10px;color:var(--muted);letter-spacing:.04em}
+.brand b{color:var(--muted2);font-weight:500}
+</style>
+</head>
+<body>
+
+<!-- ========= 표지 ========= -->
+<section class="page cover">
+  <div class="cover-inner">
+    <div class="ck">52g ReBoot Camp · VOC 분석 Step 1</div>
+    <h1>문장을 쪼개면<br>데이터가 된다</h1>
+    <div class="cs">배달의민족 고객 VOC(고객의 소리: Voice of Customer)를 <b>AI에게 품사 단위로 나누게 하는 법</b>.<br>형태소 분석기도, 파이썬도 쓰지 않습니다.</div>
+
+    <div class="hero">
+      <div class="hl">AI가 하는 일 — 한 문장을 이렇게 나눕니다</div>
+      <div class="hs">"치킨이 다 식어서 왔어요. 배달이 너무 늦었고 라이더분도 불친절했습니다."</div>
+      <div class="hd"></div>
+      <div class="hrow"><div class="hk">명사</div><div class="hv">
+        <span class="chip c-n">치킨</span><span class="chip c-n">배달</span><span class="chip c-n">라이더</span>
+      </div></div>
+      <div class="hrow"><div class="hk">동사</div><div class="hv">
+        <span class="chip c-v">식다</span><span class="chip c-v">늦다</span>
+      </div></div>
+      <div class="hrow"><div class="hk">형용사</div><div class="hv">
+        <span class="chip c-a">불친절하다</span>
+      </div></div>
+      <div class="hrow"><div class="hk">부사</div><div class="hv">
+        <span class="chip c-d">너무</span>
+      </div></div>
+    </div>
+
+    <div class="toc">
+      <div class="th">목차</div>
+      <ul class="toc-list">
+        <li><span class="ti">01</span><span class="tt">쏟아지는 VOC, 사람은 다 못 읽는다</span><span class="tg">문제</span></li>
+        <li><span class="ti">02</span><span class="tt">쪼개야 셀 수 있다 — 품사 다섯 개</span><span class="tg">개념</span></li>
+        <li><span class="ti">03</span><span class="tt">한국어의 두 가지 함정</span><span class="tg">주의</span></li>
+        <li><span class="ti">04</span><span class="tt">표의 열을 먼저 설계한다</span><span class="tg">설계</span></li>
+        <li><span class="ti">05</span><span class="tt">AI에게 시키기 — 프롬프트 작성</span><span class="tg">절차</span></li>
+        <li><span class="ti">06</span><span class="tt">AI가 흔들릴 때 잡아주는 법</span><span class="tg">보정</span></li>
+        <li><span class="ti">＋</span><span class="tt">부록 — 복사해서 쓰는 프롬프트 전문</span><span class="tg">복붙</span></li>
+      </ul>
+    </div>
+  </div>
+  <div class="sig">
+    <div class="n">(캐럿글로벌) 부성순강사 <span>/ bakpak@empas.com</span></div>
+    <div class="b">52g ReBoot Camp</div>
+  </div>
+</section>
+
+<!-- ========= 02 ========= -->
+<section class="page">
+  <div class="rh"><div class="l"><b>VOC 분석 Step 1</b> · 문장을 쪼개면 데이터가 된다</div><div class="r">01 문제<span class="pg">02</span></div></div>
+  <div class="kicker">시작하며</div>
+  <h1>매일 쌓이는 VOC,<br>사람은 다 못 읽는다</h1>
+  <p class="lede">배달앱에는 하루에도 수천 건의 리뷰와 문의가 들어옵니다. <em>다 읽을 수는 없지만, 무엇이 문제인지는 알아야 합니다.</em> 이 간극을 메우는 것이 이 문서의 주제입니다.</p>
+
+  <h2>지금까지는 이렇게 했다</h2>
+  <p>담당자가 VOC를 눈으로 훑고, 감으로 분류하고, 엑셀에 손으로 옮겨 적었습니다. 문제는 세 가지입니다.</p>
+  <ul>
+    <li><strong>느립니다</strong> — 100건 읽는 데 반나절. 그 사이 또 300건이 쌓입니다.</li>
+    <li><strong>사람마다 다릅니다</strong> — A는 '배달 지연'으로, B는 '라이더 불만'으로 분류합니다. 집계가 안 맞습니다.</li>
+    <li><strong>세지를 못합니다</strong> — "요즘 배달 늦다는 말이 많은 것 같아요"는 보고서에 쓸 수 없습니다. 몇 건인지 모르니까요.</li>
+  </ul>
+
+  <div class="point">
+    <div class="pl">진짜 문제</div>
+    <p>VOC는 <strong>문장</strong>으로 들어오는데, 필요한 건 <strong>숫자</strong>입니다. 문장을 숫자로 바꾸는 중간 단계가 빠져 있었습니다.</p>
+  </div>
+
+  <h2>이 문서가 다루는 것</h2>
+  <p>파이썬도, 형태소 분석기도 설치하지 않습니다. <strong>AI에게 우리말로 지시</strong>해 문장을 품사 단위로 나누고, 그 결과를 엑셀 표로 받아 집계하는 방법을 다룹니다.</p>
+  <p>문장 한 건이 <strong>열이 나뉜 표 한 줄</strong>로 바뀌면, 그때부터는 세는 일이 됩니다. 감이 아니라 건수로 말할 수 있게 되는 것이 목적지입니다.</p>
+
+  <div class="brand">(캐럿글로벌)<b>부성순강사</b> / bakpak@empas.com</div>
+  </section>
+
+<!-- ========= 03 ========= -->
+<section class="page">
+  <div class="rh"><div class="l"><b>VOC 분석 Step 1</b> · 문장을 쪼개면 데이터가 된다</div><div class="r">02 개념<span class="pg">03</span></div></div>
+  <div class="kicker">핵심 개념</div>
+  <h1>쪼개야 셀 수 있다</h1>
+  <p class="lede">문장은 통째로는 셀 수 없습니다. <em>조각으로 나눠야 같은 조각끼리 모아서 셀 수 있습니다.</em> 이 조각을 나누는 기준이 '품사'입니다.</p>
+
+  <h2>왜 통문장은 셀 수 없나</h2>
+  <p>아래 두 문장은 <strong>같은 불만</strong>입니다. 그런데 글자가 다르니 컴퓨터에겐 완전히 다른 두 건입니다.</p>
+  <div class="ba">
+    <div class="bad">
+      <div class="h">통문장으로 두면</div>
+      <div class="m">"배달이 너무 늦었어요"<br>"배달 왤케 늦나요"<br><br>→ 서로 다른 2건</div>
+      <div class="why">한 글자만 달라도 다른 항목. 세어봐야 전부 1건씩입니다.</div>
+    </div>
+    <div class="good">
+      <div class="h">조각으로 나누면</div>
+      <div class="m"><b>배달</b> + <b>늦다</b><br><b>배달</b> + <b>늦다</b><br><br>→ "배달·늦다" <b>2건</b></div>
+      <div class="why">같은 조각으로 모입니다. 이제 셀 수 있습니다.</div>
+    </div>
+  </div>
+
+  <h2>실제로는 이렇게 나뉩니다</h2>
+  <p class="mn">VOC 한 건을 넣으면 AI가 이렇게 돌려줍니다. 색은 품사를 구분한 것입니다.</p>
+
+  <div class="parse">
+    <div class="ph"><span>V001 · 앱 리뷰</span><span>AI 분해 결과</span></div>
+    <div class="pb">
+      <div class="src">"치킨이 다 식어서 왔어요. 배달이 너무 늦었고 라이더분도 불친절했습니다."</div>
+      <div class="arw">AI가 품사 단위로 분해</div>
+      <div class="out">
+        <div class="row"><div class="rk">명사</div><div class="rv">
+          <span class="chip c-n">치킨</span><span class="chip c-n">배달</span><span class="chip c-n">라이더</span>
+          <span class="chip c-o">← 무엇에 대한 말인가</span></div></div>
+        <div class="row"><div class="rk">동사</div><div class="rv">
+          <span class="chip c-v">식다</span><span class="chip c-v">늦다</span>
+          <span class="chip c-o">← 어떤 행동·사건인가</span></div></div>
+        <div class="row"><div class="rk">형용사</div><div class="rv">
+          <span class="chip c-a">불친절하다</span>
+          <span class="chip c-o">← 어떤 상태·평가인가</span></div></div>
+        <div class="row"><div class="rk">부사</div><div class="rv">
+          <span class="chip c-d">너무</span>
+          <span class="chip c-o">← 정도·빈도는 어떤가</span></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="point">
+    <div class="pl">한 줄 정리</div>
+    <p>품사는 문법 시간의 암기 대상이 아니라, <strong>"AI야, 이런 조각을 뽑아줘"라고 말할 때 쓰는 이름표</strong>입니다. 이름을 알아야 시킬 수 있습니다.</p>
+  </div>
+
+  <div class="brand">(캐럿글로벌)<b>부성순강사</b> / bakpak@empas.com</div>
+  </section>
+
+<!-- ========= 04 ========= -->
+<section class="page">
+  <div class="rh"><div class="l"><b>VOC 분석 Step 1</b> · 문장을 쪼개면 데이터가 된다</div><div class="r">02 개념<span class="pg">04</span></div></div>
+  <div class="kicker">최소한의 문법</div>
+  <h1>딱 다섯 개만<br>알면 됩니다</h1>
+  <p class="lede">품사는 아홉 개지만 VOC 분석에 쓰는 건 <em>다섯 개</em>뿐입니다. 각각이 무엇을 알려주는지가 핵심입니다.</p>
+
+  <table>
+    <thead><tr><th style="width:15%">품사</th><th style="width:24%">VOC에서 알려주는 것</th><th style="width:31%">배민 VOC 예시</th><th>이걸로 뭘 하나</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><b style="color:var(--pn)">명사</b></td>
+        <td><b>무엇에</b> 대한 말인가</td>
+        <td>치킨, 배달, 라이더, 쿠폰, 포장</td>
+        <td>카테고리 자동 분류</td>
+      </tr>
+      <tr>
+        <td><b style="color:var(--pv)">동사</b></td>
+        <td>어떤 <b>행동·사건</b>인가</td>
+        <td>식다, 늦다, 누락되다, 환불하다</td>
+        <td>어느 단계에서 사고가 났나</td>
+      </tr>
+      <tr>
+        <td><b style="color:var(--pa)">형용사</b></td>
+        <td>어떤 <b>상태·평가</b>인가</td>
+        <td>차갑다, 불친절하다, 맛있다, 적다</td>
+        <td>만족·불만 판정</td>
+      </tr>
+      <tr>
+        <td><b style="color:var(--pd)">부사</b></td>
+        <td><b>정도·빈도</b>는 어떤가</td>
+        <td>너무, 계속, 매번, 하나도</td>
+        <td>응대 우선순위</td>
+      </tr>
+      <tr>
+        <td><b style="color:var(--px)">부정 표현</b></td>
+        <td>의미를 <b>뒤집는</b> 말</td>
+        <td>안 왔어요, 못 받았어요, -지 않다, 없다</td>
+        <td>오판 방지</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>부정 표현은 왜 따로 보나</h2>
+  <p>부정 표현은 품사라기보다 <strong>안전장치</strong>에 가깝습니다. 이걸 놓치면 결과가 정반대로 뒤집힙니다.</p>
+
+  <div class="parse">
+    <div class="ph"><span>V002 · 고객센터</span><span>부정 표현을 놓치면</span></div>
+    <div class="pb">
+      <div class="src">"주문한 콜라가 아예 <span style="color:var(--px);font-weight:700">안</span> 왔어요."</div>
+      <div class="arw">두 가지 결과</div>
+      <div class="out">
+        <div class="row"><div class="rk" style="color:var(--px)">놓치면</div><div class="rv">
+          <span class="chip c-n">콜라</span><span class="chip c-v">오다</span>
+          <span class="chip c-o">→ "콜라가 왔다"로 집계됨 · 정상 배달</span></div></div>
+        <div class="row"><div class="rk" style="color:var(--pa)">잡으면</div><div class="rv">
+          <span class="chip c-n">콜라</span><span class="chip c-v">오다</span><span class="chip c-x">부정 Y</span>
+          <span class="chip c-o">→ "누락" 건으로 집계됨</span></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="note"><strong>기억할 것</strong> &nbsp;명사는 <strong>대상</strong>, 동사는 <strong>행동·사건</strong>, 형용사는 <strong>상태·평가</strong>, 부사는 <strong>정도·빈도</strong>, 부정 표현은 <strong>의미 반전</strong>. 이 다섯 줄이면 뒤의 내용은 전부 따라올 수 있습니다.<br><span style="display:block;margin-top:6px">문법 시간의 엄밀한 정의가 아니라, <strong>VOC를 나눌 때 각 품사가 맡는 역할</strong>로 이해하면 됩니다. 어떤 단어의 품사가 무엇인지 정확히 따져야 할 때는 <strong>국립국어원 『표준국어대사전』</strong>에서 확인하는 것이 기준입니다 — 표제어마다 품사가 함께 표시돼 있고, <code>늦다</code>처럼 문맥에 따라 갈리는 말도 여기서 가릅니다.</span>
+    <span style="display:block;margin-top:6px">품사 판정에는 사람마다 의견이 갈리는 지점이 있습니다. <strong>분류 기준을 조직의 공식 기준으로 확정할 때는 국어 전문가의 검수를 거치는 것이 안전합니다.</strong></span></div>
+
+  <div class="brand">(캐럿글로벌)<b>부성순강사</b> / bakpak@empas.com</div>
+  </section>
+
+<!-- ========= 05 ========= -->
+<section class="page">
+  <div class="rh"><div class="l"><b>VOC 분석 Step 1</b> · 문장을 쪼개면 데이터가 된다</div><div class="r">03 주의<span class="pg">05</span></div></div>
+  <div class="kicker">한국어의 특성</div>
+  <h1>지시하지 않으면<br>이렇게 나옵니다</h1>
+  <p class="lede">한국어에는 함정이 두 개 있습니다. <em>이 두 가지를 프롬프트에 안 적으면, AI는 나름대로 맞게 뽑았는데도 집계가 망가집니다.</em></p>
+
+  <div class="point" style="margin-top:-10px">
+    <div class="pl">한국어는 교착어입니다</div>
+    <p>뜻을 가진 <strong>몸통</strong>에 기능을 맡은 <strong>꼬리</strong>를 계속 붙여 쓰는 언어라는 뜻입니다. 배달<span style="color:var(--muted)">+이</span>, 늦<span style="color:var(--muted)">+었+고</span>처럼요. 영어와 달리 띄어쓰기만으로는 단어가 잘리지 않는 이유가 여기 있습니다. <strong>아래 두 함정은 이 하나의 원인에서 나오고, 처방도 하나입니다 — 꼬리를 떼고 몸통만 남긴다.</strong></p>
+  </div>
+
+  <h2>함정 하나 — 명사에 조사가 붙어 있다</h2>
+  <p>"배달이"는 <strong>배달</strong>(명사) + <strong>이</strong>(조사)입니다. 조사를 안 떼면 <code>배달이</code>, <code>배달은</code>, <code>배달을</code>이 전부 다른 항목이 됩니다.</p>
+
+  <div class="ba">
+    <div class="bad">
+      <div class="h">지시 안 했을 때</div>
+      <div class="m"><u>배달이</u> · <u>치킨이</u> · <u>라이더분도</u><br><u>배달은</u> · <u>배달을</u><br><br>배달 관련 = <u>1건씩 3종류</u></div>
+      <div class="why">엑셀에서 '배달'로 필터하면 안 잡힙니다.</div>
+    </div>
+    <div class="good">
+      <div class="h">"조사를 떼라"고 했을 때</div>
+      <div class="m"><b>배달</b> · <b>치킨</b> · <b>라이더</b><br><b>배달</b> · <b>배달</b><br><br>배달 관련 = <b>3건</b></div>
+      <div class="why">같은 이름으로 모여서 바로 세어집니다.</div>
+    </div>
+  </div>
+
+  <h2>함정 둘 — 동사·형용사는 모양이 계속 바뀐다</h2>
+  <p>같은 '늦다'가 문장마다 다르게 생겼습니다. <strong>기본형으로 되돌리라</strong>고 지시해야 한 항목으로 모입니다.</p>
+
+  <div class="ba">
+    <div class="bad">
+      <div class="h">지시 안 했을 때</div>
+      <div class="m"><u>늦었고</u> · <u>늦어서</u> · <u>늦네요</u><br><u>불친절했습니다</u> · <u>불친절하네</u><br><br>→ 5개의 서로 다른 항목</div>
+      <div class="why">"지연 불만이 몇 건?"에 답할 수 없습니다.</div>
+    </div>
+    <div class="good">
+      <div class="h">"기본형으로"라고 했을 때</div>
+      <div class="m"><b>늦다</b> · <b>늦다</b> · <b>늦다</b><br><b>불친절하다</b> · <b>불친절하다</b><br><br>→ 늦다 3건 / 불친절하다 2건</div>
+      <div class="why">그대로 보고서 숫자가 됩니다.</div>
+    </div>
+  </div>
+
+  <div class="point">
+    <div class="pl">그래서 프롬프트에 반드시 들어가야 할 두 줄</div>
+    <p><strong>"명사는 조사를 제거하고 원형만 쓴다."</strong><br><strong>"동사·형용사는 기본형으로 바꾼다. (늦었고 → 늦다)"</strong></p>
+  </div>
+
+  <div class="note"><strong>왜 AI가 알아서 안 해주나요?</strong> &nbsp;AI 입장에서는 "배달이"도 맞는 답입니다. <strong>나중에 엑셀에서 세려고 한다</strong>는 사정을 모르기 때문입니다.</div>
+
+  <div class="brand">(캐럿글로벌)<b>부성순강사</b> / bakpak@empas.com</div>
+  </section>
+
+<!-- ========= 06 ========= -->
+<section class="page">
+  <div class="rh"><div class="l"><b>VOC 분석 Step 1</b> · 문장을 쪼개면 데이터가 된다</div><div class="r">03 주의<span class="pg">06</span></div></div>
+  <div class="kicker">방법 선택</div>
+  <h1>프로그램 대신<br>AI에게 시키는 이유</h1>
+  <p class="lede">원래 이 작업은 '형태소 분석기'라는 프로그램이 했습니다. 이 문서는 그것을 <em>AI에게 말로 시키는 방식</em>으로 대체합니다. 장단점을 알고 쓰는 것이 중요합니다.</p>
+
+  <table>
+    <thead><tr><th style="width:22%">비교 항목</th><th style="width:39%">형태소 분석기 (프로그램)</th><th>AI에게 시키기 — 이 문서의 방식</th></tr></thead>
+    <tbody>
+      <tr><td><b>준비물</b></td><td>파이썬 설치, 환경 설정</td><td><b>AI 계정 하나</b></td></tr>
+      <tr><td><b>줄임말·신조어</b></td><td>미등록어 처리에 한계가 있을 수 있음</td><td><b>문맥으로 이해함</b></td></tr>
+      <tr><td><b>오타·띄어쓰기</b></td><td>분석기별로 차이가 있음</td><td><b>대체로 알아서 처리</b></td></tr>
+      <tr><td><b>문맥 의미 판단</b></td><td>LLM보다 제한적 — '배'가 과일인지 선박인지 등</td><td><b>비교적 유리함</b></td></tr>
+      <tr><td><b>고칠 때</b></td><td>사전 등록 · 코드 수정</td><td><b>프롬프트 한 줄 고치기</b></td></tr>
+      <tr><td><b style="color:var(--px)">일관성</b></td><td><b>100번 돌려도 같은 결과</b></td><td style="color:var(--px)"><b>돌릴 때마다 조금씩 흔들림</b></td></tr>
+    </tbody>
+  </table>
+
+  <h2>약점은 딱 하나입니다</h2>
+  <p>나머지는 AI가 유리한데, <strong>일관성</strong>만은 프로그램이 이깁니다. AI는 같은 VOC를 두 번 돌리면 <code>라이더</code>와 <code>라이더분</code>처럼 미묘하게 다르게 뽑기도 합니다.</p>
+  <p><em>이 약점을 다루는 방법이 뒤쪽의 핵심입니다.</em> 답은 간단합니다 — 흔들릴 여지를 프롬프트에서 미리 막아두면 됩니다.</p>
+
+  <h2>형태소 분석기 — 이름만 알아두기</h2>
+  <p>한국어의 <strong>형태와 문법 정보를 바탕으로 형태소와 품사를 분석하는 프로그램</strong>입니다. 문장을 넣으면 형태소 단위로 나누고 각각에 품사를 붙여 돌려줍니다. 아래 이름들이 널리 쓰입니다.</p>
+  <div class="analogy">
+    <div class="a"><div class="ak">Okt · 꼬꼬마(Kkma)</div><div class="av">가장 오래 쓰인 기본형. Okt는 구어체에 무난하고, 꼬꼬마는 잘게 쪼개는 대신 느립니다.</div></div>
+    <div class="a"><div class="ak">코모란 · 은전한닢(Mecab-ko)</div><div class="av">코모란은 오타·띄어쓰기 오류에 비교적 강하고, 은전한닢은 속도가 빨라 대량 처리에 씁니다.</div></div>
+    <div class="a"><div class="ak">Kiwi <small style="font-weight:400;color:var(--muted)">분석기</small></div><div class="av">비교적 최근에 나온 분석기로, 속도와 정확도의 균형이 좋아 많이 쓰입니다.</div></div>
+    <div class="a"><div class="ak">KoNLPy <small style="font-weight:400;color:var(--muted)">패키지</small></div><div class="av">분석기가 아니라, 위 분석기들을 파이썬에서 함께 쓸 수 있게 묶어 놓은 <strong>파이썬 패키지</strong>입니다.</div></div>
+  </div>
+  <p class="mn">→ 이름만 알아두면 됩니다. 이 문서에서는 설치하지 않습니다.</p>
+
+  <div class="point">
+    <div class="pl">오해하지 말 것</div>
+    <p>분석기가 <strong>규칙대로만 일하는 기계</strong>라면 AI는 <strong>눈치 빠른 신입사원</strong>입니다. AI를 쓴다고 관리할 게 없어지는 게 아니라, <strong>'사전을 관리하던 일'이 '프롬프트를 관리하는 일'로 바뀐 것</strong>입니다. 대신 프롬프트는 우리말이라 누구나 고칠 수 있습니다.</p>
+  </div>
+
+  <div class="brand">(캐럿글로벌)<b>부성순강사</b> / bakpak@empas.com</div>
+  </section>
+
+<!-- ========= 07 ========= -->
+<section class="page">
+  <div class="rh"><div class="l"><b>VOC 분석 Step 1</b> · 문장을 쪼개면 데이터가 된다</div><div class="r">04 설계<span class="pg">07</span></div></div>
+  <div class="kicker">예제 데이터 · 첨부파일</div>
+  <h1>예제로 쓰는<br>배민 VOC 10건</h1>
+  <p class="lede">첨부된 <code>배민_VOC_원본.csv</code>에는 일주일치 <em>106건</em>이 들어 있습니다. 아래는 그중 10건을 뽑아 본 것으로, <em>오타·띄어쓰기 오류·줄임말·이모티콘</em>을 실제 리뷰처럼 그대로 남겼습니다.</p>
+
+  <div class="sheet">
+    <div class="bar"><i></i>배민_VOC_원본.csv &nbsp;·&nbsp; 전체 106건 중 10건 발췌</div>
+    <table>
+      <thead><tr>
+        <th style="width:8%">VOC_ID</th><th style="width:14%">접수일시</th><th style="width:13%">채널</th><th>VOC_원문</th>
+      </tr></thead>
+      <tbody>
+        <tr><td class="id">V001</td><td class="dim" style="font-family:'JetBrains Mono',monospace;font-size:9.5px;line-height:1.5">08-24(월)<br>12:41</td><td>앱 리뷰</td><td>치킨이 다 식어서 왔어요. 배달이 너무 늦었고 라이더분도 불친절했습니다.</td></tr>
+        <tr><td class="id">V002</td><td class="dim" style="font-family:'JetBrains Mono',monospace;font-size:9.5px;line-height:1.5">08-24(월)<br>19:05</td><td>고객센터</td><td>주문한 콜라가 아예 안 왔어요. 확인 부탁드립니다.</td></tr>
+        <tr><td class="id">V003</td><td class="dim" style="font-family:'JetBrains Mono',monospace;font-size:9.5px;line-height:1.5">08-25(화)<br>21:18</td><td>앱 문의</td><td>앱에서 결제가 계속 실패해요. 카드등록도 안되고 넘 불편합니다 ㅠㅠ</td></tr>
+        <tr><td class="id">V004</td><td class="dim" style="font-family:'JetBrains Mono',monospace;font-size:9.5px;line-height:1.5">08-26(수)<br>18:30</td><td>앱 리뷰</td><td>사장님이 서비스로 음료 넣어주셨어요! 음식도 따뜻하고 진짜 맛있었습니다</td></tr>
+        <tr><td class="id">V005</td><td class="dim" style="font-family:'JetBrains Mono',monospace;font-size:9.5px;line-height:1.5">08-27(목)<br>12:07</td><td>고객센터</td><td>쿠폰적용했는데 할인이 하나도 안됐어요 환불해주세요</td></tr>
+        <tr><td class="id">V006</td><td class="dim" style="font-family:'JetBrains Mono',monospace;font-size:9.5px;line-height:1.5">08-28(금)<br>19:44</td><td>앱 리뷰</td><td>배달예상시간 20분이었는데 1시간 넘게 걸렸어요 매번 이러네요 진짜</td></tr>
+        <tr><td class="id">V007</td><td class="dim" style="font-family:'JetBrains Mono',monospace;font-size:9.5px;line-height:1.5">08-28(금)<br>20:12</td><td>고객센터</td><td>라이더가 문앞에 두라했는데 경비실에 맡기고 갔어요</td></tr>
+        <tr><td class="id">V008</td><td class="dim" style="font-family:'JetBrains Mono',monospace;font-size:9.5px;line-height:1.5">08-29(토)<br>13:22</td><td>앱 리뷰</td><td>포장상태가 엉망이라 국물이 다 샜습니다 봉투안이 완전 난리</td></tr>
+        <tr><td class="id">V009</td><td class="dim" style="font-family:'JetBrains Mono',monospace;font-size:9.5px;line-height:1.5">08-29(토)<br>18:50</td><td>앱 리뷰</td><td>음식은 맛있었는데 양이 넘 적었어요</td></tr>
+        <tr><td class="id">V010</td><td class="dim" style="font-family:'JetBrains Mono',monospace;font-size:9.5px;line-height:1.5">08-30(일)<br>11:35</td><td>고객센터</td><td>어제 취소한 주문이 아직도 환불이 안됐습니다 빨리 처리해주세요</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>데이터에 심어둔 함정 네 개</h2>
+  <div class="grid g2">
+    <div class="cell"><div class="num">V003 · V009</div><h4>줄임말과 이모티콘</h4><p><code>넘</code>, <code>ㅠㅠ</code>. 표준어로 바꾸고 이모티콘은 지우라고 지시해야 합니다.</p></div>
+    <div class="cell"><div class="num">V005 · V008</div><h4>띄어쓰기 오류</h4><p><code>쿠폰적용</code>, <code>봉투안이</code>. 붙어 있어도 나눠서 처리하게 해야 합니다.</p></div>
+    <div class="cell"><div class="num">V004 · V009</div><h4>칭찬 · 칭찬+불만 혼재</h4><p>전부 불만이라고 가정하면 틀립니다. V009는 "맛있다 + 적다"입니다.</p></div>
+    <div class="cell"><div class="num">V006 · V010</div><h4>심각도 신호</h4><p><code>매번</code>, <code>아직도</code>, <code>빨리</code>. 이탈 직전 고객을 골라내는 단서입니다.</p></div>
+  </div>
+
+  <div class="point">
+    <div class="pl">접수일시를 함께 두는 이유</div>
+    <p>배달 VOC는 <strong>언제 들어왔는지가 원인을 가릅니다.</strong> 첨부 데이터는 <strong>8월 24일(월)부터 30일(일)까지 일주일치</strong>라, 요일과 시간대를 함께 보면 덩어리가 드러납니다. 금요일 저녁에 지연 불만이 몰려 있고, 화요일 밤에는 결제 오류가, 토요일 우천에는 포장 파손이 모여 있습니다. <strong>같은 "늦었다"도 언제 났는지에 따라 손볼 곳이 달라집니다.</strong></p>
+    <p style="margin-bottom:0">다만 시간이 늘 의미 있는 것은 아닙니다. 제품 리뷰나 서비스 문의는 접수 시각과 내용이 거의 무관합니다. <strong>상황에 따라 시간도 중요한 요소</strong>라고 보고, 필요 없는 업무라면 이 열은 빼도 됩니다.</p>
+  </div>
+
+  <div class="note"><strong>문장이 제각각이라면</strong> &nbsp;채널마다 말투가 달라 결과가 흔들리면, 분해 전에 문장 형태를 맞추는 <strong>선택 단계(부록 16~17쪽)</strong>를 먼저 거칠 수 있습니다.<br><br><strong>파일을 그대로 씁니다</strong> &nbsp;표를 옮겨 적을 필요 없습니다. <code>배민_VOC_원본.csv</code>를 AI 대화창에 <strong>업로드</strong>하고, 결과로 받은 열을 원본 오른쪽에 붙여 저장하면 됩니다. 원본 네 열은 절대 지우지 않습니다 — <strong>AI가 틀렸는지 확인할 때 원문이 유일한 기준</strong>입니다.</div>
+
+  <div class="brand">(캐럿글로벌)<b>부성순강사</b> / bakpak@empas.com</div>
+  </section>
+
+<!-- ========= 08 ========= -->
+<section class="page">
+  <div class="rh"><div class="l"><b>VOC 분석 Step 1</b> · 문장을 쪼개면 데이터가 된다</div><div class="r">04 설계<span class="pg">08</span></div></div>
+  <div class="kicker">열 설계 ①</div>
+  <h1>표의 열을<br>먼저 그린다</h1>
+  <p class="lede">프롬프트부터 쓰면 안 됩니다. <em>어떤 열이 필요한지 먼저 정하면, 그 열 이름이 그대로 AI에게 줄 지시서가 됩니다.</em></p>
+
+  <h2>1차 — 품사를 그대로 담는 다섯 열</h2>
+  <p>원본 열(<code>VOC_ID</code> · <code>접수일시</code> · <code>채널</code> · <code>VOC_원문</code>)은 그대로 두고, 그 오른쪽에 아래 다섯 열을 덧붙입니다.</p>
+  <table>
+    <thead><tr><th style="width:22%">열 이름</th><th style="width:14%">담을 품사</th><th>AI에게 줄 규칙</th></tr></thead>
+    <tbody>
+      <tr><td><b style="color:var(--muted2)">정제문</b> <span style="font-size:10.5px;color:var(--muted)">선택</span></td><td>—</td><td>문장 형태를 통일한 열. 넣었다면 이 열을 분해 입력으로 쓴다 <span style="color:var(--muted)">(부록 16~17쪽)</span></td></tr>
+      <tr><td><b class="cmp-accent">명사_대상</b></td><td>명사</td><td>조사 제거, 불만·평가 대상만, <b>최대 3개</b></td></tr>
+      <tr><td><b class="cmp-accent">동사_행위</b></td><td>동사</td><td>기본형으로 변환 (늦었고 → 늦다)</td></tr>
+      <tr><td><b class="cmp-accent">형용사_평가</b></td><td>형용사</td><td>기본형으로 변환 (불친절했습니다 → 불친절하다)</td></tr>
+      <tr><td><b class="cmp-accent">부사_정도</b></td><td>부사</td><td>정도·빈도·지속·긴급성 등 판단에 필요한 부사. 줄임말은 표준어로 (넘 → 너무)</td></tr>
+      <tr><td><b class="cmp-accent">부정표현_여부</b></td><td>부정 표현</td><td>안 · 못 · -지 않다 · 아니다 · 없다 등 <b>명시적 부정</b>이 있으면 Y</td></tr>
+    </tbody>
+  </table>
+
+  <p class="mn">→ 이 다섯 열을 AI가 채우면 실제로 이런 표가 나옵니다.</p>
+
+  <div class="sheet">
+    <div class="bar"><i></i>배민_VOC_1차분해.xlsx &nbsp;·&nbsp; 주황색 열 = AI가 채운 부분</div>
+    <table>
+      <thead class="ai"><tr>
+        <th style="width:8%;background:var(--soft);color:var(--ink)">ID</th>
+        <th style="width:19%">명사_대상</th>
+        <th style="width:19%">동사_행위</th>
+        <th style="width:19%">형용사_평가</th>
+        <th style="width:13%">부사_정도</th>
+        <th style="width:13%">부정표현</th>
+      </tr></thead>
+      <tbody>
+        <tr><td class="id">V001</td><td>치킨, 배달, 라이더</td><td>식다, 오다, 늦다</td><td>불친절하다</td><td>너무</td><td>N</td></tr>
+        <tr><td class="id">V002</td><td>콜라, 주문</td><td>오다, 확인하다</td><td class="dim">-</td><td>아예</td><td class="mk">Y</td></tr>
+        <tr><td class="id">V003</td><td>앱, 결제, 카드</td><td>실패하다, 등록하다</td><td>불편하다</td><td>계속, 너무</td><td class="mk">Y</td></tr>
+        <tr><td class="id">V004</td><td>사장님, 음료, 음식</td><td>넣다</td><td>따뜻하다, 맛있다</td><td>진짜</td><td>N</td></tr>
+        <tr><td class="id">V005</td><td>쿠폰, 할인, 환불</td><td>적용하다, 환불하다</td><td class="dim">-</td><td>하나도</td><td class="mk">Y</td></tr>
+        <tr><td class="id">V006</td><td>배달, 시간</td><td>걸리다</td><td class="dim">-</td><td class="mk">매번</td><td>N</td></tr>
+        <tr><td class="id">V007</td><td>라이더, 문, 경비실</td><td>두다, 맡기다</td><td class="dim">-</td><td class="dim">-</td><td>N</td></tr>
+        <tr><td class="id">V008</td><td>포장, 국물, 봉투</td><td>새다</td><td>엉망이다</td><td>완전</td><td>N</td></tr>
+        <tr><td class="id">V009</td><td>음식, 양</td><td class="dim">-</td><td>맛있다, 적다</td><td>너무</td><td>N</td></tr>
+        <tr><td class="id">V010</td><td>주문, 환불</td><td>취소하다, 처리하다</td><td class="dim">-</td><td class="mk">아직도, 빨리</td><td class="mk">Y</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="point">
+    <div class="pl">여기서 눈여겨볼 두 가지</div>
+    <p><strong>① 빈칸이 없습니다.</strong> 해당 품사가 없으면 <code>-</code>를 넣게 했습니다. 빈칸이 있으면 엑셀에서 줄이 밀립니다.<br><strong>② V001은 명사가 3개입니다.</strong> VOC 한 건에 이슈가 여러 개일 수 있다는 뜻입니다.</p>
+  </div>
+
+  <div class="brand">(캐럿글로벌)<b>부성순강사</b> / bakpak@empas.com</div>
+  </section>
+
+<!-- ========= 09 ========= -->
+<section class="page">
+  <div class="rh"><div class="l"><b>VOC 분석 Step 1</b> · 문장을 쪼개면 데이터가 된다</div><div class="r">04 설계<span class="pg">09</span></div></div>
+  <div class="kicker">열 설계 ②</div>
+  <h1>조각을 조합해<br>판정 열을 만든다</h1>
+  <p class="lede">1차 열은 <em>재료</em>입니다. 이 재료를 조합하면 보고서에 바로 쓸 수 있는 <em>판정 열</em>이 나옵니다.</p>
+
+  <h2>2차 — 판정 네 열과 그 근거</h2>
+  <table>
+    <thead><tr><th style="width:20%">열 이름</th><th style="width:32%">무엇을 보고 판정하나</th><th>값은 이 중에서만</th></tr></thead>
+    <tbody>
+      <tr><td><b class="cmp-accent">카테고리</b></td><td><b>명사_대상</b></td><td>배달 / 음식 / 라이더 / 앱·결제 / 포장 / 기타</td></tr>
+      <tr><td><b class="cmp-accent">평가극성</b></td><td><b>동사 + 형용사 + 부정표현_여부</b></td><td>긍정 / 부정 / 혼재</td></tr>
+      <tr><td><b class="cmp-accent">심각도</b></td><td><b>부사 + 요구 동사</b></td><td>상 / 중 / 하</td></tr>
+      <tr><td><b class="cmp-accent">요구사항</b></td><td><b>동사_행위</b> 중 요구 표현</td><td>환불 / 확인 / 처리 / 없음</td></tr>
+    </tbody>
+  </table>
+
+  <div class="sheet">
+    <div class="bar"><i></i>배민_VOC_2차판정.xlsx</div>
+    <table>
+      <thead class="ai"><tr>
+        <th style="width:8%;background:var(--soft);color:var(--ink)">ID</th>
+        <th style="width:22%">카테고리</th>
+        <th style="width:14%">평가극성</th>
+        <th style="width:11%">심각도</th>
+        <th style="width:13%">요구사항</th>
+        <th style="width:32%">근거_원문</th>
+      </tr></thead>
+      <tbody>
+        <tr><td class="id">V001</td><td>음식 / 배달 / 라이더</td><td>부정</td><td>중</td><td class="dim">없음</td><td class="dim">식어서 왔어요 / 너무 늦었고</td></tr>
+        <tr><td class="id">V002</td><td>음식</td><td>부정</td><td>중</td><td>확인</td><td class="dim">아예 안 왔어요</td></tr>
+        <tr><td class="id">V003</td><td>앱·결제</td><td>부정</td><td class="mk">상</td><td class="dim">없음</td><td class="dim">계속 실패해요</td></tr>
+        <tr><td class="id">V004</td><td>음식</td><td class="mk">긍정</td><td>하</td><td class="dim">없음</td><td class="dim">따뜻하고 진짜 맛있었습니다</td></tr>
+        <tr><td class="id">V005</td><td>앱·결제</td><td>부정</td><td class="mk">상</td><td>환불</td><td class="dim">하나도 안됐어요</td></tr>
+        <tr><td class="id">V006</td><td>배달</td><td>부정</td><td class="mk">상</td><td class="dim">없음</td><td class="dim">매번 이러네요</td></tr>
+        <tr><td class="id">V007</td><td>라이더</td><td>부정</td><td>중</td><td class="dim">없음</td><td class="dim">경비실에 맡기고 갔어요</td></tr>
+        <tr><td class="id">V008</td><td>포장</td><td>부정</td><td>중</td><td class="dim">없음</td><td class="dim">포장상태가 엉망이라</td></tr>
+        <tr><td class="id">V009</td><td>음식</td><td class="mk">혼재</td><td>하</td><td class="dim">없음</td><td class="dim">맛있었는데 양이 넘 적었어요</td></tr>
+        <tr><td class="id">V010</td><td>앱·결제</td><td>부정</td><td class="mk">상</td><td>처리</td><td class="dim">아직도 / 빨리 처리해주세요</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note" style="margin-top:6px"><strong>평가극성은 형용사만 보면 안 됩니다</strong> &nbsp;"결제가 계속 실패해요"라는 문장에는 형용사도, 부정 표현도 없습니다. 그래도 명백한 부정 VOC입니다. <strong>실패하다·누락되다·새다처럼 문제 자체를 뜻하는 동사</strong>가 극성을 결정하기 때문입니다. 그래서 이름도 '감정'이 아니라 <strong>평가극성</strong>으로 둡니다 — 고객이 감정을 드러내지 않아도 부정 VOC일 수 있습니다.</div>
+
+  <h2>맨 끝의 '근거_원문' 열이 제일 중요합니다</h2>
+  <p>AI는 가끔 <strong>원문에 없는 내용을 지어냅니다.</strong> 그래서 판정마다 <em>원문의 어느 부분을 보고 그렇게 판단했는지</em> 그대로 옮겨 적게 합니다. 지어냈다면 근거를 못 씁니다.</p>
+  <p>검수는 이 열만 훑으면 됩니다. <strong>근거가 비었거나 원문과 안 맞는 행</strong>만 다시 보면 되니까요.</p>
+
+  <div class="point">
+    <div class="pl">순서를 지키세요</div>
+    <p>1차(품사 분해)와 2차(판정)를 <strong>한 번에 시키지 마세요.</strong> 같이 시키면 AI가 분류부터 먼저 하고 품사 열은 대충 채웁니다. 1차를 확정한 뒤 2차를 돌려야 근거가 남습니다.</p>
+  </div>
+
+  <div class="brand">(캐럿글로벌)<b>부성순강사</b> / bakpak@empas.com</div>
+  </section>
+
+<!-- ========= 10 ========= -->
+<section class="page">
+  <div class="rh"><div class="l"><b>VOC 분석 Step 1</b> · 문장을 쪼개면 데이터가 된다</div><div class="r">04 설계<span class="pg">10</span></div></div>
+  <div class="kicker">열 설계 ③</div>
+  <h1>목적이 정해지면<br>열도 정해진다</h1>
+  <p class="lede">다섯 열을 항상 다 뽑을 필요는 없습니다. <em>무엇을 알고 싶은지에 따라 필요한 품사가 달라집니다.</em> 이 표가 작업의 분기점입니다.</p>
+
+  <table>
+    <thead><tr><th style="width:32%">알고 싶은 것</th><th style="width:30%">필요한 열</th><th>이유</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><b>어느 영역 불만이 많나</b><br><span style="font-size:11.5px;color:var(--muted)">주간 VOC 리포트</span></td>
+        <td><b style="color:var(--pn)">명사</b></td>
+        <td>불만의 대상이 곧 분류 기준입니다. 명사만 세도 카테고리 분포가 나옵니다.</td>
+      </tr>
+      <tr>
+        <td><b>고객이 만족했나</b><br><span style="font-size:11.5px;color:var(--muted)">매장 평가 · 만족도</span></td>
+        <td><b style="color:var(--pa)">형용사</b> + <b style="color:var(--pv)">동사</b> + <b style="color:var(--px)">부정 표현</b></td>
+        <td>평가는 형용사에 담기지만, 실패하다·누락되다 같은 동사만으로도 부정이 됩니다. 부정 표현을 빠뜨리면 결과가 뒤집힙니다.</td>
+      </tr>
+      <tr>
+        <td><b>어디서 사고가 나나</b><br><span style="font-size:11.5px;color:var(--muted)">운영 프로세스 점검</span></td>
+        <td><b style="color:var(--pv)">동사</b></td>
+        <td>늦다 · 누락되다 · 실패하다 · 새다 = 프로세스가 깨진 지점입니다.</td>
+      </tr>
+      <tr>
+        <td><b>누구부터 응대하나</b><br><span style="font-size:11.5px;color:var(--muted)">CS 우선순위</span></td>
+        <td><b style="color:var(--pd)">부사</b> + <b style="color:var(--pv)">요구 동사</b></td>
+        <td>"매번", "아직도", "빨리 처리해주세요" = 이탈 직전 신호입니다.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>같은 VOC, 다른 목적 — V006으로 확인</h2>
+  <div class="parse">
+    <div class="ph"><span>V006 · "배달예상시간 20분이었는데 1시간 넘게 걸렸어요 매번 이러네요 진짜"</span></div>
+    <div class="pb">
+      <div class="row" style="display:flex;align-items:baseline;gap:12px;padding:6px 0;border-bottom:1px solid var(--line)">
+        <div class="rk" style="flex:0 0 96px;font-size:11px;font-weight:700;color:var(--muted2);text-align:right">리포트용</div>
+        <div class="rv" style="flex:1"><span class="chip c-n">배달</span><span class="chip c-o">→ 카테고리: 배달</span></div>
+      </div>
+      <div class="row" style="display:flex;align-items:baseline;gap:12px;padding:6px 0;border-bottom:1px solid var(--line)">
+        <div class="rk" style="flex:0 0 96px;font-size:11px;font-weight:700;color:var(--muted2);text-align:right">프로세스용</div>
+        <div class="rv" style="flex:1"><span class="chip c-v">걸리다</span><span class="chip c-o">→ 배차·조리 단계 지연</span></div>
+      </div>
+      <div class="row" style="display:flex;align-items:baseline;gap:12px;padding:6px 0">
+        <div class="rk" style="flex:0 0 96px;font-size:11px;font-weight:700;color:var(--muted2);text-align:right">CS용</div>
+        <div class="rv" style="flex:1"><span class="chip c-d">매번</span><span class="chip c-o">→ 반복 경험 · 이탈 위험 · 우선 응대</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="note"><strong>목적은 하나만</strong> &nbsp;네 가지 목적 중 <strong>하나만 골라</strong> 진행합니다. 다 하려다 보면 열이 열두 개가 되고, 그러면 AI 결과 품질이 떨어집니다. <strong>목적 하나 · 열 다섯 개 이하</strong>가 안정적인 크기입니다.</div>
+
+  <div class="brand">(캐럿글로벌)<b>부성순강사</b> / bakpak@empas.com</div>
+  </section>
+
+<!-- ========= 11 ========= -->
+<section class="page">
+  <div class="rh"><div class="l"><b>VOC 분석 Step 1</b> · 문장을 쪼개면 데이터가 된다</div><div class="r">05 절차<span class="pg">11</span></div></div>
+  <div class="kicker">작업 절차 ①</div>
+  <h1>AI에게 시켜서<br>표 받아내기</h1>
+  <p class="lede"><em>여기서 쓰는 프롬프트가 곧 전처리 프로그램입니다.</em> 코드를 짜는 대신 지시서를 씁니다.</p>
+
+  <div class="lab">
+    <div class="lab-head"><span class="badge">절차 1</span><h3>1차 분해 시키기</h3></div>
+    <div class="lab-body">
+      <ol class="steps">
+        <li><span class="lt">Claude 또는 ChatGPT를 열고 <code>배민_VOC_원본.csv</code>를 업로드한다</span><span class="ls">대화창의 첨부(클립) 버튼으로 파일을 올립니다. 106건이 들어 있습니다.</span></li>
+        <li><span class="lt">파일을 올린 대화창에 아래 지시서를 붙여넣는다</span>
+          <div class="say"><div class="sl">이 전체를 복사해서 붙여넣으세요</div><div class="sc">너는 고객 VOC를 품사 단위로 나누는 전처리 담당자다.<br>해석하거나 요약하지 말고, 문장에 실제로 나온 표현만 나눠라.<br><br>
+[분해 규칙]<br>
+1. 명사_대상 : 조사를 떼고 원형만. 불만·평가 대상이 되는 명사만. 최대 3개.<br>
+2. 동사_행위 : 기본형으로 바꾼다. (늦었고 → 늦다, 샜습니다 → 새다)<br>
+3. 형용사_평가 : 기본형으로 바꾼다. (불친절했습니다 → 불친절하다)<br>
+4. 부사_정도 : 정도·빈도·지속·긴급성 등 판단에 필요한 부사. 줄임말은 표준어로.<br>&nbsp;&nbsp;&nbsp;(넘 → 너무 / 매번·계속·아직도·빨리도 여기에 넣는다)<br>
+5. 부정표현_여부 : 안 / 못 / -지 않다 / 아니다 / 없다 등<br>&nbsp;&nbsp;&nbsp;명시적인 부정 표현이 있으면 Y, 없으면 N<br>&nbsp;&nbsp;&nbsp;("아예", "하나도"만으로 Y로 판정하지 않는다.<br>&nbsp;&nbsp;&nbsp;&nbsp;안 · 못 · 없다 등 부정 표현이 함께 있는지 확인한다.)<br><br>
+[공통 규칙]<br>
+· 원문에 없는 단어를 만들어내지 마라.<br>
+· 해당 품사가 없으면 반드시 "-" 로 적어라. 빈칸 금지.<br>
+· 이모티콘(ㅠㅠ, ㅎㅎ)과 문장부호는 지워라.<br>
+· 띄어쓰기가 틀려도 나눠서 처리해라. (쿠폰적용 → 쿠폰 / 적용하다)<br><br>
+[출력]<br>
+결과를 <b>CSV 파일로 만들어 내려받을 수 있게</b> 해라. 파일명은 1차분해_v1.csv<br>
+열 순서 : VOC_ID, 명사_대상, 동사_행위, 형용사_평가, 부사_정도, 부정표현_여부<br>
+한 칸에 값이 여러 개면 세미콜론(;)으로 구분한다. (예: 치킨;배달;라이더)<br>
+설명은 붙이지 말고 파일만 만들어라.<br><br>
+[대상]<br>
+업로드한 배민_VOC_원본.csv 파일의 VOC_원문 열을 분해한다.<br>이번에는 V001부터 V010까지 10건만 처리한다.<br>
+VOC_ID는 원본 값을 그대로 유지한다.</div></div>
+        </li>
+        <li><span class="lt">전송하고 <code>1차분해_v1.csv</code>를 내려받는다</span><span class="ls">먼저 10건으로 규칙이 맞는지 확인하고, 이상 없으면 범위를 넓혀 다시 돌립니다.</span></li>
+        <li><span class="lt">원본 CSV와 결과 CSV를 <code>VOC_ID</code> 기준으로 합친다</span><span class="ls">엑셀에서 두 파일을 열고 VOC_ID가 같은 줄끼리 나란히 둡니다. 건수가 많으면 VLOOKUP이나 XLOOKUP을 씁니다.</span></li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="lab">
+    <div class="lab-head"><span class="badge">절차 2</span><h3>결과 검수하기</h3></div>
+    <div class="lab-body">
+      <ol class="steps tight">
+        <li><span class="lt">조사가 붙어 나온 명사가 있나?</span><span class="ls"><code>배달이</code>처럼 나왔다면 규칙 1이 안 먹은 것.</span></li>
+        <li><span class="lt">기본형이 아닌 동사·형용사가 있나?</span><span class="ls"><code>늦었고</code>가 그대로 있다면 규칙 2·3 확인.</span></li>
+        <li><span class="lt">빈칸이 있나?</span><span class="ls">빈칸은 나중에 엑셀에서 줄이 밀립니다.</span></li>
+        <li><span class="lt">원문에 없는 단어가 들어왔나?</span><span class="ls">V002에 '지연'이 있다면 지어낸 것입니다.</span></li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="brand">(캐럿글로벌)<b>부성순강사</b> / bakpak@empas.com</div>
+  </section>
+
+<!-- ========= 12 ========= -->
+<section class="page">
+  <div class="rh"><div class="l"><b>VOC 분석 Step 1</b> · 문장을 쪼개면 데이터가 된다</div><div class="r">06 보정<span class="pg">12</span></div></div>
+  <div class="kicker">비교 실험</div>
+  <h1>규칙을 빼면<br>이렇게 됩니다</h1>
+  <p class="lede">"VOC를 품사별로 나눠줘"라고만 하면 어떻게 될까요? <em>틀린 답은 아닌데, 엑셀에서 쓸 수가 없습니다.</em> 규칙 한 줄이 왜 필요한지는 비교하면 드러납니다.</p>
+
+  <div class="ba">
+    <div class="bad">
+      <div class="h">"품사별로 나눠줘" 만 했을 때</div>
+      <div class="m">V001<br>명사: <u>치킨이, 배달이, 라이더분도</u><br>동사: <u>식어서, 왔어요, 늦었고</u><br>형용사: <u>불친절했습니다</u><br>부사: 너무<br><br>V002<br>명사: <u>콜라가</u><br>동사: <u>안 왔어요</u><br>형용사: <u>(빈칸)</u></div>
+    </div>
+    <div class="good">
+      <div class="h">규칙 다섯 줄을 줬을 때</div>
+      <div class="m">V001<br>명사: <b>치킨, 배달, 라이더</b><br>동사: <b>식다, 오다, 늦다</b><br>형용사: <b>불친절하다</b><br>부사: 너무<br><br>V002<br>명사: <b>콜라, 주문</b><br>동사: <b>오다</b> · 부정어 <b>Y</b><br>형용사: <b>-</b></div>
+    </div>
+  </div>
+
+  <h2>규칙 하나하나가 무엇을 막아주나</h2>
+  <table>
+    <thead><tr><th style="width:30%">뺐을 때 나오는 것</th><th style="width:26%">이 규칙이 막아줍니다</th><th>안 막으면 생기는 일</th></tr></thead>
+    <tbody>
+      <tr><td><code>배달이</code> <code>치킨이</code></td><td><b>"조사를 떼라"</b></td><td>엑셀에서 '배달'로 못 셉니다</td></tr>
+      <tr><td><code>늦었고</code> <code>늦어서</code></td><td><b>"기본형으로"</b></td><td>같은 불만이 3건으로 흩어집니다</td></tr>
+      <tr><td>빈칸 · 열 생략</td><td><b>"없으면 - 로"</b></td><td>붙여넣을 때 줄이 밀립니다</td></tr>
+      <tr><td>"네, 분석해드릴게요!"</td><td><b>"설명 붙이지 마라"</b></td><td>표만 복사하기 번거롭습니다</td></tr>
+      <tr><td>원문에 없는 <code>지연</code></td><td><b>"만들어내지 마라"</b></td><td>없는 이슈가 통계에 잡힙니다</td></tr>
+    </tbody>
+  </table>
+
+  <div class="point">
+    <div class="pl">핵심</div>
+    <p>AI가 못해서 틀리는 게 아닙니다. <strong>무엇을 원하는지 말하지 않아서</strong> 틀립니다. 프롬프트를 고치는 일이 곧 품질을 올리는 일입니다.</p>
+  </div>
+
+  <div class="brand">(캐럿글로벌)<b>부성순강사</b> / bakpak@empas.com</div>
+  </section>
+
+<!-- ========= 13 ========= -->
+<section class="page">
+  <div class="rh"><div class="l"><b>VOC 분석 Step 1</b> · 문장을 쪼개면 데이터가 된다</div><div class="r">06 보정<span class="pg">13</span></div></div>
+  <div class="kicker">현장에서 꼭 겪는 것</div>
+  <h1>AI가 흔들릴 때<br>잡아주는 다섯 가지</h1>
+  <p class="lede">앞에서 말한 <em>일관성</em> 문제입니다. 다섯 가지 증상과 대응책을 알면, AI 전처리를 실무에 쓸 수 있습니다.</p>
+
+  <div class="deflist">
+    <div class="d">
+      <div class="dt">① 같은 걸 다르게 부른다<small>표현 흔들림</small></div>
+      <div class="dd"><b>증상</b> — 한 배치 안에서 <code>라이더</code> / <code>라이더분</code> / <code>배달원</code>이 섞여 나옵니다. 세 개로 따로 집계됩니다.<br>
+      <b>대응</b> — 프롬프트에 <b>정규화 사전</b>을 박아둡니다.<br>
+      <span style="display:block;background:var(--soft);padding:8px 11px;margin-top:7px;font-family:'JetBrains Mono',monospace;font-size:11px;line-height:1.7;color:var(--ink2);border-left:2px solid var(--accent)">라이더분, 배달원, 기사님 → 라이더<br>어플, 어플리케이션 → 앱<br>사장님, 가게, 업소 → 매장<br>목록에 없는 명사는 원문 그대로 쓴다</span></div>
+    </div>
+    <div class="d">
+      <div class="dt">② 없던 분류를 만든다<small>선택지 이탈</small></div>
+      <div class="dd"><b>증상</b> — 카테고리에 "배달지연", "라이더불친절" 같은 새 값이 생깁니다. 피벗이 안 됩니다.<br>
+      <b>대응</b> — <b>선택지를 닫습니다.</b> "아래 5개 중에서만 고른다. 새로 만들지 마라. 해당 없으면 기타."</div>
+    </div>
+    <div class="d">
+      <div class="dt">③ 뒤로 갈수록 대충 한다<small>분량 저하</small></div>
+      <div class="dd"><b>증상</b> — 한 번에 넣는 건수가 많아지면 앞쪽은 정확한데 뒤로 갈수록 열이 비고 규칙을 어기는 일이 생깁니다. 모델·문장 길이·프롬프트 길이에 따라 달라지는 경험적 현상입니다.<br>
+      <b>대응</b> — 검수가 가능한 크기로 끊어서 처리하고(실습 기준 <b>10건</b>), 배치마다 같은 프롬프트를 다시 붙여넣습니다. 입력 문장 자체가 제각각이라면 <b>부록의 문장 정제 단계</b>를 먼저 넣습니다.</div>
+    </div>
+    <div class="d">
+      <div class="dt">④ 없는 걸 지어낸다<small>환각</small></div>
+      <div class="dd"><b>증상</b> — V002에 없는 '배달 지연'이 결과에 들어옵니다.<br>
+      <b>대응</b> — <b>근거_원문 열</b>을 추가합니다. 원문 구간을 그대로 옮겨 적게 하면 지어낸 항목은 근거를 못 씁니다.</div>
+    </div>
+    <div class="d">
+      <div class="dt">⑤ 다시 돌리면 결과가 다르다<small>재현 불가</small></div>
+      <div class="dd"><b>증상</b> — 어제 돌린 것과 오늘 돌린 게 미묘하게 다릅니다.<br>
+      <b>대응</b> — 확정된 결과는 <b>즉시 엑셀로 내려서 고정</b>합니다. 매번 재생성하지 않고, 프롬프트를 고쳤을 때만 전체를 다시 돌리며 <code>프롬프트_v1.2</code>처럼 버전과 실행일자를 적어둡니다.</div>
+    </div>
+  </div>
+
+  <div class="note"><strong>정리하면</strong> &nbsp;AI가 판단할 여지를 줄일수록 결과가 안정됩니다. <strong>①은 이름을 고정하고, ②는 선택지를 고정하고, ③은 분량을 줄이고, ④는 근거를 요구하고, ⑤는 결과를 저장</strong>합니다.</div>
+
+  <div class="brand">(캐럿글로벌)<b>부성순강사</b> / bakpak@empas.com</div>
+  </section>
+
+<!-- ========= 14 ========= -->
+<section class="page">
+  <div class="rh"><div class="l"><b>VOC 분석 Step 1</b> · 문장을 쪼개면 데이터가 된다</div><div class="r">06 보정<span class="pg">14</span></div></div>
+  <div class="kicker">작업 절차 ②</div>
+  <h1>프롬프트를<br>버전 2로 올리기</h1>
+  <p class="lede">앞에서 찾은 문제를 프롬프트에 되먹입니다. <em>이 되먹임 루프가 AI 전처리의 전부라고 해도 됩니다.</em></p>
+
+  <div class="lab">
+    <div class="lab-head"><span class="badge">절차 3</span><h3>v1에 세 덩어리를 덧붙인다</h3></div>
+    <div class="lab-body">
+      <ol class="steps tight">
+        <li><span class="lt">정규화 사전 추가</span>
+          <div class="say"><div class="sl">규칙 맨 아래에 이어 붙이세요</div><div class="sc">[명사 정규화]<br>라이더분, 배달원, 기사님, 배달기사 → 라이더<br>어플, 어플리케이션 → 앱<br>사장님, 가게, 업소 → 매장<br>위 목록에 없는 명사는 원문 표현 그대로 쓴다.</div></div>
+        </li>
+        <li><span class="lt">선택지 고정</span>
+          <div class="say"><div class="sl">2차 판정을 시킬 때 함께</div><div class="sc">카테고리는 아래 6개 중에서만 고른다. 새로 만들지 마라.<br>[배달 / 음식 / 라이더 / 앱·결제 / 포장 / 기타]</div></div>
+        </li>
+        <li><span class="lt">근거 열 요구</span>
+          <div class="say"><div class="sl">출력 형식에 열 하나 추가</div><div class="sc">근거_원문 열을 마지막에 추가한다.<br>판정의 근거가 된 원문 구간을 그대로 옮겨 적는다.<br>원문에서 찾을 수 없으면 그 행은 "판단불가"로 적는다.</div></div>
+        </li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="lab">
+    <div class="lab-head"><span class="badge">절차 4</span><h3>v1과 v2를 나란히 비교한다</h3></div>
+    <div class="lab-body">
+      <ol class="steps tight">
+        <li><span class="lt">새 대화창에 같은 CSV를 올리고 v2로 다시 돌린다</span><span class="ls">앞 대화가 결과에 영향을 주므로 반드시 새 창에서 합니다.</span></li>
+        <li><span class="lt">내려받은 v1 CSV와 v2 CSV를 엑셀에서 나란히 연다</span><span class="ls">파일명에 버전을 남겨두면 나중에 어느 규칙의 결과인지 헷갈리지 않습니다.</span></li>
+        <li><span class="lt">달라진 곳을 표시한다</span><span class="ls">라이더 표기가 통일됐는지, 새 카테고리가 사라졌는지, 근거가 다 채워졌는지.</span></li>
+        <li><span class="lt">아직 남은 문제를 한 줄 규칙으로 적어 v3를 만든다</span><span class="ls">완벽할 필요 없습니다. 한 번에 하나씩 줄여가면 됩니다.</span></li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="point">
+    <div class="pl">여기가 핵심입니다</div>
+    <p>중요한 것은 '좋은 프롬프트'가 아니라 <strong>AI가 틀린 지점을 찾아내 규칙으로 되먹이는 습관</strong>입니다. 도메인이 바뀌어도 이 루프는 그대로 씁니다.</p>
+  </div>
+
+  <div class="brand">(캐럿글로벌)<b>부성순강사</b> / bakpak@empas.com</div>
+  </section>
+
+<!-- ========= 15 ========= -->
+<section class="page">
+  <div class="rh"><div class="l"><b>VOC 분석 Step 1</b> · 문장을 쪼개면 데이터가 된다</div><div class="r">마무리<span class="pg">15</span></div></div>
+  <div class="kicker">그래서 무엇이 남았나</div>
+  <h1>이제 세어볼 수<br>있습니다</h1>
+  <p class="lede">문장 10건이 표가 됐습니다. 표가 되면 <em>엑셀에서 세는 순간 보고서가 됩니다.</em> 이것이 이 단계의 결과물입니다.</p>
+
+  <h2>명사를 바탕으로 분류한 카테고리 분포</h2>
+  <div class="bars">
+    <div class="b"><div class="bl">앱·결제</div><div class="bt"><div class="bf" style="width:75%"></div></div><div class="bv">3건</div></div>
+    <div class="b"><div class="bl">음식</div><div class="bt"><div class="bf" style="width:75%"></div></div><div class="bv">3건</div></div>
+    <div class="b"><div class="bl">배달</div><div class="bt"><div class="bf q" style="width:50%"></div></div><div class="bv">2건</div></div>
+    <div class="b"><div class="bl">라이더</div><div class="bt"><div class="bf q" style="width:50%"></div></div><div class="bv">2건</div></div>
+    <div class="b"><div class="bl">포장</div><div class="bt"><div class="bf q" style="width:25%"></div></div><div class="bv">1건</div></div>
+  </div>
+  <p class="mn">→ "요즘 배달이 문제인 것 같아요"가 아니라 <strong>"이번 주 앱·결제 3건, 음식 3건"</strong>으로 말할 수 있게 됐습니다.</p>
+
+  <h2>여기서 바로 나오는 질문들</h2>
+  <div class="grid g2">
+    <div class="cell"><div class="num">심각도</div><h4>먼저 응대할 4건</h4><p>심각도 '상' = V003·V005·V006·V010. 우선 연락할 명단입니다.</p></div>
+    <div class="cell"><div class="num">동사</div><h4>깨진 지점</h4><p>실패하다·환불하다·처리하다 같은 문제 관련 동사가 확인됩니다. 결제 프로세스 점검 대상.</p></div>
+    <div class="cell"><div class="num">형용사</div><h4>잘하고 있는 것</h4><p>따뜻하다·맛있다 = 유지할 강점. 불만만 보면 놓칩니다.</p></div>
+    <div class="cell"><div class="num">추이</div><h4>주 단위 비교</h4><p>같은 프롬프트로 매주 돌리면 증감이 보입니다.</p></div>
+  </div>
+
+  <div class="brand">(캐럿글로벌)<b>부성순강사</b> / bakpak@empas.com</div>
+  </section>
+
+<!-- ========= 16 선택단계 ========= -->
+<section class="page">
+  <div class="rh"><div class="l"><b>부록</b> · 선택 단계</div><div class="r">문장 정제<span class="pg">16</span></div></div>
+  <div class="kicker">선택 · 0단계</div>
+  <h1>문장을<br>고르게 다듬기</h1>
+  <p class="lede">들어오는 문장이 제각각이면 분해 결과도 제각각이 됩니다. 분해 전에 <em>문장 형태를 한 가지로 맞추는 단계</em>를 넣으면 뒤가 훨씬 안정됩니다. 필요할 때만 쓰는 선택 단계입니다.</p>
+
+  <h2>언제 넣고, 언제 건너뛰나</h2>
+  <div class="grid g2">
+    <div class="cell"><div class="num">넣는다</div><h4>이런 데이터라면</h4><p>· 앱 리뷰·고객센터·문의가 섞여 말투 편차가 클 때<br>· 이모티콘·줄임말·띄어쓰기 오류가 많을 때<br>· 1차 분해 결과가 돌릴 때마다 흔들릴 때</p></div>
+    <div class="cell"><div class="num">건너뛴다</div><h4>이런 데이터라면</h4><p>· 상담원이 정리해 입력한 접수 건처럼 문장이 이미 고를 때<br>· 건수가 적어 눈으로 다 볼 수 있을 때<br>· 표기 규칙 몇 줄로 충분할 때</p></div>
+  </div>
+
+  <h2>원문은 손대지 않고, 열을 하나 더 만든다</h2>
+  <p>정제한 문장으로 원문을 덮어쓰면 안 됩니다. <strong><code>근거_원문</code> 열이 환각을 잡아내는 기준</strong>인데, 원문이 AI가 쓴 문장으로 바뀌면 그 기준이 사라집니다.</p>
+
+  <div class="sheet">
+    <div class="bar"><i></i>정제 단계를 넣었을 때의 열 구성</div>
+    <table>
+      <thead><tr><th style="width:9%">VOC_ID</th><th style="width:38%">VOC_원문 <span style="font-weight:400;color:var(--muted)">· 원본, 손대지 않음</span></th><th>정제문 <span style="font-weight:400;color:var(--muted)">· 분해에 쓰는 입력</span></th></tr></thead>
+      <tbody>
+        <tr><td class="id">V003</td><td class="dim">앱에서 결제가 계속 실패해요. 카드등록도 안되고 넘 불편합니다 ㅠㅠ</td><td>앱에서 결제가 계속 실패한다. 카드 등록도 안 되고 너무 불편하다.</td></tr>
+        <tr><td class="id">V005</td><td class="dim">쿠폰적용했는데 할인이 하나도 안됐어요 환불해주세요</td><td>쿠폰을 적용했는데 할인이 하나도 안 됐다. 환불해 달라.</td></tr>
+        <tr><td class="id">V009</td><td class="dim">음식은 맛있었는데 양이 넘 적었어요</td><td>음식은 맛있었는데 양이 너무 적었다.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="point">
+    <div class="pl">지우면 안 되는 말</div>
+    <p>정제는 <strong>어투와 표기만</strong> 건드립니다. <code>너무</code> · <code>진짜</code> · <code>매번</code> · <code>하나도</code> · <code>아직도</code> 같은 정도 부사는 심각도 판정의 근거이고, <code>안</code> · <code>못</code> · <code>없다</code>는 부정 판정을 뒤집습니다. <strong>줄이거나 요약하면 뒤 단계가 전부 어긋납니다.</strong></p>
+  </div>
+
+  <div class="brand">(캐럿글로벌)<b>부성순강사</b> / bakpak@empas.com</div>
+</section>
+
+<!-- ========= 17 정제 프롬프트 ========= -->
+<section class="page">
+  <div class="rh"><div class="l"><b>부록</b> · 선택 단계</div><div class="r">정제 프롬프트<span class="pg">17</span></div></div>
+  <div class="kicker">복사해서 쓰는 프롬프트</div>
+  <h1>목록을 먼저 뽑고,<br>그 목록으로 정제한다</h1>
+  <p class="lede">변환 규칙을 머리로 짜지 않습니다. <em>데이터에서 실제로 나온 표기를 AI가 모아 오면, 사람이 걸러서 예시로 박습니다.</em></p>
+
+  <div class="lab">
+    <div class="lab-head"><span class="badge">정제 1</span><h3>정규화 후보 목록 뽑기</h3></div>
+    <div class="lab-body">
+      <div class="lab-intro">CSV를 올린 대화창에 붙여넣습니다. 나온 목록을 훑어 과한 변환은 지우고, 남은 것만 다음 프롬프트의 예시로 씁니다.</div>
+      <div class="say" style="margin-top:0">
+        <div class="sl">정규화 후보 뽑기</div>
+        <div class="sc">업로드한 배민_VOC_원본.csv의 VOC_원문 열을 모두 훑고,<br>
+정규화가 필요한 표기 패턴을 유형별로 정리해라.<br><br>
+[유형]<br>
+1. 줄임말·구어체 &nbsp;(예: 넘 → 너무)<br>
+2. 이모티콘·자음 반복 &nbsp;(예: ㅠㅠ → 삭제)<br>
+3. 붙여 쓴 말 &nbsp;(예: 쿠폰적용 → 쿠폰 적용)<br>
+4. 같은 뜻의 다른 표기 &nbsp;(예: 라이더분, 배달원 → 라이더)<br><br>
+[규칙]<br>
+· 실제 데이터에 나온 표현만 적어라. 없는 것을 지어내지 마라.<br>
+· 유형마다 등장 횟수가 많은 순으로 최대 10개.<br>
+· 뜻이 달라질 수 있는 변환은 "확인필요"에 O 표시를 해라.<br><br>
+[출력]<br>
+유형 | 원래 표기 | 바꿀 표기 | 등장 횟수 | 확인필요<br>
+표로 출력해라.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="lab">
+    <div class="lab-head"><span class="badge">정제 2</span><h3>정제 실행하기</h3></div>
+    <div class="lab-body">
+      <div class="lab-intro">앞에서 확정한 변환쌍을 <b>[예시]</b> 자리에 넣습니다. 예시에는 <b>부정문과 정도 부사가 들어간 문장을 반드시 포함</b>시켜야, AI가 그 말을 지우지 않습니다.</div>
+      <div class="say" style="margin-top:0">
+        <div class="sl">문장 정제</div>
+        <div class="sc">너는 고객 VOC의 문장 형태를 통일하는 정제 담당자다.<br><br>
+[할 일]<br>
+· 종결 표현을 "-다" 평서형으로 통일한다.<br>
+· 이모티콘과 자음 반복(ㅠㅠ, ㅎㅎ, ㅋㅋ)은 지운다.<br>
+· 줄임말·구어체는 표준어로 바꾼다.<br>
+· 붙여 쓴 말은 띄어 쓴다.<br>
+· 한 문장에 두 가지 내용이 있으면 마침표로 나눈다.<br><br>
+[하지 말 것]<br>
+· 요약하거나 줄이지 마라. 문장 수는 줄여도 내용은 그대로 둔다.<br>
+· 너무 · 진짜 · 매번 · 계속 · 하나도 · 아직도 · 빨리 같은 부사는 <b>반드시 남긴다.</b><br>
+· 안 · 못 · -지 않다 · 없다 같은 부정 표현은 <b>반드시 남긴다.</b><br>
+· 원문에 없는 말을 넣지 마라.<br><br>
+[예시]<br>
+치킨이 다 식어서 왔어요. 배달이 너무 늦었고 라이더분도 불친절했습니다.<br>
+→ 치킨이 식어서 도착했다. 배달이 너무 늦었고 라이더가 불친절했다.<br><br>
+앱에서 결제가 계속 실패해요. 카드등록도 안되고 넘 불편합니다 ㅠㅠ<br>
+→ 앱에서 결제가 계속 실패한다. 카드 등록도 안 되고 너무 불편하다.<br><br>
+쿠폰적용했는데 할인이 하나도 안됐어요 환불해주세요<br>
+→ 쿠폰을 적용했는데 할인이 하나도 안 됐다. 환불해 달라.<br><br>
+배달예상시간 20분이었는데 1시간 넘게 걸렸어요 매번 이러네요 진짜<br>
+→ 배달 예상시간이 20분이었는데 1시간 넘게 걸렸다. 진짜 매번 이런다.<br><br>
+[대상]<br>
+업로드한 배민_VOC_원본.csv의 VOC_원문 열을 정제한다.<br><br>
+[출력]<br>
+결과를 <b>CSV 파일로 만들어 내려받을 수 있게</b> 해라. 파일명은 정제_v1.csv<br>
+열 순서 : VOC_ID, 정제문<br>
+설명은 붙이지 말고 파일만 만들어라.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="note"><strong>다음 단계로</strong> &nbsp;정제가 끝나면 1차 분해 프롬프트에서 <code>VOC_원문 열</code>을 <code>정제문 열</code>로 바꿔 지정하면 됩니다. 나머지 규칙은 그대로 씁니다.</div>
+
+  <div class="brand">(캐럿글로벌)<b>부성순강사</b> / bakpak@empas.com</div>
+</section>
+
+<!-- ========= 18 부록 ========= -->
+<section class="page">
+  <div class="rh"><div class="l"><b>부록</b> · 복사해서 쓰는 프롬프트</div><div class="r">1차 분해 · 2차 판정<span class="pg">18</span></div></div>
+  <div class="kicker">완성본 — 그대로 복사</div>
+  <h1>프롬프트 전문</h1>
+  <p class="lede">앞의 절차에서 완성한 v2 프롬프트입니다. <em>VOC 부분만 내 데이터로 바꾸면 다른 업무에도 그대로 씁니다.</em></p>
+
+  <div class="lab">
+    <div class="lab-head"><span class="badge">1차</span><h3>품사 단위로 분해하기</h3></div>
+    <div class="lab-body">
+      <div class="say" style="margin-top:0">
+        <div class="sl">전체를 복사해서 붙여넣으세요</div>
+        <div class="sc">너는 고객 VOC를 품사 단위로 나누는 전처리 담당자다.<br>
+해석하거나 요약하지 말고, 문장에 실제로 나온 표현만 나눠라.<br><br>
+[분해 규칙]<br>
+1. 명사_대상 : 조사를 떼고 원형만. 불만·평가 대상이 되는 명사만. 최대 3개.<br>
+2. 동사_행위 : 기본형으로 바꾼다. (늦었고 → 늦다)<br>
+3. 형용사_평가 : 기본형으로 바꾼다. (불친절했습니다 → 불친절하다)<br>
+4. 부사_정도 : 정도·빈도·지속·긴급성 등 판단에 필요한 부사. 줄임말은 표준어로.<br>&nbsp;&nbsp;&nbsp;(넘 → 너무 / 매번·계속·아직도·빨리도 여기에 넣는다)<br>
+5. 부정표현_여부 : 안 / 못 / -지 않다 / 아니다 / 없다 등<br>&nbsp;&nbsp;&nbsp;명시적인 부정 표현이 있으면 Y, 없으면 N<br>&nbsp;&nbsp;&nbsp;("아예", "하나도"만으로 Y로 판정하지 않는다.<br>&nbsp;&nbsp;&nbsp;&nbsp;안 · 못 · 없다 등 부정 표현이 함께 있는지 확인한다.)<br><br>
+[명사 정규화]<br>
+라이더분, 배달원, 기사님, 배달기사 → 라이더<br>
+어플, 어플리케이션 → 앱<br>
+사장님, 가게, 업소 → 매장<br>
+목록에 없는 명사는 원문 표현 그대로 쓴다.<br><br>
+[공통 규칙]<br>
+· 원문에 없는 단어를 만들어내지 마라.<br>
+· 해당 품사가 없으면 반드시 "-" 로 적어라. 빈칸 금지.<br>
+· 이모티콘과 문장부호는 지워라.<br>
+· 띄어쓰기가 틀려도 나눠서 처리해라. (쿠폰적용 → 쿠폰 / 적용하다)<br>
+· 한 번에 10건씩만 처리한다. 그 이상은 나누어 요청한다.<br><br>
+[출력]<br>
+결과를 <b>CSV 파일로 만들어 내려받을 수 있게</b> 해라. 파일명은 1차분해_v1.csv<br>
+열 순서 : VOC_ID, 명사_대상, 동사_행위, 형용사_평가, 부사_정도, 부정표현_여부<br>
+한 칸에 값이 여러 개면 세미콜론(;)으로 구분한다. (예: 치킨;배달;라이더)<br>
+설명은 붙이지 말고 파일만 만들어라.<br><br>
+[대상]<br>
+업로드한 CSV 파일의 VOC_원문 열을 분해한다.<br>
+VOC_ID는 원본 값을 그대로 유지한다.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="lab">
+    <div class="lab-head"><span class="badge">2차</span><h3>판정 열 만들기</h3></div>
+    <div class="lab-body">
+      <div class="say" style="margin-top:0">
+        <div class="sl">1차 결과를 받은 뒤, 이어서 붙여넣으세요</div>
+        <div class="sc">위 1차 분해 결과를 근거로 판정 열을 만들어라.<br>
+1차에서 뽑은 단어를 주된 근거로 삼되, 판정이 애매하면 원문을 함께 확인해라.<br>원문에 없는 내용을 새로 지어내지는 마라.<br><br>
+[판정 규칙]<br>
+1. 카테고리 : 명사_대상을 보고 아래 6개 중에서만 고른다. 새로 만들지 마라.<br>
+&nbsp;&nbsp;&nbsp;[배달 / 음식 / 라이더 / 앱·결제 / 포장 / 기타]<br>
+&nbsp;&nbsp;&nbsp;해당하는 것이 여러 개면 " / "로 이어 쓴다.<br>
+2. 평가극성 : 동사_행위 · 형용사_평가 · 부정표현_여부를 <b>모두 종합</b>해<br>
+&nbsp;&nbsp;&nbsp;[긍정 / 부정 / 혼재] 중 하나로 판정한다.<br>
+&nbsp;&nbsp;&nbsp;형용사가 없어도 실패하다·누락되다처럼 문제를 뜻하는 동사가 있으면 "부정".<br>
+&nbsp;&nbsp;&nbsp;긍정 표현과 부정 표현이 함께 있으면 "혼재".<br>
+3. 심각도 : [상 / 중 / 하] 중 하나.<br>
+&nbsp;&nbsp;&nbsp;상 — 반복 표현(매번, 계속, 아직도)이 있거나 환불·처리 요구가 있을 때<br>
+&nbsp;&nbsp;&nbsp;중 — 명확한 불만이 있으나 반복·요구 표현이 없을 때<br>
+&nbsp;&nbsp;&nbsp;하 — 긍정이거나 가벼운 불만일 때<br>
+4. 요구사항 : [환불 / 확인 / 처리 / 없음] 중 하나.<br>
+5. 근거_원문 : 판정 근거가 된 원문 구간을 그대로 옮겨 적는다.<br>
+&nbsp;&nbsp;&nbsp;원문에서 찾을 수 없으면 "판단불가"로 적는다.<br><br>
+[출력]<br>
+결과를 <b>CSV 파일로 만들어 내려받을 수 있게</b> 해라. 파일명은 2차판정_v1.csv<br>
+열 순서 : VOC_ID, 카테고리, 평가극성, 심각도, 요구사항, 근거_원문<br>
+카테고리가 여러 개면 세미콜론(;)으로 구분한다.<br>
+설명은 붙이지 말고 파일만 만들어라.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="note"><strong>다른 업무에 쓸 때</strong> &nbsp;바꿀 곳은 세 군데뿐입니다 — <strong>정규화 사전</strong>(우리 업계 용어로), <strong>카테고리 선택지</strong>(우리 분류 체계로), <strong>심각도 기준</strong>(우리 기준으로). 나머지 규칙은 어느 도메인에서나 그대로 통합니다.</div>
+
+  <div class="brand">(캐럿글로벌)<b>부성순강사</b> / bakpak@empas.com</div>
+  </section>
+
+<script>
+document.querySelectorAll('.say').forEach(function(box){
+  var sc=box.querySelector('.sc'), sl=box.querySelector('.sl');
+  if(!sc||!sl) return;
+  var btn=document.createElement('button');
+  btn.type='button'; btn.className='copybtn'; btn.textContent='복사';
+  function done(){ btn.textContent='복사됨'; btn.classList.add('done');
+    setTimeout(function(){ btn.textContent='복사'; btn.classList.remove('done'); },1500); }
+  btn.addEventListener('click',function(){
+    var text=sc.innerText.replace(/\u00a0/g,' ');
+    if(navigator.clipboard&&window.isSecureContext){
+      navigator.clipboard.writeText(text).then(done);
+    }else{
+      var ta=document.createElement('textarea');
+      ta.value=text; ta.style.position='fixed'; ta.style.opacity='0';
+      document.body.appendChild(ta); ta.select();
+      try{ document.execCommand('copy'); done(); }catch(e){}
+      document.body.removeChild(ta);
+    }
+  });
+  sl.appendChild(btn);
+});
+</script>
+
+</body>
+</html>

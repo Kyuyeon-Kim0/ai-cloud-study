@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+
+<html lang="ko"><head><meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/><title>Kiwi 토크나이저 기초 교안</title><style>
+:root{
+  --ink:#1c1b19;
+  --paper:#ffffff;
+  --soft:#f6f5f2;
+  --soft2:#efedea;
+  --line:#e3e0db;
+  --line2:#d4d0c9;
+  --muted:#86827b;
+  --muted2:#5f5b54;
+  --accent:#c2410c;
+  --accent-soft:#fbf0e9;
+  --ink2:#2f2d2a;
+  /* 품사 색 */
+  --pn:#c2410c; --pnb:#f0cdb8; --pns:#fdf4ef;
+  --pv:#1d4ed8; --pvb:#c3d0f2; --pvs:#f1f4fd;
+  --pa:#15803d; --pab:#bcdcc8; --pas:#f0f7f2;
+  --pd:#7c3aed; --pdb:#d4c6f5; --pds:#f6f2fe;
+  --px:#b91c1c; --pxb:#f0c3c3; --pxs:#fdf1f1;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+body{
+  font-family:'Noto Sans KR',sans-serif;color:var(--ink);
+  background:#e8e6e1;line-height:1.65;font-weight:400;
+  letter-spacing:-.003em;
+}
+
+.page{
+  width:210mm;min-height:297mm;background:var(--paper);
+  margin:8mm auto;padding:20mm 19mm 18mm;position:relative;
+  box-shadow:0 1px 16px rgba(0,0,0,.08);
+}
+@page{size:A4 portrait;margin:0}
+@media print{
+  body{background:none}
+  .page{margin:0;box-shadow:none;page-break-after:always}
+}
+
+/* 러닝헤드 */
+.rh{display:flex;justify-content:space-between;align-items:baseline;
+  margin-bottom:30px;padding-bottom:9px;border-bottom:1px solid var(--line)}
+.rh .l{font-size:11px;font-weight:700;letter-spacing:.08em;color:var(--muted2)}
+.rh .l b{color:var(--accent)}
+.rh .r{font-size:10.5px;color:var(--muted);letter-spacing:.04em;display:flex;align-items:baseline;gap:12px}
+.rh .r .pg{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:500;
+  color:var(--accent);letter-spacing:.06em}
+
+/* 제목 */
+.kicker{font-size:12px;font-weight:700;letter-spacing:.14em;color:var(--accent);
+  text-transform:uppercase;margin-bottom:11px}
+h1{font-size:33px;font-weight:900;line-height:1.18;letter-spacing:-.02em;margin-bottom:14px}
+.lede{font-size:15px;color:var(--muted2);font-weight:400;line-height:1.75;
+  margin-bottom:30px;max-width:88%}
+.lede em{font-style:normal;color:var(--ink);font-weight:700}
+
+h2{font-size:13px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--accent);margin:30px 0 14px;padding-bottom:0;
+  display:flex;align-items:center;gap:10px}
+h2::after{content:"";flex:1;height:1px;background:var(--line)}
+h3{font-size:16px;font-weight:700;margin:16px 0 6px}
+
+p{font-size:13.5px;line-height:1.75;margin:9px 0;color:var(--ink2)}
+strong{font-weight:700;color:var(--ink)}
+em{font-style:normal;color:var(--accent);font-weight:700}
+.mn{font-size:12px;color:var(--muted);margin-top:6px}
+code{font-family:'JetBrains Mono',monospace;background:var(--soft2);
+  padding:1px 6px;border-radius:4px;font-size:12.5px;color:var(--accent)}
+
+ul,ol{margin:10px 0;padding-left:0;list-style:none}
+li{font-size:13.5px;line-height:1.7;margin:11px 0;padding-left:26px;position:relative;color:var(--ink2)}
+ul li::before{content:"";position:absolute;left:4px;top:11px;width:6px;height:6px;
+  background:var(--accent);border-radius:50%}
+li strong{color:var(--ink)}
+
+.deflist{margin:14px 0}
+.deflist .d{display:flex;gap:18px;padding:14px 0;border-bottom:1px solid var(--line)}
+.deflist .d:last-child{border-bottom:none}
+.deflist .dt{flex:0 0 28%;font-weight:700;font-size:14px}
+.deflist .dt small{display:block;font-weight:400;color:var(--muted);font-size:11.5px;margin-top:2px;letter-spacing:.02em}
+.deflist .dd{flex:1;font-size:13px;color:var(--muted2);line-height:1.7}
+
+.grid{display:grid;gap:1px;background:var(--line);border:1px solid var(--line);margin:16px 0}
+.grid.g3{grid-template-columns:repeat(3,1fr)}
+.grid.g2{grid-template-columns:repeat(2,1fr)}
+.cell{background:var(--paper);padding:18px 16px}
+.cell .num{font-size:11px;font-weight:700;letter-spacing:.1em;color:var(--accent);text-transform:uppercase}
+.cell h4{font-size:14.5px;font-weight:700;margin:7px 0 4px;line-height:1.35}
+.cell p{font-size:12px;color:var(--muted2);margin:0;line-height:1.6}
+
+table{width:100%;border-collapse:collapse;margin:16px 0;font-size:13px}
+th,td{padding:11px 14px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line)}
+thead th{border-bottom:2px solid var(--ink);font-weight:700;font-size:12px;
+  letter-spacing:.04em;color:var(--ink)}
+tbody td{color:var(--muted2)}
+tbody td b{color:var(--ink);font-weight:700}
+td:first-child,th:first-child{padding-left:0}
+.cmp-accent{color:var(--accent)!important}
+
+.point{border-left:2px solid var(--accent);padding:4px 0 4px 18px;margin:18px 0}
+.point .pl{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:5px}
+.point p{margin:0;font-size:13.5px;color:var(--ink2)}
+
+.analogy{margin:14px 0}
+.analogy .a{display:flex;gap:16px;align-items:baseline;padding:11px 0;border-bottom:1px solid var(--line)}
+.analogy .a:last-child{border-bottom:none}
+.analogy .ak{flex:0 0 30%;font-weight:700;font-size:14px}
+.analogy .av{flex:1;font-size:13px;color:var(--muted2)}
+
+/* ============ 실습 ============ */
+.lab{margin:18px 0;border:1px solid var(--ink);background:var(--soft)}
+.lab-head{background:var(--ink);color:var(--paper);padding:12px 22px;display:flex;align-items:center;gap:14px}
+.lab-head .badge{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  border:1px solid rgba(255,255,255,.4);padding:3px 11px;border-radius:3px}
+.lab-head h3{font-size:18px;margin:0;color:#fff;font-weight:700}
+.lab-body{padding:18px 22px 20px}
+.lab-intro{font-size:13px;color:var(--muted2);margin-bottom:16px;line-height:1.7}
+.steps{counter-reset:st;list-style:none;padding:0;margin:0}
+.steps>li{counter-increment:st;position:relative;padding:0 0 15px 46px;margin:0;font-size:14.5px;
+  line-height:1.55;border-left:1px solid var(--line2);margin-left:15px}
+.steps.tight>li{padding-bottom:11px}
+.steps.tight .say{margin-top:7px;padding:9px 14px}
+.steps>li:last-child{border-left:1px solid transparent;padding-bottom:0}
+.steps>li::before{content:counter(st);position:absolute;left:-15px;top:-2px;width:30px;height:30px;
+  background:var(--paper);border:1.5px solid var(--ink);color:var(--ink);border-radius:50%;
+  display:grid;place-items:center;font-weight:700;font-size:14px}
+.steps>li::marker{content:none}
+.steps>li .lt{font-weight:700;color:var(--ink)}
+.steps>li .ls{display:block;font-size:12.5px;color:var(--muted);font-weight:400;margin-top:2px}
+.say{margin-top:9px;background:var(--paper);border:1px solid var(--line2);border-left:3px solid var(--accent);
+  border-radius:4px;padding:11px 14px}
+.say .sl{font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--accent);text-transform:uppercase;
+  margin-bottom:5px;display:flex;align-items:center;gap:6px}
+.say .sc{font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.65;color:var(--ink);font-weight:500}
+.copybtn{margin-left:auto;font-family:'Noto Sans KR',sans-serif;font-size:10.5px;font-weight:700;
+  letter-spacing:0;text-transform:none;color:var(--muted2);background:var(--paper);
+  border:1px solid var(--line2);border-radius:3px;padding:3px 11px;cursor:pointer;line-height:1.4}
+.copybtn:hover{border-color:var(--accent);color:var(--accent)}
+.copybtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.copybtn.done{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+@media print{.copybtn{display:none}}
+
+.note{background:var(--soft);border-radius:6px;padding:14px 18px;margin:16px 0;font-size:13px;color:var(--muted2);line-height:1.7}
+.note strong{color:var(--accent)}
+
+/* ============ 품사 칩 ============ */
+.chip{display:inline-flex;align-items:baseline;gap:5px;font-size:12.5px;font-weight:700;
+  padding:4px 9px;border-radius:3px;border:1px solid;margin:3px 4px 3px 0;line-height:1.3}
+.chip s{text-decoration:none;font-size:9.5px;font-weight:500;opacity:.8;letter-spacing:.04em}
+.c-n{color:var(--pn);border-color:var(--pnb);background:var(--pns)}
+.c-v{color:var(--pv);border-color:var(--pvb);background:var(--pvs)}
+.c-a{color:var(--pa);border-color:var(--pab);background:var(--pas)}
+.c-d{color:var(--pd);border-color:var(--pdb);background:var(--pds)}
+.c-x{color:var(--px);border-color:var(--pxb);background:var(--pxs)}
+.c-o{color:var(--muted);border-color:var(--line2);background:var(--soft);font-weight:400}
+
+/* 문장 분해 목업 */
+.parse{border:1px solid var(--line2);background:var(--paper);margin:14px 0}
+.parse .ph{background:var(--soft);border-bottom:1px solid var(--line);padding:7px 16px;
+  font-size:10.5px;font-weight:700;letter-spacing:.08em;color:var(--muted2);
+  display:flex;justify-content:space-between}
+.parse .pb{padding:14px 16px 16px}
+.parse .src{font-size:15px;font-weight:500;color:var(--ink);line-height:1.7}
+.parse .arw{font-size:10.5px;color:var(--muted);letter-spacing:.06em;
+  margin:12px 0 8px;display:flex;align-items:center;gap:10px}
+.parse .arw::after{content:"";flex:1;height:1px;background:var(--line)}
+.parse .out{margin-top:2px}
+.parse .row{display:flex;align-items:baseline;gap:12px;padding:5px 0}
+.parse .rk{flex:0 0 62px;font-size:11px;font-weight:700;color:var(--muted2);text-align:right;padding-top:5px}
+.parse .rv{flex:1}
+
+/* 스프레드시트 목업 */
+.sheet{border:1px solid var(--line2);margin:15px 0;background:#fff}
+.sheet .bar{background:var(--soft2);border-bottom:1px solid var(--line2);padding:6px 12px;
+  font-size:10.5px;color:var(--muted2);display:flex;align-items:center;gap:8px;
+  font-family:'JetBrains Mono',monospace;letter-spacing:.02em}
+.sheet .bar i{width:8px;height:8px;border-radius:50%;background:#cfcbc4;display:block}
+.sheet table{margin:0;table-layout:fixed;font-size:10.5px;border-collapse:collapse}
+.sheet th,.sheet td{border:1px solid var(--line);padding:6px 7px;vertical-align:top;
+  letter-spacing:0;line-height:1.45;word-break:keep-all}
+.sheet thead th{background:var(--soft);font-size:10px;font-weight:700;color:var(--ink);
+  border-bottom:1px solid var(--line2);text-align:left;text-transform:none}
+.sheet tbody td{color:var(--ink2);font-size:10.5px}
+.sheet td.id{font-family:'JetBrains Mono',monospace;color:var(--muted);text-align:center;
+  background:var(--soft);font-size:10px}
+.sheet .ai th{background:var(--accent-soft);color:var(--accent)}
+.sheet .mk{color:var(--accent);font-weight:700}
+.sheet .dim{color:var(--muted)}
+.sheetcap{font-size:11px;color:var(--muted);margin:-8px 0 16px}
+
+/* before / after */
+.ba{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);
+  border:1px solid var(--line);margin:15px 0}
+.ba>div{background:var(--paper);padding:13px 15px}
+.ba .h{font-size:10.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;margin-bottom:9px}
+.ba .bad .h{color:var(--muted)}
+.ba .good .h{color:var(--accent)}
+.ba .m{font-family:'JetBrains Mono',monospace;font-size:11.5px;line-height:1.7;color:var(--ink2)}
+.ba .m u{text-decoration:none;background:var(--pxs);color:var(--px);padding:0 3px;border-radius:2px}
+.ba .m b{background:var(--pas);color:var(--pa);padding:0 3px;border-radius:2px;font-weight:500}
+.ba .why{font-size:11.5px;color:var(--muted);margin-top:9px;line-height:1.6}
+
+/* 막대 */
+.bars{margin:14px 0}
+.bars .b{display:flex;align-items:center;gap:12px;margin:8px 0}
+.bars .bl{flex:0 0 24%;font-size:12.5px;font-weight:700;color:var(--ink)}
+.bars .bt{flex:1;height:15px;background:var(--soft2)}
+.bars .bf{height:100%;background:var(--accent)}
+.bars .bf.q{background:var(--line2)}
+.bars .bv{flex:0 0 46px;text-align:right;font-family:'JetBrains Mono',monospace;
+  font-size:11.5px;color:var(--muted2)}
+
+/* ============ 표지 ============ */
+.cover{padding:0;background:var(--ink);display:flex;flex-direction:column;color:#fff}
+.cover-inner{flex:1;padding:26mm 19mm 16mm;display:flex;flex-direction:column}
+.cover .ck{font-size:11.5px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;
+  color:#e8895f;display:flex;align-items:center;gap:12px}
+.cover .ck::after{content:"";flex:1;height:1px;background:rgba(255,255,255,.22)}
+.cover h1{font-size:52px;line-height:1.1;margin:20px 0 14px;letter-spacing:-.03em;color:#fff}
+.cover .cs{font-size:16px;color:rgba(255,255,255,.66);font-weight:400;max-width:78%;line-height:1.65}
+.cover .cs b{color:#fff;font-weight:500}
+
+/* 표지 히어로 — 문장 분해 */
+.hero{margin:26px 0 0;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.04);padding:20px 22px}
+.hero .hl{font-size:10.5px;letter-spacing:.1em;color:rgba(255,255,255,.45);font-weight:700;margin-bottom:12px}
+.hero .hs{font-size:17px;color:#fff;font-weight:500;line-height:1.6;letter-spacing:-.01em}
+.hero .hd{margin:16px 0 13px;height:1px;background:rgba(255,255,255,.16)}
+.hero .hrow{display:flex;align-items:baseline;gap:12px;padding:3px 0}
+.hero .hk{flex:0 0 52px;font-size:10.5px;font-weight:700;color:rgba(255,255,255,.42);text-align:right;padding-top:5px}
+.hero .hv{flex:1}
+.hero .chip{background:transparent;font-size:12px;padding:3px 8px}
+.hero .c-n{color:#f0a077;border-color:rgba(240,160,119,.45)}
+.hero .c-v{color:#8fb0f5;border-color:rgba(143,176,245,.45)}
+.hero .c-a{color:#7dc79a;border-color:rgba(125,199,154,.45)}
+.hero .c-d{color:#b79df5;border-color:rgba(183,157,245,.45)}
+.hero .c-x{color:#ef9494;border-color:rgba(239,148,148,.45)}
+
+.cover .crow{margin-top:22px;display:flex;border-top:1px solid rgba(255,255,255,.18);
+  border-bottom:1px solid rgba(255,255,255,.18)}
+.cover .ci{flex:1;padding:16px 0;border-right:1px solid rgba(255,255,255,.18)}
+.cover .ci:last-child{border-right:none;padding-left:22px}
+.cover .ci:first-child{padding-right:22px}
+.cover .ci .cl{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.45);font-weight:700}
+.cover .ci .cv{font-size:13px;margin-top:6px;color:rgba(255,255,255,.85);font-weight:400;line-height:1.55}
+.cover .ci .cv b{color:#e8895f;font-weight:700}
+.cover .toc{margin-top:auto}
+.cover .toc .th{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#e8895f;margin-bottom:2px}
+.toc-list{list-style:none;padding:0;margin:0}
+.toc-list li{display:flex;align-items:baseline;gap:16px;padding:10px 0;
+  border-bottom:1px solid rgba(255,255,255,.13);
+  font-size:14px;font-weight:400;color:rgba(255,255,255,.88);margin:0}
+.toc-list li::before{display:none}
+.toc-list li .ti{font-family:'JetBrains Mono',monospace;font-size:12px;color:#e8895f;flex:0 0 24px}
+.toc-list li .tt{flex:1}
+.toc-list li .tg{font-size:10.5px;color:rgba(255,255,255,.4);letter-spacing:.05em}
+.cover .sig{padding:0 19mm 14mm;display:flex;justify-content:space-between;align-items:baseline}
+.cover .sig .n{font-size:12.5px;color:rgba(255,255,255,.9);font-weight:500}
+.cover .sig .n span{color:rgba(255,255,255,.45);font-family:'JetBrains Mono',monospace;font-size:11px;margin-left:8px}
+.cover .sig .b{font-size:11px;color:rgba(255,255,255,.4);letter-spacing:.08em}
+
+.pagenum{position:absolute;bottom:13mm;right:19mm;font-size:10.5px;color:var(--muted);
+  font-family:'JetBrains Mono',monospace;letter-spacing:.05em}
+.brand{position:absolute;bottom:13mm;left:19mm;font-size:10px;color:var(--muted);letter-spacing:.04em}
+.brand b{color:var(--muted2);font-weight:500}
+pre{white-space:pre-wrap;background:#252525;color:#fff;padding:15px;line-height:1.6;font-size:12px;margin:14px 0} .out{background:#f6f5f2;color:#222;border:1px solid #ddd}.page:not(.cover){padding-top:16mm}.page:not(.cover) .rh{margin-bottom:18px}.page:not(.cover) h1{font-size:29px}.page:not(.cover) .lede{margin-bottom:17px}
+/* Compact teaching handout: two complete lessons per page */
+.dense-page{padding:13mm 17mm 13mm;min-height:297mm;height:auto}
+.dense-page .rh{margin-bottom:12px;padding-bottom:5px}
+.dense-page .lesson-unit{padding-bottom:11px;margin-bottom:14px;border-bottom:2px solid var(--line)}
+.dense-page .lesson-unit:last-child{border:0}
+.dense-page h1{font-size:23px;line-height:1.23;margin:3px 0 7px}
+.dense-page h2{font-size:12px;margin:12px 0 6px}
+.dense-page .kicker{font-size:10px;margin-bottom:4px}
+.dense-page .lede{font-size:12px;line-height:1.5;margin-bottom:9px;max-width:100%}
+.dense-page p{font-size:11.5px;line-height:1.58;margin:6px 0}
+.dense-page table{font-size:10.5px;margin:7px 0}
+.dense-page th,.dense-page td{padding:5px 7px}
+.dense-page .note{font-size:11px;padding:9px 12px;margin:8px 0}
+.dense-page pre,.dense-page .say{margin:7px 0}
+.dense-page .say .sc{font-size:10.8px;line-height:1.5}
+.dense-page .grid{margin:8px 0}.dense-page .cell{padding:10px}
+@media print{.dense-page{break-after:page;page-break-after:always}}
+</style></head><body><section class="page cover"><div class="cover-inner"><div class="ck">Korean NLP · 기초 학습</div><h1>Kiwi 토크나이저<br/>기초부터 실습까지</h1><div class="cs">한국어 형태소 분석의 목적, 고전적인 분석기 비교, Kiwi 특징, 품사·토큰 속성, 사용자 사전, VOC 활용을 <b>실습 중심으로 학습</b>합니다.</div><div class="hero"><div class="hl">학습 흐름</div><div class="hs">원문 → 어절 → 형태소·품사 → 정규화 → 분석용 데이터</div><div class="hd"></div><div class="hrow"><div class="hk">개념</div><div class="hv"><span class="chip c-n">형태소</span><span class="chip c-v">품사</span></div></div><div class="hrow"><div class="hk">실습</div><div class="hv"><span class="chip c-a">Kiwi()</span><span class="chip c-d">tokenize()</span></div></div></div><div class="toc"><div class="th">목차</div><ul class="toc-list"><li><span class="ti">01</span><span class="tt">토큰화와 형태소 분석의 목적</span><span class="tg">개념</span></li><li><span class="ti">02</span><span class="tt">한국어 분석기 종류와 Kiwi 특징</span><span class="tg">비교</span></li><li><span class="ti">03</span><span class="tt">설치·토큰 객체·품사</span><span class="tg">기초</span></li><li><span class="ti">04</span><span class="tt">품사 추출·사용자 사전</span><span class="tg">실습</span></li><li><span class="ti">05</span><span class="tt">VOC 데이터 분석과 검수</span><span class="tg">응용</span></li></ul></div></div><div class="sig"><div class="n">비전공자 대상 · Python 기초 선행</div><div class="b">Kiwi 입문</div></div></section><section class="page dense-page"><div class="rh"><div class="l"><b>Kiwi 토크나이저</b> · 기초 학습</div><div class="r">개념·실습 <span class="pg">02</span></div></div><div class="lesson-unit"><div class="kicker">개념 · 사례 · 코드 · 해석</div><h1>형태소 분석은 왜 필요한가?</h1><p class="lede">“배달이 너무 늦었어요”를 의미 단위로 나누면 VOC의 공통 표현을 찾기 쉽습니다.</p><table><thead><tr><th>구분</th><th>결과</th><th>한계/효과</th></tr></thead><tbody><tr><td>원문</td><td>배달이 너무 늦었어요</td><td>그대로는 표현 비교가 어려움</td></tr><tr><td>공백 분리</td><td>배달이 / 너무 / 늦었어요</td><td>조사와 어미가 남음</td></tr><tr><td>형태소 분석</td><td>배달/명사 · 이/조사 · 너무/부사 · 늦/형용사</td><td>품사와 의미 단위를 구분</td></tr></tbody></table><div class="note"><strong>왜 필요한가?</strong> 표현이 다른 문장에서도 배달·늦다와 같은 공통 정보를 찾는 데 도움이 됩니다.</div><h2>업무에서 필요한 이유</h2><p>고객이 “배달이 늦어요”, “배달이 늦었습니다”, “배달 지연이 심해요”라고 썼을 때 공백으로만 나누면 ‘늦어요’와 ‘늦었습니다’는 다른 문자열입니다. 형태소 분석은 활용된 표현을 분석하고 품사 정보를 제공하여 공통 표현을 찾아볼 출발점을 마련합니다. 단, <b>‘배달 지연’이라는 업무 이슈로 묶는 일은 별도의 규칙이나 AI 판정</b>이 필요합니다.</p><div class="note"><b>수업 목표:</b> 문장 전체를 무작정 세는 대신, 무엇(명사)·어떤 행위(동사)·어떤 평가(형용사)·얼마나(부사)를 구분하는 이유를 이해합니다.</div></div><div class="lesson-unit"><div class="kicker">개념 · 사례 · 코드 · 해석</div><h1>토큰화와 형태소 분석은 다릅니다</h1><p class="lede">토큰화는 처리 단위로 나누는 넓은 개념이고 형태소 분석은 문법 정보를 판별합니다.</p><table><thead><tr><th>개념</th><th>설명</th><th>예</th></tr></thead><tbody><tr><td>어절 분리</td><td>공백 기준</td><td>배달이 / 늦었어요</td></tr><tr><td>토큰화</td><td>작업에 필요한 단위로 분리</td><td>단어·형태소·서브워드</td></tr><tr><td>형태소 분석</td><td>형태소와 품사 판별</td><td>배달/NNG · 이/JKS</td></tr><tr><td>정규화</td><td>표현 통일</td><td>늦었어요 → 늦다</td></tr></tbody></table><div class="note"><strong>왜 필요한가?</strong> Kiwi는 한국어 형태소 분석기입니다. LLM의 서브워드 토크나이저와 같은 목적의 도구가 아닙니다.</div><h2>토큰과 형태소의 차이를 실제 문장으로</h2><p>‘배달이’는 공백 기준으로 하나의 어절이지만, 형태소 분석에서는 ‘배달/NNG’와 ‘이/JKS’처럼 나뉠 수 있습니다. ‘늦었어요’도 어간과 어미가 구분됩니다. <b>토큰</b>은 프로그램이 반환하는 분석 단위이며, <b>형태소</b>는 문법적 의미나 기능을 가진 단위입니다.</p><p>형태소 분석기는 품사를 예측하는 도구입니다. 예컨대 ‘배’는 과일일 수도 신체일 수도 있으므로 주변 문맥이 중요합니다. 분석 결과를 언제나 정답으로 취급하지 않고 원문과 대조해야 합니다.</p></div></section><section class="page dense-page"><div class="rh"><div class="l"><b>Kiwi 토크나이저</b> · 기초 학습</div><div class="r">개념·실습 <span class="pg">03</span></div></div><div class="lesson-unit"><div class="kicker">개념 · 사례 · 코드 · 해석</div><h1>고전적인 형태소 분석기 종류</h1><p class="lede">분석기마다 사전·모델·품사 체계가 달라 같은 문장도 결과가 달라질 수 있습니다.</p><table><thead><tr><th>도구</th><th>특징</th><th>학습 관점</th></tr></thead><tbody><tr><td>Hannanum</td><td>KAIST 계열 형태소·품사 분석</td><td>전통적인 분석</td></tr><tr><td>Kkma</td><td>세분화된 품사, 문장 분리</td><td>문법 구조</td></tr><tr><td>Komoran</td><td>세종 기반 품사, 사용자 사전</td><td>정형 문서</td></tr><tr><td>MeCab-ko</td><td>사전·통계 기반의 빠른 처리</td><td>대량 데이터</td></tr><tr><td>Okt</td><td>SNS 표현 정규화·어간 추출 옵션</td><td>댓글·리뷰</td></tr><tr><td><b>Kiwi</b></td><td>문맥 분석·위치·사용자 단어·오타 처리</td><td>이번 실습</td></tr></tbody></table><div class="note"><strong>왜 필요한가?</strong> KoNLPy는 여러 분석기를 Python에서 사용하게 하는 패키지이고, Kiwi는 별도의 kiwipiepy 패키지입니다.</div><h2>왜 분석기마다 결과가 다른가?</h2><p>사전에 들어 있는 단어, 어미를 분리하는 방식, 품사 태그의 세분화, 학습 데이터가 다르기 때문입니다. Okt는 비교적 단순한 품사 체계로 SNS 문장을 실습하기 편하고, Kkma는 세분화된 태그로 문법을 자세히 볼 수 있습니다. MeCab-ko는 사전 기반 분석을 빠르게 수행하는 용도로 많이 쓰입니다. <b>속도·정확도 순위는 데이터와 실행 환경에 따라 달라집니다.</b></p><div class="note"><b>KoNLPy 주의:</b> KoNLPy는 여러 분석기를 Python에서 사용하도록 돕는 패키지이고, Kiwi는 <code>kiwipiepy</code> 패키지로 별도 사용합니다. 두 이름을 같은 분석기로 혼동하지 않습니다.</div><h2>왜 기존 분석기 설치가 어렵다고 느낄까?</h2><p>형태소 분석은 Python 코드만으로 끝나지 않는 경우가 있습니다. <b>Java 기반 분석기</b>는 JDK/JVM과 Python 연결 설정이 필요할 수 있고, <b>MeCab-ko</b>는 운영체제에 따라 엔진·사전 설치와 빌드 절차가 추가될 수 있습니다. 특히 Windows에서 강의실 PC 여러 대를 맞추면 환경별 차이가 수업 시간을 잡아먹습니다. 반면 <b>Kiwi의 Python 바인딩인 kiwipiepy는 지원되는 환경에서 pip 설치만으로 시작하기 쉬워</b> 초보 실습에 적합합니다.</p><table><thead><tr><th>도구 계열</th><th>설치에서 확인할 점</th><th>수업에 미치는 영향</th></tr></thead><tbody><tr><td>Hannanum·Kkma·Komoran 등</td><td>Java/JVM, 관련 Python 연동 환경</td><td>Java 설치·경로 설정 점검이 필요할 수 있음</td></tr><tr><td>MeCab-ko</td><td>엔진·사전·운영체제별 패키지</td><td>환경에 따라 설치 절차가 달라질 수 있음</td></tr><tr><td>Okt</td><td>Java 연동 환경 등</td><td>일부 환경에서 추가 설정 필요</td></tr><tr><td><b>Kiwi / kiwipiepy</b></td><td>지원 Python 버전과 배포 패키지</td><td><code>py -m pip install kiwipiepy</code>로 시작 가능</td></tr></tbody></table><div class="note"><b>주의:</b> 모든 기존 분석기가 항상 설치하기 어려운 것은 아닙니다. 패키지·운영체제·Python 버전에 따라 차이가 있고, Kiwi 역시 미지원 환경에서는 설치 문제가 발생할 수 있습니다.</div></div><div class="lesson-unit"><div class="kicker">개념 · 사례 · 코드 · 해석</div><h1>Kiwi의 특징과 한계</h1><p class="lede">Kiwi를 사용하는 이유와 Kiwi만으로 해결되지 않는 일을 구분합니다.</p><table><thead><tr><th>Kiwi가 제공하는 기능</th><th>VOC 활용</th></tr></thead><tbody><tr><td>형태소·품사 분석</td><td>명사·동사·형용사·부사 구분</td></tr><tr><td>원문 위치 정보</td><td>분석 근거 추적</td></tr><tr><td>사용자 단어 등록</td><td>브랜드·상품명 처리</td></tr><tr><td>오타 관련 기능</td><td>비표준 고객 표현 대응</td></tr></tbody></table><div class="note"><strong>왜 필요한가?</strong> Kiwi가 고객 감정·심각도·환불 요구까지 자동으로 완벽하게 판정하는 것은 아닙니다. 별도 업무 규칙이나 AI 판정이 필요합니다.</div><h2>Kiwi로 할 수 있는 일과 할 수 없는 일</h2><p>Kiwi는 형태소 경계와 품사를 분석하고 토큰의 원문 위치를 알려줍니다. 사용자 사전으로 고유한 상품명 등을 보완할 수 있으며 오타에 대응하는 옵션도 있습니다. 반면 “환불이 필요한 긴급 불만인지”, “배송 담당 부서가 어디인지” 같은 <b>업무 판정은 Kiwi 자체의 출력이 아닙니다.</b></p><p>VOC에서는 Kiwi로 후보 단어를 추출한 뒤, 필요하면 표준화 규칙과 LLM 판정을 연결합니다. 이 구분을 이해해야 형태소 분석 결과를 곧바로 감정분석 결과로 오해하지 않습니다.</p><h2>VOC에서 Kiwi를 선택하는 이유</h2><table><thead><tr><th>현업 문제</th><th>Kiwi가 주는 도움</th><th>검수할 점</th></tr></thead><tbody><tr><td>"늦었어요", "늦고" 등 활용형이 다름</td><td>형태소·어미 분해로 비교 가능한 후보 생성</td><td>같은 의미로 묶을지 확인</td></tr><tr><td>"배달앱", 브랜드·상품명</td><td>사용자 사전으로 도메인 단어 보완</td><td>사전 등록 전후 결과 비교</td></tr><tr><td>오타·구어체 VOC</td><td>오타 관련 분석 기능 활용 가능</td><td>원문을 임의로 덮어쓰지 않기</td></tr><tr><td>AI가 명사·형용사 열을 잘못 작성</td><td>품사·원문 위치로 검수 후보 만들기</td><td>최종 의미 판단은 별도 수행</td></tr></tbody></table><div class="note"><strong>핵심:</strong> Kiwi를 선택하는 이유는 설치 편의성 하나가 아니라 <b>한국어 형태소 분석 + 품사·위치 정보 + 도메인 사전 + 검증 가능한 구조화 출력</b>을 한 도구에서 활용할 수 있기 때문입니다.</div></div></section><section class="page dense-page"><div class="rh"><div class="l"><b>Kiwi 토크나이저</b> · 기초 학습</div><div class="r">메타데이터 검수 <span class="pg">04</span></div></div><div class="lesson-unit"><div class="kicker">실무 연결 · 정합성 검증</div><h1>Kiwi를 이용한 메타데이터 정합성 검증</h1><p class="lede">여기서 <em>메타데이터</em>는 VOC 원문을 분석해 붙인 명사·동사·형용사·카테고리 등의 구조화 정보입니다. <b>정합성</b>은 이 정보가 원문 및 분석 규칙과 어긋나지 않는지를 뜻합니다.</p><div class="ba"><div class="bad"><div class="h">불일치 후보</div><div class="m">원문: 배달이 너무 늦었어요<br/>AI 명사_대상: 결제</div><div class="why">원문에 근거가 없는 대상이 기록됨</div></div><div class="good"><div class="h">Kiwi 교차 확인</div><div class="m">명사 후보: 배달<br/>부사 후보: 너무<br/>행위·상태 후보: 늦다</div><div class="why">원문에서 확인되는 품사 후보와 비교</div></div></div><h2>왜 별도 검증이 필요한가?</h2><p>AI가 생성한 분석표는 형식이 맞더라도 내용이 틀릴 수 있습니다. 예를 들어 <code>명사_대상</code>에 원문과 무관한 단어가 들어가거나, <code>형용사_평가</code>에 동사가 들어갈 수 있습니다. Kiwi 결과와 대조하면 <b>검토할 행을 자동으로 좁힐 수 있습니다.</b> 단, Kiwi도 오류가 가능하며 동의어·생략·문맥 추론 때문에 단순 문자열 불일치가 반드시 오류는 아닙니다.</p><table><thead><tr><th>검사 항목</th><th>검사 방법</th><th>최종 처리</th></tr></thead><tbody><tr><td>품사 일치</td><td>AI가 적은 단어의 Kiwi 품사 확인</td><td>불일치 후보 표시</td></tr><tr><td>원문 근거</td><td>토큰 위치·원문 표현 대조</td><td>원문으로 재확인</td></tr><tr><td>카테고리 타당성</td><td>추출 단어와 업무 분류표 대조</td><td>업무 규칙·사람이 판단</td></tr></tbody></table><div class="point"><div class="pl">중요한 구분</div><p><b>Kiwi = 형태소 분석 도구</b>, <b>Kiwi 기반 정합성 검증 = Kiwi 결과를 활용해 별도로 설계한 검사 절차</b>입니다. Kiwi 자체가 VOC 메타데이터의 진위를 보증하지는 않습니다.</p></div></div><div class="lesson-unit"><div class="kicker">초간단 검수 코드</div><h1>AI 결과의 명사 후보를 대조해 보기</h1><pre><code>from kiwipiepy import Kiwi
+
+kiwi = Kiwi()
+text = "배달이 너무 늦었어요"
+ai_noun = "결제"
+
+nouns = []
+for token in kiwi.tokenize(text):
+    if token.tag.startswith("NN"):
+        nouns.append(token.form)
+
+print("Kiwi 명사 후보:", nouns)
+print("검토 필요:", ai_noun not in nouns)</code></pre><div class="note"><strong>출력 형태 예시</strong> · Kiwi 명사 후보: ['배달'] / 검토 필요: True. 이는 <b>자동 오답 확정이 아닌 검토 알림</b>입니다. 명사 품사 태그는 일반명사·고유명사 등을 포함합니다.</div></div></section><section class="page dense-page"><div class="rh"><div class="l"><b>Kiwi 토크나이저</b> · 기초 학습</div><div class="r">개념·실습 <span class="pg">05</span></div></div><div class="lesson-unit"><div class="kicker">개념 · 사례 · 코드 · 해석</div><h1>설치와 첫 실행</h1><p class="lede">설치 → Kiwi 객체 생성 → tokenize() 호출 순서로 시작합니다.</p><h2>설치</h2><pre>py -m pip install kiwipiepy pandas</pre><h2>첫 실습</h2><pre>from kiwipiepy import Kiwi
+kiwi = Kiwi()
+
+text = "배달이 너무 늦었어요."
+for t in kiwi.tokenize(text):
+    print(t.form, t.tag)</pre><h2>출력 형태 예시</h2><pre class="out">배달 NNG
+이 JKS
+너무 MAG
+늦 VA
+었 EP
+어요 EF
+. SF</pre><p class="mn">출력은 학습용 예시입니다. 실제 어미 분해는 설치된 Kiwi에서 확인하세요.</p><h2>처음 실행할 때 점검할 것</h2><p>Windows PowerShell에서 <code>py -m pip install kiwipiepy pandas</code>를 실행합니다. 가상환경을 사용 중이면 해당 환경의 Python으로 설치해야 합니다. 설치가 성공해도 편집기의 인터프리터가 다르면 <code>ModuleNotFoundError</code>가 발생할 수 있습니다.</p><p><code>kiwi = Kiwi()</code>는 분석기를 준비하는 단계이고, <code>kiwi.tokenize(text)</code>가 실제 문장을 분석합니다. 첫 실행은 모델 로딩 때문에 이후 실행보다 시간이 걸릴 수 있습니다.</p></div><div class="lesson-unit"><div class="kicker">개념 · 사례 · 코드 · 해석</div><h1>토큰 객체 이해하기</h1><p class="lede">form, tag, start, len은 토큰을 이해하는 가장 중요한 속성입니다.</p><table><thead><tr><th>속성</th><th>뜻</th><th>왜 보나</th></tr></thead><tbody><tr><td>form</td><td>형태소 문자열</td><td>단어 추출</td></tr><tr><td>tag</td><td>품사 태그</td><td>품사별 필터</td></tr><tr><td>start</td><td>원문 시작 위치</td><td>근거 추적</td></tr><tr><td>len</td><td>원문 대응 길이</td><td>범위 확인</td></tr></tbody></table><pre>text = "음식이 맛있어요."
+for t in kiwi.tokenize(text):
+    print(t.form, t.tag, t.start, t.len)</pre><div class="note"><strong>왜 필요한가?</strong> 분석된 기본형과 원문 표면형이 다를 수 있습니다. 원문은 따로 보존해야 합니다.</div><h2>토큰의 위치 정보가 중요한 이유</h2><p><code>form</code>은 분석된 형태소 문자열, <code>tag</code>는 품사, <code>start</code>는 원문 내 시작 위치, <code>len</code>은 길이입니다. 위치 정보로 원문의 어느 부분에서 나온 분석인지 추적할 수 있습니다. <b>토큰의 표면형이 원문의 연속 부분 문자열과 항상 똑같지는 않을 수 있으므로</b> 위치 정보와 분석형을 구분해 보세요.</p><div class="note">확인 실습: 각 토큰에 대해 <code>print(t.form, t.tag, t.start, t.len)</code>을 실행하고, 조사가 명사와 분리되는지 살펴봅니다.</div></div></section><section class="page dense-page"><div class="rh"><div class="l"><b>Kiwi 토크나이저</b> · 기초 학습</div><div class="r">개념·실습 <span class="pg">06</span></div></div><div class="lesson-unit"><div class="kicker">개념 · 사례 · 코드 · 해석</div><h1>주요 품사 태그</h1><p class="lede">VOC에서는 대상·행위·평가·정도를 분리하는 데 품사 태그를 사용합니다.</p><table><thead><tr><th>태그</th><th>의미</th><th>VOC 활용</th></tr></thead><tbody><tr><td>NNG / NNP</td><td>일반명사 / 고유명사</td><td>배달·브랜드</td></tr><tr><td>VV</td><td>동사</td><td>행위</td></tr><tr><td>VA</td><td>형용사</td><td>맛·상태·평가</td></tr><tr><td>MAG</td><td>일반부사</td><td>정도·양상</td></tr><tr><td>JKS / JKO</td><td>주격 / 목적격 조사</td><td>문법 관계</td></tr><tr><td>EP / EF</td><td>선어말 / 종결 어미</td><td>시제·종결</td></tr></tbody></table><div class="note"><strong>왜 필요한가?</strong> “늦다”는 Kiwi에서 VA로 나타날 수 있습니다. 동사/형용사는 직감이 아니라 실제 태그로 구분합니다.</div><h2>품사 태그를 외우기보다 질문으로 연결</h2><p><b>NNG·NNP</b>는 ‘무엇을 말했나’, <b>VV</b>는 ‘무슨 일이 일어났나’, <b>VA</b>는 ‘어떻게 평가했나’, <b>MAG</b>는 ‘정도나 양상이 어떤가’를 살펴보는 데 사용합니다. 조사와 어미도 문장 구조를 이해하는 데 중요하지만 VOC 키워드 집계에서는 목적에 따라 제외할 수 있습니다.</p><p>주의: ‘늦다’는 한국어 문법상 형용사로 분석될 수 있습니다. 일상적인 ‘행동’이라는 의미와 품사 태그의 동사는 다릅니다. 업무상의 ‘지연’ 분류는 별도 규칙으로 처리합니다.</p></div><div class="lesson-unit"><div class="kicker">개념 · 사례 · 코드 · 해석</div><h1>명사만 추출하기</h1><p class="lede">고객이 무엇을 언급했는지 파악하는 첫 단계입니다.</p><pre>text = "배달이 늦어서 치킨이 식었어요."
+for t in kiwi.tokenize(text):
+    if t.tag in ("NNG", "NNP"):
+        print(t.form)</pre><pre class="out">배달
+치킨</pre><div class="note"><strong>왜 필요한가?</strong> 명사 빈도는 언급 대상을 보여주지만 부정의 크기를 직접 뜻하지 않습니다.</div><h2>명사를 모두 핵심 이슈라고 해석하면 안 되는 이유</h2><p>‘배달’이 30회 등장하더라도 긍정 VOC에서 등장했는지, 불만에서 등장했는지는 아직 알 수 없습니다. 명사 빈도는 <b>자주 언급되는 대상</b>을 찾는 출발점입니다. 다음 단계에서 평가극성·심각도와 교차분석해야 문제의 크기를 알 수 있습니다.</p><div class="note">실습 확장: <code>t.tag in ('NNG', 'NNP')</code> 조건으로 추출한 뒤 중복 단어를 세어 보세요. 한 VOC 안에서 두 번 나온 단어를 2회로 셀지 1건으로 셀지 먼저 정해야 합니다.</div></div></section><section class="page dense-page"><div class="rh"><div class="l"><b>Kiwi 토크나이저</b> · 기초 학습</div><div class="r">개념·실습 <span class="pg">07</span></div></div><div class="lesson-unit"><div class="kicker">개념 · 사례 · 코드 · 해석</div><h1>동사·형용사·부사 추출</h1><p class="lede">어떤 일이 있었고 어떻게 평가했는지를 분리합니다.</p><pre>text = "배달이 너무 늦고 음식이 정말 맛있어요."
+for t in kiwi.tokenize(text):
+    if t.tag in ("VV", "VA", "MAG"):
+        print(t.form, t.tag)</pre><table><thead><tr><th>품사</th><th>업무 질문</th></tr></thead><tbody><tr><td>VV</td><td>어떤 행위가 있었나?</td></tr><tr><td>VA</td><td>어떻게 평가했나?</td></tr><tr><td>MAG</td><td>정도·양상이 어떤가?</td></tr></tbody></table><div class="note"><strong>왜 필요한가?</strong> 형용사를 맛·온도·서비스·기분 등으로 묶는 것은 Kiwi 품사 분석 이후의 별도 의미 분류 작업입니다.</div><h2>형용사는 ‘평가 영역’으로 한 번 더 묶을 수 있습니다</h2><p>‘맛있다·짜다·싱겁다’는 <b>맛</b>, ‘따뜻하다·차갑다’는 <b>온도·상태</b>, ‘친절하다·불친절하다’는 <b>응대</b>라는 평가 영역으로 연결할 수 있습니다. 다만 문맥에 따라 의미가 달라지므로 사람이 확정한 기준표를 사용합니다.</p><p>동사도 ‘환불하다·취소하다’처럼 업무 행위 유형으로 묶을 수 있지만, 품사별 추출과 업무 카테고리 분류는 서로 다른 단계입니다.</p></div><div class="lesson-unit"><div class="kicker">개념 · 사례 · 코드 · 해석</div><h1>사용자 사전과 오타</h1><p class="lede">서비스명이나 고객 특유의 표현은 기본 분석만으로 부족할 수 있습니다.</p><pre>kiwi.add_user_word("배달앱", "NNG")
+for t in kiwi.tokenize("배달앱에서 결제가 안 돼요"):
+    print(t.form, t.tag)</pre><table><thead><tr><th>고객 표현</th><th>확인할 사항</th></tr></thead><tbody><tr><td>넘 늦어요</td><td>줄임말</td></tr><tr><td>배달안옴</td><td>띄어쓰기 누락</td></tr><tr><td>맛있어여</td><td>비표준 어미</td></tr></tbody></table><div class="note"><strong>왜 필요한가?</strong> 사용자 사전 등록 전후 결과를 비교하고, 오타 처리 기능은 설치 버전의 설정을 확인한 후 적용합니다. 원문은 변경하지 않습니다.</div><h2>사용자 사전이 필요한 실제 사례</h2><p>서비스명, 제품명, 사내 약어는 기본 사전에서 잘못 나뉠 수 있습니다. 예를 들어 특정 서비스명을 하나의 명사로 취급하려면 사용자 사전에 추가합니다. 다만 사전 추가는 <b>모든 문맥에서 반드시 그 단어로 분석됨을 보장하지 않습니다.</b> 전후 결과를 비교하고 과도한 등록을 피해야 합니다.</p><p>오타 교정은 의도하지 않은 변경 가능성이 있으므로 원문은 별도로 보존합니다. ‘넘’ 같은 표현을 ‘너무’로 통일할지는 분석 목적과 교정 옵션을 확인한 뒤 결정합니다.</p></div></section><section class="page dense-page"><div class="rh"><div class="l"><b>Kiwi 토크나이저</b> · 기초 학습</div><div class="r">개념·실습 <span class="pg">08</span></div></div><div class="lesson-unit"><div class="kicker">개념 · 사례 · 코드 · 해석</div><h1>여러 VOC를 DataFrame으로</h1><p class="lede">한 문장 실습을 여러 고객 문장으로 확장합니다.</p><pre>import pandas as pd
+
+texts = [
+    "배달이 너무 늦어요",
+    "음식이 정말 맛있어요",
+    "결제가 계속 실패해요"
+]
+
+rows = []
+for text in texts:
+    nouns = []
+    for t in kiwi.tokenize(text):
+        if t.tag in ("NNG", "NNP"):
+            nouns.append(t.form)
+    rows.append([text, ";".join(nouns)])
+
+df = pd.DataFrame(rows, columns=["VOC_원문", "명사_대상"])
+print(df.to_string(index=False))</pre><div class="note"><strong>왜 필요한가?</strong> 이 구조가 VOC Step 1의 품사별 분석 열로 이어집니다. 다만 업무용 카테고리·극성·심각도는 별도 판정이 필요합니다.</div><h2>DataFrame에서 반드시 보존할 열</h2><p>여러 문장을 처리할 때는 <b>VOC_ID·VOC_원문·명사_대상·동사_행위·형용사_평가·부사_정도</b>를 한 행으로 관리합니다. 원문을 보존해야 형태소 분석이 이상할 때 되돌아가 확인할 수 있습니다.</p><p>빈 값과 ‘분석 실패’는 구분해야 합니다. 특정 품사가 없는 문장과 분석 자체가 실패한 문장을 동일하게 처리하면 나중에 빈도와 비율이 왜곡됩니다.</p></div><div class="lesson-unit"><div class="kicker">개념 · 사례 · 코드 · 해석</div><h1>최종 연습과 검수</h1><p class="lede">같은 원문을 여러 번 분석하고 결과를 비교해 봅니다.</p><pre>samples = [
+    "음식이 맛있어요",
+    "음식이 맛없어요",
+    "배달이 늦었어요",
+    "배달이 빨랐어요"
+]
+for text in samples:
+    print("원문:", text)
+    print([(t.form, t.tag) for t in kiwi.tokenize(text)])</pre><table><thead><tr><th>검수 질문</th><th>왜 중요한가</th></tr></thead><tbody><tr><td>품사 태그가 기대와 같은가?</td><td>오분석 탐지</td></tr><tr><td>원문이 보존되었는가?</td><td>근거 확인</td></tr><tr><td>사용자 단어가 잘 처리되었는가?</td><td>도메인 품질</td></tr><tr><td>기본형·업무 분류가 구분되는가?</td><td>과도한 자동화 방지</td></tr></tbody></table><div class="note"><strong>왜 필요한가?</strong> 다음 학습에서는 Kiwi 결과를 이용해 단어 빈도·비율·TF-IDF 입력을 만들 수 있습니다.</div><h2>마지막 점검 질문</h2><p>① 공백 분리와 형태소 분석의 차이를 설명할 수 있나요? ② <code>form</code>과 <code>tag</code>가 각각 무엇인가요? ③ Kiwi 결과만으로 긍정·부정이 결정되나요? ④ 원문을 왜 보존하나요? ⑤ 품사별 단어를 세기 전에 무엇을 정해야 하나요?</p><div class="note"><b>다음 학습 연결:</b> Kiwi가 추출한 토큰은 VOC 빈도분석과 TF-IDF의 입력 후보가 됩니다. 하지만 카테고리·심각도·개선안 같은 업무 판단은 별도의 분석 단계가 필요합니다.</div></div></section></body></html>
