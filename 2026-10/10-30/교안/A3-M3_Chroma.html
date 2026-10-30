@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+
+<html lang="ko"><head><meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/><title>A3-M3-2 · Chroma 실전 — 쇼핑몰 FAQ</title><link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" rel="stylesheet"/><style>
+:root{--bg:#fff;--surface:#f8fafc;--ink:#0f172a;--muted:#64748b;--line:#e2e8f0;--accent:#ff2e93;--soft:rgba(255,46,147,.065);--codebg:#101d34}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink);font-family:'Pretendard',system-ui,'Malgun Gothic',sans-serif;font-size:18px;line-height:1.81;word-break:keep-all}
+.banner{background:linear-gradient(125deg,#fcfcff,#f8fafc);border-bottom:1px solid var(--line)}.banner-in{max-width:1320px;margin:auto;padding:18px 24px;display:flex;align-items:center;justify-content:space-between;gap:18px}.brand{font-size:16px;font-weight:850;letter-spacing:.03em}.who{font-size:15px;color:var(--muted)}.who a{color:var(--accent);text-decoration:none}.layout{max-width:1320px;margin:auto;padding:32px 24px 84px;display:grid;grid-template-columns:minmax(0,1fr) 290px;gap:38px;align-items:start}.sidebar{order:2;position:sticky;top:22px;max-height:calc(100vh - 44px);overflow:auto;border:1px solid var(--line);border-radius:15px;background:var(--surface);padding:17px}.group{font-size:15px;color:var(--muted);font-weight:800;margin:3px 10px 14px}.tabs{display:flex;flex-direction:column;gap:5px}.tabs button{appearance:none;border:1px solid transparent;border-radius:9px;background:transparent;color:#253348;cursor:pointer;text-align:left;font:600 16px/1.55 'Pretendard',sans-serif;padding:9px 12px}.tabs button span{color:var(--accent);font-weight:850;margin-right:7px}.tabs button:hover{background:#fff;border-color:var(--line)}.tabs button[aria-selected=true]{background:var(--soft);border-color:var(--accent);color:#bd1366}.tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+main{min-width:0}.panel[hidden]{display:none}.panel{display:block}.crumb{color:var(--accent);font-size:15px;font-weight:800;margin:0 0 8px}.panel h1{font-size:31px;line-height:1.4;margin:0 0 12px}.lead{font-size:19px;font-weight:550;color:#344255;margin:6px 0 26px}.panel h3{font-size:21px;margin:33px 0 10px;border-bottom:1px solid var(--line);padding-bottom:6px}.panel h3:before{content:'▸ ';color:var(--accent)}.panel p{margin:13px 0}.panel b,.panel strong{font-weight:790}.panel code:not(pre code){font:15px/1.6 Consolas,monospace;word-break:break-word;background:#f1f5f9;border:1px solid #e5e7eb;padding:1px 5px;border-radius:4px}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;margin:17px 0 24px}.panel table{border-collapse:collapse;width:100%;font-size:17px;line-height:1.65}.panel th,.panel td{border-bottom:1px solid var(--line);padding:12px 14px;vertical-align:top;text-align:left}.panel th{font-size:16px;font-weight:800;background:#f1f5f9;color:#40516a}.panel tbody tr:last-child td{border:0}.panel tbody tr:nth-child(even){background:#fbfcfe}.note,.task,.try{border:1px solid var(--line);border-radius:13px;background:#fafcff;padding:17px 19px;margin:24px 0}.note{border-left:4px solid var(--accent);background:var(--soft)}.note b{color:#ad155e}.note p{margin:6px 0}.task{background:#fff}.task h4{margin:0 0 9px;font-size:19px}.task ol{margin:0;padding-left:23px}.task li{margin:8px 0}
+.codebox{border:1px solid #243953;border-radius:13px;overflow:hidden;margin:21px 0 26px}.codehead{display:flex;justify-content:space-between;align-items:center;gap:15px;padding:8px 13px;background:#1d3452;color:#dceafc;font-size:14px;font-weight:700}.copy{border:1px solid #8598b4;color:#fff;background:#314f78;border-radius:6px;padding:3px 10px;cursor:pointer;font-size:13px}.codebox pre{background:var(--codebg);color:#cbe9fb;margin:0;padding:20px;overflow-x:auto;font:16px/1.7 Consolas,'JetBrains Mono',monospace;word-break:normal;white-space:pre}.qa{padding:13px 17px;margin:13px 0;border:1px solid var(--line);background:#fbfcff;border-radius:10px}.qa summary{font-size:17px;cursor:pointer;font-weight:780}.qa[open] summary{color:#c01168}.qa p{font-size:17px}.try label{display:block;font-size:17px}.tryrow{display:flex;gap:10px;margin-top:10px}.try input{flex:1;min-width:0;border:1px solid #cbd5e1;border-radius:8px;font:17px 'Pretendard',sans-serif;padding:10px 12px}.try button{background:#e72281;color:#fff;border:0;border-radius:8px;padding:10px 16px;font:700 16px 'Pretendard',sans-serif;cursor:pointer}.try pre{font:16px/1.7 Consolas,monospace;background:#101d34;color:#caeeff;padding:12px;border-radius:8px;overflow:auto;white-space:pre-wrap}.hint{font-size:15px;color:var(--muted)}.footer{max-width:1320px;margin:auto;border-top:1px solid var(--line);padding:20px 24px 38px;text-align:center;color:var(--muted);font-size:15px}.footer small{display:block;max-width:950px;margin:5px auto}
+@media(max-width:900px){.layout{grid-template-columns:1fr;gap:12px;padding:15px 16px 64px}.sidebar{order:0;position:sticky;top:0;z-index:10;border-radius:0;max-height:none;overflow:auto;padding:8px 0;background:#fff}.sidebar .group{display:none}.tabs{flex-direction:row;white-space:nowrap;overflow-x:auto}.tabs button{flex:none;font-size:15px}.banner-in{flex-wrap:wrap}.panel h1{font-size:27px}}
+@media(max-width:680px){body{font-size:17px}.panel table{font-size:16px}.panel th{font-size:15px}.panel h1{font-size:24px}.panel h3{font-size:20px}.codebox pre{font-size:15px;padding:15px}.tryrow{flex-direction:column}}
+@media print{.sidebar,.copy{display:none}.layout{display:block}.panel[hidden]{display:block!important}.panel{break-before:page}.banner{background:#fff}}
+
+/* 3-Part expanded guide, retaining supplied visual language */
+.sidebar .tabs .group{margin:18px 10px 7px;font-size:14px;color:#a51662;font-weight:850;border-top:1px solid var(--line);padding-top:12px}
+.sidebar .tabs .group:first-child{margin-top:2px;border-top:0;padding-top:0}
+.panel h2{font-size:23px;line-height:1.5;margin:27px 0 8px}
+.panel ul,.panel ol{padding-left:27px;margin:12px 0}.panel li{margin:7px 0}
+.panel .meta{display:flex;gap:10px}.panel .note span{display:inline-block;margin-right:12px;font-weight:750;color:#ad155e}
+.panel pre:not(.codebox pre){white-space:pre-wrap}.panel .codebox pre{font-size:15px}
+.panel .codebox pre code{white-space:pre;display:block}
+.panel .math,.panel .formula{overflow-x:auto}
+.panel a{color:#bd1366}
+@media(min-width:901px){.sidebar{width:300px}.layout{grid-template-columns:minmax(0,1fr) 300px}}
+@media print{.panel{break-before:auto;page-break-inside:avoid}.sidebar{display:none}}
+
+.merged-subheading{font-size:24px;line-height:1.42;margin:42px 0 17px;padding:11px 14px;border-left:4px solid var(--accent);background:var(--surface);border-radius:0 8px 8px 0;} .panel .merged-subheading:first-of-type{margin-top:25px;}
+
+.paper-figure,.matrix-demo{margin:22px 0 28px;padding:20px 22px;border:1px solid var(--line);border-radius:13px;background:#fbfcfe}.paper-figure h3,.matrix-demo h3{margin-top:0}.paper-figure figure{text-align:center;margin:12px auto}.paper-figure img{display:block;margin:auto;max-width:min(100%,510px);max-height:710px;object-fit:contain;background:#fff;border:1px solid var(--line);border-radius:6px}.paper-figure figcaption{font-size:14px;color:var(--muted);line-height:1.6;margin-top:10px}.paper-figure a{color:#b31968}.matrix-demo .tablewrap{margin-top:12px}.matrix-demo td{font-size:15px}@media print{.paper-figure,.matrix-demo{break-inside:avoid}}
+
+/* Part headings: visual grouping, not selectable tabs */
+.tabs .part-heading{display:block;margin:15px 4px 6px;padding:12px 11px;background:#e5e7eb;color:#334155;border:1px solid #cbd5e1;border-radius:9px;font-size:15px;font-weight:850;line-height:1.5;white-space:normal;}
+.tabs .part-heading:first-child{margin-top:0}.tabs button{padding-left:14px}
+.panel .source-note{font-size:15px;color:#475569;background:#f8fafc;border-left:3px solid #94a3b8;padding:11px 14px;margin:20px 0}
+.panel .minihead{margin-top:24px;font-weight:800;color:#334155}
+@media(max-width:900px){.tabs .part-heading{flex:none;margin:0 6px 0 0;white-space:nowrap;padding:9px 12px}}
+</style><style>.journey{border-left:4px solid #ff2e93;background:#fff5fa;padding:16px 19px;margin:20px 0;border-radius:8px}.journey h3{border:0!important;margin:0 0 8px!important;padding:0!important;font-size:18px!important}.journey h3:before{content:none!important}.modelcode{border:1px solid #d4dce8;background:#f8fafc;border-radius:12px;padding:15px 17px;margin:24px 0}.modelcode h3{border:0!important;margin:0 0 8px!important;font-size:18px!important}.modelcode h3:before{content:none!important}.modelcode pre{background:#101d34;color:#d6ecff;padding:15px;overflow:auto;border-radius:9px;font:15px/1.65 Consolas,monospace;white-space:pre}.matrix-intro{margin:16px 0;padding:15px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px}.miniout{font:15px/1.6 Consolas,monospace;background:#f1f5f9;padding:12px;white-space:pre-wrap;border-radius:8px}</style><style>
+.ragmap{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 22px}.ragmap .chip{display:inline-flex;align-items:center;gap:5px;font-size:14px;line-height:1.4;padding:5px 10px;border:1px solid var(--line);border-radius:999px;background:#fff;color:#64748b}.ragmap .chip em{font-style:normal;font-weight:850;color:#94a3b8}.ragmap .chip.done{background:#f8fafc;color:#334155}.ragmap .chip.done em{color:#bd1366}.ragmap .chip.on{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:800}.ragmap .chip.on em{color:#fff}
+.flow{display:flex;flex-wrap:wrap;align-items:stretch;gap:8px;margin:18px 0 24px}.flow .fstep{flex:1 1 96px;min-width:92px;border:1px solid var(--line);border-top:3px solid var(--accent);border-radius:10px;background:#fff;padding:10px 12px}.flow .fstep b{display:block;font-size:16px;color:#0f172a}.flow .fstep span{display:block;font-size:14px;color:var(--muted);line-height:1.5;margin-top:3px}.flow .arrow{align-self:center;color:var(--accent);font-weight:900}
+.outbox .codehead{background:#203a2c}.outbox{border-color:#2f5a43}.outbox pre{background:#0d1f17;color:#c9f5d9}
+.shot{margin:18px 0 26px;padding:12px;border:1px solid var(--line);border-radius:12px;background:#fbfcfe}.shot img{display:block;max-width:100%;height:auto;border-radius:8px;border:1px solid #1e293b}.shot figcaption{font-size:14px;color:var(--muted);margin-top:8px;text-align:center}
+@media(max-width:680px){.flow .arrow{display:none}.flow .fstep{flex-basis:100%}}
+</style><style>
+.syn td:first-child code{white-space:pre-wrap;word-break:break-all}
+.syn td{vertical-align:top}
+.use{display:inline-block;margin:8px 6px 0 0;padding:1px 7px;border-radius:5px;background:#fde7f2;color:#bd1366;font-size:13px;font-weight:800}
+.use+code{display:inline-block;margin-top:6px;white-space:pre-wrap}
+main p,main li,main td{overflow-wrap:anywhere}
+.mock{border:1px solid #cbd5e1;border-radius:14px;background:#f8fafc;padding:14px 16px;margin:20px 0}
+.mock-title{font-weight:800;font-size:15px;color:#475569;margin-bottom:10px}
+.mock table{border-collapse:collapse;width:100%;font-size:15px;background:#fff}
+.mock td,.mock th{border:1px solid #e2e8f0;padding:6px 8px;text-align:center}
+.mock th{background:#f1f5f9}
+.mock .hl{background:#fde7f2;font-weight:800}
+.mock .dim{color:#94a3b8}
+.mock .ok{background:#dcfce7;font-weight:700}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}
+.chips span{border:1px solid #cbd5e1;background:#fff;border-radius:6px;padding:2px 8px;font:14px Consolas,monospace}
+.chips span.sp{background:#fde7f2;border-color:#f9a8d4}
+.chips span.unk{background:#fef3c7;border-color:#f59e0b}
+.figsvg{width:100%;height:auto;max-width:560px;display:block;margin:6px auto}
+.figrow{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.figcap{font-size:14px;color:#64748b;text-align:center;margin-top:4px}
+@media (max-width:760px){.syn table,.syn tbody,.syn tr,.syn td{display:block;width:100%!important}.syn thead{display:none}.syn tr{padding:10px 12px;border-bottom:1px solid #e2e8f0}.syn td{border:0!important;padding:3px 0!important}.mock{overflow-x:auto}}
+</style></head><body><header class="banner"><div class="banner-in"><div><div class="brand">Part A · A3-M3-2 · Chroma 실전 — 쇼핑몰 FAQ</div><div style="font-size:23px;font-weight:850">Chroma 핵심 기능 · FAQ CSV로 저장·검색 · where 필터 · 수정 · RAG 평가 · 리랭킹</div></div><div class="who">© 2026 부성순 · AI·클라우드 실무 과정</div><a href="/lectures/files/index.html#section-a1" style="display:inline-block;padding:7px 11px;border:1px solid #e2e8f0;border-radius:8px;background:#fff;color:#bd1366;text-decoration:none;font-weight:800;white-space:nowrap">📚 강의자료 라이브러리 · Part A</a></div></header><div class="layout"><aside class="sidebar"><div class="group">A3-M3-2 · 세부 목차</div><nav aria-label="교안 세부 목차" class="tabs" role="tablist"><div aria-level="2" class="part-heading" role="heading">Part 0. Chroma 소개</div><button aria-controls="u00" aria-selected="true" id="tab-u00" role="tab" tabindex="0" type="button"><span>00</span>Chroma 한눈에</button><div aria-level="2" class="part-heading" role="heading">Part 1. 저장·검색·필터</div><button aria-controls="u01" aria-selected="false" id="tab-u01" role="tab" tabindex="-1" type="button"><span>01</span>저장과 검색</button><button aria-controls="u02" aria-selected="false" id="tab-u02" role="tab" tabindex="-1" type="button"><span>02</span>메타데이터 필터</button><button aria-controls="u03" aria-selected="false" id="tab-u03" role="tab" tabindex="-1" type="button"><span>03</span>수정·삭제와 실수</button><div aria-level="2" class="part-heading" role="heading">Part 2. RAG 평가와 리랭킹</div><button aria-controls="u04" aria-selected="false" id="tab-u04" role="tab" tabindex="-1" type="button"><span>04</span>RAG 평가</button><button aria-controls="u05" aria-selected="false" id="tab-u05" role="tab" tabindex="-1" type="button"><span>05</span>리랭킹</button><div aria-level="2" class="part-heading" role="heading">Part 3. 마무리</div><button aria-controls="u06" aria-selected="false" id="tab-u06" role="tab" tabindex="-1" type="button"><span>06</span>실습 과제</button><button aria-controls="u07" aria-selected="false" id="tab-u07" role="tab" tabindex="-1" type="button"><span>07</span>정리</button></nav></aside><main><section aria-labelledby="tab-u00" class="panel" id="u00" role="tabpanel"><div class="crumb">Part 0. Chroma 소개 · A3-M3-2</div><h1>00. Chroma 한눈에 — FAISS에서 직접 만들던 것을 DB가 해 준다</h1><p class="lead">A3-M2-2에서는 FAISS에 벡터와 번호만 넣고, 원문·카테고리는 pandas 표로 따로 들고 다니며, 필터는 허용 id 목록으로 만들고, 저장은 파일 세 개로 했습니다. Chroma는 이것을 <b>컬렉션 하나</b>가 모두 맡습니다. 같은 FAQ CSV, 같은 e5 벡터, 같은 평가 질문으로 해 보며 차이를 봅니다.</p><h3>00-1. Chroma 핵심 기능</h3><div class="tablewrap "><table><thead><tr><th>기능</th><th>문법</th><th>한 줄 설명</th></tr></thead><tbody><tr><td>클라이언트</td><td><code>chromadb.PersistentClient(path="chroma_db")</code></td><td>폴더에 자동 저장. 다시 열면 그대로 있음</td></tr><tr><td>컬렉션</td><td><code>get_or_create_collection(name, configuration=...)</code></td><td>테이블 하나에 해당. 거리 방식(cosine 등)을 정함</td></tr><tr><td>넣기</td><td><code>add(ids, documents, metadatas, embeddings)</code></td><td>id·원문·메타데이터·벡터를 한 번에</td></tr><tr><td>찾기</td><td><code>query(query_embeddings, n_results, where)</code></td><td>가까운 것 n개 + 원문 + 메타데이터가 함께 나옴</td></tr><tr><td>꺼내기</td><td><code>get(ids=...)</code>, <code>get(where=...)</code></td><td>검색 없이 조건으로 꺼내기</td></tr><tr><td>필터</td><td><code>where={"category": "환불"}</code>, <code>where_document={"$contains": "..."}</code></td><td>메타데이터·원문 조건을 검색 안에서 적용</td></tr><tr><td>고치기</td><td><code>update</code>, <code>upsert</code>, <code>delete</code></td><td>id로 수정·추가·삭제</td></tr><tr><td>내부 인덱스</td><td>HNSW</td><td>A3-M2의 08탭에서 본 그 그래프 검색</td></tr></tbody></table></div><h3>00-2. 같은 일을 FAISS와 Chroma로</h3><div class="tablewrap "><table><thead><tr><th>할 일</th><th>A3-M2-2 (FAISS)</th><th>A3-M3-2 (Chroma)</th></tr></thead><tbody><tr><td>번호 붙여 넣기</td><td><code>IndexIDMap2</code> + <code>add_with_ids(X, int64 ids)</code></td><td><code>col.add(ids=["101", ...], embeddings=X)</code></td></tr><tr><td>원문·카테고리</td><td>pandas 표 <code>meta</code>를 따로 관리</td><td><code>documents</code>, <code>metadatas</code>로 함께 저장</td></tr><tr><td>카테고리 필터</td><td>허용 id 목록 → <code>IDSelectorBatch</code> → <code>SearchParameters</code></td><td><code>where={"category": "환불"}</code></td></tr><tr><td>저장</td><td><code>write_index</code> + meta.csv + manifest.json</td><td>자동 (PersistentClient)</td></tr><tr><td>점수</td><td>내적 = 코사인 (클수록 가까움)</td><td>거리 = 1 − 코사인 (작을수록 가까움)</td></tr></tbody></table></div><div class="note"><b>임베딩은 우리가 만들어 넣습니다</b><p>Chroma는 <code>documents</code>만 주면 자체 기본 모델로 임베딩해 줍니다. 하지만 그 모델은 영어 중심이고 처음 쓸 때 따로 내려받습니다. 이 모듈은 A3-M2-2와 똑같이 <code>emb.py</code>의 e5 함수로 벡터를 만들어 <code>embeddings=</code>로 넣고, 질문도 <code>query_embeddings=</code>로 넣습니다. 그래야 두 모듈의 결과를 그대로 비교할 수 있습니다.</p></div><h3>00-3. 실습 데이터 — shop_faq.csv (A3-M2-2와 같음)</h3><div class="tablewrap "><table><thead><tr><th>faq_id</th><th>category</th><th>question</th></tr></thead><tbody><tr><td>101</td><td>배송</td><td>배송은 언제 오나요?</td></tr><tr><td>102</td><td>배송</td><td>배송비는 얼마인가요?</td></tr><tr><td>103</td><td>배송</td><td>주문한 상품의 배송 조회는 어디서 하나요?</td></tr><tr><td>104</td><td>배송</td><td>냉장고 같은 대형 상품은 어떻게 배송되나요?</td></tr><tr><td>105</td><td>배송</td><td>해외로도 배송되나요?</td></tr><tr><td>201</td><td>결제</td><td>어떤 결제 수단을 쓸 수 있나요?</td></tr><tr><td>202</td><td>결제</td><td>무이자 할부가 되나요?</td></tr><tr><td>203</td><td>결제</td><td>현금영수증은 어떻게 발급하나요?</td></tr><tr><td>301</td><td>교환반품</td><td>교환이나 반품은 언제까지 되나요?</td></tr><tr><td>302</td><td>교환반품</td><td>단순 변심 반품 배송비는 누가 내나요?</td></tr><tr><td>303</td><td>교환반품</td><td>상품이 파손되어 왔어요.</td></tr><tr><td>304</td><td>교환반품</td><td>사이즈 교환이 가능한가요?</td></tr><tr><td>401</td><td>환불</td><td>환불은 언제 되나요?</td></tr><tr><td>402</td><td>환불</td><td>부분 환불도 되나요?</td></tr><tr><td>501</td><td>주문</td><td>주문을 취소하고 싶어요.</td></tr><tr><td>502</td><td>주문</td><td>주문 후 배송지를 바꿀 수 있나요?</td></tr><tr><td>601</td><td>회원</td><td>비밀번호를 잊어버렸어요.</td></tr><tr><td>602</td><td>회원</td><td>회원 탈퇴는 어떻게 하나요?</td></tr><tr><td>701</td><td>적립금</td><td>적립금은 언제 소멸되나요?</td></tr><tr><td>702</td><td>적립금</td><td>쿠폰과 적립금을 같이 쓸 수 있나요?</td></tr></tbody></table></div><p class="hint">평가 질문은 shop_faq_tests.csv의 12개를 그대로 씁니다.</p><h3>00-4. 노트북 지도</h3><div class="tablewrap "><table><thead><tr><th>노트북</th><th>탭</th><th>내용</th></tr></thead><tbody><tr><td>01_Chroma_저장과_검색</td><td>01</td><td>CSV → 벡터, 컬렉션, add·get·query, search()</td></tr><tr><td>02_메타데이터_필터와_수정</td><td>02~03</td><td>where, $in·$ne, where_document, update·upsert·delete, 실수</td></tr><tr><td>03_RAG평가와_리랭킹</td><td>04~05</td><td>Hit@1·MRR, 틀린 질문, 리랭킹 비교</td></tr><tr><td>04_실습과제</td><td>06</td><td>과제 3개</td></tr></tbody></table></div></section>
+<section aria-labelledby="tab-u01" class="panel" hidden="" id="u01" role="tabpanel"><div class="crumb">Part 1. 저장·검색·필터 · A3-M3-2</div><h1>01. 저장과 검색 — 컬렉션에 넣고 찾기</h1><p class="lead">CSV를 벡터로 바꾸고, Chroma 컬렉션을 만들어 넣고, 질문으로 찾습니다. 코드는 짧지만 결과에 원문과 카테고리가 함께 나옵니다.</p><h3>01-1. CSV 읽고 FAQ 20건을 벡터로</h3><div class="codebox"><div class="codehead"><span>01_Chroma_저장과_검색.ipynb · 01-1</span><button class="copy" type="button">코드 복사</button></div><pre><code>import pandas as pd
+from emb import embed
+
+faq = pd.read_csv("shop_faq.csv")
+faq["doc"] = faq["question"] + " " + faq["answer"]
+X = embed(faq["doc"].tolist())                 # 문서는 passage
+print(faq.shape, "→ 벡터", X.shape)
+print(faq[["faq_id", "category", "question"]].head(3).to_string(index=False))</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>from emb import embed</code></td><td>A3-M2-2와 같은 e5 임베딩 함수.</td></tr><tr><td><code>faq["question"] + " " + faq["answer"]</code></td><td>질문과 답을 이어 검색 문서로.</td></tr><tr><td><code>embed(...)</code></td><td>문서는 기본값 <code>kind="passage"</code>. 결과 (20, 384).</td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>(20, 5) → 벡터 (20, 384)
+ faq_id category                question
+    101       배송             배송은 언제 오나요?
+    102       배송             배송비는 얼마인가요?
+    103       배송 주문한 상품의 배송 조회는 어디서 하나요?</code></pre></div><h3>01-2. Chroma 클라이언트와 컬렉션 만들기</h3><div class="codebox"><div class="codehead"><span>01_Chroma_저장과_검색.ipynb · 01-2</span><button class="copy" type="button">코드 복사</button></div><pre><code>import chromadb
+
+client = chromadb.PersistentClient(path="chroma_db")        # 이 폴더에 자동 저장
+col = client.get_or_create_collection(
+    name="shop_faq",
+    configuration={"hnsw": {"space": "cosine"}},            # 거리: 코사인
+)
+print("컬렉션:", col.name, "| 저장된 개수:", col.count())
+print("전체 컬렉션:", [c.name for c in client.list_collections()])</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>chromadb.PersistentClient(path="chroma_db")</code></td><td>현재 폴더 아래 <code>chroma_db/</code>에 저장하는 클라이언트. 메모리에만 두려면 <code>chromadb.Client()</code>.</td></tr><tr><td><code>get_or_create_collection(name=...)</code></td><td>있으면 열고, 없으면 만듭니다. 노트북을 다시 실행해도 오류가 나지 않습니다.</td></tr><tr><td><code>configuration={"hnsw": {"space": "cosine"}}</code></td><td>거리 방식. <code>cosine</code>(코사인 거리), <code>l2</code>(기본값), <code>ip</code>(내적) 중 하나. 만든 뒤에는 바꿀 수 없습니다.</td></tr><tr><td><code>client.list_collections()</code></td><td>이 DB에 있는 컬렉션 목록.</td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>컬렉션: shop_faq | 저장된 개수: 0
+전체 컬렉션: ['shop_faq']</code></pre></div><h3>01-3. add — id·문서·메타데이터·벡터를 한 번에 넣기</h3><div class="codebox"><div class="codehead"><span>01_Chroma_저장과_검색.ipynb · 01-3</span><button class="copy" type="button">코드 복사</button></div><pre><code>col.add(
+    ids=[str(i) for i in faq["faq_id"]],                      # id는 문자열
+    documents=faq["doc"].tolist(),                            # 원문
+    metadatas=faq[["category", "question"]].to_dict("records"),   # 필터에 쓸 정보
+    embeddings=X,                                             # 우리가 만든 e5 벡터
+)
+print("저장된 개수:", col.count())</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>ids=[str(i) for i in faq["faq_id"]]</code></td><td>Chroma의 id는 <b>문자열</b>이어야 합니다. 101 → "101".</td></tr><tr><td><code>documents=faq["doc"].tolist()</code></td><td>원문 목록. 검색 결과에 그대로 돌아옵니다.</td></tr><tr><td><code>faq[[...]].to_dict("records")</code></td><td>행마다 <code>{"category": "배송", "question": "..."}</code> 딕셔너리 목록으로.</td></tr><tr><td><code>embeddings=X</code></td><td>넘파이 배열을 그대로 넣습니다. 네 목록의 길이가 모두 같아야 합니다.</td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>저장된 개수: 20</code></pre></div><div class="task"><h4>결과에서 볼 곳</h4><ol><li>노트북을 두 번 실행해도 20건입니다. 이미 있는 id로 <code>add</code>하면 Chroma는 그 행을 무시합니다(03탭).</li></ol></div><h3>01-4. get — 넣은 것 꺼내 보기</h3><div class="codebox"><div class="codehead"><span>01_Chroma_저장과_검색.ipynb · 01-4</span><button class="copy" type="button">코드 복사</button></div><pre><code>r = col.get(ids=["101", "401"])
+for i, m, d in zip(r["ids"], r["metadatas"], r["documents"]):
+    print(i, m, "|", d[:30], "...")
+
+r = col.get(where={"category": "환불"})
+print("환불 카테고리:", r["ids"])</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>col.get(ids=["101", "401"])</code></td><td>id로 꺼내기. 결과는 <code>ids</code>, <code>documents</code>, <code>metadatas</code> 목록이 든 딕셔너리.</td></tr><tr><td><code>d[:30]</code></td><td>문자열 앞 30글자.</td></tr><tr><td><code>col.get(where={"category": "환불"})</code></td><td>검색 없이 조건에 맞는 것을 모두 꺼냅니다.</td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>101 {'question': '배송은 언제 오나요?', 'category': '배송'} | 배송은 언제 오나요? 주문 후 평일 기준 2~3일 이내 ...
+401 {'question': '환불은 언제 되나요?', 'category': '환불'} | 환불은 언제 되나요? 반품 상품이 확인되면 3영업일 이 ...
+환불 카테고리: ['401', '402']</code></pre></div><h3>01-5. query — 질문과 가까운 FAQ 찾기</h3><div class="codebox"><div class="codehead"><span>01_Chroma_저장과_검색.ipynb · 01-5</span><button class="copy" type="button">코드 복사</button></div><pre><code>q = embed(["택배 언제 와요?"], kind="query")       # 질문은 query
+r = col.query(query_embeddings=q, n_results=3)
+print("결과 키:", list(r.keys()))
+print("ids:", r["ids"])
+print("distances:", [[round(d, 3) for d in r["distances"][0]]])
+
+for i, d, m in zip(r["ids"][0], r["distances"][0], r["metadatas"][0]):
+    print(f"{i}  거리 {d:.3f}  유사도 {1 - d:.3f}  [{m['category']}] {m['question']}")</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>embed([...], kind="query")</code></td><td>질문은 <code>query</code> 접두어. 문서와 같은 함수여야 합니다.</td></tr><tr><td><code>col.query(query_embeddings=q, n_results=3)</code></td><td>가까운 3개. 질문을 여러 개 넣을 수 있어서 결과가 <b>목록의 목록</b>입니다.</td></tr><tr><td><code>r["ids"][0]</code></td><td>첫 번째 질문의 결과 id들. 질문이 하나여도 <code>[0]</code>이 필요합니다.</td></tr><tr><td><code>1 - d</code></td><td>코사인 거리 → 코사인 유사도. A3-M2-2의 FAISS 점수와 같은 값이 됩니다.</td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>결과 키: ['ids', 'embeddings', 'documents', 'uris', 'included', 'data', 'metadatas', 'distances']
+ids: [['101', '301', '103']]
+distances: [[0.154, 0.173, 0.176]]
+101  거리 0.154  유사도 0.846  [배송] 배송은 언제 오나요?
+301  거리 0.173  유사도 0.827  [교환반품] 교환이나 반품은 언제까지 되나요?
+103  거리 0.176  유사도 0.824  [배송] 주문한 상품의 배송 조회는 어디서 하나요?</code></pre></div><div class="task"><h4>결과에서 볼 곳</h4><ol><li>유사도가 A3-M2-2 02탭의 FAISS 점수(101 0.846 …)와 같은지 비교해 보세요. 같은 벡터를 썼기 때문에 같아야 합니다.</li><li>결과에 <code>metadatas</code>와 <code>documents</code>가 함께 나옵니다. FAISS에서는 번호로 표를 다시 찾아야 했습니다.</li></ol></div><h3>01-6. 결과를 표로 돌려주는 search() 함수</h3><p>매번 <code>[0]</code>을 붙이는 게 번거로우므로 결과를 표로 돌려주는 함수를 만듭니다. 이후 노트북에서 계속 씁니다.</p><div class="codebox"><div class="codehead"><span>01_Chroma_저장과_검색.ipynb · 01-6</span><button class="copy" type="button">코드 복사</button></div><pre><code>def search(question, k=3, where=None):
+    r = col.query(query_embeddings=embed([question], kind="query"), n_results=k, where=where)
+    return pd.DataFrame({
+        "faq_id": [int(i) for i in r["ids"][0]],
+        "score": [round(1 - d, 3) for d in r["distances"][0]],
+        "category": [m["category"] for m in r["metadatas"][0]],
+        "question": [m["question"] for m in r["metadatas"][0]],
+    })
+
+print(search("환불 며칠 걸려요?").to_string(index=False))</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>def search(question, k=3, where=None)</code></td><td>where를 주면 필터 검색.</td></tr><tr><td><code>pd.DataFrame({...})</code></td><td>열 이름 → 값 목록 딕셔너리로 표 만들기.</td></tr><tr><td><code>[int(i) for i in r["ids"][0]]</code></td><td>문자열 id를 다시 숫자로. 평가할 때 정답 번호(숫자)와 비교하기 위해서.</td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code> faq_id  score category           question
+    401  0.885       환불        환불은 언제 되나요?
+    402  0.871       환불        부분 환불도 되나요?
+    301  0.870     교환반품 교환이나 반품은 언제까지 되나요?</code></pre></div></section>
+<section aria-labelledby="tab-u02" class="panel" hidden="" id="u02" role="tabpanel"><div class="crumb">Part 1. 저장·검색·필터 · A3-M3-2</div><h1>02. 메타데이터 필터 — where 한 줄로</h1><p class="lead">A3-M2-2에서는 카테고리 → 허용 id 목록 → IDSelectorBatch → SearchParameters 네 단계였습니다. Chroma는 <code>where</code> 딕셔너리 하나입니다.</p><div class="tablewrap "><table><thead><tr><th>조건</th><th>where 쓰는 법</th></tr></thead><tbody><tr><td>같다</td><td><code>{"category": "환불"}</code> 또는 <code>{"category": {"$eq": "환불"}}</code></td></tr><tr><td>다르다</td><td><code>{"category": {"$ne": "회원"}}</code></td></tr><tr><td>목록 안</td><td><code>{"category": {"$in": ["환불", "결제"]}}</code></td></tr><tr><td>목록 밖</td><td><code>{"category": {"$nin": [...]}}</code></td></tr><tr><td>숫자 비교</td><td><code>{"price": {"$gte": 10000}}</code> (<code>$gt $gte $lt $lte</code>)</td></tr><tr><td>여러 조건</td><td><code>{"$and": [조건1, 조건2]}</code>, <code>{"$or": [...]}</code></td></tr><tr><td>원문 조건</td><td><code>where_document={"$contains": "마이페이지"}</code></td></tr></tbody></table></div><h3>02-1. 준비 — 저장된 컬렉션 다시 열기</h3><p>02 노트북의 준비 셀. 01에서 만든 컬렉션을 다시 엽니다.</p><div class="codebox"><div class="codehead"><span>02_메타데이터_필터와_수정.ipynb · 02-1</span><button class="copy" type="button">코드 복사</button></div><pre><code>import pandas as pd
+import chromadb
+from emb import embed
+
+client = chromadb.PersistentClient(path="chroma_db")
+col = client.get_collection("shop_faq")                     # 01에서 만든 컬렉션 다시 열기
+print("저장된 개수:", col.count())
+
+def search(question, k=3, where=None, where_document=None):
+    r = col.query(query_embeddings=embed([question], kind="query"), n_results=k,
+                  where=where, where_document=where_document)
+    return pd.DataFrame({
+        "faq_id": [int(i) for i in r["ids"][0]],
+        "score": [round(1 - d, 3) for d in r["distances"][0]],
+        "category": [m["category"] for m in r["metadatas"][0]],
+        "question": [m["question"] for m in r["metadatas"][0]],
+    })</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>client.get_collection("shop_faq")</code></td><td>없으면 오류. 01을 먼저 실행해야 합니다.</td></tr><tr><td><code>where_document=None</code></td><td>search()에 원문 조건도 받게 했습니다.</td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>저장된 개수: 20</code></pre></div><h3>02-2. where — 카테고리 하나로 거르기</h3><div class="codebox"><div class="codehead"><span>02_메타데이터_필터와_수정.ipynb · 02-2</span><button class="copy" type="button">코드 복사</button></div><pre><code>q = "돈 언제 돌려줘요?"
+print("[필터 없음]")
+print(search(q).to_string(index=False))
+print("\n[환불만]  where={'category': '환불'}")
+print(search(q, where={"category": "환불"}).to_string(index=False))</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>where={"category": "환불"}</code></td><td>카테고리가 환불인 것 안에서만 검색.</td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>[필터 없음]
+ faq_id  score category           question
+    301  0.847     교환반품 교환이나 반품은 언제까지 되나요?
+    202  0.838       결제       무이자 할부가 되나요?
+    701  0.837      적립금     적립금은 언제 소멸되나요?
+
+[환불만]  where={'category': '환불'}
+ faq_id  score category    question
+    401  0.836       환불 환불은 언제 되나요?
+    402  0.823       환불 부분 환불도 되나요?</code></pre></div><div class="task"><h4>결과에서 볼 곳</h4><ol><li>필터 없이 찾으면 '돈 언제 돌려줘요?'의 top-3(301 교환반품, 202 결제, 701 적립금)에 환불 FAQ가 하나도 없습니다. <code>where={"category": "환불"}</code> 한 줄로 401 '환불은 언제 되나요?'가 1위가 됩니다.</li><li>환불은 2건뿐이라 n_results=3이어도 2개만 나옵니다.</li><li>점수와 순서가 A3-M2-2 04탭(FAISS + IDSelectorBatch)과 똑같습니다. 결과는 같고 코드만 짧아졌습니다.</li></ol></div><h3>02-3. where 연산자 — 여러 개, 빼고, 숫자 비교</h3><div class="codebox"><div class="codehead"><span>02_메타데이터_필터와_수정.ipynb · 02-3</span><button class="copy" type="button">코드 복사</button></div><pre><code>q = "돈 언제 돌려줘요?"
+print("[환불 또는 결제]")
+print(search(q, where={"category": {"$in": ["환불", "결제"]}}).to_string(index=False))
+print("\n[회원 빼고]")
+print(search(q, where={"category": {"$ne": "회원"}}).to_string(index=False))</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>{"$in": ["환불", "결제"]}</code></td><td>둘 중 하나.</td></tr><tr><td><code>{"$ne": "회원"}</code></td><td>회원만 빼고. FAISS의 IDSelectorNot에 해당.</td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>[환불 또는 결제]
+ faq_id  score category           question
+    202  0.838       결제       무이자 할부가 되나요?
+    401  0.836       환불        환불은 언제 되나요?
+    201  0.828       결제 어떤 결제 수단을 쓸 수 있나요?
+
+[회원 빼고]
+ faq_id  score category           question
+    301  0.847     교환반품 교환이나 반품은 언제까지 되나요?
+    202  0.838       결제       무이자 할부가 되나요?
+    701  0.837      적립금     적립금은 언제 소멸되나요?</code></pre></div><h3>02-4. where_document — 원문에 특정 단어가 있는 것만</h3><div class="codebox"><div class="codehead"><span>02_메타데이터_필터와_수정.ipynb · 02-4</span><button class="copy" type="button">코드 복사</button></div><pre><code>q = "어디서 확인해요?"
+print("[필터 없음]")
+print(search(q).to_string(index=False))
+print("\n[원문에 '마이페이지'가 들어간 것만]")
+print(search(q, where_document={"$contains": "마이페이지"}).to_string(index=False))</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>where_document={"$contains": "마이페이지"}</code></td><td>원문(documents)에 이 글자가 들어간 것만. 대소문자·띄어쓰기까지 그대로 비교합니다.</td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>[필터 없음]
+ faq_id  score category                question
+    103  0.861       배송 주문한 상품의 배송 조회는 어디서 하나요?
+    601  0.836       회원           비밀번호를 잊어버렸어요.
+    105  0.831       배송             해외로도 배송되나요?
+
+[원문에 '마이페이지'가 들어간 것만]
+ faq_id  score category                question
+    103  0.861       배송 주문한 상품의 배송 조회는 어디서 하나요?
+    602  0.830       회원         회원 탈퇴는 어떻게 하나요?
+    301  0.828     교환반품      교환이나 반품은 언제까지 되나요?</code></pre></div><div class="task"><h4>결과에서 볼 곳</h4><ol><li>필터 없이 2위였던 601 '비밀번호를 잊어버렸어요'는 답에 '마이페이지'가 없어서 빠지고, 마이페이지에서 하는 일(배송 조회·회원 탈퇴·교환 신청)만 남았습니다.</li><li>'어디서 확인해요?'처럼 막연한 질문은 원문 조건으로 범위를 좁히면 답이 있는 FAQ만 남습니다. 다만 <code>$contains</code>는 글자 그대로 비교하므로 '마이 페이지'처럼 띄어 쓴 문서는 놓칩니다.</li></ol></div></section>
+<section aria-labelledby="tab-u03" class="panel" hidden="" id="u03" role="tabpanel"><div class="crumb">Part 1. 저장·검색·필터 · A3-M3-2</div><h1>03. 수정·삭제 — 그리고 자주 하는 실수</h1><p class="lead">FAQ는 계속 바뀝니다. id로 고치고, 넣고, 지웁니다. 저장은 자동입니다.</p><div class="tablewrap "><table><thead><tr><th>메서드</th><th>id가 없을 때</th><th>id가 있을 때</th></tr></thead><tbody><tr><td><code>add</code></td><td>추가</td><td><b>무시</b> (오류도 안 남)</td></tr><tr><td><code>update</code></td><td><b>무시</b> (오류도 안 남)</td><td>준 값만 바꿈 (메타데이터는 준 키만 바뀌고 나머지 키는 유지)</td></tr><tr><td><code>upsert</code></td><td>추가</td><td>덮어씀</td></tr><tr><td><code>delete</code></td><td>아무 일 없음</td><td>삭제</td></tr></tbody></table></div><h3>03-1. update · upsert · delete — 데이터 고치기</h3><div class="codebox"><div class="codehead"><span>02_메타데이터_필터와_수정.ipynb · 03-1</span><button class="copy" type="button">코드 복사</button></div><pre><code>col.update(ids=["601"], metadatas=[{"category": "회원", "question": "비밀번호를 잊어버렸어요.", "updated": "2026-10"}])
+print("update 후:", col.get(ids=["601"])["metadatas"])
+
+col.upsert(ids=["999"], documents=["임시 FAQ 테스트 문서"], metadatas=[{"category": "테스트", "question": "임시"}],
+           embeddings=embed(["임시 FAQ 테스트 문서"]))
+print("upsert 후 개수:", col.count())
+
+col.delete(ids=["999"])
+print("delete 후 개수:", col.count())</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>col.update(ids=["601"], metadatas=[{...}])</code></td><td>601번의 메타데이터를 바꿉니다. 새 키(<code>updated</code>)도 추가할 수 있습니다.</td></tr><tr><td><code>col.upsert(...)</code></td><td>999번이 없으므로 추가. 있으면 덮어씁니다. 원문이 바뀌면 벡터도 새로 만들어 넣어야 합니다.</td></tr><tr><td><code>col.delete(ids=["999"])</code></td><td>삭제. <code>delete(where={...})</code>로 조건 삭제도 됩니다.</td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>update 후: [{'category': '회원', 'question': '비밀번호를 잊어버렸어요.', 'updated': '2026-10'}]
+upsert 후 개수: 21
+delete 후 개수: 20</code></pre></div><h3>03-2. 자주 하는 실수 두 가지</h3><div class="codebox"><div class="codehead"><span>02_메타데이터_필터와_수정.ipynb · 03-2</span><button class="copy" type="button">코드 복사</button></div><pre><code>try:
+    col.add(ids=[101], documents=["x"], embeddings=embed(["x"]))       # id를 숫자로
+except Exception as e:
+    print("① id가 숫자:", type(e).__name__, "-", str(e)[:80])
+
+n = col.count()
+col.add(ids=["101"], documents=["다른 내용"], metadatas=[{"category": "배송", "question": "?"}], embeddings=embed(["다른 내용"]))
+print("② 이미 있는 id로 add:", n, "→", col.count(), "| 101 원문:", col.get(ids=["101"])["documents"][0][:20], "...")</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>ids=[101]</code></td><td>숫자 id → 오류.</td></tr><tr><td><code>col.add(ids=["101"], ...)</code></td><td>이미 있는 id로 add → 개수도 원문도 그대로.</td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>① id가 숫자: ValueError - Expected ID to be a str, got 101 in add.
+② 이미 있는 id로 add: 20 → 20 | 101 원문: 배송은 언제 오나요? 주문 후 평일  ...</code></pre></div><div class="task"><h4>결과에서 볼 곳</h4><ol><li>② 는 오류가 없어서 더 위험합니다. 원문을 고쳤다고 생각했는데 그대로입니다. 고칠 때는 <code>upsert</code>를 씁니다.</li></ol></div></section>
+<section aria-labelledby="tab-u04" class="panel" hidden="" id="u04" role="tabpanel"><div class="crumb">Part 2. RAG 평가와 리랭킹 · A3-M3-2</div><h1>04. RAG 평가 — Chroma 검색도 같은 방법으로 잰다</h1><p class="lead">A3-M2-2와 같은 평가 질문 12개, 같은 지표(Hit@1·Hit@3·MRR)로 잽니다. 평가 함수 <code>evaluate()</code>는 검색 함수를 인자로 받아서, 다음 탭의 리랭킹도 같은 함수로 잽니다.</p><div class="tablewrap "><table><thead><tr><th>지표</th><th>뜻</th></tr></thead><tbody><tr><td>Hit@1</td><td>정답 FAQ가 1위인 질문 비율</td></tr><tr><td>Hit@3</td><td>정답이 3위 안인 질문 비율</td></tr><tr><td>MRR</td><td>1/정답 순위의 평균 (1위 1, 2위 0.5, 3위 0.33, 못 찾으면 0)</td></tr></tbody></table></div><h3>04-1. 준비 — 컬렉션 열고 search · evaluate 만들기</h3><p>03 노트북의 준비 셀. search·evaluate·summary를 만듭니다.</p><div class="codebox"><div class="codehead"><span>03_RAG평가와_리랭킹.ipynb · 04-1</span><button class="copy" type="button">코드 복사</button></div><pre><code>import time
+import numpy as np
+import pandas as pd
+import chromadb
+from emb import embed, RERANK_MODEL
+
+client = chromadb.PersistentClient(path="chroma_db")
+col = client.get_collection("shop_faq")
+tests = pd.read_csv("shop_faq_tests.csv")
+
+def search(question, k=3, where=None):
+    r = col.query(query_embeddings=embed([question], kind="query"), n_results=k, where=where)
+    return pd.DataFrame({
+        "faq_id": [int(i) for i in r["ids"][0]],
+        "score": [round(1 - d, 3) for d in r["distances"][0]],
+        "category": [m["category"] for m in r["metadatas"][0]],
+        "question": [m["question"] for m in r["metadatas"][0]],
+        "doc": r["documents"][0],
+    })
+
+def evaluate(fn, **kw):
+    rows = []
+    for q, gold in tests.itertuples(index=False):
+        ranked = fn(q, **kw)["faq_id"].tolist()
+        rows.append({"question": q, "gold": gold, "top1": ranked[0],
+                     "rank": ranked.index(gold) + 1 if gold in ranked else np.nan})
+    return pd.DataFrame(rows)
+
+def summary(ev):
+    return {"Hit@1": round(float((ev["rank"] == 1).mean()), 3), "Hit@3": round(float((ev["rank"] &lt;= 3).mean()), 3),
+            "MRR": round(float((1 / ev["rank"]).fillna(0).mean()), 3)}
+
+print("FAQ", col.count(), "건 | 평가 질문", len(tests), "개")</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>"doc": r["documents"][0]</code></td><td>리랭킹에 원문이 필요해서 결과 표에 원문 열을 추가했습니다.</td></tr><tr><td><code>def evaluate(fn, **kw)</code></td><td>검색 함수 fn으로 평가 질문을 모두 돌려 순위 표를 만듭니다. <code>**kw</code>는 k·pool 같은 인자를 그대로 넘깁니다.</td></tr><tr><td><code>ranked.index(gold) + 1 if gold in ranked else np.nan</code></td><td>정답의 순위. 5위 안에 없으면 NaN.</td></tr><tr><td><code>(1 / ev["rank"]).fillna(0).mean()</code></td><td>MRR. 못 찾은 질문은 0점.</td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>FAQ 20 건 | 평가 질문 12 개</code></pre></div><h3>04-2. 평가 질문 12개로 Hit@1 · Hit@3 · MRR</h3><div class="codebox"><div class="codehead"><span>03_RAG평가와_리랭킹.ipynb · 04-2</span><button class="copy" type="button">코드 복사</button></div><pre><code>ev = evaluate(search, k=5)
+print(ev.assign(rank=ev["rank"].astype("Int64")).to_string(index=False))
+print(summary(ev))</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>evaluate(search, k=5)</code></td><td>질문마다 5위까지 검색해 정답 순위를 기록.</td></tr><tr><td><code>ev["rank"].astype("Int64")</code></td><td>2.0 대신 2로 보이게.</td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>            question  gold  top1  rank
+           택배 언제 와요?   101   101     1
+     배송비 무료 기준이 뭐예요?   102   102     1
+내 택배 지금 어디쯤인지 보고 싶어요   103   103     1
+ 소파 같은 큰 물건은 어떻게 와요?   104   104     1
+     미국으로 보내줄 수 있나요?   105   105     1
+    카드 할부 몇 개월까지 돼요?   202   202     1
+  받은 지 5일 됐는데 반품 돼요?   301   301     1
+         물건이 깨져서 왔어요   303   303     1
+          환불 며칠 걸려요?   401   401     1
+       주문 취소 어떻게 해요?   501   501     1
+            비번 까먹었어요   601   303     3
+       포인트 유효기간 있나요?   701   701     1
+{'Hit@1': 0.917, 'Hit@3': 1.0, 'MRR': 0.944}</code></pre></div><div class="task"><h4>결과에서 볼 곳</h4><ol><li>Hit@1 0.917 · Hit@3 1.000 · MRR 0.944. A3-M2-2의 FAISS 결과와 <b>완전히 같습니다</b>. 같은 벡터·같은 거리이고, 20건이면 Chroma의 HNSW도 전부 비교한 것과 같은 결과를 냅니다.</li><li>DB를 바꿔도 검색 품질은 <b>임베딩 모델</b>이 정합니다. Chroma가 바꿔 주는 것은 저장·필터·관리의 편의입니다.</li></ol></div><h3>04-3. 틀린 질문 보기</h3><div class="codebox"><div class="codehead"><span>03_RAG평가와_리랭킹.ipynb · 04-3</span><button class="copy" type="button">코드 복사</button></div><pre><code>for r in ev[ev["rank"] != 1].itertuples(index=False):
+    rank = "5위 밖" if pd.isna(r.rank) else f"{int(r.rank)}위"
+    print(f"\nQ: {r.question} | 정답 {r.gold} | 1위 {r.top1} | 정답 {rank}")
+    print(search(r.question, k=3)[["faq_id", "score", "category", "question"]].to_string(index=False))</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>ev[ev["rank"] != 1]</code></td><td>1위가 정답이 아닌 질문만.</td></tr><tr><td><code>pd.isna(r.rank)</code></td><td>순위가 NaN(5위 밖)인지.</td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>Q: 비번 까먹었어요 | 정답 601 | 1위 303 | 정답 3위
+ faq_id  score category      question
+    303  0.823     교환반품 상품이 파손되어 왔어요.
+    501  0.810       주문 주문을 취소하고 싶어요.
+    601  0.809       회원 비밀번호를 잊어버렸어요.</code></pre></div></section>
+<section aria-labelledby="tab-u05" class="panel" hidden="" id="u05" role="tabpanel"><div class="crumb">Part 2. RAG 평가와 리랭킹 · A3-M3-2</div><h1>05. 리랭킹 — Chroma 후보를 다시 줄 세우기</h1><p class="lead">Chroma로 후보 몇 개를 뽑고, 리랭커(cross-encoder)가 (질문, 문서) 쌍마다 점수를 매겨 다시 정렬합니다. 리랭커는 A3-M2-2와 같은 모델입니다.</p><div class="flow"><div class="fstep"><b>질문</b><span>비번 까먹었어요</span></div><span class="arrow" aria-hidden="true">→</span><div class="fstep"><b>Chroma</b><span>후보 pool개</span></div><span class="arrow" aria-hidden="true">→</span><div class="fstep"><b>리랭커</b><span>쌍마다 점수</span></div><span class="arrow" aria-hidden="true">→</span><div class="fstep"><b>정렬</b><span>상위 k개</span></div></div><h3>05-1. 리랭커 붙이기</h3><div class="codebox"><div class="codehead"><span>03_RAG평가와_리랭킹.ipynb · 05-1</span><button class="copy" type="button">코드 복사</button></div><pre><code>from transformers import pipeline
+rr = pipeline("text-classification", model=RERANK_MODEL, device=-1)
+
+def search_rerank(question, k=3, pool=8, where=None):
+    cand = search(question, k=pool, where=where)
+    pairs = [{"text": question, "text_pair": d} for d in cand["doc"]]
+    cand["rerank"] = [round(s["score"], 3) for s in rr(pairs, function_to_apply="none")]
+    return cand.sort_values("rerank", ascending=False).head(k)
+
+q = "비번 까먹었어요"
+print("[Chroma 순서]")
+print(search(q, k=5)[["faq_id", "score", "question"]].to_string(index=False))
+print("\n[리랭킹 순서]")
+print(search_rerank(q, k=5, pool=5)[["faq_id", "score", "rerank", "question"]].to_string(index=False))</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>pipeline("text-classification", model=RERANK_MODEL)</code></td><td>리랭커 불러오기. 처음 한 번 내려받습니다.</td></tr><tr><td><code>{"text": question, "text_pair": d}</code></td><td>질문과 원문을 한 쌍으로.</td></tr><tr><td><code>function_to_apply="none"</code></td><td>점수를 변환하지 않은 원래 값. 순서만 쓰므로 그대로 둡니다.</td></tr><tr><td><code>sort_values("rerank", ascending=False).head(k)</code></td><td>리랭커 점수 내림차순 상위 k개.</td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>[Chroma 순서]
+ faq_id  score                question
+    303  0.823           상품이 파손되어 왔어요.
+    501  0.810           주문을 취소하고 싶어요.
+    601  0.809           비밀번호를 잊어버렸어요.
+    602  0.798         회원 탈퇴는 어떻게 하나요?
+    103  0.793 주문한 상품의 배송 조회는 어디서 하나요?
+
+[리랭킹 순서]
+ faq_id  score  rerank                question
+    303  0.823  -4.482           상품이 파손되어 왔어요.
+    601  0.809  -4.916           비밀번호를 잊어버렸어요.
+    501  0.810  -5.252           주문을 취소하고 싶어요.
+    103  0.793  -7.074 주문한 상품의 배송 조회는 어디서 하나요?
+    602  0.798  -9.073         회원 탈퇴는 어떻게 하나요?</code></pre></div><div class="task"><h4>결과에서 볼 곳</h4><ol><li>정답 601이 Chroma 3위 → 리랭킹 2위로 올랐지만, 1위는 여전히 303 '상품이 파손되어 왔어요'입니다.</li><li>이 질문은 리랭커 점수가 모두 음수(−4.5 ~ −9.1)입니다. 리랭커도 '비번'과 '비밀번호'를 확실히 잇지 못한 것입니다. 이럴 때는 과제 2처럼 <b>FAQ 문서에 고객 표현을 넣는 것</b>이 더 확실한 해결입니다.</li></ol></div><h3>05-2. 검색만 vs 검색 + 리랭킹 비교</h3><div class="codebox"><div class="codehead"><span>03_RAG평가와_리랭킹.ipynb · 05-2</span><button class="copy" type="button">코드 복사</button></div><pre><code>ev_rr = evaluate(search_rerank, k=5, pool=8)
+print(pd.DataFrame({"검색만": summary(ev), "검색+리랭킹": summary(ev_rr)}).to_string())
+
+for name, fn in [("검색만", lambda q: search(q, 5)), ("검색+리랭킹", lambda q: search_rerank(q, 5, 8))]:
+    t = time.perf_counter()
+    for q in tests["question"]:
+        fn(q)
+    print(f"{name:&lt;8} 질문당 {(time.perf_counter() - t) / len(tests) * 1000:.0f} ms")</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>evaluate(search_rerank, k=5, pool=8)</code></td><td>후보 8개를 리랭킹해 5위까지로 평가.</td></tr><tr><td><code>pd.DataFrame({...: summary(ev), ...})</code></td><td>두 결과를 열로 나란히.</td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>         검색만  검색+리랭킹
+Hit@1  0.917   0.833
+Hit@3  1.000   1.000
+MRR    0.944   0.917
+검색만      질문당 17 ms
+검색+리랭킹   질문당 203 ms</code></pre></div><div class="task"><h4>결과에서 볼 곳</h4><ol><li>리랭킹 후 Hit@1 0.917 → 0.833, MRR 0.944 → 0.917로 내려갔습니다. A3-M2-2(FAISS)와 같은 결과입니다. 후보가 같으면 리랭킹 결과도 같습니다.</li><li>질문당 17 ms → 203 ms로 약 12배 느려집니다. 리랭킹은 붙이기 전에 항상 평가로 확인합니다.</li></ol></div></section>
+<section aria-labelledby="tab-u06" class="panel" hidden="" id="u06" role="tabpanel"><div class="crumb">Part 3. 마무리 · A3-M3-2</div><h1>06. 실습 과제</h1><p class="lead">04_실습과제.ipynb의 준비 셀부터 실행합니다.</p><div class="tablewrap "><table><thead><tr><th>과제</th><th>확인하는 것</th></tr></thead><tbody><tr><td>1 카테고리 필터로 평가</td><td>where로 범위를 좁히면 Hit@1이 얼마나 오르나</td></tr><tr><td>2 FAQ 문장 고치기</td><td>upsert로 고객 표현('비번')을 넣으면 검색이 좋아지나, 되돌리기</td></tr><tr><td>3 두 필터를 함께</td><td>where + where_document</td></tr></tbody></table></div><h3>06-1. 준비</h3><p>모든 과제가 함께 쓰는 준비 셀입니다. 01 노트북을 먼저 실행해 chroma_db/가 있어야 합니다.</p><div class="codebox"><div class="codehead"><span>04_실습과제.ipynb · x0</span><button class="copy" type="button">코드 복사</button></div><pre><code>import time
+import numpy as np
+import pandas as pd
+import chromadb
+from emb import embed, RERANK_MODEL
+
+client = chromadb.PersistentClient(path="chroma_db")
+col = client.get_collection("shop_faq")
+tests = pd.read_csv("shop_faq_tests.csv")
+
+def search(question, k=3, where=None):
+    r = col.query(query_embeddings=embed([question], kind="query"), n_results=k, where=where)
+    return pd.DataFrame({
+        "faq_id": [int(i) for i in r["ids"][0]],
+        "score": [round(1 - d, 3) for d in r["distances"][0]],
+        "category": [m["category"] for m in r["metadatas"][0]],
+        "question": [m["question"] for m in r["metadatas"][0]],
+        "doc": r["documents"][0],
+    })
+
+def evaluate(fn, **kw):
+    rows = []
+    for q, gold in tests.itertuples(index=False):
+        ranked = fn(q, **kw)["faq_id"].tolist()
+        rows.append({"question": q, "gold": gold, "top1": ranked[0],
+                     "rank": ranked.index(gold) + 1 if gold in ranked else np.nan})
+    return pd.DataFrame(rows)
+
+def summary(ev):
+    return {"Hit@1": round(float((ev["rank"] == 1).mean()), 3), "Hit@3": round(float((ev["rank"] &lt;= 3).mean()), 3),
+            "MRR": round(float((1 / ev["rank"]).fillna(0).mean()), 3)}
+
+print("FAQ", col.count(), "건 | 평가 질문", len(tests), "개")
+from transformers import pipeline
+rr = pipeline("text-classification", model=RERANK_MODEL, device=-1)
+
+def search_rerank(question, k=3, pool=8, where=None):
+    cand = search(question, k=pool, where=where)
+    pairs = [{"text": question, "text_pair": d} for d in cand["doc"]]
+    cand["rerank"] = [round(s["score"], 3) for s in rr(pairs, function_to_apply="none")]
+    return cand.sort_values("rerank", ascending=False).head(k)</code></pre></div><h3>06-2. 과제 1 · 카테고리 필터로 평가하기</h3><p>평가 질문마다 정답 FAQ의 카테고리를 <code>where</code>로 걸고 검색해서, 필터 없을 때와 Hit@1·MRR을 비교하세요. 정답 FAQ의 카테고리는 <code>col.get(ids=[str(gold)])</code>로 꺼냅니다.</p><div class="codebox"><div class="codehead"><span>04_실습과제.ipynb · x1</span><button class="copy" type="button">코드 복사</button></div><pre><code># TODO</code></pre></div><details class="qa"><summary>정답 코드와 실행 결과 보기</summary><div class="codebox"><div class="codehead"><span>04_실습과제_정답.ipynb</span><button class="copy" type="button">코드 복사</button></div><pre><code>def search_cat(q, gold, k=5):
+    cat = col.get(ids=[str(gold)])["metadatas"][0]["category"]
+    return search(q, k=k, where={"category": cat})
+
+rows = []
+for q, gold in tests.itertuples(index=False):
+    ranked = search_cat(q, gold)["faq_id"].tolist()
+    rows.append({"question": q, "gold": gold, "top1": ranked[0], "rank": ranked.index(gold) + 1 if gold in ranked else np.nan})
+print(pd.DataFrame({"필터 없음": summary(evaluate(search, k=5)), "정답 카테고리 필터": summary(pd.DataFrame(rows))}).to_string())</code></pre></div><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>       필터 없음  정답 카테고리 필터
+Hit@1  0.917         1.0
+Hit@3  1.000         1.0
+MRR    0.944         1.0</code></pre></div></details><h3>06-3. 과제 2 · FAQ 문장 고쳐서 검색 개선하기</h3><p>'비번 까먹었어요'가 1위로 찾히도록 FAQ 601의 문서에 고객이 쓰는 표현('비번')을 넣어 <code>upsert</code>하세요. 다시 평가해 Hit@1이 바뀌는지 보고, 끝나면 원래 문서로 되돌리세요.</p><div class="codebox"><div class="codehead"><span>04_실습과제.ipynb · x2</span><button class="copy" type="button">코드 복사</button></div><pre><code># TODO</code></pre></div><details class="qa"><summary>정답 코드와 실행 결과 보기</summary><div class="codebox"><div class="codehead"><span>04_실습과제_정답.ipynb</span><button class="copy" type="button">코드 복사</button></div><pre><code>old = col.get(ids=["601"], include=["documents", "metadatas", "embeddings"])
+new_doc = "비번 까먹었어요. " + old["documents"][0]          # 고객 표현을 앞에 추가
+col.upsert(ids=["601"], documents=[new_doc], metadatas=old["metadatas"], embeddings=embed([new_doc]))
+print("바꾼 문서:", new_doc)
+print(search("비번 까먹었어요")[["faq_id", "score", "question"]].to_string(index=False))
+print("고친 뒤:", summary(evaluate(search, k=5)))
+
+col.upsert(ids=["601"], documents=old["documents"], metadatas=old["metadatas"], embeddings=old["embeddings"])
+print("되돌린 뒤:", summary(evaluate(search, k=5)))</code></pre></div><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>바꾼 문서: 비번 까먹었어요. 비밀번호를 잊어버렸어요. 로그인 화면의 비밀번호 찾기에서 가입한 이메일로 재설정 링크를 받을 수 있습니다.
+ faq_id  score      question
+    601  0.874 비밀번호를 잊어버렸어요.
+    303  0.823 상품이 파손되어 왔어요.
+    501  0.810 주문을 취소하고 싶어요.
+고친 뒤: {'Hit@1': 1.0, 'Hit@3': 1.0, 'MRR': 1.0}
+되돌린 뒤: {'Hit@1': 0.917, 'Hit@3': 1.0, 'MRR': 0.944}</code></pre></div></details><h3>06-4. 과제 3 · 두 필터를 함께</h3><p>'언제까지 돼요?'를 검색하되 카테고리가 <code>교환반품</code> 또는 <code>적립금</code>이고 원문에 '일'이 들어간 FAQ만 찾으세요(<code>where</code> + <code>where_document</code>).</p><div class="codebox"><div class="codehead"><span>04_실습과제.ipynb · x3</span><button class="copy" type="button">코드 복사</button></div><pre><code># TODO</code></pre></div><details class="qa"><summary>정답 코드와 실행 결과 보기</summary><div class="codebox"><div class="codehead"><span>04_실습과제_정답.ipynb</span><button class="copy" type="button">코드 복사</button></div><pre><code>r = col.query(query_embeddings=embed(["언제까지 돼요?"], kind="query"), n_results=3,
+              where={"category": {"$in": ["교환반품", "적립금"]}},
+              where_document={"$contains": "일"})
+for i, d, m in zip(r["ids"][0], r["distances"][0], r["metadatas"][0]):
+    print(i, round(1 - d, 3), m["category"], m["question"])</code></pre></div><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>301 0.844 교환반품 교환이나 반품은 언제까지 되나요?
+701 0.816 적립금 적립금은 언제 소멸되나요?
+702 0.788 적립금 쿠폰과 적립금을 같이 쓸 수 있나요?</code></pre></div></details><h3>06-5. 과제 결과 읽기</h3><div class="tablewrap "><table><thead><tr><th>과제</th><th>결과</th><th>읽을거리</th></tr></thead><tbody><tr><td>1 카테고리 필터</td><td>Hit@1 0.917 → <b>1.000</b></td><td>카테고리만 알면 12문항 모두 1위. 메타데이터 필터는 가장 싸고 확실한 개선입니다.</td></tr><tr><td>2 FAQ 문장 고치기</td><td>601 점수 0.809 → <b>0.874</b>(1위), Hit@1 → <b>1.000</b>, 되돌리면 0.917</td><td>모델·DB를 바꾸지 않고 <b>문서에 고객이 쓰는 말을 넣는 것</b>만으로 고쳐졌습니다. upsert로 바로 반영되는 것이 DB를 쓰는 장점입니다.</td></tr><tr><td>3 두 필터를 함께</td><td>301 · 701 · 702</td><td>카테고리와 원문 조건을 동시에 만족하는 것 안에서 검색</td></tr></tbody></table></div></section>
+<section aria-labelledby="tab-u07" class="panel" hidden="" id="u07" role="tabpanel"><div class="crumb">Part 3. 마무리 · A3-M3-2</div><h1>07. 정리 — Chroma 문법 한 장</h1><p class="lead">다음 모듈(A3-M4)에서는 같은 일을 PostgreSQL(pgvector)과 Qdrant로 합니다.</p><div class="tablewrap "><table><thead><tr><th>하고 싶은 일</th><th>Chroma 코드</th></tr></thead><tbody><tr><td>DB 열기</td><td><code>client = chromadb.PersistentClient(path="chroma_db")</code></td></tr><tr><td>컬렉션</td><td><code>col = client.get_or_create_collection("shop_faq", configuration={"hnsw": {"space": "cosine"}})</code></td></tr><tr><td>넣기</td><td><code>col.add(ids=["101"], documents=[...], metadatas=[{...}], embeddings=X)</code></td></tr><tr><td>찾기</td><td><code>r = col.query(query_embeddings=q, n_results=3)</code> → <code>r["ids"][0]</code>, <code>1 - r["distances"][0][i]</code></td></tr><tr><td>필터</td><td><code>where={"category": "환불"}</code>, <code>{"$in": [...]}</code>, <code>{"$ne": ...}</code>, <code>where_document={"$contains": "..."}</code></td></tr><tr><td>꺼내기</td><td><code>col.get(ids=[...])</code>, <code>col.get(where={...})</code></td></tr><tr><td>고치기</td><td><code>update</code> (바꾸기), <code>upsert</code> (있으면 덮고 없으면 추가), <code>delete</code></td></tr><tr><td>주의</td><td>id는 문자열, 같은 id로 add는 무시됨, 질문·문서는 같은 임베딩 함수로</td></tr></tbody></table></div><h3>07-1. FAISS(A3-M2-2)와 Chroma(A3-M3-2) 결과 비교</h3><div class="tablewrap "><table><thead><tr><th></th><th>FAISS</th><th>Chroma</th></tr></thead><tbody><tr><td>Hit@1 · Hit@3 · MRR</td><td>0.917 · 1.000 · 0.944</td><td>0.917 · 1.000 · 0.944</td></tr><tr><td>검색 + 리랭킹</td><td>0.833 · 1.000 · 0.917</td><td>0.833 · 1.000 · 0.917</td></tr><tr><td>카테고리 필터 평가</td><td>Hit@1 1.000</td><td>Hit@1 1.000</td></tr><tr><td>카테고리 필터 코드</td><td>허용 id 목록 → IDSelectorBatch → SearchParameters</td><td><code>where={"category": ...}</code></td></tr><tr><td>저장</td><td>index.faiss + meta.csv + manifest.json</td><td>자동</td></tr></tbody></table></div><div class="note"><b>결론</b><p>같은 벡터를 넣으면 검색 결과는 같습니다. 검색 품질은 <b>임베딩 모델과 문서 내용</b>이 정하고, DB는 저장·필터·수정을 얼마나 쉽게 하느냐를 정합니다.</p></div><p class="hint">실행 환경: Windows · CPU 8코어 · chromadb 1.5.9 · transformers 5.19 · torch 2.14 CPU. 전체 노트북 실행 29.8초(모델 다운로드 제외).</p></section>
+</main></div><footer class="footer">© 2026 부성순. All rights reserved.<small>교안의 자체 해설 및 실습 예제에 대한 저작권 표시입니다. 외부 라이브러리·모델의 권리는 각 권리자에게 있습니다. 실습 데이터(쇼핑몰 FAQ·말뭉치)는 교육용 가상 데이터입니다.</small></footer><script>(function(){
+const tabs=[...document.querySelectorAll('[role="tab"]')];
+function setTab(i,focus=false){tabs.forEach((t,j)=>{const on=i===j;t.setAttribute('aria-selected',on?'true':'false');t.tabIndex=on?0:-1;document.getElementById(t.getAttribute('aria-controls')).hidden=!on;});if(focus)tabs[i].focus({preventScroll:true});history.replaceState(null,'','#'+tabs[i].getAttribute('aria-controls'));window.scrollTo({top:0});}
+tabs.forEach((t,i)=>{t.addEventListener('click',()=>setTab(i));t.addEventListener('keydown',e=>{if(['ArrowDown','ArrowUp','ArrowLeft','ArrowRight'].includes(e.key)){e.preventDefault();setTab((i+(e.key==='ArrowDown'||e.key==='ArrowRight'?1:-1)+tabs.length)%tabs.length,true);}})});
+const index=tabs.findIndex(t=>'#'+t.getAttribute('aria-controls')===location.hash);if(index>=0)setTab(index);
+document.querySelectorAll('.copy').forEach(b=>{b.dataset.label=b.textContent;});document.querySelectorAll('.copy').forEach(b=>b.addEventListener('click',async()=>{const code=b.closest('.codebox').querySelector('pre').textContent;try{await navigator.clipboard.writeText(code);b.textContent='복사됨';}catch(e){b.textContent='복사 실패';}setTimeout(()=>b.textContent=b.dataset.label||'코드 복사',1500); }));
+})();</script></body></html>

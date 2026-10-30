@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+
+<html lang="ko"><head><meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/><title>A3-M4 · pgvector와 Qdrant</title><link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" rel="stylesheet"/><style>
+:root{--bg:#fff;--surface:#f8fafc;--ink:#0f172a;--muted:#64748b;--line:#e2e8f0;--accent:#ff2e93;--soft:rgba(255,46,147,.065);--codebg:#101d34}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink);font-family:'Pretendard',system-ui,'Malgun Gothic',sans-serif;font-size:18px;line-height:1.81;word-break:keep-all}
+.banner{background:linear-gradient(125deg,#fcfcff,#f8fafc);border-bottom:1px solid var(--line)}.banner-in{max-width:1320px;margin:auto;padding:18px 24px;display:flex;align-items:center;justify-content:space-between;gap:18px}.brand{font-size:16px;font-weight:850;letter-spacing:.03em}.who{font-size:15px;color:var(--muted)}.who a{color:var(--accent);text-decoration:none}.layout{max-width:1320px;margin:auto;padding:32px 24px 84px;display:grid;grid-template-columns:minmax(0,1fr) 290px;gap:38px;align-items:start}.sidebar{order:2;position:sticky;top:22px;max-height:calc(100vh - 44px);overflow:auto;border:1px solid var(--line);border-radius:15px;background:var(--surface);padding:17px}.group{font-size:15px;color:var(--muted);font-weight:800;margin:3px 10px 14px}.tabs{display:flex;flex-direction:column;gap:5px}.tabs button{appearance:none;border:1px solid transparent;border-radius:9px;background:transparent;color:#253348;cursor:pointer;text-align:left;font:600 16px/1.55 'Pretendard',sans-serif;padding:9px 12px}.tabs button span{color:var(--accent);font-weight:850;margin-right:7px}.tabs button:hover{background:#fff;border-color:var(--line)}.tabs button[aria-selected=true]{background:var(--soft);border-color:var(--accent);color:#bd1366}.tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+main{min-width:0}.panel[hidden]{display:none}.panel{display:block}.crumb{color:var(--accent);font-size:15px;font-weight:800;margin:0 0 8px}.panel h1{font-size:31px;line-height:1.4;margin:0 0 12px}.lead{font-size:19px;font-weight:550;color:#344255;margin:6px 0 26px}.panel h3{font-size:21px;margin:33px 0 10px;border-bottom:1px solid var(--line);padding-bottom:6px}.panel h3:before{content:'▸ ';color:var(--accent)}.panel p{margin:13px 0}.panel b,.panel strong{font-weight:790}.panel code:not(pre code){font:15px/1.6 Consolas,monospace;word-break:break-word;background:#f1f5f9;border:1px solid #e5e7eb;padding:1px 5px;border-radius:4px}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;margin:17px 0 24px}.panel table{border-collapse:collapse;width:100%;font-size:17px;line-height:1.65}.panel th,.panel td{border-bottom:1px solid var(--line);padding:12px 14px;vertical-align:top;text-align:left}.panel th{font-size:16px;font-weight:800;background:#f1f5f9;color:#40516a}.panel tbody tr:last-child td{border:0}.panel tbody tr:nth-child(even){background:#fbfcfe}.note,.task,.try{border:1px solid var(--line);border-radius:13px;background:#fafcff;padding:17px 19px;margin:24px 0}.note{border-left:4px solid var(--accent);background:var(--soft)}.note b{color:#ad155e}.note p{margin:6px 0}.task{background:#fff}.task h4{margin:0 0 9px;font-size:19px}.task ol{margin:0;padding-left:23px}.task li{margin:8px 0}
+.codebox{border:1px solid #243953;border-radius:13px;overflow:hidden;margin:21px 0 26px}.codehead{display:flex;justify-content:space-between;align-items:center;gap:15px;padding:8px 13px;background:#1d3452;color:#dceafc;font-size:14px;font-weight:700}.copy{border:1px solid #8598b4;color:#fff;background:#314f78;border-radius:6px;padding:3px 10px;cursor:pointer;font-size:13px}.codebox pre{background:var(--codebg);color:#cbe9fb;margin:0;padding:20px;overflow-x:auto;font:16px/1.7 Consolas,'JetBrains Mono',monospace;word-break:normal;white-space:pre}.qa{padding:13px 17px;margin:13px 0;border:1px solid var(--line);background:#fbfcff;border-radius:10px}.qa summary{font-size:17px;cursor:pointer;font-weight:780}.qa[open] summary{color:#c01168}.qa p{font-size:17px}.try label{display:block;font-size:17px}.tryrow{display:flex;gap:10px;margin-top:10px}.try input{flex:1;min-width:0;border:1px solid #cbd5e1;border-radius:8px;font:17px 'Pretendard',sans-serif;padding:10px 12px}.try button{background:#e72281;color:#fff;border:0;border-radius:8px;padding:10px 16px;font:700 16px 'Pretendard',sans-serif;cursor:pointer}.try pre{font:16px/1.7 Consolas,monospace;background:#101d34;color:#caeeff;padding:12px;border-radius:8px;overflow:auto;white-space:pre-wrap}.hint{font-size:15px;color:var(--muted)}.footer{max-width:1320px;margin:auto;border-top:1px solid var(--line);padding:20px 24px 38px;text-align:center;color:var(--muted);font-size:15px}.footer small{display:block;max-width:950px;margin:5px auto}
+@media(max-width:900px){.layout{grid-template-columns:1fr;gap:12px;padding:15px 16px 64px}.sidebar{order:0;position:sticky;top:0;z-index:10;border-radius:0;max-height:none;overflow:auto;padding:8px 0;background:#fff}.sidebar .group{display:none}.tabs{flex-direction:row;white-space:nowrap;overflow-x:auto}.tabs button{flex:none;font-size:15px}.banner-in{flex-wrap:wrap}.panel h1{font-size:27px}}
+@media(max-width:680px){body{font-size:17px}.panel table{font-size:16px}.panel th{font-size:15px}.panel h1{font-size:24px}.panel h3{font-size:20px}.codebox pre{font-size:15px;padding:15px}.tryrow{flex-direction:column}}
+@media print{.sidebar,.copy{display:none}.layout{display:block}.panel[hidden]{display:block!important}.panel{break-before:page}.banner{background:#fff}}
+
+/* 3-Part expanded guide, retaining supplied visual language */
+.sidebar .tabs .group{margin:18px 10px 7px;font-size:14px;color:#a51662;font-weight:850;border-top:1px solid var(--line);padding-top:12px}
+.sidebar .tabs .group:first-child{margin-top:2px;border-top:0;padding-top:0}
+.panel h2{font-size:23px;line-height:1.5;margin:27px 0 8px}
+.panel ul,.panel ol{padding-left:27px;margin:12px 0}.panel li{margin:7px 0}
+.panel .meta{display:flex;gap:10px}.panel .note span{display:inline-block;margin-right:12px;font-weight:750;color:#ad155e}
+.panel pre:not(.codebox pre){white-space:pre-wrap}.panel .codebox pre{font-size:15px}
+.panel .codebox pre code{white-space:pre;display:block}
+.panel .math,.panel .formula{overflow-x:auto}
+.panel a{color:#bd1366}
+@media(min-width:901px){.sidebar{width:300px}.layout{grid-template-columns:minmax(0,1fr) 300px}}
+@media print{.panel{break-before:auto;page-break-inside:avoid}.sidebar{display:none}}
+
+.merged-subheading{font-size:24px;line-height:1.42;margin:42px 0 17px;padding:11px 14px;border-left:4px solid var(--accent);background:var(--surface);border-radius:0 8px 8px 0;} .panel .merged-subheading:first-of-type{margin-top:25px;}
+
+.paper-figure,.matrix-demo{margin:22px 0 28px;padding:20px 22px;border:1px solid var(--line);border-radius:13px;background:#fbfcfe}.paper-figure h3,.matrix-demo h3{margin-top:0}.paper-figure figure{text-align:center;margin:12px auto}.paper-figure img{display:block;margin:auto;max-width:min(100%,510px);max-height:710px;object-fit:contain;background:#fff;border:1px solid var(--line);border-radius:6px}.paper-figure figcaption{font-size:14px;color:var(--muted);line-height:1.6;margin-top:10px}.paper-figure a{color:#b31968}.matrix-demo .tablewrap{margin-top:12px}.matrix-demo td{font-size:15px}@media print{.paper-figure,.matrix-demo{break-inside:avoid}}
+
+/* Part headings: visual grouping, not selectable tabs */
+.tabs .part-heading{display:block;margin:15px 4px 6px;padding:12px 11px;background:#e5e7eb;color:#334155;border:1px solid #cbd5e1;border-radius:9px;font-size:15px;font-weight:850;line-height:1.5;white-space:normal;}
+.tabs .part-heading:first-child{margin-top:0}.tabs button{padding-left:14px}
+.panel .source-note{font-size:15px;color:#475569;background:#f8fafc;border-left:3px solid #94a3b8;padding:11px 14px;margin:20px 0}
+.panel .minihead{margin-top:24px;font-weight:800;color:#334155}
+@media(max-width:900px){.tabs .part-heading{flex:none;margin:0 6px 0 0;white-space:nowrap;padding:9px 12px}}
+</style><style>.journey{border-left:4px solid #ff2e93;background:#fff5fa;padding:16px 19px;margin:20px 0;border-radius:8px}.journey h3{border:0!important;margin:0 0 8px!important;padding:0!important;font-size:18px!important}.journey h3:before{content:none!important}.modelcode{border:1px solid #d4dce8;background:#f8fafc;border-radius:12px;padding:15px 17px;margin:24px 0}.modelcode h3{border:0!important;margin:0 0 8px!important;font-size:18px!important}.modelcode h3:before{content:none!important}.modelcode pre{background:#101d34;color:#d6ecff;padding:15px;overflow:auto;border-radius:9px;font:15px/1.65 Consolas,monospace;white-space:pre}.matrix-intro{margin:16px 0;padding:15px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px}.miniout{font:15px/1.6 Consolas,monospace;background:#f1f5f9;padding:12px;white-space:pre-wrap;border-radius:8px}</style><style>
+.ragmap{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 22px}.ragmap .chip{display:inline-flex;align-items:center;gap:5px;font-size:14px;line-height:1.4;padding:5px 10px;border:1px solid var(--line);border-radius:999px;background:#fff;color:#64748b}.ragmap .chip em{font-style:normal;font-weight:850;color:#94a3b8}.ragmap .chip.done{background:#f8fafc;color:#334155}.ragmap .chip.done em{color:#bd1366}.ragmap .chip.on{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:800}.ragmap .chip.on em{color:#fff}
+.flow{display:flex;flex-wrap:wrap;align-items:stretch;gap:8px;margin:18px 0 24px}.flow .fstep{flex:1 1 96px;min-width:92px;border:1px solid var(--line);border-top:3px solid var(--accent);border-radius:10px;background:#fff;padding:10px 12px}.flow .fstep b{display:block;font-size:16px;color:#0f172a}.flow .fstep span{display:block;font-size:14px;color:var(--muted);line-height:1.5;margin-top:3px}.flow .arrow{align-self:center;color:var(--accent);font-weight:900}
+.outbox .codehead{background:#203a2c}.outbox{border-color:#2f5a43}.outbox pre{background:#0d1f17;color:#c9f5d9}
+.shot{margin:18px 0 26px;padding:12px;border:1px solid var(--line);border-radius:12px;background:#fbfcfe}.shot img{display:block;max-width:100%;height:auto;border-radius:8px;border:1px solid #1e293b}.shot figcaption{font-size:14px;color:var(--muted);margin-top:8px;text-align:center}
+@media(max-width:680px){.flow .arrow{display:none}.flow .fstep{flex-basis:100%}}
+</style><style>
+.syn td:first-child code{white-space:pre-wrap;word-break:break-all}
+.syn td{vertical-align:top}
+.use{display:inline-block;margin:8px 6px 0 0;padding:1px 7px;border-radius:5px;background:#fde7f2;color:#bd1366;font-size:13px;font-weight:800}
+.use+code{display:inline-block;margin-top:6px;white-space:pre-wrap}
+main p,main li,main td{overflow-wrap:anywhere}
+.mock{border:1px solid #cbd5e1;border-radius:14px;background:#f8fafc;padding:14px 16px;margin:20px 0}
+.mock-title{font-weight:800;font-size:15px;color:#475569;margin-bottom:10px}
+.mock table{border-collapse:collapse;width:100%;font-size:15px;background:#fff}
+.mock td,.mock th{border:1px solid #e2e8f0;padding:6px 8px;text-align:center}
+.mock th{background:#f1f5f9}
+.mock .hl{background:#fde7f2;font-weight:800}
+.mock .dim{color:#94a3b8}
+.mock .ok{background:#dcfce7;font-weight:700}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}
+.chips span{border:1px solid #cbd5e1;background:#fff;border-radius:6px;padding:2px 8px;font:14px Consolas,monospace}
+.chips span.sp{background:#fde7f2;border-color:#f9a8d4}
+.chips span.unk{background:#fef3c7;border-color:#f59e0b}
+.figsvg{width:100%;height:auto;max-width:560px;display:block;margin:6px auto}
+.figrow{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.figcap{font-size:14px;color:#64748b;text-align:center;margin-top:4px}
+@media (max-width:760px){.syn table,.syn tbody,.syn tr,.syn td{display:block;width:100%!important}.syn thead{display:none}.syn tr{padding:10px 12px;border-bottom:1px solid #e2e8f0}.syn td{border:0!important;padding:3px 0!important}.mock{overflow-x:auto}}
+</style></head><body><header class="banner"><div class="banner-in"><div><div class="brand">Part A · A3-M4 · pgvector와 Qdrant</div><div style="font-size:23px;font-weight:850">벡터 DB 지도 · pgvector(SQL·인덱스·필터) · Qdrant(point·payload·Filter) · 두 DB 비교</div></div><div class="who">© 2026 부성순 · AI·클라우드 실무 과정</div><a href="/lectures/files/index.html#section-a1" style="display:inline-block;padding:7px 11px;border:1px solid #e2e8f0;border-radius:8px;background:#fff;color:#bd1366;text-decoration:none;font-weight:800;white-space:nowrap">📚 강의자료 라이브러리 · Part A</a></div></header><div class="layout"><aside class="sidebar"><div class="group">A3-M4 · 세부 목차</div><nav aria-label="교안 세부 목차" class="tabs" role="tablist"><div aria-level="2" class="part-heading" role="heading">Part 0. 벡터 DB 지도</div><button aria-controls="u00" aria-selected="true" id="tab-u00" role="tab" tabindex="0" type="button"><span>00</span>벡터 DB를 고르는 두 갈래</button><div aria-level="2" class="part-heading" role="heading">Part 1. pgvector</div><button aria-controls="u01" aria-selected="false" id="tab-u01" role="tab" tabindex="-1" type="button"><span>01</span>pgvector 접속</button><button aria-controls="u02" aria-selected="false" id="tab-u02" role="tab" tabindex="-1" type="button"><span>02</span>테이블과 거리 연산자</button><button aria-controls="u03" aria-selected="false" id="tab-u03" role="tab" tabindex="-1" type="button"><span>03</span>검색 SQL·WHERE·JOIN</button><button aria-controls="u04" aria-selected="false" id="tab-u04" role="tab" tabindex="-1" type="button"><span>04</span>HNSW·IVFFlat 인덱스</button><button aria-controls="u05" aria-selected="false" id="tab-u05" role="tab" tabindex="-1" type="button"><span>05</span>필터와 인덱스, 오류</button><div aria-level="2" class="part-heading" role="heading">Part 2. Qdrant</div><button aria-controls="u06" aria-selected="false" id="tab-u06" role="tab" tabindex="-1" type="button"><span>06</span>Qdrant 구조와 접속</button><button aria-controls="u07" aria-selected="false" id="tab-u07" role="tab" tabindex="-1" type="button"><span>07</span>넣기와 검색</button><button aria-controls="u08" aria-selected="false" id="tab-u08" role="tab" tabindex="-1" type="button"><span>08</span>Filter 문법</button><button aria-controls="u09" aria-selected="false" id="tab-u09" role="tab" tabindex="-1" type="button"><span>09</span>오류와 서버 설정</button><div aria-level="2" class="part-heading" role="heading">Part 3. 비교와 적용</div><button aria-controls="u10" aria-selected="false" id="tab-u10" role="tab" tabindex="-1" type="button"><span>10</span>두 DB로 쇼핑몰 Q&A</button><div aria-level="2" class="part-heading" role="heading">Part 4. 마무리</div><button aria-controls="u11" aria-selected="false" id="tab-u11" role="tab" tabindex="-1" type="button"><span>11</span>실습 과제</button><button aria-controls="u12" aria-selected="false" id="tab-u12" role="tab" tabindex="-1" type="button"><span>12</span>정리</button></nav></aside><main><section aria-labelledby="tab-u00" class="panel" id="u00" role="tabpanel"><div class="crumb">Part 0. 벡터 DB 지도 · A3-M4</div><h1>00. 벡터 DB 지도 — ‘DB에 벡터를 붙이기’와 ‘전용 벡터 DB’</h1><p class="lead">벡터 검색 도구는 크게 두 갈래입니다. 이미 쓰는 데이터베이스에 벡터 열을 붙이는 방식(pgvector, OpenSearch, Redis …)과, 벡터 검색만을 위해 만든 전용 DB(Qdrant, Milvus, Weaviate, Pinecone …)입니다. 이 모듈은 각 갈래의 대표인 <b>pgvector</b>와 <b>Qdrant</b>를 실습합니다.</p><div class="journey"><h3>이 모듈에서 할 일</h3><p>pgvector로 PostgreSQL 테이블에 벡터 열을 만들고, SQL로 검색·필터·JOIN을 합니다. HNSW·IVFFlat 인덱스를 만들어 실행 계획과 정확도를 확인하고, 필터와 인덱스가 만날 때 생기는 문제를 재현합니다. Qdrant로는 점(point)·payload 구조와 Filter 문법 전체를 익힙니다. 마지막으로 같은 쇼핑몰 Q&A를 두 DB로 만들어 문법과 결과를 비교합니다.</p></div><h3>00-1. 요즘 쓰는 벡터 검색 도구</h3><div class="tablewrap "><table><thead><tr><th>이름</th><th>갈래</th><th>강점</th><th>이럴 때</th></tr></thead><tbody><tr><td><b>pgvector</b></td><td>DB에 붙이기 (PostgreSQL 확장)</td><td>SQL·트랜잭션·JOIN·백업 그대로, 운영 인력 재사용</td><td>이미 PostgreSQL을 쓰는 서비스, 수백만 건 이하</td></tr><tr><td><b>Qdrant</b></td><td>전용 벡터 DB (Rust)</td><td>payload 필터가 강하고 빠름, 폴더 모드로 바로 실습, 양자화</td><td>필터가 많은 검색 서비스, 소~대규모</td></tr><tr><td>Chroma (A3-M3)</td><td>전용 (내장형)</td><td>설치 가장 쉬움, 파이썬 친화</td><td>프로토타입, 개인·소규모 RAG</td></tr><tr><td>Milvus (Zilliz)</td><td>전용 (분산)</td><td>수십억 벡터, GPU·다양한 인덱스(IVF·HNSW·DiskANN)</td><td>대규모 전용 벡터 플랫폼</td></tr><tr><td>Weaviate</td><td>전용</td><td>모듈로 임베딩 자동화, 하이브리드 검색</td><td>검색 앱을 빠르게</td></tr><tr><td>Pinecone</td><td>전용 (완전 관리형)</td><td>서버 관리 없음, 서버리스</td><td>운영 인력이 없을 때</td></tr><tr><td>OpenSearch · Elasticsearch</td><td>검색엔진에 붙이기</td><td>BM25 키워드 + 벡터 하이브리드, 로그·검색 인프라 재사용</td><td>기업 검색, AWS 환경 — <b>다음 과정</b></td></tr><tr><td>Redis</td><td>인메모리 DB에 붙이기</td><td>아주 낮은 지연, 캐시와 함께</td><td>실시간 추천, 의미 기반 캐시</td></tr><tr><td>FAISS (A3-M2)</td><td>라이브러리</td><td>가장 빠르고 인덱스가 가장 다양, 다른 제품의 엔진</td><td>직접 제어, 배치 처리, 연구</td></tr></tbody></table></div><h3>00-2. 고르는 순서</h3><div class="tablewrap "><table><thead><tr><th>질문</th><th>예 →</th><th>아니오 →</th></tr></thead><tbody><tr><td>① PostgreSQL을 이미 쓰고, 벡터가 수백만 건 이하인가?</td><td><b>pgvector</b></td><td>②</td></tr><tr><td>② 키워드 검색(BM25)과 섞어야 하거나 검색엔진이 이미 있는가?</td><td><b>OpenSearch / Elasticsearch</b></td><td>③</td></tr><tr><td>③ 운영 인력 없이 관리형으로 쓰고 싶은가?</td><td>Pinecone · Qdrant Cloud · Zilliz Cloud</td><td>④</td></tr><tr><td>④ 수천만 건 이상, 필터가 복잡한가?</td><td><b>Qdrant</b> · Milvus</td><td>프로토타입은 Chroma</td></tr></tbody></table></div><h3>00-3. 어느 도구든 같은 다섯 가지</h3><div class="tablewrap "><table><thead><tr><th>개념</th><th>FAISS</th><th>Chroma</th><th>pgvector</th><th>Qdrant</th><th>OpenSearch</th></tr></thead><tbody><tr><td>저장 단위</td><td>index</td><td>collection</td><td>table</td><td>collection</td><td>index</td></tr><tr><td>한 건</td><td>벡터 + int id</td><td>id + document + metadata + embedding</td><td>행(row) + vector 열</td><td>point = id + vector + payload</td><td>문서(JSON) + knn_vector 필드</td></tr><tr><td>거리</td><td>METRIC_L2·IP</td><td>space</td><td>연산자 <code>&lt;-&gt; &lt;#&gt; &lt;=&gt;</code> + ops</td><td>Distance</td><td>space_type</td></tr><tr><td>필터</td><td>IDSelector</td><td>where</td><td>SQL WHERE</td><td>Filter(must/should/must_not)</td><td>bool filter</td></tr><tr><td>근사 인덱스</td><td>IVF·PQ·HNSW</td><td>HNSW</td><td>HNSW·IVFFlat</td><td>HNSW</td><td>HNSW·IVF (faiss/lucene)</td></tr></tbody></table></div><h3>00-4. 실습 준비 — Docker 두 개</h3><div class="codebox"><div class="codehead"><span>터미널</span><button class="copy" type="button">코드 복사</button></div><pre><code># PostgreSQL + pgvector (비밀번호 postgres, 포트 5432)
+docker run -d --name pgvector -e POSTGRES_PASSWORD=postgres -p 5432:5432 pgvector/pgvector:pg17
+
+# (선택) Qdrant 서버 — 노트북은 서버 없이 폴더 모드로도 실행됨
+docker run -d --name qdrant -p 6333:6333 -v ./qdrant_storage:/qdrant/storage qdrant/qdrant
+
+pip install -r requirements.txt     # psycopg[binary] pgvector qdrant-client numpy ...</code></pre></div><div class="note"><b>실행 결과에 대해</b><p>이 교안의 pgvector 결과는 PostgreSQL 16 + pgvector 0.6에서 실행한 값입니다. Docker 이미지는 더 최신 pgvector(0.8 이상)라 실행 계획 숫자가 조금 다를 수 있고, 05번 탭의 iterative_scan이 동작합니다. 쇼핑몰 FAQ 결과는 대체 임베딩(글자 n-gram, 1024차원)으로 실행한 값입니다. e5 모델이 설치된 PC에서는 384차원이 되고 점수와 순위가 달라집니다.</p></div></section>
+<section aria-labelledby="tab-u01" class="panel" hidden="" id="u01" role="tabpanel"><div class="crumb">Part 1. pgvector · A3-M4</div><h1>01. pgvector — PostgreSQL에 벡터 열 붙이기</h1><p class="lead">pgvector는 PostgreSQL 확장입니다. 설치하면 <code>vector(차원)</code>이라는 열 종류와 거리 연산자, HNSW·IVFFlat 인덱스가 생깁니다. 벡터 DB를 따로 운영하지 않고 기존 DB에서 RAG를 할 수 있다는 것이 가장 큰 장점입니다.</p><div class="flow"><div class="fstep"><b>PostgreSQL</b><span>테이블·SQL·트랜잭션</span></div><span class="arrow" aria-hidden="true">→</span><div class="fstep"><b>+ pgvector</b><span>vector 열 · 거리 연산자 · 인덱스</span></div><span class="arrow" aria-hidden="true">→</span><div class="fstep"><b>psycopg</b><span>파이썬 접속</span></div><span class="arrow" aria-hidden="true">→</span><div class="fstep"><b>pgvector.psycopg</b><span>numpy ↔ vector 변환</span></div></div><h3>01-1. 접속과 확장 켜기</h3><div class="codebox"><div class="codehead"><span>01_pgvector_시작하기.ipynb · 01-1</span><button class="copy" type="button">코드 복사</button></div><pre><code>import os, psycopg, numpy as np
+from pgvector.psycopg import register_vector
+
+# Docker로 띄운 PostgreSQL(pgvector 포함)에 접속. 다른 주소면 환경변수 PG_DSN으로 바꾼다
+DSN = os.getenv("PG_DSN", "postgresql://postgres:postgres@localhost:5432/postgres")
+conn = psycopg.connect(DSN, autocommit=True)          # autocommit: 문장마다 바로 반영
+conn.execute("CREATE EXTENSION IF NOT EXISTS vector")  # pgvector 켜기 (DB마다 한 번)
+register_vector(conn)                                   # numpy 배열 ↔ vector 자동 변환
+print("PostgreSQL:", conn.execute("SHOW server_version").fetchone()[0])
+print("pgvector  :", conn.execute("SELECT extversion FROM pg_extension WHERE extname = 'vector'").fetchone()[0])</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>import psycopg</code></td><td>PostgreSQL 파이썬 드라이버(3버전). 설치 이름 <code>psycopg[binary]</code></td></tr><tr><td><code>os.getenv("PG_DSN", "postgresql://postgres:postgres@localhost:5432/postgres")</code></td><td>접속 주소. <code>postgresql://사용자:비밀번호@호스트:포트/DB이름</code>. 환경변수로 바꿀 수 있게</td></tr><tr><td><code>psycopg.connect(DSN, autocommit=True)</code></td><td>autocommit: 문장마다 바로 저장(실습용). 운영에서는 트랜잭션으로 묶음</td></tr><tr><td><code>conn.execute("CREATE EXTENSION IF NOT EXISTS vector")</code></td><td>DB마다 한 번 확장 켜기. 안 하면 <code>type "vector" does not exist</code></td></tr><tr><td><code>register_vector(conn)</code></td><td>numpy 배열을 그대로 SQL 인자로 넘기고, 결과도 numpy로 받게 해 줌</td></tr><tr><td><code>conn.execute(sql).fetchone()[0]</code></td><td>결과 첫 행의 첫 칸</td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>PostgreSQL: 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1)
+pgvector  : 0.6.0</code></pre></div></section>
+<section aria-labelledby="tab-u02" class="panel" hidden="" id="u02" role="tabpanel"><div class="crumb">Part 1. pgvector · A3-M4</div><h1>02. vector 열이 있는 테이블과 거리 연산자</h1><p class="lead">FAQ를 담는 평범한 테이블에 <code>embedding vector(1024)</code> 열 하나를 더합니다. 그리고 pgvector의 거리 연산자 세 개를 손계산과 비교합니다.</p><h3>02-1. vector 열이 있는 테이블 만들고 넣기</h3><p>쇼핑몰 FAQ 결과는 대체 임베딩(글자 n-gram, 1024차원)으로 실행한 값입니다. e5 모델이 설치된 PC에서는 384차원이 되고 점수와 순위가 달라집니다.</p><div class="codebox"><div class="codehead"><span>01_pgvector_시작하기.ipynb · 02-1</span><button class="copy" type="button">코드 복사</button></div><pre><code>from shop_faq import FAQ
+from embedder import Embedder
+emb = Embedder()
+DIM = emb.dim
+
+conn.execute("DROP TABLE IF EXISTS faq_stats")               # faq를 참조하는 표가 있으면 먼저 지움(다시 실행 대비)
+conn.execute("DROP TABLE IF EXISTS faq")
+conn.execute(f"""
+    CREATE TABLE faq (
+        id        bigint PRIMARY KEY,
+        cat       text NOT NULL,
+        question  text,
+        answer    text,
+        year      int,
+        embedding vector({DIM})            -- 차원을 고정한 벡터 열
+    )""")
+X = emb.encode([f"{q} {a}" for _, _, q, a in FAQ])
+rows = [(i, c, q, a, 2024 + i % 3, X[k]) for k, (i, c, q, a) in enumerate(FAQ)]
+with conn.cursor() as cur:
+    cur.executemany("INSERT INTO faq VALUES (%s, %s, %s, %s, %s, %s)", rows)
+print(emb.kind, "| 행 수:", conn.execute("SELECT count(*) FROM faq").fetchone()[0])
+print(conn.execute("SELECT id, cat, vector_dims(embedding) FROM faq LIMIT 3").fetchall())</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>embedding vector({DIM})</code></td><td>차원 고정 벡터 열. 다른 차원은 넣을 수 없음</td></tr><tr><td><code>f"""CREATE TABLE ..."""</code></td><td>여러 줄 f-string으로 SQL 작성. 값은 f-string으로 넣지 말고 %s 자리표시자로(아래)</td></tr><tr><td><code>cur.executemany("INSERT ... VALUES (%s, ...)", rows)</code></td><td>여러 행을 한 번에. %s는 psycopg가 안전하게 값을 채움(SQL 주입 방지)</td></tr><tr><td><code>vector_dims(embedding)</code></td><td>벡터 차원을 돌려주는 SQL 함수</td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>(임베딩 모델을 불러오지 못해 대체 임베딩 사용: ModuleNotFoundError)
+fallback-char-ngram-1024 | 행 수: 20
+[(101, '배송', 1024), (102, '배송', 1024), (103, '배송', 1024)]</code></pre></div><h3>02-2. 거리 연산자 세 가지 — 작은 벡터로 손계산과 비교</h3><div class="codebox"><div class="codehead"><span>01_pgvector_시작하기.ipynb · 02-2</span><button class="copy" type="button">코드 복사</button></div><pre><code>a, b = np.array([1, 2, 3], dtype="float32"), np.array([1, 1, 1], dtype="float32")
+r = conn.execute("""SELECT %s::vector &lt;-&gt; %s::vector  AS l2,
+                           %s::vector &lt;#&gt; %s::vector  AS neg_ip,
+                           %s::vector &lt;=&gt; %s::vector  AS cos_dist""", (a, b) * 3).fetchone()
+print("SQL  :", [round(x, 4) for x in r])
+print("numpy:", round(float(np.linalg.norm(a - b)), 4), -float(a @ b),
+      round(1 - float(a @ b / np.linalg.norm(a) / np.linalg.norm(b)), 4))</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>%s::vector</code></td><td>값을 vector 자료형으로 변환(캐스트)</td></tr><tr><td><code>&lt;-&gt;</code></td><td><b>L2 거리</b> (FAISS와 달리 제곱근을 씌운 진짜 거리)</td></tr><tr><td><code>&lt;#&gt;</code></td><td><b>음수 내적</b>. 작을수록 가깝게 정렬하려고 부호를 뒤집음 → 내적 = −(결과)</td></tr><tr><td><code>&lt;=&gt;</code></td><td><b>코사인 거리</b> = 1 − 코사인 유사도</td></tr><tr><td><code>(a, b) * 3</code></td><td>튜플 반복 — %s 여섯 자리에 a, b, a, b, a, b</td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>SQL  : [2.2361, -6.0, 0.0742]
+numpy: 2.2361 -6.0 0.0742</code></pre></div><div class="tablewrap "><table><thead><tr><th>연산자</th><th>뜻</th><th>인덱스 ops</th><th>유사도로 바꾸기</th></tr></thead><tbody><tr><td><code>&lt;-&gt;</code></td><td>L2 거리</td><td><code>vector_l2_ops</code></td><td>작을수록 가까움</td></tr><tr><td><code>&lt;#&gt;</code></td><td>음수 내적</td><td><code>vector_ip_ops</code></td><td><code>-(a &lt;#&gt; b)</code> = 내적</td></tr><tr><td><code>&lt;=&gt;</code></td><td>코사인 거리</td><td><code>vector_cosine_ops</code></td><td><code>1 - (a &lt;=&gt; b)</code></td></tr><tr><td><code>&lt;+&gt;</code></td><td>L1 거리 (0.7+)</td><td><code>vector_l1_ops</code></td><td>—</td></tr></tbody></table></div><div class="note"><b>연산자와 인덱스는 짝</b><p>인덱스를 <code>vector_cosine_ops</code>로 만들었으면 검색도 <code>&lt;=&gt;</code>로 해야 인덱스를 씁니다. 다른 연산자로 검색하면 오류 없이 <b>전부 읽는 느린 검색</b>이 됩니다(05번 탭, 과제 2).</p></div></section>
+<section aria-labelledby="tab-u03" class="panel" hidden="" id="u03" role="tabpanel"><div class="crumb">Part 1. pgvector · A3-M4</div><h1>03. 검색은 ORDER BY 거리 LIMIT k — 필터는 그냥 WHERE</h1><p class="lead">pgvector 검색은 새 문법이 아니라 평범한 SQL입니다. ‘거리 순으로 정렬해서 위에서 k개’. 필터는 WHERE, 다른 표와의 결합은 JOIN입니다. Chroma의 where 사전이 그대로 SQL이 됩니다.</p><h3>03-1. 검색 SQL — ORDER BY 거리 LIMIT k</h3><div class="codebox"><div class="codehead"><span>01_pgvector_시작하기.ipynb · 03-1</span><button class="copy" type="button">코드 복사</button></div><pre><code>qv = emb.encode(["택배 언제 와요?"], kind="query")[0]
+sql = """SELECT id, cat, question, 1 - (embedding &lt;=&gt; %s) AS sim
+         FROM faq
+         ORDER BY embedding &lt;=&gt; %s
+         LIMIT 3"""
+for row in conn.execute(sql, (qv, qv)).fetchall():
+    print(row[0], row[1], row[2], round(row[3], 3))</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>ORDER BY embedding &lt;=&gt; %s</code></td><td>질문 벡터와의 코사인 거리 순</td></tr><tr><td><code>LIMIT 3</code></td><td>위에서 3개 = top-k</td></tr><tr><td><code>1 - (embedding &lt;=&gt; %s) AS sim</code></td><td>SELECT에서 유사도 계산해 함께 받기</td></tr><tr><td><code>(qv, qv)</code></td><td>같은 벡터를 두 자리에 — SELECT용, ORDER BY용</td></tr></tbody></table></div><h4 class="minihead">실행 결과 · 쇼핑몰 FAQ 결과는 대체 임베딩(글자 n-gram, 1024차원)으로 실행한 값입니다. e5 모델이 설치된 PC에서는 384차원이 되고 점수와 순위가 달라집니다.</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>401 환불 환불은 언제 되나요? 0.222
+101 배송 배송은 언제 오나요? 0.194
+701 적립금 적립금은 언제 소멸되나요? 0.179</code></pre></div><h3>03-2. WHERE와 JOIN — SQL이 곧 필터</h3><div class="codebox"><div class="codehead"><span>01_pgvector_시작하기.ipynb · 03-2</span><button class="copy" type="button">코드 복사</button></div><pre><code>conn.execute("DROP TABLE IF EXISTS faq_stats")
+conn.execute("CREATE TABLE faq_stats (faq_id bigint REFERENCES faq(id), views int)")
+conn.execute("INSERT INTO faq_stats SELECT id, (id * 37) % 500 FROM faq")   # 조회수(가상)
+
+qv = emb.encode(["환불 며칠 걸려요?"], kind="query")[0]
+print("환불만:", conn.execute("""SELECT id, question FROM faq WHERE cat = '환불'
+                                 ORDER BY embedding &lt;=&gt; %s LIMIT 3""", (qv,)).fetchall())
+print("2025년 이후 + (환불 또는 교환반품):", conn.execute("""
+        SELECT id, cat, year FROM faq
+        WHERE year &gt;= 2025 AND cat IN ('환불', '교환반품')
+        ORDER BY embedding &lt;=&gt; %s LIMIT 3""", (qv,)).fetchall())
+print("조회수와 함께:", conn.execute("""
+        SELECT f.id, f.question, s.views, round((1 - (f.embedding &lt;=&gt; %s))::numeric, 3) AS sim
+        FROM faq f JOIN faq_stats s ON s.faq_id = f.id
+        ORDER BY f.embedding &lt;=&gt; %s LIMIT 3""", (qv, qv)).fetchall())</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>REFERENCES faq(id)</code></td><td>외래 키: faq에 있는 id만 들어갈 수 있음</td></tr><tr><td><code>WHERE cat = '환불'</code></td><td>메타데이터 필터 = SQL 조건</td></tr><tr><td><code>WHERE year &gt;= 2025 AND cat IN (...)</code></td><td>Chroma의 $and·$gte·$in을 SQL로</td></tr><tr><td><code>FROM faq f JOIN faq_stats s ON s.faq_id = f.id</code></td><td>다른 표(조회수)와 결합 — 전용 벡터 DB에서는 어려운 일</td></tr><tr><td><code>round((...)::numeric, 3)</code></td><td>PostgreSQL round는 numeric에서 자릿수 지정 가능 → 결과가 Decimal로 옴</td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>환불만: [(402, '부분 환불도 되나요?'), (401, '환불은 언제 되나요?')]
+2025년 이후 + (환불 또는 교환반품): [(401, '환불', 2026), (302, '교환반품', 2026), (304, '교환반품', 2025)]
+조회수와 함께: [(402, '부분 환불도 되나요?', 374, Decimal('0.244')), (401, '환불은 언제 되나요?', 337, Decimal('0.216')), (201, '어떤 결제 수단을 쓸 수 있나요?', 437, Decimal('0.145'))]</code></pre></div><h3>03-3. 파이썬 검색 함수와 평가</h3><div class="codebox"><div class="codehead"><span>01_pgvector_시작하기.ipynb · 03-3</span><button class="copy" type="button">코드 복사</button></div><pre><code>from shop_faq import TESTS
+def search(question, k=3, cat=None):
+    v = emb.encode([question], kind="query")[0]
+    where, params = ("WHERE cat = %s", [cat]) if cat else ("", [])
+    rows = conn.execute(f"""SELECT id, 1 - (embedding &lt;=&gt; %s) FROM faq {where}
+                            ORDER BY embedding &lt;=&gt; %s LIMIT %s""", [v, *params, v, k]).fetchall()
+    return [(int(i), round(float(s), 3)) for i, s in rows]
+
+print(search("택배 언제 와요?"))
+hit1 = sum(search(q, 1)[0][0] == g for q, g in TESTS)
+print(f"Hit@1 {hit1}/{len(TESTS)}")</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>where, params = ("WHERE cat = %s", [cat]) if cat else ("", [])</code></td><td>조건이 있을 때만 WHERE와 값을 붙이는 패턴</td></tr><tr><td><code>[v, *params, v, k]</code></td><td>리스트 풀기로 자리표시자 순서대로 값 나열</td></tr><tr><td><code>LIMIT %s</code></td><td>LIMIT 값도 자리표시자로</td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>[(401, 0.222), (101, 0.194), (701, 0.179)]
+Hit@1 7/12</code></pre></div><p>Hit@1이 FAISS·Chroma와 같은 7/12입니다. 같은 벡터를 쓰면 DB가 달라도 결과는 같습니다. 검색 품질은 DB가 아니라 <b>임베딩</b>이 정합니다.</p></section>
+<section aria-labelledby="tab-u04" class="panel" hidden="" id="u04" role="tabpanel"><div class="crumb">Part 1. pgvector · A3-M4</div><h1>04. 인덱스 — 실행 계획으로 확인하는 HNSW와 IVFFlat</h1><p class="lead">인덱스가 없으면 PostgreSQL은 모든 행의 거리를 계산하고 정렬합니다(Seq Scan + Sort). A3-M2에서 배운 HNSW·IVF를 <code>CREATE INDEX</code> 한 줄로 만들고, <b>EXPLAIN</b>으로 실제로 쓰이는지 확인합니다.</p><h3>04-1. 준비 — 2만 개 벡터를 COPY로 빠르게 넣기</h3><div class="codebox"><div class="codehead"><span>02_pgvector_인덱스와_필터.ipynb · 04-1</span><button class="copy" type="button">코드 복사</button></div><pre><code>import os, psycopg, numpy as np
+from pgvector.psycopg import register_vector
+
+# Docker로 띄운 PostgreSQL(pgvector 포함)에 접속. 다른 주소면 환경변수 PG_DSN으로 바꾼다
+DSN = os.getenv("PG_DSN", "postgresql://postgres:postgres@localhost:5432/postgres")
+conn = psycopg.connect(DSN, autocommit=True)          # autocommit: 문장마다 바로 반영
+conn.execute("CREATE EXTENSION IF NOT EXISTS vector")  # pgvector 켜기 (DB마다 한 번)
+register_vector(conn)                                   # numpy 배열 ↔ vector 자동 변환
+import time
+rng = np.random.default_rng(0)
+d, n = 64, 20000
+centers = rng.normal(0, 10, (50, d))
+xb = (centers[rng.integers(0, 50, n)] + rng.normal(0, 1, (n, d))).astype("float32")
+xq = (centers[rng.integers(0, 50, 50)] + rng.normal(0, 1, (50, d))).astype("float32")
+cats = rng.integers(0, 10, n)                                  # 카테고리 0~9
+
+conn.execute("DROP TABLE IF EXISTS bench")
+conn.execute(f"CREATE TABLE bench (id bigint PRIMARY KEY, cat int, embedding vector({d}))")
+t = time.perf_counter()
+with conn.cursor() as cur:
+    with cur.copy("COPY bench (id, cat, embedding) FROM STDIN WITH (FORMAT BINARY)") as cp:
+        cp.set_types(["int8", "int4", "vector"])
+        for i in range(n):
+            cp.write_row((i, int(cats[i]), xb[i]))
+print(f"COPY {n}행 {time.perf_counter() - t:.2f}초")</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>cur.copy("COPY bench ... FROM STDIN WITH (FORMAT BINARY)")</code></td><td><b>COPY</b>: 대량 적재 전용 명령. INSERT 반복보다 수십 배 빠름</td></tr><tr><td><code>cp.set_types(["int8", "int4", "vector"])</code></td><td>바이너리 COPY의 열 자료형</td></tr><tr><td><code>cp.write_row((i, cat, vec))</code></td><td>한 행씩 보냄</td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>COPY 20000행 0.07초</code></pre></div><h3>04-2. 인덱스 없이 — 정답과 실행 계획</h3><div class="codebox"><div class="codehead"><span>02_pgvector_인덱스와_필터.ipynb · 04-2</span><button class="copy" type="button">코드 복사</button></div><pre><code>def topk(sql, q, k=10, extra=()):
+    return [r[0] for r in conn.execute(sql, (*extra, q, k)).fetchall()]
+
+SQL = "SELECT id FROM bench ORDER BY embedding &lt;-&gt; %s LIMIT %s"
+t = time.perf_counter()
+gt = [topk(SQL, q) for q in xq]                                # 정답(전수 비교)
+t_exact = (time.perf_counter() - t) / len(xq) * 1000
+print(f"전수 비교: 질문당 {t_exact:.1f} ms")
+plan = conn.execute("EXPLAIN SELECT id FROM bench ORDER BY embedding &lt;-&gt; %s LIMIT 10", (xq[0],)).fetchall()
+print("\n".join(r[0][:80] for r in plan))</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>EXPLAIN SELECT ...</code></td><td>실행하지 않고 <b>실행 계획</b>만 보여 줌. 실제 시간까지 보려면 <code>EXPLAIN ANALYZE</code></td></tr><tr><td><code>Seq Scan → Sort → Limit</code></td><td>전부 읽고(Seq Scan) 거리로 정렬(Sort)한 뒤 10개 — FAISS의 Flat</td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>전수 비교: 질문당 4.5 ms
+Limit  (cost=3796.13..3796.16 rows=10 width=16)
+  -&gt;  Sort  (cost=3796.13..4017.05 rows=88366 width=16)
+        Sort Key: ((embedding &lt;-&gt; '[4.3141823,-5.8971767,-9.470028,3.5003521,7.7
+        -&gt;  Seq Scan on bench  (cost=0.00..1886.57 rows=88366 width=16)</code></pre></div><h3>04-3. HNSW 인덱스 — 만들기, 실행 계획, ef_search</h3><div class="codebox"><div class="codehead"><span>02_pgvector_인덱스와_필터.ipynb · 04-3</span><button class="copy" type="button">코드 복사</button></div><pre><code>def recall(res):
+    return np.mean([len(set(a) &amp; set(b)) / 10 for a, b in zip(res, gt)])
+
+t = time.perf_counter()
+conn.execute("CREATE INDEX bench_hnsw ON bench USING hnsw (embedding vector_l2_ops) WITH (m = 16, ef_construction = 64)")
+print(f"HNSW 만들기 {time.perf_counter() - t:.1f}초 | 크기",
+      conn.execute("SELECT pg_size_pretty(pg_relation_size('bench_hnsw'))").fetchone()[0])
+plan = conn.execute("EXPLAIN SELECT id FROM bench ORDER BY embedding &lt;-&gt; %s LIMIT 10", (xq[0],)).fetchall()
+print("\n".join(r[0][:80] for r in plan[:2]))
+for ef in [10, 40, 100]:
+    conn.execute(f"SET hnsw.ef_search = {ef}")
+    t = time.perf_counter(); res = [topk(SQL, q) for q in xq]; el = (time.perf_counter() - t) / len(xq) * 1000
+    print(f"ef_search={ef:&lt;3} recall@10 {recall(res):.3f}  질문당 {el:.2f} ms")</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>CREATE INDEX ... USING hnsw (embedding vector_l2_ops) WITH (m = 16, ef_construction = 64)</code></td><td>HNSW 인덱스. <b>m</b>·<b>ef_construction</b>은 만들 때 정함(A3-M2 08탭)</td></tr><tr><td><code>pg_size_pretty(pg_relation_size('bench_hnsw'))</code></td><td>인덱스 크기</td></tr><tr><td><code>Index Scan using bench_hnsw</code></td><td>계획이 바뀜 — 인덱스를 따라가며 가까운 순으로 꺼냄</td></tr><tr><td><code>SET hnsw.ef_search = 40</code></td><td>검색 폭. 세션(접속) 단위 설정. <code>SET LOCAL</code>이면 트랜잭션 단위</td></tr></tbody></table></div><h4 class="minihead">실행 결과 · 시간은 PC마다 다름</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>HNSW 만들기 4.7초 | 크기 11 MB
+Limit  (cost=24.60..26.29 rows=10 width=16)
+  -&gt;  Index Scan using bench_hnsw on bench  (cost=24.60..3402.60 rows=20000 widt
+ef_search=10  recall@10 0.902  질문당 0.55 ms
+ef_search=40  recall@10 0.978  질문당 0.71 ms
+ef_search=100 recall@10 0.980  질문당 0.81 ms</code></pre></div><div class="mock"><div class="mock-title">ef_search에 따른 정확도 (문서 20,000, m 16)</div><div class="tablewrap "><table><thead><tr><th>hnsw.ef_search</th><th>recall@10</th><th>질문당 ms</th></tr></thead><tbody><tr><td>10</td><td>0.902</td><td>0.55</td></tr><tr><td>40</td><td>0.978</td><td>0.71</td></tr><tr><td>100</td><td>0.980</td><td>0.81</td></tr></tbody></table></div></div><h3>04-4. IVFFlat 인덱스 — lists와 probes</h3><div class="codebox"><div class="codehead"><span>02_pgvector_인덱스와_필터.ipynb · 04-4</span><button class="copy" type="button">코드 복사</button></div><pre><code>conn.execute("DROP INDEX bench_hnsw")
+t = time.perf_counter()
+conn.execute("CREATE INDEX bench_ivf ON bench USING ivfflat (embedding vector_l2_ops) WITH (lists = 100)")
+print(f"IVFFlat 만들기 {time.perf_counter() - t:.1f}초 (데이터를 넣은 뒤 만들어야 중심점이 좋다)")
+for probes in [1, 4, 10]:
+    conn.execute(f"SET ivfflat.probes = {probes}")
+    t = time.perf_counter(); res = [topk(SQL, q) for q in xq]; el = (time.perf_counter() - t) / len(xq) * 1000
+    print(f"probes={probes:&lt;2} recall@10 {recall(res):.3f}  질문당 {el:.2f} ms")
+conn.execute("DROP INDEX bench_ivf")</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>USING ivfflat (... ) WITH (lists = 100)</code></td><td>IVF. <b>lists</b> = FAISS의 nlist. 만들 때 <b>지금 있는 데이터로 K-means</b> → 데이터를 넣은 뒤 만들어야 함</td></tr><tr><td><code>SET ivfflat.probes = 4</code></td><td>= FAISS의 nprobe</td></tr><tr><td><code>DROP INDEX bench_ivf</code></td><td>인덱스 지우기</td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>IVFFlat 만들기 0.1초 (데이터를 넣은 뒤 만들어야 중심점이 좋다)
+probes=1  recall@10 0.670  질문당 0.29 ms
+probes=4  recall@10 1.000  질문당 0.39 ms
+probes=10 recall@10 1.000  질문당 0.63 ms</code></pre></div><div class="mock"><div class="mock-title">probes에 따른 정확도 (lists 100)</div><div class="tablewrap "><table><thead><tr><th>ivfflat.probes</th><th>recall@10</th><th>질문당 ms</th></tr></thead><tbody><tr><td>1</td><td>0.670</td><td>0.29</td></tr><tr><td>4</td><td>1.000</td><td>0.39</td></tr><tr><td>10</td><td>1.000</td><td>0.63</td></tr></tbody></table></div></div><div class="tablewrap "><table><thead><tr><th>pgvector</th><th>A3-M2 FAISS</th><th>OpenSearch</th></tr></thead><tbody><tr><td><code>USING hnsw ... WITH (m, ef_construction)</code></td><td><code>IndexHNSWFlat(d, M)</code>, efConstruction</td><td><code>method: hnsw</code>, m, ef_construction</td></tr><tr><td><code>SET hnsw.ef_search</code></td><td><code>hnsw.efSearch</code></td><td>ef_search</td></tr><tr><td><code>USING ivfflat ... WITH (lists)</code></td><td><code>IndexIVFFlat(q, d, nlist)</code> + train</td><td><code>method: ivf</code>, nlist + train API</td></tr><tr><td><code>SET ivfflat.probes</code></td><td><code>nprobe</code></td><td>nprobes</td></tr></tbody></table></div><div class="tablewrap "><table><thead><tr><th></th><th>HNSW</th><th>IVFFlat</th></tr></thead><tbody><tr><td>만들기</td><td>느림(그래프)</td><td>빠름(K-means)</td></tr><tr><td>빈 테이블에 미리 만들기</td><td>가능</td><td><b>데이터를 넣은 뒤</b> (중심점이 데이터에 맞아야)</td></tr><tr><td>데이터가 많이 바뀌면</td><td>그대로 사용</td><td>다시 만들기(REINDEX) 권장</td></tr><tr><td>기본 선택</td><td><b>대부분 HNSW</b></td><td>만들기 시간·메모리가 부담될 때</td></tr></tbody></table></div></section>
+<section aria-labelledby="tab-u05" class="panel" hidden="" id="u05" role="tabpanel"><div class="crumb">Part 1. pgvector · A3-M4</div><h1>05. 필터 + 근사 인덱스 — 결과가 LIMIT보다 적게 나오는 문제</h1><p class="lead">벡터 검색과 WHERE 필터를 함께 쓸 때 가장 많이 만나는 함정입니다. HNSW는 먼저 ‘가까운 후보 ef_search개’를 고르고 그다음 WHERE로 거릅니다. 후보 중 조건에 맞는 것이 적으면 LIMIT 10을 줬는데도 1~2개만 나옵니다. 오류는 나지 않습니다.</p><div class="flow"><div class="fstep"><b>HNSW</b><span>가까운 후보 ef_search개</span></div><span class="arrow" aria-hidden="true">→</span><div class="fstep"><b>WHERE cat = 3</b><span>후보 중 조건 맞는 것만</span></div><span class="arrow" aria-hidden="true">→</span><div class="fstep"><b>LIMIT 10</b><span>남은 것이 10개보다 적으면 그대로</span></div></div><h3>05-1. 필터 + HNSW — 결과가 LIMIT보다 적게 나오는 문제</h3><div class="codebox"><div class="codehead"><span>02_pgvector_인덱스와_필터.ipynb · 05-1</span><button class="copy" type="button">코드 복사</button></div><pre><code>conn.execute("CREATE INDEX bench_hnsw ON bench USING hnsw (embedding vector_l2_ops) WITH (m = 16, ef_construction = 64)")
+FSQL = "SELECT id FROM bench WHERE cat = 3 ORDER BY embedding &lt;-&gt; %s LIMIT %s"
+q0 = xq[0]
+for ef in [10, 40, 100]:
+    conn.execute(f"SET hnsw.ef_search = {ef}")
+    print(f"ef_search={ef:&lt;3} WHERE cat=3 LIMIT 10 → {len(topk(FSQL, q0))}행")
+
+conn.execute("SET hnsw.ef_search = 10")
+conn.execute("CREATE INDEX bench_hnsw_cat3 ON bench USING hnsw (embedding vector_l2_ops) WITH (m = 16) WHERE (cat = 3)")
+print("부분 인덱스(cat=3) 만든 뒤 ef_search=10 →", len(topk(FSQL, q0)), "행")
+plan = conn.execute("EXPLAIN " + FSQL, (q0, 10)).fetchall()
+print(plan[1][0][:70])
+try:
+    conn.execute("SET hnsw.iterative_scan = relaxed_order")    # pgvector 0.8 이상
+    print("iterative_scan 사용 가능 →", len(topk(FSQL, q0)), "행")
+except Exception as e:
+    print("iterative_scan: 이 서버의 pgvector 버전에는 없음 →", type(e).__name__)</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>WHERE cat = 3 ORDER BY embedding &lt;-&gt; %s LIMIT %s</code></td><td>카테고리 10개 중 하나 → 전체의 약 10%</td></tr><tr><td><code>CREATE INDEX ... WHERE (cat = 3)</code></td><td><b>부분 인덱스</b>: cat=3인 행만으로 만든 HNSW. 그 조건 검색에서는 후보가 전부 조건에 맞음</td></tr><tr><td><code>SET hnsw.iterative_scan = relaxed_order</code></td><td>pgvector 0.8 이상: 결과가 모자라면 그래프를 더 탐색해 채움</td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>ef_search=10  WHERE cat=3 LIMIT 10 → 1행
+ef_search=40  WHERE cat=3 LIMIT 10 → 5행
+ef_search=100 WHERE cat=3 LIMIT 10 → 10행
+부분 인덱스(cat=3) 만든 뒤 ef_search=10 → 10 행
+  -&gt;  Index Scan using bench_hnsw_cat3 on bench  (cost=20.48..397.73 r
+iterative_scan: 이 서버의 pgvector 버전에는 없음 → InvalidName</code></pre></div><div class="mock"><div class="mock-title">필터 검색 결과 행 수 (LIMIT 10, cat=3은 전체의 약 10%)</div><div class="tablewrap "><table><thead><tr><th>방법</th><th>결과 행 수</th><th>비고</th></tr></thead><tbody><tr><td>ef_search=10</td><td><b>1</b></td><td>후보 10개 중 cat=3이 1개</td></tr><tr><td>ef_search=40</td><td>5</td><td></td></tr><tr><td>ef_search=100</td><td>10</td><td>검색이 느려짐</td></tr><tr><td>부분 인덱스(cat=3) + ef_search=10</td><td><span class="ok">10</span></td><td>실행 계획이 bench_hnsw_cat3를 사용</td></tr><tr><td>iterative_scan (0.8+)</td><td>10까지 채움</td><td>Docker 최신 이미지에서 확인</td></tr></tbody></table></div></div><div class="tablewrap "><table><thead><tr><th>해결책</th><th>장점</th><th>단점</th></tr></thead><tbody><tr><td>ef_search 올리기</td><td>간단</td><td>모든 검색이 느려짐, 조건이 드물수록 한계</td></tr><tr><td>부분 인덱스(조건별)</td><td>그 조건에서 빠르고 정확</td><td>조건 종류가 많으면 인덱스가 많아짐</td></tr><tr><td>iterative_scan (0.8+)</td><td>설정 한 줄</td><td>버전 필요, 탐색량 증가</td></tr><tr><td>조건으로 먼저 거른 뒤 전수 비교</td><td>정확</td><td>조건에 맞는 행이 많으면 느림</td></tr></tbody></table></div><div class="note"><b>다른 DB에서는</b><p>Qdrant는 필터를 검색 중에 함께 적용하는 방식(payload 인덱스)이라 이 문제가 적고, OpenSearch도 필터를 k-NN 검색 안에서 적용하는 옵션을 제공합니다. ‘필터 + 근사 검색’은 벡터 DB를 고를 때 꼭 확인할 항목입니다.</p></div><h3>05-2. 오류와 조용한 함정</h3><div class="codebox"><div class="codehead"><span>02_pgvector_인덱스와_필터.ipynb · 05-2</span><button class="copy" type="button">코드 복사</button></div><pre><code>def show(title, sql, params=()):
+    try:
+        r = conn.execute(sql, params).fetchall()
+        print(f"[정상] {title} → {r[:2]}")
+    except Exception as e:
+        print(f"[오류] {title} → {type(e).__name__}: {str(e).splitlines()[0][:80]}")
+
+show("차원이 다른 벡터 INSERT", "INSERT INTO bench VALUES (99999, 1, %s) RETURNING id", (np.array([1, 2, 3], dtype="float32"),))
+show("2,000차원 넘는 열에 HNSW", "CREATE TABLE IF NOT EXISTS big (e vector(3000)); CREATE INDEX ON big USING hnsw (e vector_l2_ops)")
+show("다른 차원끼리 거리", "SELECT '[1,2]'::vector &lt;-&gt; '[1,2,3]'::vector")
+plan = conn.execute("EXPLAIN SELECT id FROM bench ORDER BY embedding &lt;=&gt; %s LIMIT 10", (xq[0],)).fetchall()
+print("[함정] L2 인덱스에 &lt;=&gt; 로 검색 →", " / ".join(r[0].strip()[:30] for r in plan[:3]), "← 인덱스를 안 쓰고 전부 읽음")</code></pre></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>[오류] 차원이 다른 벡터 INSERT → DataException: expected 64 dimensions, not 3
+[오류] 2,000차원 넘는 열에 HNSW → InternalError_: column cannot have more than 2000 dimensions for hnsw index
+[오류] 다른 차원끼리 거리 → DataException: different vector dimensions 2 and 3
+[함정] L2 인덱스에 &lt;=&gt; 로 검색 → Limit  (cost=1464.19..1464.22  / -&gt;  Sort  (cost=1464.19..1514. / Sort Key: ((embedding &lt;=&gt; '[4. ← 인덱스를 안 쓰고 전부 읽음</code></pre></div><div class="tablewrap "><table><thead><tr><th>상황</th><th>결과</th><th>고치는 법</th></tr></thead><tbody><tr><td>차원이 다른 벡터 INSERT</td><td>DataException: expected 64 dimensions, not 3</td><td>같은 임베딩 모델, 열 차원 확인</td></tr><tr><td>2,000차원 넘는 열에 HNSW</td><td>column cannot have more than 2000 dimensions</td><td>차원 줄이기(OpenAI dimensions=), 0.7+의 halfvec(4,000차원까지)</td></tr><tr><td>다른 차원끼리 거리</td><td>different vector dimensions</td><td>질문 벡터 차원 확인</td></tr><tr><td>확장을 안 켠 DB</td><td>type "vector" does not exist</td><td><code>CREATE EXTENSION vector</code></td></tr><tr><td><b>인덱스 ops와 다른 연산자</b></td><td><b>오류 없음</b> — Seq Scan으로 전부 읽음</td><td>EXPLAIN으로 Index Scan인지 확인</td></tr></tbody></table></div></section>
+<section aria-labelledby="tab-u06" class="panel" hidden="" id="u06" role="tabpanel"><div class="crumb">Part 2. Qdrant · A3-M4</div><h1>06. Qdrant — 점(point)과 payload로 생각하기</h1><p class="lead">Qdrant는 Rust로 만든 전용 벡터 DB입니다. 데이터 한 건을 <b>점(point)</b>이라고 부르고, 점은 id·벡터·payload(JSON 메타데이터)로 이루어집니다. 서버(Docker)로 운영하고, 실습은 서버 없이 폴더 모드로 바로 할 수 있습니다.</p><div class="mock"><div class="mock-title">점(point) 하나</div><div class="tablewrap "><table><thead><tr><th>id</th><th>vector</th><th>payload (JSON)</th></tr></thead><tbody><tr><td>101 (정수 또는 UUID 문자열)</td><td>[0.01, 0.00, …] 1024개</td><td>{"cat": "배송", "question": "…", "year": 2026, "tags": ["배송", "자주묻는질문"]}</td></tr></tbody></table></div></div><div class="tablewrap "><table><thead><tr><th>모드</th><th>만드는 법</th><th>검색 방식</th><th>언제</th></tr></thead><tbody><tr><td>메모리</td><td><code>QdrantClient(":memory:")</code></td><td>전수 비교</td><td>테스트</td></tr><tr><td>폴더(로컬)</td><td><code>QdrantClient(path="qdrant_db")</code></td><td>전수 비교 (HNSW·payload 인덱스 설정은 저장만)</td><td>실습, 작은 데이터</td></tr><tr><td>서버</td><td><code>QdrantClient(url="http://localhost:6333")</code></td><td><b>HNSW</b>, payload 인덱스, 양자화</td><td>운영</td></tr></tbody></table></div><h3>06-1. 접속 — 내 PC 폴더 모드와 서버 모드</h3><div class="codebox"><div class="codehead"><span>03_Qdrant.ipynb · 06-1</span><button class="copy" type="button">코드 복사</button></div><pre><code>from qdrant_client import QdrantClient, models as m
+import numpy as np, warnings
+warnings.filterwarnings("ignore", category=UserWarning)
+
+client = QdrantClient(path="qdrant_db")                 # 서버 없이 폴더에 저장 (실습용)
+# client = QdrantClient(":memory:")                     # 메모리
+# client = QdrantClient(url="http://localhost:6333")    # Docker 서버: docker run -p 6333:6333 qdrant/qdrant
+print(type(client).__name__, "| 컬렉션:", [c.name for c in client.get_collections().collections])</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>from qdrant_client import QdrantClient, models as m</code></td><td>설정·조건 클래스는 <code>models</code>에 모여 있음 → 짧게 m</td></tr><tr><td><code>QdrantClient(path="qdrant_db")</code></td><td>서버 없이 폴더 모드. 한 번에 한 프로그램만 열 수 있음(close 필요)</td></tr><tr><td><code>client.get_collections().collections</code></td><td>컬렉션 목록</td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>QdrantClient | 컬렉션: []</code></pre></div><h3>06-2. 컬렉션 만들기 — 벡터 크기·거리·HNSW</h3><p>쇼핑몰 FAQ 결과는 대체 임베딩(글자 n-gram, 1024차원)으로 실행한 값입니다. e5 모델이 설치된 PC에서는 384차원이 되고 점수와 순위가 달라집니다.</p><div class="codebox"><div class="codehead"><span>03_Qdrant.ipynb · 06-2</span><button class="copy" type="button">코드 복사</button></div><pre><code>from embedder import Embedder
+from shop_faq import FAQ, TESTS
+emb = Embedder()
+if client.collection_exists("shop-faq"):
+    client.delete_collection("shop-faq")
+client.create_collection(
+    "shop-faq",
+    vectors_config=m.VectorParams(size=emb.dim, distance=m.Distance.COSINE),   # COSINE·DOT·EUCLID·MANHATTAN
+    hnsw_config=m.HnswConfigDiff(m=16, ef_construct=100))                      # 서버 모드에서 적용
+info = client.get_collection("shop-faq")
+print("벡터:", info.config.params.vectors.size, info.config.params.vectors.distance, "| 점 수:", info.points_count)</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>client.collection_exists(name)</code></td><td>있는지 확인 → 다시 실행 대비</td></tr><tr><td><code>m.VectorParams(size=..., distance=m.Distance.COSINE)</code></td><td>벡터 크기와 거리. COSINE·DOT·EUCLID·MANHATTAN</td></tr><tr><td><code>m.HnswConfigDiff(m=16, ef_construct=100)</code></td><td>HNSW 설정(서버에서 적용). <code>ef_construct</code> 이름 주의</td></tr><tr><td><code>client.get_collection(name)</code></td><td>컬렉션 정보: 설정, 점 수, 상태</td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>(임베딩 모델을 불러오지 못해 대체 임베딩 사용: ModuleNotFoundError)
+벡터: 1024 Cosine | 점 수: 0</code></pre></div></section>
+<section aria-labelledby="tab-u07" class="panel" hidden="" id="u07" role="tabpanel"><div class="crumb">Part 2. Qdrant · A3-M4</div><h1>07. 점 넣기와 검색 — upsert, query_points</h1><p class="lead">Qdrant에는 add가 없고 upsert 하나입니다. 같은 id면 덮어쓰고, 없으면 넣습니다. 검색은 query_points로 하고, 결과는 점 목록입니다.</p><h3>07-1. 점(point) 넣기 — id · 벡터 · payload</h3><div class="codebox"><div class="codehead"><span>03_Qdrant.ipynb · 07-1</span><button class="copy" type="button">코드 복사</button></div><pre><code>X = emb.encode([f"{q} {a}" for _, _, q, a in FAQ])
+points = [m.PointStruct(id=i, vector=X[k].tolist(),
+                        payload={"cat": c, "question": q, "answer": a, "year": 2024 + i % 3,
+                                 "tags": [c, "자주묻는질문"] if i % 100 == 1 else [c]})
+          for k, (i, c, q, a) in enumerate(FAQ)]
+client.upsert("shop-faq", points=points)
+print("점 수:", client.count("shop-faq").count)
+print("101번:", client.retrieve("shop-faq", ids=[101])[0].payload["question"])</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>m.PointStruct(id=i, vector=X[k].tolist(), payload={...})</code></td><td>점 하나. 벡터는 리스트로</td></tr><tr><td><code>client.upsert("shop-faq", points=points)</code></td><td>여러 점을 한 번에. 많을 때는 <code>upload_points</code>·<code>upload_collection</code>(나눠서 자동 전송)</td></tr><tr><td><code>client.retrieve(name, ids=[101])</code></td><td>id로 꺼내기</td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>점 수: 20
+101번: 배송은 언제 오나요?</code></pre></div><h3>07-2. 검색 — query_points와 결과 읽기</h3><div class="codebox"><div class="codehead"><span>03_Qdrant.ipynb · 07-2</span><button class="copy" type="button">코드 복사</button></div><pre><code>qv = emb.encode(["환불 며칠 걸려요?"], kind="query")[0]
+res = client.query_points("shop-faq", query=qv, limit=3)
+print(type(res).__name__, "→ .points 길이", len(res.points))
+for p in res.points:
+    print(f"  id {p.id}  score {p.score:.3f}  {p.payload['cat']}  {p.payload['question']}")
+one = client.query_points("shop-faq", query=qv, limit=1, with_payload=["cat"], with_vectors=True).points[0]
+print("payload 일부만:", one.payload, "| 벡터 길이:", len(one.vector))</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>client.query_points(name, query=qv, limit=3)</code></td><td>검색. 결과는 <code>QueryResponse</code> → <code>.points</code></td></tr><tr><td><code>p.id, p.score, p.payload</code></td><td>COSINE이면 score = 유사도(<b>클수록</b> 가까움) — Chroma·pgvector의 거리와 반대</td></tr><tr><td><code>with_payload=["cat"]</code></td><td>payload 일부만</td></tr><tr><td><code>with_vectors=True</code></td><td>벡터도 받기</td></tr></tbody></table></div><h4 class="minihead">실행 결과 · 쇼핑몰 FAQ 결과는 대체 임베딩(글자 n-gram, 1024차원)으로 실행한 값입니다. e5 모델이 설치된 PC에서는 384차원이 되고 점수와 순위가 달라집니다.</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>QueryResponse → .points 길이 3
+  id 402  score 0.244  환불  부분 환불도 되나요?
+  id 401  score 0.216  환불  환불은 언제 되나요?
+  id 201  score 0.145  결제  어떤 결제 수단을 쓸 수 있나요?
+payload 일부만: {'cat': '환불'} | 벡터 길이: 1024</code></pre></div><div class="tablewrap "><table><thead><tr><th></th><th>Chroma</th><th>pgvector</th><th>Qdrant</th></tr></thead><tbody><tr><td>점수</td><td>distance (작을수록)</td><td><code>&lt;=&gt;</code> 거리 (작을수록)</td><td>score (클수록)</td></tr><tr><td>결과 모양</td><td>리스트의 리스트</td><td>행 목록</td><td>points 목록</td></tr></tbody></table></div></section>
+<section aria-labelledby="tab-u08" class="panel" hidden="" id="u08" role="tabpanel"><div class="crumb">Part 2. Qdrant · A3-M4</div><h1>08. Filter — must · should · must_not</h1><p class="lead">Qdrant의 필터는 세 칸짜리 상자입니다. <b>must</b>(모두 만족, AND), <b>should</b>(하나 이상, OR), <b>must_not</b>(하나도 만족하지 않음, NOT). 각 칸에 조건(FieldCondition 등)을 목록으로 넣습니다.</p><div class="mock"><div class="mock-title">Filter 상자</div><div class="tablewrap "><table><thead><tr><th>칸</th><th>뜻</th><th>SQL로 읽으면</th></tr></thead><tbody><tr><td>must=[A, B]</td><td>A AND B</td><td>WHERE A AND B</td></tr><tr><td>should=[A, B]</td><td>A OR B</td><td>WHERE A OR B</td></tr><tr><td>must_not=[A]</td><td>NOT A</td><td>WHERE NOT A</td></tr><tr><td>must=[A], must_not=[B]</td><td>A AND NOT B</td><td>WHERE A AND NOT B</td></tr></tbody></table></div></div><div class="tablewrap "><table><thead><tr><th>조건</th><th>문법</th><th>뜻</th></tr></thead><tbody><tr><td>값 같음</td><td><code>FieldCondition(key="cat", match=MatchValue(value="환불"))</code></td><td>cat = '환불'</td></tr><tr><td>목록 중 하나</td><td><code>match=MatchAny(any=["환불", "교환반품"])</code></td><td>cat IN (…)</td></tr><tr><td>목록이 아님</td><td><code>match=MatchExcept(**{"except": ["환불"]})</code></td><td>cat NOT IN (…)</td></tr><tr><td>범위</td><td><code>FieldCondition(key="year", range=Range(gte=2025, lt=2027))</code></td><td>2025 ≤ year &lt; 2027</td></tr><tr><td>배열에 값</td><td><code>FieldCondition(key="tags", match=MatchValue(value="자주묻는질문"))</code></td><td>배열 payload는 원소 중 하나와 비교</td></tr><tr><td>id 범위</td><td><code>HasIdCondition(has_id=[301, 302])</code></td><td>이 id들 중에서</td></tr><tr><td>값이 비었나</td><td><code>IsEmptyCondition(is_empty=PayloadField(key="tags"))</code></td><td>키가 없거나 빈 값</td></tr></tbody></table></div><h3>08-1. Filter 문법 — must · should · must_not</h3><div class="codebox"><div class="codehead"><span>03_Qdrant.ipynb · 08-1</span><button class="copy" type="button">코드 복사</button></div><pre><code>def ask(flt, q="환불 며칠 걸려요?", n=5):
+    v = emb.encode([q], kind="query")[0]
+    return [(p.id, p.payload["cat"], p.payload["year"]) for p in client.query_points("shop-faq", query=v, limit=n, query_filter=flt).points]
+
+C = m.FieldCondition
+print("must cat=환불        :", ask(m.Filter(must=[C(key="cat", match=m.MatchValue(value="환불"))])))
+print("must cat in [..]     :", ask(m.Filter(must=[C(key="cat", match=m.MatchAny(any=["환불", "교환반품"]))])))
+print("must_not cat=환불    :", ask(m.Filter(must_not=[C(key="cat", match=m.MatchValue(value="환불"))])))
+print("must year&gt;=2025      :", ask(m.Filter(must=[C(key="year", range=m.Range(gte=2025))])))
+print("should 환불 or 2026  :", ask(m.Filter(should=[C(key="cat", match=m.MatchValue(value="환불")),
+                                                    C(key="year", range=m.Range(gte=2026))])))
+print("배열 tags=자주묻는질문:", ask(m.Filter(must=[C(key="tags", match=m.MatchValue(value="자주묻는질문"))])))
+print("id 범위 has_id       :", ask(m.Filter(must=[m.HasIdCondition(has_id=[301, 302, 401])])))</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>C = m.FieldCondition</code></td><td>긴 클래스 이름에 별명</td></tr><tr><td><code>m.Filter(must=[...])</code></td><td>목록으로 조건 여러 개</td></tr><tr><td><code>query_filter=flt</code></td><td>검색과 필터를 함께</td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>must cat=환불        : [(402, '환불', 2024), (401, '환불', 2026)]
+must cat in [..]     : [(402, '환불', 2024), (401, '환불', 2026), (302, '교환반품', 2026), (304, '교환반품', 2025), (301, '교환반품', 2025)]
+must_not cat=환불    : [(201, '결제', 2024), (302, '교환반품', 2026), (304, '교환반품', 2025), (102, '배송', 2024), (104, '배송', 2026)]
+must year&gt;=2025      : [(401, '환불', 2026), (302, '교환반품', 2026), (304, '교환반품', 2025), (104, '배송', 2026), (101, '배송', 2026)]
+should 환불 or 2026  : [(402, '환불', 2024), (401, '환불', 2026), (302, '교환반품', 2026), (104, '배송', 2026), (101, '배송', 2026)]
+배열 tags=자주묻는질문: [(401, '환불', 2026), (201, '결제', 2024), (101, '배송', 2026), (301, '교환반품', 2025), (701, '적립금', 2026)]
+id 범위 has_id       : [(401, '환불', 2026), (302, '교환반품', 2026), (301, '교환반품', 2025)]</code></pre></div><h3>08-2. 꺼내기·세기·고치기·지우기</h3><div class="codebox"><div class="codehead"><span>03_Qdrant.ipynb · 08-2</span><button class="copy" type="button">코드 복사</button></div><pre><code>recs, next_offset = client.scroll("shop-faq", limit=5, with_payload=["cat"])
+print("scroll 1쪽:", [(r.id, r.payload["cat"]) for r in recs], "| 다음 시작:", next_offset)
+print("count(배송):", client.count("shop-faq", count_filter=m.Filter(must=[m.FieldCondition(key="cat", match=m.MatchValue(value="배송"))])).count)
+client.set_payload("shop-faq", payload={"checked": True}, points=[101])
+print("set_payload 후 101:", client.retrieve("shop-faq", ids=[101])[0].payload.get("checked"))
+client.delete("shop-faq", points_selector=m.PointIdsList(points=[105]))
+client.delete("shop-faq", points_selector=m.FilterSelector(filter=m.Filter(must=[m.FieldCondition(key="year", range=m.Range(lt=2025))])))
+print("삭제 후 점 수:", client.count("shop-faq").count)</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>client.scroll(name, limit=5, with_payload=["cat"])</code></td><td>검색이 아닌 <b>훑어보기</b>. (점 목록, 다음 시작 id) 튜플 → 다음 쪽은 <code>offset=다음 시작 id</code></td></tr><tr><td><code>client.count(name, count_filter=...)</code></td><td>조건에 맞는 개수</td></tr><tr><td><code>client.set_payload(name, payload={"checked": True}, points=[101])</code></td><td>payload 일부만 추가·수정(벡터는 그대로)</td></tr><tr><td><code>m.PointIdsList(points=[105])</code></td><td>id로 삭제</td></tr><tr><td><code>m.FilterSelector(filter=m.Filter(...))</code></td><td>조건으로 삭제</td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>scroll 1쪽: [(101, '배송'), (102, '배송'), (103, '배송'), (104, '배송'), (105, '배송')] | 다음 시작: 201
+count(배송): 5
+set_payload 후 101: True
+삭제 후 점 수: 13</code></pre></div></section>
+<section aria-labelledby="tab-u09" class="panel" hidden="" id="u09" role="tabpanel"><div class="crumb">Part 2. Qdrant · A3-M4</div><h1>09. Qdrant 오류와 서버에서 쓰는 설정</h1><p class="lead">id 규칙(정수 또는 UUID)과 차원 검사가 가장 흔한 오류입니다. 그리고 폴더 모드에서는 저장만 되고 효과가 없는 설정들(HNSW·payload 인덱스·양자화)을 서버에서 어떻게 쓰는지 정리합니다.</p><h3>09-1. 오류 모음</h3><div class="codebox"><div class="codehead"><span>03_Qdrant.ipynb · 09-1</span><button class="copy" type="button">코드 복사</button></div><pre><code>def show(title, fn):
+    try:
+        print(f"[정상] {title} →", fn())
+    except Exception as e:
+        print(f"[오류] {title} → {type(e).__name__}: {str(e).splitlines()[0][:80]}")
+
+v = X[0].tolist()
+show("문자열 id 'abc'", lambda: client.upsert("shop-faq", points=[m.PointStruct(id="abc", vector=v)]))
+show("UUID 문자열 id", lambda: client.upsert("shop-faq", points=[m.PointStruct(id="5c56c793-69f3-4fbf-87e6-c4bf54c28c26", vector=v)]).status)
+show("실수 id 1.5", lambda: m.PointStruct(id=1.5, vector=v))
+show("차원이 다른 벡터", lambda: client.upsert("shop-faq", points=[m.PointStruct(id=9999, vector=[0.1, 0.2])]))
+show("없는 컬렉션", lambda: client.query_points("no-such", query=v))
+show("이미 있는 컬렉션 create", lambda: client.create_collection("shop-faq", vectors_config=m.VectorParams(size=4, distance=m.Distance.COSINE)))
+client.delete("shop-faq", points_selector=m.PointIdsList(points=["5c56c793-69f3-4fbf-87e6-c4bf54c28c26"]))   # 실습용 점 정리</code></pre></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>[오류] 문자열 id 'abc' → ValueError: Point id abc is not a valid UUID
+[정상] UUID 문자열 id → completed
+[오류] 실수 id 1.5 → ValidationError: 3 validation errors for PointStruct
+[오류] 차원이 다른 벡터 → ValueError: Wrong input: Vector dimension error: expected dim: 1024, got 2 for vector ''
+[오류] 없는 컬렉션 → ValueError: Collection no-such not found
+[오류] 이미 있는 컬렉션 create → ValueError: Collection shop-faq already exists</code></pre></div><div class="tablewrap "><table><thead><tr><th>상황</th><th>결과</th><th>고치는 법</th></tr></thead><tbody><tr><td>문자열 id 'abc'</td><td>ValueError: not a valid UUID</td><td>정수 id 또는 <code>uuid.uuid4()</code> 문자열</td></tr><tr><td>실수 id</td><td>ValidationError</td><td>정수로</td></tr><tr><td>차원이 다른 벡터</td><td>Vector dimension error: expected dim: 1024, got 2</td><td>컬렉션 size와 임베딩 모델 확인</td></tr><tr><td>없는 컬렉션 / 이미 있는 컬렉션</td><td>Collection … not found / already exists</td><td><code>collection_exists</code>로 먼저 확인</td></tr></tbody></table></div><h3>09-2. 서버 모드에서 쓰는 설정 — payload 인덱스·검색 파라미터·양자화</h3><div class="codebox"><div class="codehead"><span>03_Qdrant.ipynb · 09-2</span><button class="copy" type="button">코드 복사</button></div><pre><code>client.create_payload_index("shop-faq", field_name="cat", field_schema=m.PayloadSchemaType.KEYWORD)
+r = client.query_points("shop-faq", query=qv, limit=3, search_params=m.SearchParams(hnsw_ef=128, exact=False))
+print("hnsw_ef=128 검색:", [p.id for p in r.points])
+if client.collection_exists("shop-faq-q8"):
+    client.delete_collection("shop-faq-q8")
+client.create_collection("shop-faq-q8",
+    vectors_config=m.VectorParams(size=emb.dim, distance=m.Distance.COSINE),
+    quantization_config=m.ScalarQuantization(scalar=m.ScalarQuantizationConfig(type=m.ScalarType.INT8, always_ram=True)))
+print("SQ8 양자화 설정(로컬 모드 저장값):", client.get_collection("shop-faq-q8").config.quantization_config)
+print("주의: 폴더·메모리 모드는 전수 비교라 HNSW·payload 인덱스 설정이 검색에 영향을 주지 않음")
+client.close()</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>client.create_payload_index(name, field_name="cat", field_schema=m.PayloadSchemaType.KEYWORD)</code></td><td><b>서버</b>: 필터에 자주 쓰는 payload 키에 인덱스 — 필터 검색이 빨라지고 정확해짐</td></tr><tr><td><code>m.SearchParams(hnsw_ef=128, exact=False)</code></td><td>검색할 때 ef(서버). <code>exact=True</code>면 전수 비교</td></tr><tr><td><code>m.ScalarQuantization(scalar=m.ScalarQuantizationConfig(type=m.ScalarType.INT8, always_ram=True))</code></td><td>SQ8 양자화(A3-M2 07탭) — 메모리 1/4</td></tr><tr><td><code>client.close()</code></td><td>폴더 모드는 닫아야 다른 노트북에서 열 수 있음</td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>hnsw_ef=128 검색: [401, 302, 304]
+SQ8 양자화 설정(로컬 모드 저장값): None
+주의: 폴더·메모리 모드는 전수 비교라 HNSW·payload 인덱스 설정이 검색에 영향을 주지 않음</code></pre></div><div class="tablewrap "><table><thead><tr><th>Qdrant 서버 설정</th><th>A3-M2 FAISS</th><th>OpenSearch</th></tr></thead><tbody><tr><td><code>hnsw_config.m</code></td><td>M</td><td>m</td></tr><tr><td><code>hnsw_config.ef_construct</code></td><td>efConstruction</td><td>ef_construction</td></tr><tr><td><code>SearchParams(hnsw_ef=)</code></td><td>efSearch</td><td>ef_search</td></tr><tr><td><code>quantization_config</code> (scalar·product·binary)</td><td>SQ·PQ</td><td>encoder: sq / pq</td></tr><tr><td>payload 인덱스</td><td>— (IDSelector는 매번 목록)</td><td>keyword 필드 + filter</td></tr></tbody></table></div></section>
+<section aria-labelledby="tab-u10" class="panel" hidden="" id="u10" role="tabpanel"><div class="crumb">Part 3. 비교와 적용 · A3-M4</div><h1>10. 같은 Q&A를 두 DB로 — 문법은 다르고 결과는 같다</h1><p class="lead">같은 FAQ, 같은 임베딩으로 pgvector와 Qdrant 검색 함수를 나란히 만들고, FAQ 버전 2로 동기화한 뒤 평가합니다. 문법 차이를 표로 정리합니다.</p><h3>10-1. 같은 Q&amp;A, 두 DB — 준비</h3><p>쇼핑몰 FAQ 결과는 대체 임베딩(글자 n-gram, 1024차원)으로 실행한 값입니다. e5 모델이 설치된 PC에서는 384차원이 되고 점수와 순위가 달라집니다.</p><div class="codebox"><div class="codehead"><span>04_두_DB로_쇼핑몰QA.ipynb · 10-1</span><button class="copy" type="button">코드 복사</button></div><pre><code>import os, psycopg, numpy as np
+from pgvector.psycopg import register_vector
+
+# Docker로 띄운 PostgreSQL(pgvector 포함)에 접속. 다른 주소면 환경변수 PG_DSN으로 바꾼다
+DSN = os.getenv("PG_DSN", "postgresql://postgres:postgres@localhost:5432/postgres")
+conn = psycopg.connect(DSN, autocommit=True)          # autocommit: 문장마다 바로 반영
+conn.execute("CREATE EXTENSION IF NOT EXISTS vector")  # pgvector 켜기 (DB마다 한 번)
+register_vector(conn)                                   # numpy 배열 ↔ vector 자동 변환
+from qdrant_client import QdrantClient, models as m
+from shop_faq import FAQ, TESTS
+from embedder import Embedder
+emb = Embedder()
+qd = QdrantClient(path="qdrant_db")
+if qd.collection_exists("shop-faq"):                       # 03 노트북에서 지운 점이 있으니 FAQ 20건으로 새로
+    qd.delete_collection("shop-faq")
+qd.create_collection("shop-faq", vectors_config=m.VectorParams(size=emb.dim, distance=m.Distance.COSINE))
+X = emb.encode([f"{q} {a}" for _, _, q, a in FAQ])
+qd.upsert("shop-faq", points=[m.PointStruct(id=i, vector=X[k].tolist(), payload={"cat": c, "question": q, "answer": a})
+                              for k, (i, c, q, a) in enumerate(FAQ)])
+print("pgvector faq 행:", conn.execute("SELECT count(*) FROM faq").fetchone()[0], "| Qdrant 점:", qd.count("shop-faq").count)</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>qd.delete_collection → create_collection → upsert</code></td><td>03 노트북에서 일부 점을 지웠으므로 FAQ 20건으로 새로 만듦</td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>(임베딩 모델을 불러오지 못해 대체 임베딩 사용: ModuleNotFoundError)
+pgvector faq 행: 20 | Qdrant 점: 20</code></pre></div><h3>10-2. 검색 함수 두 개 — 문법 비교</h3><div class="codebox"><div class="codehead"><span>04_두_DB로_쇼핑몰QA.ipynb · 10-2</span><button class="copy" type="button">코드 복사</button></div><pre><code>def pg_search(q, k=3, cat=None):
+    v = emb.encode([q], kind="query")[0]
+    where, params = ("WHERE cat = %s", [cat]) if cat else ("", [])
+    return [int(r[0]) for r in conn.execute(f"SELECT id FROM faq {where} ORDER BY embedding &lt;=&gt; %s LIMIT %s", [*params, v, k]).fetchall()]
+
+def qd_search(q, k=3, cat=None):
+    v = emb.encode([q], kind="query")[0]
+    flt = m.Filter(must=[m.FieldCondition(key="cat", match=m.MatchValue(value=cat))]) if cat else None
+    return [int(p.id) for p in qd.query_points("shop-faq", query=v, limit=k, query_filter=flt).points]
+
+for q in ["택배 언제 와요?", "비번 까먹었어요"]:
+    print(q, "| pgvector", pg_search(q), "| Qdrant", qd_search(q))
+print("환불만 | pgvector", pg_search("환불 며칠 걸려요?", cat="환불"), "| Qdrant", qd_search("환불 며칠 걸려요?", cat="환불"))</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>pg_search</code></td><td>SQL: WHERE + ORDER BY 거리 + LIMIT</td></tr><tr><td><code>qd_search</code></td><td>Filter(must=[FieldCondition]) + query_points</td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>택배 언제 와요? | pgvector [401, 101, 701] | Qdrant [401, 101, 701]
+비번 까먹었어요 | pgvector [701, 601, 302] | Qdrant [701, 601, 302]
+환불만 | pgvector [402, 401] | Qdrant [402, 401]</code></pre></div><h3>10-3. 동기화 — FAQ 버전 2</h3><div class="codebox"><div class="codehead"><span>04_두_DB로_쇼핑몰QA.ipynb · 10-3</span><button class="copy" type="button">코드 복사</button></div><pre><code>V2 = [(i, c, q, a.replace("6000원", "5000원")) for i, c, q, a in FAQ if i != 105]
+V2.append((801, "배송", "명절에도 배송되나요?", "설·추석 연휴에는 2~3일 늦어질 수 있습니다."))
+X2 = emb.encode([f"{q} {a}" for _, _, q, a in V2])
+ids2 = [i for i, *_ in V2]
+
+# pgvector: 지우고 INSERT ... ON CONFLICT 로 upsert
+conn.execute("DELETE FROM faq_stats WHERE NOT (faq_id = ANY(%s))", (ids2,))
+conn.execute("DELETE FROM faq WHERE NOT (id = ANY(%s))", (ids2,))
+with conn.cursor() as cur:
+    cur.executemany("""INSERT INTO faq (id, cat, question, answer, year, embedding) VALUES (%s, %s, %s, %s, 2026, %s)
+                       ON CONFLICT (id) DO UPDATE SET cat = EXCLUDED.cat, question = EXCLUDED.question,
+                       answer = EXCLUDED.answer, embedding = EXCLUDED.embedding""",
+                    [(i, c, q, a, X2[k]) for k, (i, c, q, a) in enumerate(V2)])
+
+# Qdrant: 없는 id 삭제 + upsert
+now = {int(r.id) for r in qd.scroll("shop-faq", limit=1000, with_payload=False)[0]}
+qd.delete("shop-faq", points_selector=m.PointIdsList(points=sorted(now - set(ids2))))
+qd.upsert("shop-faq", points=[m.PointStruct(id=i, vector=X2[k].tolist(), payload={"cat": c, "question": q, "answer": a, "year": 2026})
+                              for k, (i, c, q, a) in enumerate(V2)])
+print("pgvector:", conn.execute("SELECT count(*) FROM faq").fetchone()[0], "| Qdrant:", qd.count("shop-faq").count)
+print("명절 질문 | pgvector", pg_search("추석에도 택배 와요?", 1), "| Qdrant", qd_search("추석에도 택배 와요?", 1))</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>DELETE FROM faq WHERE NOT (id = ANY(%s))</code></td><td>새 목록에 없는 id 삭제. 파이썬 리스트가 PostgreSQL 배열로 넘어감</td></tr><tr><td><code>INSERT ... ON CONFLICT (id) DO UPDATE SET ... = EXCLUDED....</code></td><td><b>PostgreSQL의 upsert</b>. EXCLUDED = 넣으려던 새 값</td></tr><tr><td><code>qd.scroll(..., limit=1000)[0]</code></td><td>현재 id 모두 꺼내기</td></tr><tr><td><code>sorted(now - set(ids2))</code></td><td>차집합 → 지울 id</td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>pgvector: 20 | Qdrant: 20
+명절 질문 | pgvector [801] | Qdrant [801]</code></pre></div><h3>10-4. 평가 — 같은 벡터면 같은 결과</h3><div class="codebox"><div class="codehead"><span>04_두_DB로_쇼핑몰QA.ipynb · 10-4</span><button class="copy" type="button">코드 복사</button></div><pre><code>pg1 = sum(pg_search(q, 1)[0] == g for q, g in TESTS)
+qd1 = sum(qd_search(q, 1)[0] == g for q, g in TESTS)
+print(f"Hit@1  pgvector {pg1}/12  |  Qdrant {qd1}/12")
+qd.close()</code></pre></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>Hit@1  pgvector 7/12  |  Qdrant 7/12</code></pre></div><h3>10-5. 같은 일, 다섯 가지 문법</h3><div class="tablewrap "><table><thead><tr><th>하고 싶은 일</th><th>FAISS</th><th>Chroma</th><th>pgvector</th><th>Qdrant</th></tr></thead><tbody><tr><td>만들기</td><td><code>IndexIDMap2(IndexFlatIP(d))</code></td><td><code>create_collection(name, configuration=…)</code></td><td><code>CREATE TABLE … embedding vector(d)</code></td><td><code>create_collection(name, VectorParams(size, distance))</code></td></tr><tr><td>넣기</td><td><code>add_with_ids</code></td><td><code>add</code> / <code>upsert</code></td><td><code>INSERT</code> / <code>COPY</code></td><td><code>upsert(points)</code></td></tr><tr><td>검색</td><td><code>search(q, k)</code></td><td><code>query(query_embeddings, n_results)</code></td><td><code>ORDER BY embedding &lt;=&gt; q LIMIT k</code></td><td><code>query_points(query, limit)</code></td></tr><tr><td>필터</td><td><code>IDSelectorBatch</code></td><td><code>where={"cat": "환불"}</code></td><td><code>WHERE cat = '환불'</code></td><td><code>Filter(must=[FieldCondition(…)])</code></td></tr><tr><td>수정</td><td>remove_ids + add_with_ids</td><td><code>update</code> / <code>upsert</code></td><td><code>UPDATE</code> / <code>ON CONFLICT DO UPDATE</code></td><td><code>upsert</code> / <code>set_payload</code></td></tr><tr><td>삭제</td><td><code>remove_ids</code></td><td><code>delete(ids|where)</code></td><td><code>DELETE … WHERE</code></td><td><code>delete(PointIdsList|FilterSelector)</code></td></tr><tr><td>인덱스 설정</td><td><code>IndexHNSWFlat(d, M)</code>, efSearch</td><td>configuration hnsw</td><td><code>USING hnsw WITH (m, ef_construction)</code>, <code>SET hnsw.ef_search</code></td><td>hnsw_config, SearchParams(hnsw_ef)</td></tr></tbody></table></div></section>
+<section aria-labelledby="tab-u11" class="panel" hidden="" id="u11" role="tabpanel"><div class="crumb">Part 4. 마무리 · A3-M4</div><h1>11. 실습 과제</h1><p class="lead">과제 네 개는 pgvector 조건 검색 → 실행 계획 → Qdrant 필터 → 세 가지 필터 문법 비교 순서입니다.</p><h3>11-1. 준비</h3><p>pgvector 접속과 Qdrant 클라이언트를 엽니다. 01·03 노트북을 먼저 실행해 두어야 합니다.</p><div class="codebox"><div class="codehead"><span>05_실습과제.ipynb · x0</span><button class="copy" type="button">코드 복사</button></div><pre><code>import os, psycopg, numpy as np
+from pgvector.psycopg import register_vector
+
+# Docker로 띄운 PostgreSQL(pgvector 포함)에 접속. 다른 주소면 환경변수 PG_DSN으로 바꾼다
+DSN = os.getenv("PG_DSN", "postgresql://postgres:postgres@localhost:5432/postgres")
+conn = psycopg.connect(DSN, autocommit=True)          # autocommit: 문장마다 바로 반영
+conn.execute("CREATE EXTENSION IF NOT EXISTS vector")  # pgvector 켜기 (DB마다 한 번)
+register_vector(conn)                                   # numpy 배열 ↔ vector 자동 변환
+from qdrant_client import QdrantClient, models as m
+from shop_faq import FAQ, TESTS
+from embedder import Embedder
+emb = Embedder()
+qd = QdrantClient(path="qdrant_ex")</code></pre></div><h3>11-2. 과제 1 · pgvector 조건 검색</h3><p><code>faq</code> 테이블에서 <code>"주문 취소하고 싶어요"</code>와 가장 비슷한 FAQ 3개를 찾되, 카테고리가 <code>주문</code> 또는 <code>배송</code>인 것만 대상으로 하세요. id·카테고리·유사도(1 − 코사인 거리)를 출력하세요.</p><div class="codebox"><div class="codehead"><span>05_실습과제.ipynb · x1</span><button class="copy" type="button">코드 복사</button></div><pre><code># TODO</code></pre></div><details class="qa"><summary>정답 코드와 실행 결과 보기</summary><div class="codebox"><div class="codehead"><span>05_실습과제_정답.ipynb</span><button class="copy" type="button">코드 복사</button></div><pre><code>v = emb.encode(["주문 취소하고 싶어요"], kind="query")[0]
+print(conn.execute("""SELECT id, cat, round((1 - (embedding &lt;=&gt; %s))::numeric, 3)
+                      FROM faq WHERE cat IN ('주문', '배송')
+                      ORDER BY embedding &lt;=&gt; %s LIMIT 3""", (v, v)).fetchall())</code></pre></div><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>[(501, '주문', Decimal('0.518')), (103, '배송', Decimal('0.141')), (502, '주문', Decimal('0.113'))]</code></pre></div></details><h3>11-3. 과제 2 · 실행 계획 읽기</h3><p><code>faq</code> 테이블에 코사인 HNSW 인덱스(<code>vector_cosine_ops</code>)를 만들고, <code>&lt;=&gt;</code> 검색과 <code>&lt;-&gt;</code> 검색의 EXPLAIN 첫 두 줄을 비교하세요. 어느 쪽이 인덱스를 쓰나요? (행이 20개뿐이면 플래너가 인덱스를 안 쓸 수 있어 <code>SET enable_seqscan = off</code>로 확인합니다.)</p><div class="codebox"><div class="codehead"><span>05_실습과제.ipynb · x2</span><button class="copy" type="button">코드 복사</button></div><pre><code># TODO</code></pre></div><details class="qa"><summary>정답 코드와 실행 결과 보기</summary><div class="codebox"><div class="codehead"><span>05_실습과제_정답.ipynb</span><button class="copy" type="button">코드 복사</button></div><pre><code>conn.execute("DROP INDEX IF EXISTS faq_cos")
+conn.execute("CREATE INDEX faq_cos ON faq USING hnsw (embedding vector_cosine_ops)")
+conn.execute("SET enable_seqscan = off")
+v = emb.encode(["배송"], kind="query")[0]
+for op in ["&lt;=&gt;", "&lt;-&gt;"]:
+    plan = conn.execute(f"EXPLAIN SELECT id FROM faq ORDER BY embedding {op} %s LIMIT 3", (v,)).fetchall()
+    print(op, "→", " / ".join(r[0].strip()[:45] for r in plan[:2]))
+conn.execute("SET enable_seqscan = on")</code></pre></div><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>&lt;=&gt; → Limit  (cost=84.15..85.39 rows=3 width=16) / -&gt;  Index Scan using faq_cos on faq  (cost=84
+&lt;-&gt; → Limit  (cost=10000000002.51..10000000002.52 r / -&gt;  Sort  (cost=10000000002.51..10000000002.5</code></pre></div></details><h3>11-4. 과제 3 · Qdrant 컬렉션 만들기</h3><p><code>faq-ex</code> 컬렉션(코사인)을 만들고 FAQ 20건을 payload(cat, len=답변 길이)와 함께 넣은 뒤, 답변 길이가 40 이상인 <code>배송</code> FAQ만 대상으로 <code>"냉장고도 배송돼요?"</code>를 검색하세요.</p><div class="codebox"><div class="codehead"><span>05_실습과제.ipynb · x3</span><button class="copy" type="button">코드 복사</button></div><pre><code># TODO</code></pre></div><details class="qa"><summary>정답 코드와 실행 결과 보기</summary><div class="codebox"><div class="codehead"><span>05_실습과제_정답.ipynb</span><button class="copy" type="button">코드 복사</button></div><pre><code>if qd.collection_exists("faq-ex"):
+    qd.delete_collection("faq-ex")
+qd.create_collection("faq-ex", vectors_config=m.VectorParams(size=emb.dim, distance=m.Distance.COSINE))
+X = emb.encode([f"{q} {a}" for _, _, q, a in FAQ])
+qd.upsert("faq-ex", points=[m.PointStruct(id=i, vector=X[k].tolist(), payload={"cat": c, "len": len(a)})
+                            for k, (i, c, q, a) in enumerate(FAQ)])
+flt = m.Filter(must=[m.FieldCondition(key="cat", match=m.MatchValue(value="배송")),
+                     m.FieldCondition(key="len", range=m.Range(gte=40))])
+v = emb.encode(["냉장고도 배송돼요?"], kind="query")[0]
+print([(p.id, p.payload) for p in qd.query_points("faq-ex", query=v, limit=3, query_filter=flt).points])</code></pre></div><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>[(104, {'cat': '배송', 'len': 56}), (102, {'cat': '배송', 'len': 46}), (103, {'cat': '배송', 'len': 45})]</code></pre></div></details><h3>11-5. 과제 4 · 같은 조건, 세 가지 문법</h3><p>‘카테고리가 환불이 아니고 2025년 이후’라는 조건을 Chroma where, pgvector SQL, Qdrant Filter로 각각 적어 보세요. pgvector와 Qdrant는 실행해서 결과 id를 비교합니다(Qdrant 컬렉션에는 year가 없으니 <code>faq-ex</code>에 year를 set_payload로 추가). pgvector의 <code>faq</code>는 04 노트북에서 버전 2로 동기화되어 105가 없고 801이 있다는 점도 결과에서 확인하세요.</p><div class="codebox"><div class="codehead"><span>05_실습과제.ipynb · x4</span><button class="copy" type="button">코드 복사</button></div><pre><code>chroma_where = None   # TODO: 사전으로
+# TODO: pgvector, Qdrant</code></pre></div><details class="qa"><summary>정답 코드와 실행 결과 보기</summary><div class="codebox"><div class="codehead"><span>05_실습과제_정답.ipynb</span><button class="copy" type="button">코드 복사</button></div><pre><code>chroma_where = {"$and": [{"cat": {"$ne": "환불"}}, {"year": {"$gte": 2025}}]}
+print("Chroma where:", chroma_where)
+v = emb.encode(["언제 와요?"], kind="query")[0]
+print("pgvector:", [r[0] for r in conn.execute(
+    "SELECT id FROM faq WHERE cat &lt;&gt; '환불' AND year &gt;= 2025 ORDER BY embedding &lt;=&gt; %s LIMIT 5", (v,)).fetchall()])
+for i, *_ in FAQ:
+    qd.set_payload("faq-ex", payload={"year": 2024 + i % 3}, points=[i])
+flt = m.Filter(must_not=[m.FieldCondition(key="cat", match=m.MatchValue(value="환불"))],
+               must=[m.FieldCondition(key="year", range=m.Range(gte=2025))])
+print("Qdrant  :", [p.id for p in qd.query_points("faq-ex", query=v, limit=5, query_filter=flt).points])</code></pre></div><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>Chroma where: {'$and': [{'cat': {'$ne': '환불'}}, {'year': {'$gte': 2025}}]}
+pgvector: [101, 701, 801, 203, 301]
+Qdrant  : [101, 701, 203, 301, 104]</code></pre></div></details><div class="note"><b>과제 2의 결과</b><p>코사인 인덱스(<code>vector_cosine_ops</code>)는 <code>&lt;=&gt;</code> 검색에서만 Index Scan으로 쓰이고, <code>&lt;-&gt;</code> 검색은 Sort(전부 정렬)가 됩니다. 비용 숫자 10000000000은 <code>enable_seqscan = off</code>가 붙인 ‘쓰지 말라’ 표시입니다.</p></div></section>
+<section aria-labelledby="tab-u12" class="panel" hidden="" id="u12" role="tabpanel"><div class="crumb">Part 4. 마무리 · A3-M4</div><h1>12. 정리 — A3 벡터 검색 전체</h1><p class="lead">A3-M1에서 문장을 토큰과 벡터로 바꾸고, M2에서 FAISS로 빠르게 찾는 원리를, M3·M4에서 그것을 DB로 운영하는 법을 익혔습니다. 다음 과정 OpenSearch는 이 모두를 한 검색엔진 안에서 합니다.</p><div class="tablewrap "><table><thead><tr><th>단계</th><th>모듈</th><th>핵심</th></tr></thead><tbody><tr><td>문장 → 조각</td><td>A3-M1</td><td>토크나이저(형태소·서브워드·tiktoken), 토큰 기반 유사도</td></tr><tr><td>조각 → 벡터</td><td>A3-M1</td><td>임베딩(e5, OpenAI), 정규화 + 내적 = 코사인</td></tr><tr><td>빠르게 찾기</td><td>A3-M2</td><td>Flat → IVF(nlist·nprobe) · PQ·SQ · HNSW(M·ef), 클러스터로 다양화</td></tr><tr><td>DB로 운영</td><td>A3-M3·M4</td><td>컬렉션·테이블, 필터(where·WHERE·Filter), upsert 동기화, 인덱스 설정</td></tr><tr><td>다음: OpenSearch</td><td>—</td><td>knn_vector(faiss 엔진의 HNSW·IVF) + BM25 하이브리드 + 필터</td></tr></tbody></table></div><h3>12-1. 꼭 기억할 다섯 가지</h3><ol><li>pgvector 검색은 <b>ORDER BY 거리 LIMIT k</b>, 필터는 WHERE. 인덱스 ops와 연산자는 짝을 맞추고 EXPLAIN으로 확인한다.</li><li>HNSW + 필터는 <b>결과가 모자랄 수 있다</b>. ef_search, 부분 인덱스, iterative_scan, 필터를 함께 적용하는 DB로 해결한다.</li><li>Qdrant는 <b>점 = id + 벡터 + payload</b>, 필터는 must·should·must_not. 폴더 모드는 전수 비교다.</li><li>점수의 방향을 확인한다: Chroma·pgvector는 거리(작을수록), Qdrant는 score(클수록).</li><li>DB가 달라도 같은 벡터면 결과는 같다. 품질은 <b>임베딩과 평가</b>, 속도는 <b>인덱스 설정</b>, 운영은 <b>동기화와 필터</b>가 정한다.</li></ol></section>
+</main></div><footer class="footer">© 2026 부성순. All rights reserved.<small>교안의 자체 해설 및 실습 예제에 대한 저작권 표시입니다. 외부 라이브러리·모델의 권리는 각 권리자에게 있습니다. 실습 데이터(쇼핑몰 FAQ·말뭉치)는 교육용 가상 데이터입니다.</small></footer><script>(function(){
+const tabs=[...document.querySelectorAll('[role="tab"]')];
+function setTab(i,focus=false){tabs.forEach((t,j)=>{const on=i===j;t.setAttribute('aria-selected',on?'true':'false');t.tabIndex=on?0:-1;document.getElementById(t.getAttribute('aria-controls')).hidden=!on;});if(focus)tabs[i].focus({preventScroll:true});history.replaceState(null,'','#'+tabs[i].getAttribute('aria-controls'));window.scrollTo({top:0});}
+tabs.forEach((t,i)=>{t.addEventListener('click',()=>setTab(i));t.addEventListener('keydown',e=>{if(['ArrowDown','ArrowUp','ArrowLeft','ArrowRight'].includes(e.key)){e.preventDefault();setTab((i+(e.key==='ArrowDown'||e.key==='ArrowRight'?1:-1)+tabs.length)%tabs.length,true);}})});
+const index=tabs.findIndex(t=>'#'+t.getAttribute('aria-controls')===location.hash);if(index>=0)setTab(index);
+document.querySelectorAll('.copy').forEach(b=>{b.dataset.label=b.textContent;});document.querySelectorAll('.copy').forEach(b=>b.addEventListener('click',async()=>{const code=b.closest('.codebox').querySelector('pre').textContent;try{await navigator.clipboard.writeText(code);b.textContent='복사됨';}catch(e){b.textContent='복사 실패';}setTimeout(()=>b.textContent=b.dataset.label||'코드 복사',1500); }));
+})();</script></body></html>

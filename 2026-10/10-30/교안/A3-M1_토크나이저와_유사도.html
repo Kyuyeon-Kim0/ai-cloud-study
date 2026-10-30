@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+
+<html lang="ko"><head><meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/><title>A3-M1 · 토크나이저와 유사도</title><link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" rel="stylesheet"/><style>
+:root{--bg:#fff;--surface:#f8fafc;--ink:#0f172a;--muted:#64748b;--line:#e2e8f0;--accent:#ff2e93;--soft:rgba(255,46,147,.065);--codebg:#101d34}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink);font-family:'Pretendard',system-ui,'Malgun Gothic',sans-serif;font-size:18px;line-height:1.81;word-break:keep-all}
+.banner{background:linear-gradient(125deg,#fcfcff,#f8fafc);border-bottom:1px solid var(--line)}.banner-in{max-width:1320px;margin:auto;padding:18px 24px;display:flex;align-items:center;justify-content:space-between;gap:18px}.brand{font-size:16px;font-weight:850;letter-spacing:.03em}.who{font-size:15px;color:var(--muted)}.who a{color:var(--accent);text-decoration:none}.layout{max-width:1320px;margin:auto;padding:32px 24px 84px;display:grid;grid-template-columns:minmax(0,1fr) 290px;gap:38px;align-items:start}.sidebar{order:2;position:sticky;top:22px;max-height:calc(100vh - 44px);overflow:auto;border:1px solid var(--line);border-radius:15px;background:var(--surface);padding:17px}.group{font-size:15px;color:var(--muted);font-weight:800;margin:3px 10px 14px}.tabs{display:flex;flex-direction:column;gap:5px}.tabs button{appearance:none;border:1px solid transparent;border-radius:9px;background:transparent;color:#253348;cursor:pointer;text-align:left;font:600 16px/1.55 'Pretendard',sans-serif;padding:9px 12px}.tabs button span{color:var(--accent);font-weight:850;margin-right:7px}.tabs button:hover{background:#fff;border-color:var(--line)}.tabs button[aria-selected=true]{background:var(--soft);border-color:var(--accent);color:#bd1366}.tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+main{min-width:0}.panel[hidden]{display:none}.panel{display:block}.crumb{color:var(--accent);font-size:15px;font-weight:800;margin:0 0 8px}.panel h1{font-size:31px;line-height:1.4;margin:0 0 12px}.lead{font-size:19px;font-weight:550;color:#344255;margin:6px 0 26px}.panel h3{font-size:21px;margin:33px 0 10px;border-bottom:1px solid var(--line);padding-bottom:6px}.panel h3:before{content:'▸ ';color:var(--accent)}.panel p{margin:13px 0}.panel b,.panel strong{font-weight:790}.panel code:not(pre code){font:15px/1.6 Consolas,monospace;word-break:break-word;background:#f1f5f9;border:1px solid #e5e7eb;padding:1px 5px;border-radius:4px}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;margin:17px 0 24px}.panel table{border-collapse:collapse;width:100%;font-size:17px;line-height:1.65}.panel th,.panel td{border-bottom:1px solid var(--line);padding:12px 14px;vertical-align:top;text-align:left}.panel th{font-size:16px;font-weight:800;background:#f1f5f9;color:#40516a}.panel tbody tr:last-child td{border:0}.panel tbody tr:nth-child(even){background:#fbfcfe}.note,.task,.try{border:1px solid var(--line);border-radius:13px;background:#fafcff;padding:17px 19px;margin:24px 0}.note{border-left:4px solid var(--accent);background:var(--soft)}.note b{color:#ad155e}.note p{margin:6px 0}.task{background:#fff}.task h4{margin:0 0 9px;font-size:19px}.task ol{margin:0;padding-left:23px}.task li{margin:8px 0}
+.codebox{border:1px solid #243953;border-radius:13px;overflow:hidden;margin:21px 0 26px}.codehead{display:flex;justify-content:space-between;align-items:center;gap:15px;padding:8px 13px;background:#1d3452;color:#dceafc;font-size:14px;font-weight:700}.copy{border:1px solid #8598b4;color:#fff;background:#314f78;border-radius:6px;padding:3px 10px;cursor:pointer;font-size:13px}.codebox pre{background:var(--codebg);color:#cbe9fb;margin:0;padding:20px;overflow-x:auto;font:16px/1.7 Consolas,'JetBrains Mono',monospace;word-break:normal;white-space:pre}.qa{padding:13px 17px;margin:13px 0;border:1px solid var(--line);background:#fbfcff;border-radius:10px}.qa summary{font-size:17px;cursor:pointer;font-weight:780}.qa[open] summary{color:#c01168}.qa p{font-size:17px}.try label{display:block;font-size:17px}.tryrow{display:flex;gap:10px;margin-top:10px}.try input{flex:1;min-width:0;border:1px solid #cbd5e1;border-radius:8px;font:17px 'Pretendard',sans-serif;padding:10px 12px}.try button{background:#e72281;color:#fff;border:0;border-radius:8px;padding:10px 16px;font:700 16px 'Pretendard',sans-serif;cursor:pointer}.try pre{font:16px/1.7 Consolas,monospace;background:#101d34;color:#caeeff;padding:12px;border-radius:8px;overflow:auto;white-space:pre-wrap}.hint{font-size:15px;color:var(--muted)}.footer{max-width:1320px;margin:auto;border-top:1px solid var(--line);padding:20px 24px 38px;text-align:center;color:var(--muted);font-size:15px}.footer small{display:block;max-width:950px;margin:5px auto}
+@media(max-width:900px){.layout{grid-template-columns:1fr;gap:12px;padding:15px 16px 64px}.sidebar{order:0;position:sticky;top:0;z-index:10;border-radius:0;max-height:none;overflow:auto;padding:8px 0;background:#fff}.sidebar .group{display:none}.tabs{flex-direction:row;white-space:nowrap;overflow-x:auto}.tabs button{flex:none;font-size:15px}.banner-in{flex-wrap:wrap}.panel h1{font-size:27px}}
+@media(max-width:680px){body{font-size:17px}.panel table{font-size:16px}.panel th{font-size:15px}.panel h1{font-size:24px}.panel h3{font-size:20px}.codebox pre{font-size:15px;padding:15px}.tryrow{flex-direction:column}}
+@media print{.sidebar,.copy{display:none}.layout{display:block}.panel[hidden]{display:block!important}.panel{break-before:page}.banner{background:#fff}}
+
+/* 3-Part expanded guide, retaining supplied visual language */
+.sidebar .tabs .group{margin:18px 10px 7px;font-size:14px;color:#a51662;font-weight:850;border-top:1px solid var(--line);padding-top:12px}
+.sidebar .tabs .group:first-child{margin-top:2px;border-top:0;padding-top:0}
+.panel h2{font-size:23px;line-height:1.5;margin:27px 0 8px}
+.panel ul,.panel ol{padding-left:27px;margin:12px 0}.panel li{margin:7px 0}
+.panel .meta{display:flex;gap:10px}.panel .note span{display:inline-block;margin-right:12px;font-weight:750;color:#ad155e}
+.panel pre:not(.codebox pre){white-space:pre-wrap}.panel .codebox pre{font-size:15px}
+.panel .codebox pre code{white-space:pre;display:block}
+.panel .math,.panel .formula{overflow-x:auto}
+.panel a{color:#bd1366}
+@media(min-width:901px){.sidebar{width:300px}.layout{grid-template-columns:minmax(0,1fr) 300px}}
+@media print{.panel{break-before:auto;page-break-inside:avoid}.sidebar{display:none}}
+
+.merged-subheading{font-size:24px;line-height:1.42;margin:42px 0 17px;padding:11px 14px;border-left:4px solid var(--accent);background:var(--surface);border-radius:0 8px 8px 0;} .panel .merged-subheading:first-of-type{margin-top:25px;}
+
+.paper-figure,.matrix-demo{margin:22px 0 28px;padding:20px 22px;border:1px solid var(--line);border-radius:13px;background:#fbfcfe}.paper-figure h3,.matrix-demo h3{margin-top:0}.paper-figure figure{text-align:center;margin:12px auto}.paper-figure img{display:block;margin:auto;max-width:min(100%,510px);max-height:710px;object-fit:contain;background:#fff;border:1px solid var(--line);border-radius:6px}.paper-figure figcaption{font-size:14px;color:var(--muted);line-height:1.6;margin-top:10px}.paper-figure a{color:#b31968}.matrix-demo .tablewrap{margin-top:12px}.matrix-demo td{font-size:15px}@media print{.paper-figure,.matrix-demo{break-inside:avoid}}
+
+/* Part headings: visual grouping, not selectable tabs */
+.tabs .part-heading{display:block;margin:15px 4px 6px;padding:12px 11px;background:#e5e7eb;color:#334155;border:1px solid #cbd5e1;border-radius:9px;font-size:15px;font-weight:850;line-height:1.5;white-space:normal;}
+.tabs .part-heading:first-child{margin-top:0}.tabs button{padding-left:14px}
+.panel .source-note{font-size:15px;color:#475569;background:#f8fafc;border-left:3px solid #94a3b8;padding:11px 14px;margin:20px 0}
+.panel .minihead{margin-top:24px;font-weight:800;color:#334155}
+@media(max-width:900px){.tabs .part-heading{flex:none;margin:0 6px 0 0;white-space:nowrap;padding:9px 12px}}
+</style><style>.journey{border-left:4px solid #ff2e93;background:#fff5fa;padding:16px 19px;margin:20px 0;border-radius:8px}.journey h3{border:0!important;margin:0 0 8px!important;padding:0!important;font-size:18px!important}.journey h3:before{content:none!important}.modelcode{border:1px solid #d4dce8;background:#f8fafc;border-radius:12px;padding:15px 17px;margin:24px 0}.modelcode h3{border:0!important;margin:0 0 8px!important;font-size:18px!important}.modelcode h3:before{content:none!important}.modelcode pre{background:#101d34;color:#d6ecff;padding:15px;overflow:auto;border-radius:9px;font:15px/1.65 Consolas,monospace;white-space:pre}.matrix-intro{margin:16px 0;padding:15px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px}.miniout{font:15px/1.6 Consolas,monospace;background:#f1f5f9;padding:12px;white-space:pre-wrap;border-radius:8px}</style><style>
+.ragmap{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 22px}.ragmap .chip{display:inline-flex;align-items:center;gap:5px;font-size:14px;line-height:1.4;padding:5px 10px;border:1px solid var(--line);border-radius:999px;background:#fff;color:#64748b}.ragmap .chip em{font-style:normal;font-weight:850;color:#94a3b8}.ragmap .chip.done{background:#f8fafc;color:#334155}.ragmap .chip.done em{color:#bd1366}.ragmap .chip.on{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:800}.ragmap .chip.on em{color:#fff}
+.flow{display:flex;flex-wrap:wrap;align-items:stretch;gap:8px;margin:18px 0 24px}.flow .fstep{flex:1 1 96px;min-width:92px;border:1px solid var(--line);border-top:3px solid var(--accent);border-radius:10px;background:#fff;padding:10px 12px}.flow .fstep b{display:block;font-size:16px;color:#0f172a}.flow .fstep span{display:block;font-size:14px;color:var(--muted);line-height:1.5;margin-top:3px}.flow .arrow{align-self:center;color:var(--accent);font-weight:900}
+.outbox .codehead{background:#203a2c}.outbox{border-color:#2f5a43}.outbox pre{background:#0d1f17;color:#c9f5d9}
+.shot{margin:18px 0 26px;padding:12px;border:1px solid var(--line);border-radius:12px;background:#fbfcfe}.shot img{display:block;max-width:100%;height:auto;border-radius:8px;border:1px solid #1e293b}.shot figcaption{font-size:14px;color:var(--muted);margin-top:8px;text-align:center}
+@media(max-width:680px){.flow .arrow{display:none}.flow .fstep{flex-basis:100%}}
+</style><style>
+.syn td:first-child code{white-space:pre-wrap;word-break:break-all}
+.syn td{vertical-align:top}
+.use{display:inline-block;margin:8px 6px 0 0;padding:1px 7px;border-radius:5px;background:#fde7f2;color:#bd1366;font-size:13px;font-weight:800}
+.use+code{display:inline-block;margin-top:6px;white-space:pre-wrap}
+main p,main li,main td{overflow-wrap:anywhere}
+.mock{border:1px solid #cbd5e1;border-radius:14px;background:#f8fafc;padding:14px 16px;margin:20px 0}
+.mock-title{font-weight:800;font-size:15px;color:#475569;margin-bottom:10px}
+.mock table{border-collapse:collapse;width:100%;font-size:15px;background:#fff}
+.mock td,.mock th{border:1px solid #e2e8f0;padding:6px 8px;text-align:center}
+.mock th{background:#f1f5f9}
+.mock .hl{background:#fde7f2;font-weight:800}
+.mock .dim{color:#94a3b8}
+.mock .ok{background:#dcfce7;font-weight:700}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}
+.chips span{border:1px solid #cbd5e1;background:#fff;border-radius:6px;padding:2px 8px;font:14px Consolas,monospace}
+.chips span.sp{background:#fde7f2;border-color:#f9a8d4}
+.chips span.unk{background:#fef3c7;border-color:#f59e0b}
+.figsvg{width:100%;height:auto;max-width:560px;display:block;margin:6px auto}
+.figrow{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.figcap{font-size:14px;color:#64748b;text-align:center;margin-top:4px}
+@media (max-width:760px){.syn table,.syn tbody,.syn tr,.syn td{display:block;width:100%!important}.syn thead{display:none}.syn tr{padding:10px 12px;border-bottom:1px solid #e2e8f0}.syn td{border:0!important;padding:3px 0!important}.mock{overflow-x:auto}}
+</style></head><body><header class="banner"><div class="banner-in"><div><div class="brand">Part A · A3-M1 · 토크나이저와 유사도</div><div style="font-size:23px;font-weight:850">Hugging Face 토크나이저 · tiktoken · 토큰과 임베딩으로 유사도 계산</div></div><div class="who">© 2026 부성순 · AI·클라우드 실무 과정</div><a href="/lectures/files/index.html#section-a1" style="display:inline-block;padding:7px 11px;border:1px solid #e2e8f0;border-radius:8px;background:#fff;color:#bd1366;text-decoration:none;font-weight:800;white-space:nowrap">📚 강의자료 라이브러리 · Part A</a></div></header><div class="layout"><aside class="sidebar"><div class="group">A3-M1 · 세부 목차</div><nav aria-label="교안 세부 목차" class="tabs" role="tablist"><div aria-level="2" class="part-heading" role="heading">Part 0. 전체 그림</div><button aria-controls="u00" aria-selected="true" id="tab-u00" role="tab" tabindex="0" type="button"><span>00</span>왜 토크나이저부터 보나</button><div aria-level="2" class="part-heading" role="heading">Part 1. 토큰 나누기 기초</div><button aria-controls="u01" aria-selected="false" id="tab-u01" role="tab" tabindex="-1" type="button"><span>01</span>다섯 가지 자르기</button><button aria-controls="u02" aria-selected="false" id="tab-u02" role="tab" tabindex="-1" type="button"><span>02</span>kiwi 형태소 분석</button><button aria-controls="u03" aria-selected="false" id="tab-u03" role="tab" tabindex="-1" type="button"><span>03</span>서브워드 원리 (BPE)</button><div aria-level="2" class="part-heading" role="heading">Part 2. Hugging Face 토크나이저</div><button aria-controls="u04" aria-selected="false" id="tab-u04" role="tab" tabindex="-1" type="button"><span>04</span>토크나이저 직접 만들기 ①</button><button aria-controls="u05" aria-selected="false" id="tab-u05" role="tab" tabindex="-1" type="button"><span>05</span>토크나이저 직접 만들기 ②</button><button aria-controls="u06" aria-selected="false" id="tab-u06" role="tab" tabindex="-1" type="button"><span>06</span>바이트 BPE와 저장</button><button aria-controls="u07" aria-selected="false" id="tab-u07" role="tab" tabindex="-1" type="button"><span>07</span>transformers 사용법 ①</button><button aria-controls="u08" aria-selected="false" id="tab-u08" role="tab" tabindex="-1" type="button"><span>08</span>transformers 사용법 ②</button><button aria-controls="u09" aria-selected="false" id="tab-u09" role="tab" tabindex="-1" type="button"><span>09</span>사전학습 토크나이저</button><div aria-level="2" class="part-heading" role="heading">Part 3. tiktoken (OpenAI)</div><button aria-controls="u10" aria-selected="false" id="tab-u10" role="tab" tabindex="-1" type="button"><span>10</span>tiktoken 기본</button><button aria-controls="u11" aria-selected="false" id="tab-u11" role="tab" tabindex="-1" type="button"><span>11</span>토큰 수 세기·자르기</button><div aria-level="2" class="part-heading" role="heading">Part 4. 토큰과 유사도</div><button aria-controls="u12" aria-selected="false" id="tab-u12" role="tab" tabindex="-1" type="button"><span>12</span>토큰으로 유사도</button><button aria-controls="u13" aria-selected="false" id="tab-u13" role="tab" tabindex="-1" type="button"><span>13</span>토크나이저 비교 실험</button><button aria-controls="u14" aria-selected="false" id="tab-u14" role="tab" tabindex="-1" type="button"><span>14</span>임베딩으로 유사도</button><div aria-level="2" class="part-heading" role="heading">Part 5. 마무리</div><button aria-controls="u15" aria-selected="false" id="tab-u15" role="tab" tabindex="-1" type="button"><span>15</span>실습 과제</button><button aria-controls="u16" aria-selected="false" id="tab-u16" role="tab" tabindex="-1" type="button"><span>16</span>정리</button></nav></aside><main><section aria-labelledby="tab-u00" class="panel" id="u00" role="tabpanel"><div class="crumb">Part 0. 전체 그림 · A3-M1</div><h1>00. 왜 토크나이저부터 보나</h1><p class="lead">검색·RAG·LLM 비용은 모두 ‘문장을 어떤 조각으로 나누었는가’에서 출발합니다. 이 모듈은 Hugging Face 토크나이저와 OpenAI tiktoken을 손에 익히고, 그 조각으로 유사도를 계산해 검색 품질이 어떻게 달라지는지 직접 확인합니다.</p><div class="journey"><h3>이 모듈에서 할 일</h3><p>같은 문장을 여러 방식으로 잘라 보고(글자·띄어쓰기·형태소·서브워드), Hugging Face <code>tokenizers</code>로 우리 데이터 전용 토크나이저를 직접 학습한 뒤, <code>transformers</code>의 토크나이저 문법과 OpenAI의 <code>tiktoken</code> 문법을 익힙니다. 마지막으로 토크나이저만 바꿔 쇼핑몰 FAQ 검색 정확도가 어떻게 바뀌는지 숫자로 비교하고, 임베딩 모델로 계산한 유사도와 견줘 봅니다.</p></div><h3>00-1. 토크나이저가 결정하는 세 가지</h3><div class="tablewrap "><table><thead><tr><th>무엇</th><th>왜 토크나이저 때문인가</th><th>이 모듈에서 확인하는 곳</th></tr></thead><tbody><tr><td><b>검색 품질</b></td><td>‘택배’와 ‘배송’, ‘와요’와 ‘오나요’가 같은 조각으로 잘리는지에 따라 키워드 검색 점수가 0이 되기도 하고 높아지기도 합니다.</td><td>13 토크나이저 비교 실험</td></tr><tr><td><b>길이 한도</b></td><td>모델은 글자가 아니라 토큰 수로 입력을 제한합니다(BERT 512, OpenAI 임베딩 8,192). 넘치면 뒤가 잘려 근거가 사라집니다.</td><td>08 긴 문서, 11 토큰으로 자르기</td></tr><tr><td><b>비용</b></td><td>OpenAI API 요금은 토큰 수로 계산됩니다. 한국어는 같은 뜻의 영어보다 토큰이 더 많이 나오고, 인코딩에 따라서도 달라집니다.</td><td>10 tiktoken 기본, 11 비용 어림</td></tr></tbody></table></div><h3>00-2. 같은 문장, 전혀 다른 조각</h3><p>아래는 01번 실습에서 실제로 나온 결과입니다. 같은 문장인데 방식에 따라 조각 수가 7개에서 38개까지 차이 납니다. 이 차이가 이 모듈 전체의 출발점입니다.</p><div class="mock"><div class="mock-title">‘택배비 얼마예요? 35kg 냉장고(RF85T)도 free shipping 되나요’를 자른 결과</div><div class="tablewrap "><table><thead><tr><th>방식</th><th>조각 수</th><th>앞부분</th></tr></thead><tbody><tr><td>글자</td><td>38</td><td>택 · 배 · 비 · 얼 · 마 · 예 · 요 · ? · 3 · 5 · k · g …</td></tr><tr><td>띄어쓰기</td><td>7</td><td>택배비 · 얼마예요? · 35kg · 냉장고(RF85T)도 …</td></tr><tr><td>정규식 단어</td><td>12</td><td>택배비 · 얼마예요 · ? · 35kg · 냉장고 · ( · RF85T …</td></tr><tr><td>형태소(kiwi)</td><td>18</td><td>택배비 · 얼마 · 이 · 예요 · ? · 35 · kg · 냉장고 …</td></tr><tr><td>BPE(tiktoken o200k)</td><td>24</td><td>택 · 배 · 비 · ␣얼마 · 예 · 요 · ? · ␣ · 35 · kg …</td></tr></tbody></table></div></div><h3>00-3. 모듈 지도</h3><div class="tablewrap "><table><thead><tr><th>노트북</th><th>탭</th><th>핵심 문법</th></tr></thead><tbody><tr><td>01_토큰_나누기_기초</td><td>01~03</td><td><code>Kiwi().tokenize</code>, 품사 골라내기, <code>add_user_word</code>, BPE 병합 원리</td></tr><tr><td>02_HF_토크나이저_직접_만들기</td><td>04~06</td><td><code>tokenizers</code>: normalizer · pre_tokenizer · model · trainer · post_processor · save</td></tr><tr><td>03_transformers_토크나이저_사용법</td><td>07~09</td><td><code>AutoTokenizer</code>, <code>tok(...)</code>, padding · truncation · offsets · stride · add_tokens</td></tr><tr><td>04_tiktoken</td><td>10~11</td><td><code>get_encoding</code>, <code>encode/decode</code>, 특수 토큰, 비용 어림, 토큰 기준 자르기</td></tr><tr><td>05_토큰으로_유사도</td><td>12~13</td><td>Counter·코사인·자카드, <code>TfidfVectorizer(tokenizer=...)</code>, Hit@k</td></tr><tr><td>06_임베딩으로_유사도</td><td>14</td><td>e5 mean pooling, OpenAI <code>embeddings.create</code></td></tr><tr><td>07_실습과제 / 정답</td><td>15</td><td>과제 6개</td></tr></tbody></table></div><h3>00-4. 실습 준비</h3><div class="codebox"><div class="codehead"><span>터미널 · A3-M1 폴더</span><button class="copy" type="button">코드 복사</button></div><pre><code>python -m venv .venv
+.venv\Scripts\activate            # macOS·Linux: source .venv/bin/activate
+pip install -r requirements.txt
+python make_corpus.py              # shop_corpus.txt(말뭉치 2,000줄) 만들기</code></pre></div><div class="tablewrap "><table><thead><tr><th>파일</th><th>내용</th></tr></thead><tbody><tr><td><code>shop_corpus.txt</code></td><td>쇼핑몰 고객 문의 말뭉치 2,000줄(가상). 토크나이저 학습용. <code>make_corpus.py</code>가 만듦</td></tr><tr><td><code>shop_faq.py</code></td><td>FAQ 20건(<code>FAQ</code>)과 고객 말투 평가 질문 12개(<code>TESTS</code>). 유사도·검색 실험용</td></tr><tr><td><code>.env</code></td><td>06 노트북의 OpenAI 임베딩에만 필요. <code>OPENAI_API_KEY=...</code></td></tr></tbody></table></div><details class="qa"><summary>Q. tiktoken도 처음에 인터넷이 필요한가요?</summary><p>네. 처음 <code>get_encoding</code>을 부를 때 인코딩 파일(수 MB)을 한 번 내려받아 캐시에 저장하고, 그다음부터는 오프라인으로 동작합니다. Hugging Face 토크나이저도 처음 한 번 내려받습니다. 02 노트북에서 직접 만드는 토크나이저는 인터넷이 필요 없습니다.</p></details></section>
+<section aria-labelledby="tab-u01" class="panel" hidden="" id="u01" role="tabpanel"><div class="crumb">Part 1. 토큰 나누기 기초 · A3-M1</div><h1>01. 토큰이란 — 같은 문장을 다섯 가지로 잘라 보기</h1><p class="lead">토큰은 ‘모델이나 검색엔진이 한 단위로 다루는 조각’입니다. 무엇을 한 조각으로 볼지 정하는 규칙이 토크나이저입니다. 규칙마다 장단점이 분명해서, 어떤 규칙을 고르느냐가 곧 검색·생성 품질의 바탕이 됩니다.</p><div class="journey"><h3>이 단계의 의미</h3><p>RAG에서 문서를 검색할 때 ‘질문의 조각’과 ‘문서의 조각’이 겹쳐야 키워드 점수가 생기고, 임베딩 모델도 결국 토큰 단위로 문장을 읽습니다. 그래서 문장이 어떻게 잘리는지 눈으로 보는 습관이 첫 단계입니다.</p></div><h3>01-1. 준비 — 설치 확인과 예문</h3><p>이 모듈에서 쓰는 라이브러리 네 개가 모두 설치되었는지 확인합니다.</p><div class="codebox"><div class="codehead"><span>01_토큰_나누기_기초.ipynb · 01-1</span><button class="copy" type="button">코드 복사</button></div><pre><code># 터미널: pip install kiwipiepy tokenizers transformers tiktoken scikit-learn
+from kiwipiepy import Kiwi
+import tokenizers, transformers, tiktoken
+print("kiwipiepy 준비 완료 | tokenizers", tokenizers.__version__, "| transformers", transformers.__version__)
+
+sentence = "택배비 얼마예요? 35kg 냉장고(RF85T)도 free shipping 되나요"
+print(sentence)</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>from kiwipiepy import Kiwi</code></td><td>한국어 형태소 분석기. 설치 이름 <code>kiwipiepy</code>, 클래스 이름 <code>Kiwi</code></td></tr><tr><td><code>import tokenizers, transformers, tiktoken</code></td><td>Hugging Face 토크나이저 엔진 / 모델·토크나이저 통합 라이브러리 / OpenAI 토크나이저</td></tr><tr><td><code>tokenizers.__version__</code></td><td>패키지 버전 문자열. 오류가 나면 먼저 버전부터 확인</td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>kiwipiepy 준비 완료 | tokenizers 0.23.3 | transformers 5.21.0
+택배비 얼마예요? 35kg 냉장고(RF85T)도 free shipping 되나요</code></pre></div><h3>01-2. 같은 문장, 다섯 가지 자르기</h3><div class="codebox"><div class="codehead"><span>01_토큰_나누기_기초.ipynb · 01-2</span><button class="copy" type="button">코드 복사</button></div><pre><code>import re
+kiwi = Kiwi()
+enc = tiktoken.get_encoding("o200k_base")
+
+ways = {
+    "글자":      list(sentence.replace(" ", "")),
+    "띄어쓰기":  sentence.split(),
+    "정규식 단어": re.findall(r"\w+|[^\w\s]", sentence),
+    "형태소(kiwi)": [t.form for t in kiwi.tokenize(sentence)],
+    "BPE(tiktoken o200k)": [enc.decode([i]) for i in enc.encode(sentence)],
+}
+for name, toks in ways.items():
+    print(f"{name:&lt;18} {len(toks):&gt;2}개  {toks}")</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>list(sentence.replace(" ", ""))</code></td><td>문자열을 <code>list()</code>에 넣으면 <b>글자 하나씩</b> 리스트. 공백은 먼저 지움</td></tr><tr><td><code>sentence.split()</code></td><td>인자 없이 쓰면 공백(스페이스·탭·줄바꿈) 기준으로 나눔</td></tr><tr><td><code>re.findall(r"\w+|[^\w\s]", sentence)</code></td><td><b>정규식</b>: <code>\w+</code> 글자·숫자 묶음, 또는(<code>|</code>) <code>[^\w\s]</code> 글자도 공백도 아닌 기호 하나. ‘단어와 기호를 떼어 내기’</td></tr><tr><td><code>[t.form for t in kiwi.tokenize(sentence)]</code></td><td>kiwi 결과(Token 객체 리스트)에서 형태(<code>.form</code>)만 꺼냄</td></tr><tr><td><code>enc.encode(sentence)</code></td><td>tiktoken: 문장 → 토큰 번호 리스트</td></tr><tr><td><code>[enc.decode([i]) for i in ...]</code></td><td>번호 하나씩 다시 글자로. 리스트로 감싸서 넘김(<code>decode</code>는 리스트를 받음)</td></tr><tr><td><code>f"{name:&lt;18} {len(toks):&gt;2}개"</code></td><td>f-string 서식: <code>&lt;18</code> 왼쪽 정렬 18칸, <code>&gt;2</code> 오른쪽 정렬 2칸</td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>글자                 38개  ['택', '배', '비', '얼', '마', '예', '요', '?', '3', '5', 'k', 'g', '냉', '장', '고', '(', 'R', 'F', '8', '5', 'T', ')', '도', 'f', 'r', 'e', 'e', 's', 'h', 'i', 'p', 'p', 'i', 'n', 'g', '되', '나', '요']
+띄어쓰기                7개  ['택배비', '얼마예요?', '35kg', '냉장고(RF85T)도', 'free', 'shipping', '되나요']
+정규식 단어             12개  ['택배비', '얼마예요', '?', '35kg', '냉장고', '(', 'RF85T', ')', '도', 'free', 'shipping', '되나요']
+형태소(kiwi)          18개  ['택배비', '얼마', '이', '예요', '?', '35', 'kg', '냉장고', '(', 'RF', '85', 'T', ')', '도', 'free', 'shipping', '되', '나요']
+BPE(tiktoken o200k) 24개  ['택', '배', '비', ' 얼마', '예', '요', '?', ' ', '35', 'kg', ' �', '�', '장', '고', '(R', 'F', '85', 'T', ')', '도', ' free', ' shipping', ' 되', '나요']</code></pre></div><h3>01-3. 다섯 방식 비교</h3><div class="tablewrap "><table><thead><tr><th>방식</th><th>어떻게 자르나</th><th>장점</th><th>약점</th><th>주로 쓰는 곳</th></tr></thead><tbody><tr><td>글자</td><td>한 글자씩</td><td>모르는 단어가 없음</td><td>조각에 뜻이 거의 없고 너무 많음</td><td>글자 n-gram 검색</td></tr><tr><td>띄어쓰기</td><td>공백 기준</td><td>가장 단순하고 빠름</td><td>한국어는 조사가 붙어 ‘냉장고는’ ‘냉장고도’가 다른 조각</td><td>영어 기본 검색</td></tr><tr><td>정규식 단어</td><td>글자 묶음과 기호 분리</td><td>괄호·물음표가 떨어짐</td><td>조사 문제는 그대로</td><td>전처리 보조</td></tr><tr><td>형태소(kiwi)</td><td>뜻을 가진 최소 단위 + 품사</td><td>‘냉장고’와 ‘는’이 분리. 품사로 골라 쓸 수 있음</td><td>사전에 없는 신조어·모델명은 잘게 쪼개짐</td><td>한국어 키워드 검색·BM25</td></tr><tr><td>서브워드(BPE·WordPiece)</td><td>자주 나오는 글자 묶음을 학습</td><td>어휘 수를 고정하면서 모르는 단어도 조각으로 표현</td><td>사람이 보기엔 경계가 어색함</td><td>모든 신경망 모델(BERT·GPT·e5)</td></tr></tbody></table></div><div class="note"><b>tiktoken 결과의 ‘�’는 오류가 아닙니다</b><p>BPE(tiktoken)는 글자가 아니라 <b>UTF-8 바이트</b>를 묶습니다. 한글 한 글자는 3바이트라서, ‘냉’이 두 토큰에 걸쳐 나뉘면 토큰 하나만 따로 decode할 때 반쪽짜리 바이트가 되어 ‘�’로 보입니다. 두 토큰을 함께 decode하면 ‘냉’으로 정상 복원됩니다. 10번 탭에서 바이트를 직접 확인합니다.</p></div><details class="qa"><summary>Q. 어떤 방식이 가장 좋은가요?</summary><p>목적에 따라 다릅니다. 신경망 모델에 넣을 때는 모델이 학습한 서브워드 토크나이저를 <b>반드시 그대로</b> 써야 하고, 키워드 검색(BM25·TF-IDF)은 한국어에서 형태소나 글자 n-gram이 강합니다. 13번 탭에서 같은 데이터로 직접 비교합니다.</p></details></section>
+<section aria-labelledby="tab-u02" class="panel" hidden="" id="u02" role="tabpanel"><div class="crumb">Part 1. 토큰 나누기 기초 · A3-M1</div><h1>02. kiwi 형태소 분석 — 한국어를 뜻 단위로</h1><p class="lead">한국어는 ‘냉장고+는’, ‘오+나요’처럼 뜻을 가진 덩어리에 조사·어미가 붙습니다. 형태소 분석기는 이것을 떼어 내고 품사를 붙여 줍니다. 검색용 토크나이저를 만들 때 가장 먼저 꺼내는 도구입니다.</p><h3>02-1. kiwi 형태소 분석 — 결과 객체 읽기</h3><div class="codebox"><div class="codehead"><span>01_토큰_나누기_기초.ipynb · 02-1</span><button class="copy" type="button">코드 복사</button></div><pre><code>tokens = kiwi.tokenize("택배비 얼마예요?? 35키로 냉장고는요")
+for t in tokens:
+    print(f"{t.form:&lt;6} {t.tag:&lt;4} 시작 {t.start:&gt;2} 길이 {t.len}")
+print("첫 토큰 통째로:", tokens[0])</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>kiwi.tokenize(text)</code></td><td>문장 → <b>Token 객체 리스트</b>. 하나의 Token에 형태·품사·위치가 함께 들어 있음</td></tr><tr><td><code>t.form / t.tag</code></td><td>형태(글자) / 품사 태그(세종 품사 체계)</td></tr><tr><td><code>t.start / t.len</code></td><td>원문에서의 시작 위치와 길이. <code>text[t.start:t.start+t.len]</code>로 원문 조각을 다시 꺼낼 수 있음</td></tr><tr><td><code>f"{t.form:&lt;6}"</code></td><td>왼쪽 정렬 6칸. 한글은 화면 폭이 2칸이라 줄이 조금 어긋날 수 있음</td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>택배비    NNG  시작  0 길이 3
+얼마     NNG  시작  4 길이 2
+이      VCP  시작  6 길이 0
+예요     EF   시작  6 길이 2
+??     SF   시작  8 길이 2
+35     SN   시작 11 길이 2
+키로     NNB  시작 13 길이 2
+냉장고    NNG  시작 16 길이 3
+는      JX   시작 19 길이 1
+요      MM   시작 20 길이 1
+첫 토큰 통째로: Token(form='택배비', tag='NNG', start=0, len=3)</code></pre></div><p>‘35키로’는 35(SN, 숫자) + 키로(NNB, 의존명사)로, ‘얼마예요’는 얼마(NNG) + 이(VCP) + 예요(EF)로 나뉘었습니다. ‘이’의 길이가 0인 것은 원문에 글자로 드러나지 않고 분석으로 복원된 형태라는 뜻입니다.</p><h3>02-2. 자주 쓰는 품사 태그</h3><div class="tablewrap "><table><thead><tr><th>태그</th><th>뜻</th><th>예</th><th>검색에 남길까</th></tr></thead><tbody><tr><td>NNG / NNP / NNB</td><td>일반명사 / 고유명사 / 의존명사</td><td>냉장고 / 머시닝센터 / 키로·개</td><td>남김</td></tr><tr><td>VV / VA</td><td>동사 / 형용사</td><td>오(다) / 크(다)</td><td>대체로 남김</td></tr><tr><td>XR</td><td>어근</td><td>깨끗(하다)</td><td>남김</td></tr><tr><td>SL / SN</td><td>외국어 / 숫자</td><td>free, RF / 35</td><td>남김(모델명·수치)</td></tr><tr><td>NP / MAG</td><td>대명사 / 일반부사</td><td>언제·어디 / 빨리</td><td>질문 의도에 따라(과제 5)</td></tr><tr><td>JKS·JKB·JX…</td><td>조사</td><td>이·에서·는</td><td>버림</td></tr><tr><td>EF·EC·EP…</td><td>어미</td><td>나요·고·었</td><td>버림</td></tr><tr><td>SF·SP·SS</td><td>문장부호</td><td>? , ( )</td><td>버림</td></tr></tbody></table></div><h3>02-3. 필요한 품사만 골라 쓰기 — 검색용 토크나이저 만들기</h3><div class="codebox"><div class="codehead"><span>01_토큰_나누기_기초.ipynb · 02-3</span><button class="copy" type="button">코드 복사</button></div><pre><code>from kiwipiepy.utils import Stopwords
+
+KEEP = {"NNG", "NNP", "NNB", "SL", "SN", "VV", "VA", "XR"}      # 일반·고유·의존명사, 외국어, 숫자, 동사, 형용사, 어근
+def kiwi_tokens(text, keep=KEEP):
+    return [t.form for t in kiwi.tokenize(text) if t.tag in keep]
+
+q = "냉장고는 언제쯤 오나요?"
+print("전체      :", [(t.form, t.tag) for t in kiwi.tokenize(q)])
+print("품사 골라냄:", kiwi_tokens(q))
+print("불용어 제거:", [t.form for t in kiwi.tokenize(q, stopwords=Stopwords())])</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>KEEP = {"NNG", ...}</code></td><td><b>집합(set)</b>. <code>in</code> 검사가 리스트보다 빠름</td></tr><tr><td><code>def kiwi_tokens(text, keep=KEEP):</code></td><td>기본값 인자. 다른 품사 조합을 넘겨 실험 가능</td></tr><tr><td><code>[t.form for t in ... if t.tag in keep]</code></td><td>조건 있는 리스트 컴프리헨션: 남길 품사만</td></tr><tr><td><code>from kiwipiepy.utils import Stopwords</code></td><td>kiwi가 제공하는 기본 불용어 목록</td></tr><tr><td><code>kiwi.tokenize(q, stopwords=Stopwords())</code></td><td>불용어에 해당하는 형태소를 빼고 돌려줌</td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>전체      : [('냉장고', 'NNG'), ('는', 'JX'), ('언제', 'NP'), ('쯤', 'XSN'), ('오', 'VV'), ('나요', 'EF'), ('?', 'SF')]
+품사 골라냄: ['냉장고', '오']
+불용어 제거: ['냉장고', '언제', '쯤', '오', '나요']</code></pre></div><p>‘품사 골라냄’ 결과에 ‘언제’가 빠졌습니다. ‘언제’가 대명사(NP)로 분석되어 KEEP에 없기 때문입니다. ‘언제 와요’처럼 의문사가 질문의 핵심인 FAQ에서는 NP를 남기는 편이 나을 수 있습니다. 과제 5에서 숫자로 확인합니다.</p><h3>02-4. 사용자 사전 · 띄어쓰기 교정 · 문장 나누기</h3><div class="codebox"><div class="codehead"><span>01_토큰_나누기_기초.ipynb · 02-4</span><button class="copy" type="button">코드 복사</button></div><pre><code>text = "CNC 머시닝센터 3호기에서 불량 발생"
+print("사전 추가 전:", [(t.form, t.tag) for t in kiwi.tokenize(text)])
+kiwi.add_user_word("머시닝센터", "NNP")                     # 고유명사로 등록
+kiwi.add_user_word("3호기", "NNP")
+print("사전 추가 후:", [(t.form, t.tag) for t in kiwi.tokenize(text)])
+
+print("띄어쓰기 교정:", kiwi.space("배송비얼마인가요냉장고도무료배송인가요"))
+print("문장 나누기 :", [s.text for s in kiwi.split_into_sents("배송 언제 와요? 어제 주문했어요. 빨리 받고 싶어요")])</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>kiwi.add_user_word("머시닝센터", "NNP")</code></td><td><b>사용자 사전</b>에 단어와 품사 등록. 반환값 True면 새로 추가됨. 모델명·제품명·사내 용어에 필수</td></tr><tr><td><code>kiwi.space(text)</code></td><td>띄어쓰기 교정. 붙여 쓴 고객 문의를 정리할 때</td></tr><tr><td><code>kiwi.split_into_sents(text)</code></td><td>문장 단위로 나눔. 결과 객체의 <code>.text</code>가 문장. 11번 탭에서 ‘문장 경계를 지키는 청킹’에 사용</td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>사전 추가 전: [('CNC', 'SL'), ('머시닝센터', 'NNP'), ('3', 'SN'), ('호기', 'NNB'), ('에서', 'JKB'), ('불량', 'NNG'), ('발생', 'NNG')]
+사전 추가 후: [('CNC', 'SL'), ('머시닝센터', 'NNP'), ('3호기', 'NNP'), ('에서', 'JKB'), ('불량', 'NNG'), ('발생', 'NNG')]
+띄어쓰기 교정: 배송비 얼마인가요 냉장고도 무료 배송인가요
+문장 나누기 : ['배송 언제 와요?', '어제 주문했어요.', '빨리 받고 싶어요']</code></pre></div><p>‘3호기’를 등록하기 전에는 3(SN) + 호기(NNB)로 나뉘어, ‘3호기’로 검색하면 ‘3’과 ‘호기’가 따로 매칭됩니다. 등록 후에는 한 덩어리입니다. 도메인 용어 사전은 검색 품질을 가장 싸게 올리는 방법입니다.</p><details class="qa"><summary>Q. Kiwi() 객체를 함수 안에서 매번 만들면?</summary><p>모델을 메모리에 올리는 데 시간이 걸립니다. 파일 맨 위에서 한 번만 만들고 재사용합니다.</p></details><details class="qa"><summary>Q. 사용자 사전은 저장되나요?</summary><p><code>add_user_word</code>는 그 객체에만 적용됩니다. 단어 목록을 파일로 두고 시작할 때 읽어 등록하거나, <code>kiwi.load_user_dictionary("사전.txt")</code>로 한 번에 불러옵니다(한 줄에 ‘단어 탭 품사’).</p></details></section>
+<section aria-labelledby="tab-u03" class="panel" hidden="" id="u03" role="tabpanel"><div class="crumb">Part 1. 토큰 나누기 기초 · A3-M1</div><h1>03. 서브워드 — BPE가 어휘를 만드는 과정 따라가기</h1><p class="lead">BERT·GPT·e5 같은 모델은 형태소 분석기를 쓰지 않습니다. 대신 말뭉치에서 ‘자주 붙어 나오는 조각’을 통계로 찾아 어휘를 만듭니다. 그 대표 방법인 BPE(Byte Pair Encoding)의 병합 과정을 손으로 따라갑니다.</p><div class="journey"><h3>왜 서브워드인가</h3><p>단어 단위 어휘는 끝이 없습니다(신조어, 모델명, 오타). 글자 단위는 조각에 뜻이 없습니다. 서브워드는 그 중간입니다. 자주 나오는 ‘배송’은 한 조각, 드문 ‘배송지’는 ‘배송’+‘지’처럼 나눠서, 정해진 어휘 수(예: 3만 개) 안에서 어떤 문장이든 표현합니다.</p></div><h3>03-1. BPE 병합을 손으로 따라가기</h3><div class="codebox"><div class="codehead"><span>01_토큰_나누기_기초.ipynb · 03-1</span><button class="copy" type="button">코드 복사</button></div><pre><code>from collections import Counter
+
+words = {"배송": 6, "배송비": 4, "배송지": 3, "배달": 2, "배달비": 2}     # 단어: 등장 횟수
+splits = {w: list(w) for w in words}                                      # 처음엔 글자 단위
+vocab = sorted({ch for w in words for ch in w})
+print("시작 어휘:", vocab)
+
+for step in range(1, 5):
+    pairs = Counter()
+    for w, freq in words.items():                                         # 이웃한 두 조각 쌍 세기
+        s = splits[w]
+        for a, b in zip(s, s[1:]):
+            pairs[(a, b)] += freq
+    (a, b), cnt = pairs.most_common(1)[0]                                 # 가장 많이 나온 쌍
+    for w in words:                                                       # 그 쌍을 하나로 합친다
+        s, out, i = splits[w], [], 0
+        while i &lt; len(s):
+            if i &lt; len(s) - 1 and s[i] == a and s[i + 1] == b:
+                out.append(a + b); i += 2
+            else:
+                out.append(s[i]); i += 1
+        splits[w] = out
+    vocab.append(a + b)
+    print(f"병합 {step}: '{a}'+'{b}' (함께 {cnt}번) → {splits}")
+print("최종 어휘:", vocab)</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>words = {"배송": 6, ...}</code></td><td>학습 말뭉치를 ‘단어: 등장 횟수’로 요약한 것</td></tr><tr><td><code>splits = {w: list(w) for w in words}</code></td><td>사전 컴프리헨션. 처음에는 모든 단어를 글자로 쪼갠 상태</td></tr><tr><td><code>Counter()</code></td><td><code>collections.Counter</code>: 개수 세기용 사전. 없는 키는 0으로 시작</td></tr><tr><td><code>zip(s, s[1:])</code></td><td>리스트와 한 칸 민 리스트를 짝지으면 <b>이웃한 두 조각 쌍</b>이 나옴. ['배','송','비'] → ('배','송'), ('송','비')</td></tr><tr><td><code>pairs[(a, b)] += freq</code></td><td>쌍이 나온 단어의 등장 횟수만큼 더함</td></tr><tr><td><code>pairs.most_common(1)[0]</code></td><td>가장 많은 쌍 1개 → ((a, b), 횟수)</td></tr><tr><td><code>while i &lt; len(s): ...</code></td><td>왼쪽부터 보며 a 다음에 b가 오면 합친 조각을 넣고 두 칸 건너뜀</td></tr><tr><td><code>vocab.append(a + b)</code></td><td>합친 조각이 새 어휘가 됨. 이 병합 순서 목록이 곧 BPE 토크나이저의 규칙</td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>시작 어휘: ['달', '배', '비', '송', '지']
+병합 1: '배'+'송' (함께 13번) → {'배송': ['배송'], '배송비': ['배송', '비'], '배송지': ['배송', '지'], '배달': ['배', '달'], '배달비': ['배', '달', '비']}
+병합 2: '배송'+'비' (함께 4번) → {'배송': ['배송'], '배송비': ['배송비'], '배송지': ['배송', '지'], '배달': ['배', '달'], '배달비': ['배', '달', '비']}
+병합 3: '배'+'달' (함께 4번) → {'배송': ['배송'], '배송비': ['배송비'], '배송지': ['배송', '지'], '배달': ['배달'], '배달비': ['배달', '비']}
+병합 4: '배송'+'지' (함께 3번) → {'배송': ['배송'], '배송비': ['배송비'], '배송지': ['배송지'], '배달': ['배달'], '배달비': ['배달', '비']}
+최종 어휘: ['달', '배', '비', '송', '지', '배송', '배송비', '배달', '배송지']</code></pre></div><h3>03-2. 병합 과정을 표로</h3><div class="mock"><div class="mock-title">단어별 조각 변화 (숫자는 단어 등장 횟수)</div><div class="tablewrap "><table><thead><tr><th>단계</th><th>합친 쌍</th><th>배송(6)</th><th>배송비(4)</th><th>배송지(3)</th><th>배달(2)</th><th>배달비(2)</th></tr></thead><tbody><tr><td>시작</td><td>—</td><td>배 송</td><td>배 송 비</td><td>배 송 지</td><td>배 달</td><td>배 달 비</td></tr><tr><td>병합 1</td><td>배+송 (13번)</td><td><span class="hl">배송</span></td><td>배송 비</td><td>배송 지</td><td>배 달</td><td>배 달 비</td></tr><tr><td>병합 2</td><td>배송+비 (4번)</td><td>배송</td><td><span class="hl">배송비</span></td><td>배송 지</td><td>배 달</td><td>배 달 비</td></tr><tr><td>병합 3</td><td>배+달 (4번)</td><td>배송</td><td>배송비</td><td>배송 지</td><td><span class="hl">배달</span></td><td>배달 비</td></tr><tr><td>병합 4</td><td>배송+지 (3번)</td><td>배송</td><td>배송비</td><td><span class="hl">배송지</span></td><td>배달</td><td>배달 비</td></tr></tbody></table></div></div><p>‘배+송’이 13번(6+4+3)으로 가장 많아 먼저 합쳐집니다. 이렇게 만들어진 병합 순서는 새 문장을 자를 때 그대로 적용됩니다. 학습 말뭉치에 ‘배달비’가 많았다면 ‘배달비’도 한 조각이 되었을 것입니다. <b>토크나이저는 학습 말뭉치를 닮는다</b>는 점이 13번 실험의 열쇠입니다.</p><h3>03-3. 서브워드 방식 세 가지</h3><div class="tablewrap "><table><thead><tr><th>방식</th><th>어휘 만드는 법</th><th>표시</th><th>사용 모델</th></tr></thead><tbody><tr><td>BPE</td><td>가장 자주 붙어 나오는 쌍을 반복해서 합침</td><td>GPT 계열은 공백을 <code>Ġ</code>(바이트 단위)로 표시</td><td>GPT-2·GPT-4(tiktoken), RoBERTa</td></tr><tr><td>WordPiece</td><td>합쳤을 때 말뭉치 확률이 가장 크게 오르는 쌍을 합침</td><td>단어 중간 조각에 <code>##</code></td><td>BERT, klue/bert-base</td></tr><tr><td>Unigram (SentencePiece)</td><td>큰 후보 어휘에서 덜 쓰이는 조각을 지워 나감</td><td>단어 시작에 <code>▁</code></td><td>XLM-R, multilingual-e5, T5</td></tr></tbody></table></div><details class="qa"><summary>Q. ‘바이트 단위 BPE’는 무엇이 다른가요?</summary><p>글자 대신 UTF-8 바이트 256개에서 시작합니다. 그래서 이모지·처음 보는 글자도 반드시 바이트 조각으로 표현되어 [UNK](모르는 토큰)가 생기지 않습니다. 06번 탭에서 WordPiece와 비교합니다.</p></details></section>
+<section aria-labelledby="tab-u04" class="panel" hidden="" id="u04" role="tabpanel"><div class="crumb">Part 2. Hugging Face 토크나이저 · A3-M1</div><h1>04. Hugging Face tokenizers로 우리 토크나이저 만들기 ① 학습</h1><p class="lead"><code>tokenizers</code> 라이브러리는 모든 Hugging Face 토크나이저의 엔진입니다. 부품 네 개를 끼워 조립하고 우리 말뭉치로 학습합니다. 사전학습 토크나이저가 내부에서 무슨 일을 하는지 가장 확실하게 이해하는 방법입니다.</p><h3>04-1. 토크나이저 파이프라인 — 부품 다섯 개</h3><div class="flow"><div class="fstep"><b>Normalizer</b><span>글자 정리 NFKC·소문자</span></div><span class="arrow" aria-hidden="true">→</span><div class="fstep"><b>Pre-tokenizer</b><span>공백·기호로 1차 분리</span></div><span class="arrow" aria-hidden="true">→</span><div class="fstep"><b>Model</b><span>WordPiece·BPE로 조각</span></div><span class="arrow" aria-hidden="true">→</span><div class="fstep"><b>Post-processor</b><span>[CLS]·[SEP] 붙이기</span></div><span class="arrow" aria-hidden="true">→</span><div class="fstep"><b>Decoder</b><span>조각 → 문장 복원</span></div></div><div class="tablewrap "><table><thead><tr><th>부품</th><th>속성</th><th>이 실습의 선택</th><th>하는 일 예</th></tr></thead><tbody><tr><td>Normalizer</td><td><code>tok.normalizer</code></td><td><code>NFKC</code> + <code>Lowercase</code></td><td>‘ＦＲＥＥ’ → ‘free’, ‘㎏’ → ‘kg’</td></tr><tr><td>Pre-tokenizer</td><td><code>tok.pre_tokenizer</code></td><td><code>BertPreTokenizer</code></td><td>‘얼마인가요?’ → ‘얼마인가요’ · ‘?’</td></tr><tr><td>Model</td><td><code>Tokenizer(models.WordPiece(...))</code></td><td>WordPiece</td><td>‘배송지’ → ‘배송’ · ‘##지’</td></tr><tr><td>Trainer</td><td><code>trainers.WordPieceTrainer(...)</code></td><td>어휘 800, 최소 2번</td><td>말뭉치에서 어휘 학습</td></tr><tr><td>Post-processor</td><td><code>tok.post_processor</code></td><td><code>TemplateProcessing</code></td><td>앞뒤에 [CLS]·[SEP]</td></tr><tr><td>Decoder</td><td><code>tok.decoder</code></td><td><code>decoders.WordPiece()</code></td><td>‘배송 ##지’ → ‘배송지’</td></tr></tbody></table></div><h3>04-2. 준비 — 말뭉치 읽기</h3><div class="codebox"><div class="codehead"><span>02_HF_토크나이저_직접_만들기.ipynb · 04-2</span><button class="copy" type="button">코드 복사</button></div><pre><code>from pathlib import Path
+lines = Path("shop_corpus.txt").read_text(encoding="utf-8").splitlines()
+print(len(lines), "줄")
+print(lines[:3])</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>Path("shop_corpus.txt").read_text(encoding="utf-8")</code></td><td>파일 전체를 문자열로. 한글은 encoding 명시</td></tr><tr><td><code>.splitlines()</code></td><td>줄 단위 리스트. 끝의 줄바꿈 문자는 빠짐</td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>2000 줄
+['냉장고 교환이 가능한가요?', '무선이어폰 색상을 바꾸고 싶어요', '에어컨 배송지 변경하고 싶어요']</code></pre></div><h3>04-3. WordPiece 토크나이저 학습</h3><div class="codebox"><div class="codehead"><span>02_HF_토크나이저_직접_만들기.ipynb · 04-3</span><button class="copy" type="button">코드 복사</button></div><pre><code>from tokenizers import Tokenizer, models, normalizers, pre_tokenizers, trainers, processors, decoders
+
+SPECIAL = ["[PAD]", "[UNK]", "[CLS]", "[SEP]", "[MASK]"]
+wp = Tokenizer(models.WordPiece(unk_token="[UNK]"))                 # ① 모델: WordPiece
+wp.normalizer = normalizers.Sequence([normalizers.NFKC(), normalizers.Lowercase()])   # ② 정규화
+wp.pre_tokenizer = pre_tokenizers.BertPreTokenizer()               # ③ 미리 나누기: 공백·문장부호
+trainer = trainers.WordPieceTrainer(vocab_size=800, min_frequency=2, special_tokens=SPECIAL)
+wp.train_from_iterator(lines, trainer=trainer)                     # ④ 학습
+print("어휘 수:", wp.get_vocab_size())
+print("특수 토큰 번호:", {t: wp.token_to_id(t) for t in SPECIAL})</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>from tokenizers import Tokenizer, models, normalizers, ...</code></td><td>부품별 모듈을 한 번에 가져옴</td></tr><tr><td><code>Tokenizer(models.WordPiece(unk_token="[UNK]"))</code></td><td>모델을 넣어 빈 토크나이저 생성. 모르는 조각은 [UNK]로</td></tr><tr><td><code>normalizers.Sequence([NFKC(), Lowercase()])</code></td><td>여러 정규화를 순서대로. NFKC는 전각·특수 문자를 표준 문자로</td></tr><tr><td><code>pre_tokenizers.BertPreTokenizer()</code></td><td>BERT 방식: 공백과 문장부호에서 끊음</td></tr><tr><td><code>trainers.WordPieceTrainer(vocab_size=800, min_frequency=2, special_tokens=SPECIAL)</code></td><td><b>vocab_size</b> 목표 어휘 수, <b>min_frequency</b> 이 횟수 미만 조각은 버림, <b>special_tokens</b> 맨 앞 번호(0~4)에 예약</td></tr><tr><td><code>wp.train_from_iterator(lines, trainer=trainer)</code></td><td>리스트(또는 제너레이터)로 학습. 파일 목록이면 <code>wp.train(["a.txt"], trainer)</code></td></tr><tr><td><code>wp.get_vocab_size()</code></td><td>실제 어휘 수. 말뭉치가 작으면 목표(800)보다 적게 나옴(632)</td></tr><tr><td><code>wp.token_to_id("[PAD]")</code></td><td>토큰 → 번호. 반대는 <code>id_to_token</code></td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>어휘 수: 632
+특수 토큰 번호: {'[PAD]': 0, '[UNK]': 1, '[CLS]': 2, '[SEP]': 3, '[MASK]': 4}</code></pre></div><p>특수 토큰이 0~4번을 차지했습니다. [PAD]=0은 뒤에서 패딩 번호로 쓰입니다. 어휘가 632개뿐인 것은 2,000줄 말뭉치에서 2번 이상 나온 조각이 그만큼이라는 뜻입니다.</p><details class="qa"><summary>Q. vocab_size는 얼마로 해야 하나요?</summary><p>BERT 계열은 3만 개 안팎, 다국어 모델은 25만 개입니다. 말뭉치가 작으면 크게 잡아도 다 채우지 못합니다. 너무 작으면 글자 단위에 가까워지고(조각이 많아짐), 너무 크면 단어 통째가 되어 조사 붙은 형태끼리 매칭이 안 됩니다. 13번 탭 마지막 실험에서 직접 봅니다.</p></details></section>
+<section aria-labelledby="tab-u05" class="panel" hidden="" id="u05" role="tabpanel"><div class="crumb">Part 2. Hugging Face 토크나이저 · A3-M1</div><h1>05. 만든 토크나이저 쓰기 ② encode 결과·후처리·padding</h1><p class="lead">학습이 끝난 토크나이저로 문장을 바꿔 보고, 결과 객체(Encoding)에 무엇이 들어 있는지, 모델 입력 모양을 만드는 후처리·padding·truncation이 어떻게 동작하는지 봅니다.</p><h3>05-1. encode 결과(Encoding) 읽기</h3><div class="codebox"><div class="codehead"><span>02_HF_토크나이저_직접_만들기.ipynb · 05-1</span><button class="copy" type="button">코드 복사</button></div><pre><code>e = wp.encode("냉장고 배송비는 얼마인가요? FREE shipping")
+print("tokens :", e.tokens)
+print("ids    :", e.ids)
+print("offsets:", e.offsets)
+print("mask   :", e.attention_mask)
+print("원문 조각:", [ "냉장고 배송비는 얼마인가요? FREE shipping"[s:t] for s, t in e.offsets])
+print("모르는 글자:", wp.encode("냉장고 ♨ 배송").tokens)</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>e = wp.encode(text)</code></td><td>문장 1개 → <b>Encoding 객체</b></td></tr><tr><td><code>e.tokens / e.ids</code></td><td>조각 문자열 / 번호. 둘은 같은 순서</td></tr><tr><td><code>e.offsets</code></td><td>조각마다 원문에서의 (시작, 끝) 위치. 정규화로 소문자가 되어도 위치는 <b>원문 기준</b></td></tr><tr><td><code>e.attention_mask</code></td><td>실제 토큰 1, 패딩 0</td></tr><tr><td><code>[text[s:t] for s, t in e.offsets]</code></td><td>위치로 원문 조각을 다시 잘라 봄 — ‘FREE’가 원래 모양 그대로 나옴</td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>tokens : ['냉장고', '배송비는', '얼마인가요', '?', 'free', 'shipping']
+ids    : [448, 446, 447, 17, 496, 500]
+offsets: [(0, 3), (4, 8), (9, 14), (14, 15), (16, 20), (21, 29)]
+mask   : [1, 1, 1, 1, 1, 1]
+원문 조각: ['냉장고', '배송비는', '얼마인가요', '?', 'FREE', 'shipping']
+모르는 글자: ['냉장고', '[UNK]', '배송']</code></pre></div><div class="mock"><div class="mock-title">encode 결과를 한눈에</div><div class="tablewrap "><table><thead><tr><th>순서</th><th>0</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th></tr></thead><tbody><tr><td>tokens</td><td>냉장고</td><td>배송비는</td><td>얼마인가요</td><td>?</td><td>free</td><td>shipping</td></tr><tr><td>ids</td><td>448</td><td>446</td><td>447</td><td>17</td><td>496</td><td>500</td></tr><tr><td>offsets</td><td>0–3</td><td>4–8</td><td>9–14</td><td>14–15</td><td>16–20</td><td>21–29</td></tr><tr><td>원문</td><td>냉장고</td><td>배송비는</td><td>얼마인가요</td><td>?</td><td><span class="hl">FREE</span></td><td>shipping</td></tr></tbody></table></div></div><p class="hint">번호(ids)는 학습할 때마다 조금씩 달라질 수 있습니다. 빈도가 같은 조각의 순서를 정하는 방식 때문이며, 같은 tokenizer.json 파일을 쓰는 한 결과는 항상 같습니다.</p><p>‘♨’처럼 말뭉치에 없던 글자는 [UNK]가 됩니다. [UNK]가 많아지면 서로 다른 문장이 같은 번호로 보이게 되어 검색·분류 품질이 떨어집니다.</p><h3>05-2. 후처리 — [CLS]·[SEP] 붙이기와 문장 쌍</h3><div class="codebox"><div class="codehead"><span>02_HF_토크나이저_직접_만들기.ipynb · 05-2</span><button class="copy" type="button">코드 복사</button></div><pre><code>cls_id, sep_id = wp.token_to_id("[CLS]"), wp.token_to_id("[SEP]")
+wp.post_processor = processors.TemplateProcessing(
+    single="[CLS] $A [SEP]",
+    pair="[CLS] $A [SEP] $B:1 [SEP]:1",
+    special_tokens=[("[CLS]", cls_id), ("[SEP]", sep_id)])
+wp.decoder = decoders.WordPiece()
+
+one = wp.encode("배송비는 얼마인가요?")
+print("한 문장 :", one.tokens)
+pair = wp.encode("배송비는 얼마인가요?", "3만 원 이상 무료 배송입니다.")
+print("문장 쌍 :", pair.tokens)
+print("type_ids:", pair.type_ids)
+print("decode  :", wp.decode(pair.ids))</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>processors.TemplateProcessing(single=..., pair=..., special_tokens=[...])</code></td><td>문장 1개일 때와 2개일 때 특수 토큰을 어디에 붙일지 <b>템플릿</b>으로 지정</td></tr><tr><td><code>"[CLS] $A [SEP]"</code></td><td><code>$A</code> 자리에 첫 문장 토큰이 들어감</td></tr><tr><td><code>"$B:1 [SEP]:1"</code></td><td><code>:1</code>은 그 부분의 type_id를 1로. 질문(0)과 문서(1)를 구분</td></tr><tr><td><code>[("[CLS]", cls_id), ...]</code></td><td>템플릿에 쓴 특수 토큰의 번호를 알려 줌</td></tr><tr><td><code>wp.decoder = decoders.WordPiece()</code></td><td>decode할 때 ‘##’를 붙여 원래 단어로</td></tr><tr><td><code>wp.encode(a, b)</code></td><td>두 번째 인자를 주면 <b>문장 쌍</b></td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>한 문장 : ['[CLS]', '배송비는', '얼마인가요', '?', '[SEP]']
+문장 쌍 : ['[CLS]', '배송비는', '얼마인가요', '?', '[SEP]', '3만', '원', '이상', '무료', '배송입니다', '.', '[SEP]']
+type_ids: [0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1]
+decode  : 배송비는 얼마인가요? 3만 원 이상 무료 배송입니다.</code></pre></div><div class="mock"><div class="mock-title">문장 쌍 입력 모양</div><div class="chips"><span class="sp">[CLS]</span><span>배송비는</span><span>얼마인가요</span><span>?</span><span class="sp">[SEP]</span><span>3만</span><span>원</span><span>이상</span><span>무료</span><span>배송입니다</span><span>.</span><span class="sp">[SEP]</span></div><div class="tablewrap "><table><thead><tr><th></th><th>type_ids</th></tr></thead><tbody><tr><td>값</td><td>0 0 0 0 0 1 1 1 1 1 1 1</td></tr></tbody></table></div></div><p>이 모양이 리랭커(질문과 문서를 함께 넣어 관련도를 매기는 모델)의 입력입니다. M2 이후의 RAG에서 다시 만납니다.</p><h3>05-3. padding과 truncation — 여러 문장을 한 번에</h3><div class="codebox"><div class="codehead"><span>02_HF_토크나이저_직접_만들기.ipynb · 05-3</span><button class="copy" type="button">코드 복사</button></div><pre><code>wp.enable_padding(pad_id=wp.token_to_id("[PAD]"), pad_token="[PAD]")
+wp.enable_truncation(max_length=10)
+batch = wp.encode_batch(["배송 언제 와요?", "냉장고 반품하려면 어떻게 하나요? 설치 기사님 방문 일정은요?"])
+for b in batch:
+    print(b.tokens)
+    print("  mask:", b.attention_mask, "| 잘린 나머지:", [o.tokens for o in b.overflowing][:1])
+wp.no_padding(); wp.no_truncation()</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>wp.enable_padding(pad_id=..., pad_token="[PAD]")</code></td><td>배치에서 가장 긴 문장에 맞춰 [PAD] 채우기 켜기. <code>length=16</code>을 주면 고정 길이</td></tr><tr><td><code>wp.enable_truncation(max_length=10)</code></td><td>10토큰 넘으면 자르기 켜기 (특수 토큰 포함 길이)</td></tr><tr><td><code>wp.encode_batch([...])</code></td><td>여러 문장을 한 번에(병렬 처리)</td></tr><tr><td><code>b.overflowing</code></td><td>잘려 나간 나머지가 별도 Encoding으로 들어 있음</td></tr><tr><td><code>wp.no_padding(); wp.no_truncation()</code></td><td>설정 끄기. 토크나이저 객체에 설정이 <b>남아 있으니</b> 다음 실습 전에 꺼 둠</td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>['[CLS]', '배송', '언제', '[UNK]', '?', '[SEP]', '[PAD]', '[PAD]', '[PAD]', '[PAD]']
+  mask: [1, 1, 1, 1, 1, 1, 0, 0, 0, 0] | 잘린 나머지: []
+['[CLS]', '냉장고', '반품하려면', '어떻게', '하나요', '?', '설치', '기사님', '방문', '[SEP]']
+  mask: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1] | 잘린 나머지: [['[CLS]', '일정은요', '?', '[SEP]', '[PAD]', '[PAD]', '[PAD]', '[PAD]', '[PAD]', '[PAD]']]</code></pre></div><p>첫 문장의 ‘와요’가 [UNK]입니다. 말뭉치 2,000줄에 ‘와’라는 글자가 2번 이상 나오지 않았기 때문입니다. 직접 만든 토크나이저는 <b>말뭉치에 없는 글자를 모릅니다</b>. 13번 탭에서 이 문제가 검색 점수에 어떤 영향을 주는지 확인합니다.</p></section>
+<section aria-labelledby="tab-u06" class="panel" hidden="" id="u06" role="tabpanel"><div class="crumb">Part 2. Hugging Face 토크나이저 · A3-M1</div><h1>06. 바이트 BPE와 저장 — GPT 방식, tokenizer.json 한 파일</h1><p class="lead">WordPiece는 모르는 글자를 [UNK]로 버립니다. GPT 계열이 쓰는 바이트 단위 BPE는 어떤 글자도 버리지 않습니다. 두 방식을 같은 말뭉치로 비교하고, 토크나이저를 파일 하나로 저장·복원합니다.</p><h3>06-1. BPE(바이트 단위) 토크나이저 학습 — GPT 방식과 비교</h3><div class="codebox"><div class="codehead"><span>02_HF_토크나이저_직접_만들기.ipynb · 06-1</span><button class="copy" type="button">코드 복사</button></div><pre><code>bpe = Tokenizer(models.BPE())
+bpe.pre_tokenizer = pre_tokenizers.ByteLevel(add_prefix_space=False)
+bpe.decoder = decoders.ByteLevel()
+bpe.train_from_iterator(lines, trainers.BpeTrainer(vocab_size=800, min_frequency=2,
+                        special_tokens=["&lt;pad&gt;", "&lt;eos&gt;"], initial_alphabet=pre_tokenizers.ByteLevel.alphabet()))
+s = "냉장고 배송비는 얼마인가요? ♨"
+print("WordPiece:", wp.encode(s).tokens)
+print("ByteBPE  :", bpe.encode(s).tokens)
+print("ByteBPE 복원:", bpe.decode(bpe.encode(s).ids))</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>models.BPE()</code></td><td>BPE 모델</td></tr><tr><td><code>pre_tokenizers.ByteLevel(add_prefix_space=False)</code></td><td>문장을 UTF-8 바이트로 바꾼 뒤, 바이트 256개를 보이는 글자 256개로 대응시켜 다룸</td></tr><tr><td><code>initial_alphabet=pre_tokenizers.ByteLevel.alphabet()</code></td><td>바이트 256개를 처음부터 어휘에 넣음 → [UNK]가 생길 수 없음</td></tr><tr><td><code>decoders.ByteLevel()</code></td><td>바이트 글자를 다시 UTF-8 문자열로</td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>WordPiece: ['[CLS]', '냉장고', '배송비는', '얼마인가요', '?', '[UNK]', '[SEP]']
+ByteBPE  : ['ëĥīìŀ¥ê³ł', 'Ġë°°ìĨ¡ë¹ĦëĬĶ', 'Ġìĸ¼ë§ĪìĿ¸ê°ĢìļĶ', '?', 'Ġ', 'â', 'Ļ', '¨']
+ByteBPE 복원: 냉장고 배송비는 얼마인가요? ♨</code></pre></div><p>ByteBPE 토큰이 ‘ëĥīìŀ¥ê³ł’처럼 보이는 것은 한글 바이트를 화면용 글자로 바꿔 보여 주기 때문입니다(<code>Ġ</code>는 앞의 공백). decode하면 ‘냉장고 배송비는 얼마인가요? ♨’로 <b>♨까지</b> 복원됩니다. WordPiece는 같은 자리가 [UNK]였습니다.</p><div class="tablewrap "><table><thead><tr><th></th><th>WordPiece (직접 학습)</th><th>바이트 BPE (직접 학습)</th></tr></thead><tbody><tr><td>모르는 글자</td><td>[UNK]로 사라짐</td><td>바이트 조각으로 남음</td></tr><tr><td>한글 한 글자</td><td>글자 단위가 최소</td><td>3바이트라 여러 조각이 될 수 있음</td></tr><tr><td>사람이 읽기</td><td>쉬움 (‘배송’, ‘##비’)</td><td>어려움 (‘ë°°ìĨ¡’)</td></tr><tr><td>대표 모델</td><td>BERT, klue</td><td>GPT, RoBERTa</td></tr></tbody></table></div><h3>06-2. 저장과 불러오기 — tokenizer.json 한 파일</h3><div class="codebox"><div class="codehead"><span>02_HF_토크나이저_직접_만들기.ipynb · 06-2</span><button class="copy" type="button">코드 복사</button></div><pre><code>wp.save("shop_wordpiece.json")
+again = Tokenizer.from_file("shop_wordpiece.json")
+print("파일 크기:", Path("shop_wordpiece.json").stat().st_size, "바이트")
+print("같은 결과?", again.encode("배송 언제 와요?").ids == wp.encode("배송 언제 와요?").ids)</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>wp.save("shop_wordpiece.json")</code></td><td>어휘·병합 규칙·정규화·후처리 설정까지 <b>JSON 한 파일</b>로</td></tr><tr><td><code>Tokenizer.from_file("shop_wordpiece.json")</code></td><td>파일 → 토크나이저. 학습 없이 바로 사용</td></tr><tr><td><code>again.encode(...).ids == wp.encode(...).ids</code></td><td>리스트 비교 — 같은 번호가 나오면 저장·복원 성공</td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>파일 크기: 15601 바이트
+같은 결과? True</code></pre></div><p>Hugging Face Hub의 모델 폴더에 있는 <code>tokenizer.json</code>이 바로 이 파일입니다. 07번 탭에서 이 파일을 <code>transformers</code> 토크나이저로 감싸 Hub 모델과 똑같은 문법으로 씁니다.</p></section>
+<section aria-labelledby="tab-u07" class="panel" hidden="" id="u07" role="tabpanel"><div class="crumb">Part 2. Hugging Face 토크나이저 · A3-M1</div><h1>07. transformers 토크나이저 사용법 ① 기본·배치</h1><p class="lead">실무에서는 모델과 함께 <code>transformers</code>의 토크나이저를 씁니다. 직접 만든 토크나이저를 감싸 <code>AutoTokenizer</code>로 다시 열면, Hub의 klue·e5 토크나이저와 똑같은 문법을 인터넷 없이 연습할 수 있습니다.</p><h3>07-1. transformers 토크나이저로 감싸기 — AutoTokenizer로 다시 열기</h3><div class="codebox"><div class="codehead"><span>03_transformers_토크나이저_사용법.ipynb · 07-1</span><button class="copy" type="button">코드 복사</button></div><pre><code>from transformers import PreTrainedTokenizerFast, AutoTokenizer
+
+hf = PreTrainedTokenizerFast(tokenizer_file="shop_wordpiece.json",
+                             unk_token="[UNK]", pad_token="[PAD]", cls_token="[CLS]",
+                             sep_token="[SEP]", mask_token="[MASK]", model_max_length=64,
+                             model_input_names=["input_ids", "token_type_ids", "attention_mask"])
+hf.save_pretrained("shop_tokenizer")                       # 폴더로 저장
+tok = AutoTokenizer.from_pretrained("shop_tokenizer")       # Hub 모델과 똑같은 방법으로 열기
+print(type(tok).__name__, "| 어휘", tok.vocab_size, "| 최대 길이", tok.model_max_length)
+print("특수 토큰:", tok.special_tokens_map)</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>PreTrainedTokenizerFast(tokenizer_file=..., unk_token=..., ...)</code></td><td>tokenizers 객체(파일)를 transformers 토크나이저로 감쌈. 특수 토큰의 <b>역할</b>을 이름으로 알려 줌</td></tr><tr><td><code>model_max_length=64</code></td><td><code>truncation=True</code>일 때 기본 최대 길이</td></tr><tr><td><code>model_input_names=["input_ids", "token_type_ids", "attention_mask"]</code></td><td>결과 사전에 넣을 키. BERT 계열이면 token_type_ids 포함</td></tr><tr><td><code>hf.save_pretrained("shop_tokenizer")</code></td><td>폴더로 저장: tokenizer.json + tokenizer_config.json(+ special_tokens_map)</td></tr><tr><td><code>AutoTokenizer.from_pretrained("shop_tokenizer")</code></td><td>폴더 경로를 주면 로컬에서 열림. Hub ID를 주면 내려받음 — 문법이 같다는 것이 핵심</td></tr><tr><td><code>tok.special_tokens_map</code></td><td>역할 → 토큰 사전</td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>TokenizersBackend | 어휘 632 | 최대 길이 64
+특수 토큰: {'unk_token': '[UNK]', 'sep_token': '[SEP]', 'pad_token': '[PAD]', 'cls_token': '[CLS]', 'mask_token': '[MASK]'}</code></pre></div><h3>07-2. tok(문장) — 결과는 사전처럼</h3><div class="codebox"><div class="codehead"><span>03_transformers_토크나이저_사용법.ipynb · 07-2</span><button class="copy" type="button">코드 복사</button></div><pre><code>enc = tok("냉장고 배송비는 얼마인가요?")
+print(type(enc).__name__, list(enc.keys()))
+print("input_ids:", enc["input_ids"])
+print("tokens   :", tok.convert_ids_to_tokens(enc["input_ids"]))
+print("tokenize :", tok.tokenize("냉장고 배송비는 얼마인가요?"))
+print("decode   :", tok.decode(enc["input_ids"]), "/", tok.decode(enc["input_ids"], skip_special_tokens=True))</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>enc = tok(text)</code></td><td>토크나이저 객체를 <b>함수처럼 호출</b>. 모델 입력용 기본 방법</td></tr><tr><td><code>type(enc).__name__ → BatchEncoding</code></td><td>사전처럼 쓰는 결과 객체. <code>enc["input_ids"]</code>, <code>enc.keys()</code></td></tr><tr><td><code>tok.convert_ids_to_tokens(ids)</code></td><td>번호 → 조각. 특수 토큰까지 보임</td></tr><tr><td><code>tok.tokenize(text)</code></td><td>조각만(특수 토큰 없이). 눈으로 확인할 때</td></tr><tr><td><code>tok.decode(ids, skip_special_tokens=True)</code></td><td>번호 → 문장. 특수 토큰을 빼고 복원</td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>BatchEncoding ['input_ids', 'token_type_ids', 'attention_mask']
+input_ids: [2, 448, 446, 447, 17, 3]
+tokens   : ['[CLS]', '냉장고', '배송비는', '얼마인가요', '?', '[SEP]']
+tokenize : ['냉장고', '배송비는', '얼마인가요', '?']
+decode   : [CLS] 냉장고 배송비는 얼마인가요? [SEP] / 냉장고 배송비는 얼마인가요?</code></pre></div><h3>07-3. 여러 문장 — padding·truncation·return_tensors</h3><div class="codebox"><div class="codehead"><span>03_transformers_토크나이저_사용법.ipynb · 07-3</span><button class="copy" type="button">코드 복사</button></div><pre><code>qs = ["배송 언제 와요?", "냉장고 반품하려면 어떻게 하나요?", "무료 배송 기준이 뭐예요? 3만 원 이상인가요?"]
+b = tok(qs, padding=True, truncation=True, max_length=12, return_tensors="np")
+for key in b:
+    print(key, b[key].shape)
+print(b["input_ids"])
+print(b["attention_mask"])
+
+print("\npadding='max_length':", tok(qs[0], padding="max_length", max_length=12)["input_ids"])
+print("padding_side 왼쪽  :", tok(qs[:2], padding=True, padding_side="left")["input_ids"])</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>tok(qs, padding=True, truncation=True, max_length=12, return_tensors="np")</code></td><td>리스트를 주면 배치. <code>"np"</code> numpy, <code>"pt"</code> PyTorch, 생략하면 파이썬 리스트</td></tr><tr><td><code>for key in b:</code></td><td>BatchEncoding을 돌면 키가 나옴</td></tr><tr><td><code>b[key].shape</code></td><td>(문장 수, 맞춰진 길이) = (3, 12)</td></tr><tr><td><code>padding="max_length"</code></td><td>배치와 상관없이 max_length까지 채움 (고정 길이 입력이 필요할 때)</td></tr><tr><td><code>padding_side="left"</code></td><td>앞쪽에 채우기. GPT 같은 생성 모델 배치 생성에서 사용</td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>input_ids (3, 12)
+token_type_ids (3, 12)
+attention_mask (3, 12)
+[[  2 341 346   1  17   3   0   0   0   0   0   0]
+ [  2 448 436 432 427  17   3   0   0   0   0   0]
+ [  2 367 341 532 215   1  17 535 134 537 352   3]]
+[[1 1 1 1 1 1 0 0 0 0 0 0]
+ [1 1 1 1 1 1 1 0 0 0 0 0]
+ [1 1 1 1 1 1 1 1 1 1 1 1]]
+
+padding='max_length': [2, 341, 346, 1, 17, 3, 0, 0, 0, 0, 0, 0]
+padding_side 왼쪽  : [[0, 2, 341, 346, 1, 17, 3], [2, 448, 436, 432, 427, 17, 3]]</code></pre></div><div class="mock"><div class="mock-title">배치 결과 읽기 (max_length=12)</div><div class="tablewrap "><table><thead><tr><th>문장</th><th>input_ids</th><th>attention_mask</th><th>읽는 법</th></tr></thead><tbody><tr><td>배송 언제 와요?</td><td>2 341 346 1 17 3 0 0 0 0 0 0</td><td>1 1 1 1 1 1 0 0 0 0 0 0</td><td>1 = [UNK](‘와요’), 0 = [PAD]</td></tr><tr><td>냉장고 반품하려면 어떻게 하나요?</td><td>2 448 436 432 427 17 3 0 0 0 0 0</td><td>1 1 1 1 1 1 1 0 0 0 0 0</td><td>끝의 0 = [PAD]</td></tr><tr><td>무료 배송 기준이 뭐예요? 3만 원 이상인가요?</td><td>2 367 341 532 215 1 17 535 134 537 352 3</td><td>1 1 1 1 1 1 1 1 1 1 1 1</td><td>12에서 잘림, 끝은 [SEP](3)</td></tr></tbody></table></div></div><details class="qa"><summary>Q. truncation으로 잘려도 끝에 [SEP]이 붙나요?</summary><p>네. max_length는 특수 토큰을 포함한 길이이고, 잘린 뒤에도 템플릿대로 [SEP]을 붙입니다. 그래서 실제 내용 토큰은 max_length−2개입니다.</p></details></section>
+<section aria-labelledby="tab-u08" class="panel" hidden="" id="u08" role="tabpanel"><div class="crumb">Part 2. Hugging Face 토크나이저 · A3-M1</div><h1>08. transformers 토크나이저 사용법 ② 문장 쌍·위치·긴 문서</h1><p class="lead">RAG에서 자주 쓰는 고급 문법입니다. 질문과 문서를 한 입력으로 만들기, 토큰을 원문 위치로 되돌리기, 긴 문서를 잘라 버리지 않고 겹쳐서 나누기, 도메인 단어 추가.</p><h3>08-1. 문장 쌍 — 질문과 문서를 한 입력으로</h3><div class="codebox"><div class="codehead"><span>03_transformers_토크나이저_사용법.ipynb · 08-1</span><button class="copy" type="button">코드 복사</button></div><pre><code>p = tok("배송비 얼마예요?", "3만 원 이상 구매 시 무료 배송입니다.")
+print(tok.convert_ids_to_tokens(p["input_ids"]))
+print("token_type_ids:", p["token_type_ids"])
+long_q = "배송비 " * 10
+p2 = tok(long_q, "3만 원 이상 무료 배송", truncation="only_first", max_length=12)
+print("질문만 자르기:", tok.convert_ids_to_tokens(p2["input_ids"]))</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>tok(문장A, 문장B)</code></td><td>문장 쌍. token_type_ids가 0(질문)·1(문서)로 나뉨</td></tr><tr><td><code>truncation="only_first"</code></td><td>넘칠 때 <b>첫 문장만</b> 자름. 문서는 지키고 긴 질문을 줄일 때. <code>"only_second"</code>는 문서만, <code>True</code>(=longest_first)는 긴 쪽부터</td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>['[CLS]', '배송', '##비', '[UNK]', '?', '[SEP]', '3만', '원', '이상', '구매', '시', '무료', '배송입니다', '.', '[SEP]']
+token_type_ids: [0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+질문만 자르기: ['[CLS]', '배송', '##비', '배송', '##비', '[SEP]', '3만', '원', '이상', '무료', '배송', '[SEP]']</code></pre></div><h3>08-2. offsets_mapping · word_ids — 토큰을 원문 위치로</h3><div class="codebox"><div class="codehead"><span>03_transformers_토크나이저_사용법.ipynb · 08-2</span><button class="copy" type="button">코드 복사</button></div><pre><code>text = "냉장고 배송비는 얼마인가요?"
+o = tok(text, return_offsets_mapping=True)
+for tid, (s, e), w in zip(o["input_ids"], o["offset_mapping"], o.word_ids()):
+    print(f"{tok.convert_ids_to_tokens(tid):&lt;8} 위치 {s:&gt;2}~{e:&lt;2} 원문 '{text[s:e]}'  단어번호 {w}")</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>return_offsets_mapping=True</code></td><td>토큰마다 원문 (시작, 끝) 위치를 함께 돌려줌. <b>fast 토크나이저</b>에서만 가능</td></tr><tr><td><code>o.word_ids()</code></td><td>토큰이 원문의 몇 번째 단어에서 왔는지. 특수 토큰은 None</td></tr><tr><td><code>zip(ids, offsets, word_ids)</code></td><td>세 목록을 같은 순서로 묶어 읽기</td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>[CLS]    위치  0~0  원문 ''  단어번호 None
+냉장고      위치  0~3  원문 '냉장고'  단어번호 0
+배송비는     위치  4~8  원문 '배송비는'  단어번호 1
+얼마인가요    위치  9~14 원문 '얼마인가요'  단어번호 2
+?        위치 14~15 원문 '?'  단어번호 3
+[SEP]    위치  0~0  원문 ''  단어번호 None</code></pre></div><p>특수 토큰의 위치는 (0, 0)입니다. 이 성질을 이용해 다음 셀에서 특수 토큰을 걸러 냅니다. RAG 답변에서 ‘근거 문장 하이라이트’를 할 때 이 offsets를 씁니다.</p><h3>08-3. 긴 문서 — 잘라 버리지 말고 겹쳐서 나누기(stride)</h3><div class="codebox"><div class="codehead"><span>03_transformers_토크나이저_사용법.ipynb · 08-3</span><button class="copy" type="button">코드 복사</button></div><pre><code>doc = ("냉장고 같은 대형 가전은 설치 기사가 직접 방문합니다. 방문 일정은 문자로 안내됩니다. "
+       "제주와 도서산간은 3~5일 더 걸립니다. 설치 후 포장재는 기사님이 수거합니다.")
+print("전체 토큰 수:", len(tok(doc)["input_ids"]))
+
+cut = tok(doc, truncation=True, max_length=16)
+print("truncation만:", tok.decode(cut["input_ids"], skip_special_tokens=True), "← 뒤는 사라짐")
+
+ch = tok(doc, truncation=True, max_length=16, stride=4,
+         return_overflowing_tokens=True, return_offsets_mapping=True)
+print("조각 수:", len(ch["input_ids"]))
+for i, (ids, offs) in enumerate(zip(ch["input_ids"], ch["offset_mapping"])):
+    real = [o for o in offs if o != (0, 0)]                     # 특수 토큰 제외
+    print(f"조각 {i}: 원문 {real[0][0]}~{real[-1][1]} → {doc[real[0][0]:real[-1][1]]}")</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>tok(doc, truncation=True, max_length=16)</code></td><td>16토큰 뒤는 <b>버려짐</b></td></tr><tr><td><code>stride=4</code></td><td>다음 조각이 앞 조각의 마지막 4토큰을 <b>겹쳐서</b> 시작</td></tr><tr><td><code>return_overflowing_tokens=True</code></td><td>잘린 나머지를 버리지 않고 추가 조각으로 돌려줌 → 결과가 조각 리스트</td></tr><tr><td><code>[o for o in offs if o != (0, 0)]</code></td><td>특수 토큰 위치 제외</td></tr><tr><td><code>doc[real[0][0]:real[-1][1]]</code></td><td>첫 토큰 시작 ~ 마지막 토큰 끝 = 조각의 원문 범위</td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>전체 토큰 수: 36
+truncation만: 냉장고 대형 가전은 설치 기사가 직접 방문합니다. 방문 일정은 문자 ← 뒤는 사라짐
+조각 수: 3
+조각 0: 원문 0~40 → 냉장고 같은 대형 가전은 설치 기사가 직접 방문합니다. 방문 일정은 문자
+조각 1: 원문 34~63 → 일정은 문자로 안내됩니다. 제주와 도서산간은 3~5일
+조각 2: 원문 53~93 → 도서산간은 3~5일 더 걸립니다. 설치 후 포장재는 기사님이 수거합니다.</code></pre></div><div class="mock"><div class="mock-title">겹쳐 나누기(stride) 그림 — 실행 결과의 원문 위치</div><div class="tablewrap "><table><thead><tr><th>조각</th><th>원문 위치</th><th>앞 조각과 겹친 위치</th><th>조각 내용</th></tr></thead><tbody><tr><td>0</td><td>0 ~ 40</td><td>—</td><td>냉장고 같은 대형 가전은 설치 기사가 직접 방문합니다. 방문 일정은 문자</td></tr><tr><td>1</td><td>34 ~ 63</td><td><span class="hl">34~40</span></td><td>일정은 문자로 안내됩니다. 제주와 도서산간은 3~5일</td></tr><tr><td>2</td><td>53 ~ 93</td><td><span class="hl">53~63</span></td><td>도서산간은 3~5일 더 걸립니다. 설치 후 포장재는 기사님이 수거합니다.</td></tr></tbody></table></div></div><p>truncation만 쓰면 ‘제주와 도서산간은 3~5일 더 걸립니다’가 검색에서 영원히 사라집니다. 겹쳐 나누면 모든 문장이 적어도 한 조각에 들어가고, 경계에 걸친 문장도 겹친 부분 덕분에 끊기지 않습니다. 결과의 ‘truncation만’ 줄에서 ‘같은’이 빠진 것은 ‘같’이 [UNK]여서 <code>skip_special_tokens=True</code>로 지워졌기 때문입니다.</p><h3>08-4. add_tokens — 도메인 단어를 한 덩어리로</h3><div class="codebox"><div class="codehead"><span>03_transformers_토크나이저_사용법.ipynb · 08-4</span><button class="copy" type="button">코드 복사</button></div><pre><code>w = "RF85T 머시닝센터"
+print("추가 전:", tok.tokenize(w))
+n = tok.add_tokens(["RF85T", "머시닝센터"])
+print("추가한 수:", n, "| 어휘", len(tok))
+print("추가 후:", tok.tokenize(w))
+print("주의: 모델과 함께 쓸 때는 model.resize_token_embeddings(len(tok)) 필요")</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>tok.add_tokens(["RF85T", "머시닝센터"])</code></td><td>어휘 끝에 새 토큰 추가. 반환값 = 실제로 추가된 수</td></tr><tr><td><code>len(tok)</code></td><td>추가 토큰을 포함한 전체 어휘 수 (<code>vocab_size</code>는 원래 어휘만)</td></tr><tr><td><code>model.resize_token_embeddings(len(tok))</code></td><td>모델과 함께 쓸 때 임베딩 행렬 크기를 맞추는 문법. 새 토큰 벡터는 학습 전까지 의미가 없음</td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>추가 전: ['rf85t', '[UNK]']
+추가한 수: 2 | 어휘 634
+추가 후: ['rf85t', '머시닝센터']
+주의: 모델과 함께 쓸 때는 model.resize_token_embeddings(len(tok)) 필요</code></pre></div><p>‘RF85T’는 정규화(소문자) 때문에 추가 전부터 ‘rf85t’로 이미 한 조각이었습니다. ‘머시닝센터’는 [UNK]에서 한 조각이 되었습니다.</p></section>
+<section aria-labelledby="tab-u09" class="panel" hidden="" id="u09" role="tabpanel"><div class="crumb">Part 2. Hugging Face 토크나이저 · A3-M1</div><h1>09. 사전학습 토크나이저 — klue/bert-base와 multilingual-e5</h1><p class="lead">지금까지의 문법은 Hub의 사전학습 토크나이저에 그대로 적용됩니다. 실무에서 가장 많이 쓰는 두 토크나이저의 차이를 표로 정리하고, 같은 셀을 실행해 결과를 비교합니다.</p><div class="tablewrap "><table><thead><tr><th></th><th>klue/bert-base</th><th>intfloat/multilingual-e5-small</th></tr></thead><tbody><tr><td>방식</td><td>WordPiece (<code>##</code>)</td><td>SentencePiece Unigram (<code>▁</code>), XLM-RoBERTa와 같은 어휘</td></tr><tr><td>어휘 수</td><td>32,000 (한국어 중심)</td><td>약 25만 (100여 개 언어)</td></tr><tr><td>최대 길이</td><td>512</td><td>512</td></tr><tr><td>특수 토큰</td><td>[CLS] [SEP] [PAD] [UNK] [MASK]</td><td>&lt;s&gt; &lt;/s&gt; &lt;pad&gt; &lt;unk&gt; &lt;mask&gt;</td></tr><tr><td>token_type_ids</td><td>있음</td><td>없음</td></tr><tr><td>주 용도</td><td>한국어 분류·파인튜닝</td><td>다국어 문장 임베딩(검색)</td></tr></tbody></table></div><h3>09-1. 사전학습 토크나이저 — klue/bert-base와 e5 (인터넷 필요)</h3><p>이 셀은 처음 실행할 때 두 토크나이저 파일을 내려받습니다(모델 가중치는 받지 않아 가볍습니다). 03 노트북 맨 아래에 있습니다.</p><div class="codebox"><div class="codehead"><span>03_transformers_토크나이저_사용법.ipynb · 09-1</span><button class="copy" type="button">코드 복사</button></div><pre><code>from transformers import AutoTokenizer
+for name in ["klue/bert-base", "intfloat/multilingual-e5-small"]:
+    t = AutoTokenizer.from_pretrained(name)
+    s = "냉장고 배송비는 얼마인가요? RF85T"
+    print(name, "|", type(t).__name__, "| 어휘", t.vocab_size, "| 최대", t.model_max_length)
+    print("   ", t.tokenize(s))
+    print("   ", t(s)["input_ids"])</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>AutoTokenizer.from_pretrained(name)</code></td><td>Hub ID로 열기. 이후 문법은 07·08 탭과 100% 같음</td></tr><tr><td><code>t.vocab_size / t.model_max_length</code></td><td>어휘 수 / 최대 길이</td></tr><tr><td><code>t.tokenize(s), t(s)["input_ids"]</code></td><td>조각과 번호 비교</td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>klue/bert-base | BertTokenizer | 어휘 32000 | 최대 512
+    ['냉장고', '배송', '##비', '##는', '얼마', '##인', '##가요', '?', 'RF', '##85', '##T']
+    [2, 8545, 9488, 2151, 2259, 3943, 2179, 18119, 35, 26048, 21411, 2081, 3]
+intfloat/multilingual-e5-small | XLMRobertaTokenizer | 어휘 250002 | 최대 512
+    ['▁냉', '장', '고', '▁배송', '비', '는', '▁얼마', '인', '가요', '?', '▁RF', '85', 'T']
+    [0, 129673, 3013, 1077, 112667, 4274, 769, 131602, 1571, 82484, 32, 100250, 12951, 618, 2]</code></pre></div><h3>09-2. 결과 정리 — 같은 문장, 두 토크나이저</h3><div class="tablewrap "><table><thead><tr><th>확인할 것</th><th>klue/bert-base</th><th>multilingual-e5-small</th><th>생각해 볼 점</th></tr></thead><tbody><tr><td>‘냉장고’는 몇 조각인가</td><td><b>1조각</b> <code>냉장고</code></td><td><b>3조각</b> <code>▁냉</code> <code>장</code> <code>고</code></td><td>한국어 중심 어휘(3.2만)는 ‘냉장고’를 통째로 갖고 있고, 100여 개 언어를 나눠 쓰는 25만 어휘에는 없음</td></tr><tr><td>‘배송비는’</td><td><code>배송</code> <code>##비</code> <code>##는</code></td><td><code>▁배송</code> <code>비</code> <code>는</code></td><td>둘 다 ‘배송’은 한 조각, 뒤의 ‘비’·‘는’은 따로 — 표시만 <code>##</code>(이어짐)와 <code>▁</code>(띄어쓰기 시작)로 다름</td></tr><tr><td>‘RF85T’는 어떻게 잘리나</td><td><code>RF</code> <code>##85</code> <code>##T</code></td><td><code>▁RF</code> <code>85</code> <code>T</code></td><td>둘 다 3조각. 모델명이 쪼개지면 ‘RF85T’와 ‘RF85S’가 앞 두 조각을 공유해 비슷하게 보일 수 있음</td></tr><tr><td>문장 전체 토큰 수</td><td>11개 (+특수 2 = id 13개)</td><td>13개 (+특수 2 = id 15개)</td><td>같은 문장인데 어휘가 달라서 수가 다름. 최대 길이 512는 이 id 수로 셈</td></tr><tr><td>특수 토큰이 붙는 위치</td><td>앞 <code>[CLS]</code>=2, 뒤 <code>[SEP]</code>=3</td><td>앞 <code>&lt;s&gt;</code>=0, 뒤 <code>&lt;/s&gt;</code>=2</td><td>07 탭의 [CLS]/[SEP]와 같은 자리. 번호는 토크나이저마다 다름</td></tr></tbody></table></div><div class="note"><b>이미 확인된 klue/bert-base 결과</b><p>이전 과정(A2) 실행 로그에서 ‘이미지에 대체 텍스트를 제공해야 합니다.’는 <code>['이미지', '##에', '대체', '텍스트', '##를', '제공', '##해야', '합니다', '.']</code>로, ‘WCAG 2.4.4’는 W·CAG·2·.·4·.·4처럼 잘게 나뉘었습니다. 조사가 ##조각으로 분리되는 것, 영문·숫자 코드가 산산조각 나는 것이 WordPiece 한국어 모델의 전형적인 모습입니다.</p></div><details class="qa"><summary>Q. 모델과 다른 토크나이저를 써도 되나요?</summary><p>안 됩니다. 모델의 임베딩 행렬은 ‘이 번호는 이 조각’이라는 약속으로 학습되었습니다. 같은 문장이라도 토크나이저가 다르면 번호가 달라져 의미 없는 결과가 나옵니다. 모델과 토크나이저는 항상 같은 ID(폴더)에서 엽니다.</p></details><details class="qa"><summary>Q. e5는 왜 문장 앞에 ‘query: ’를 붙이나요?</summary><p>토크나이저 규칙이 아니라 e5 모델의 학습 규칙입니다. 학습 때 질문에는 ‘query: ’, 문서에는 ‘passage: ’를 붙였기 때문에 사용할 때도 같아야 합니다. 14번 탭 코드에서 확인합니다.</p></details></section>
+<section aria-labelledby="tab-u10" class="panel" hidden="" id="u10" role="tabpanel"><div class="crumb">Part 3. tiktoken (OpenAI) · A3-M1</div><h1>10. tiktoken 기본 — OpenAI 모델의 토크나이저</h1><p class="lead">tiktoken은 OpenAI 모델이 실제로 쓰는 바이트 단위 BPE 토크나이저입니다. GPT에 보내기 전에 토큰 수를 정확히 세고, 길이 한도와 비용을 미리 계산할 때 씁니다. 문법은 단순하지만, 한국어에서 꼭 알아야 할 성질이 있습니다.</p><h3>10-1. 인코딩 고르기 — get_encoding / encoding_for_model</h3><div class="codebox"><div class="codehead"><span>04_tiktoken.ipynb · 10-1</span><button class="copy" type="button">코드 복사</button></div><pre><code>import tiktoken
+o200k = tiktoken.get_encoding("o200k_base")          # GPT-4o·4.1 계열
+cl100k = tiktoken.get_encoding("cl100k_base")        # GPT-4·3.5, text-embedding-3
+print(o200k.name, o200k.n_vocab, "|", cl100k.name, cl100k.n_vocab)
+for m in ["gpt-4o", "gpt-4o-mini", "gpt-4", "text-embedding-3-small"]:
+    print(f"{m:&lt;24} → {tiktoken.encoding_for_model(m).name}")</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>tiktoken.get_encoding("o200k_base")</code></td><td>인코딩 이름으로 열기. 처음 한 번 파일을 내려받아 캐시에 저장</td></tr><tr><td><code>tiktoken.encoding_for_model("gpt-4o")</code></td><td>모델 이름으로 알맞은 인코딩을 찾아 줌. 모델 이름표가 바뀌면 이 함수가 최신 대응표를 따름</td></tr><tr><td><code>.name / .n_vocab</code></td><td>인코딩 이름 / 어휘 수(특수 토큰 포함)</td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>o200k_base 200019 | cl100k_base 100277
+gpt-4o                   → o200k_base
+gpt-4o-mini              → o200k_base
+gpt-4                    → cl100k_base
+text-embedding-3-small   → cl100k_base</code></pre></div><div class="tablewrap "><table><thead><tr><th>인코딩</th><th>어휘 수</th><th>주요 모델</th></tr></thead><tbody><tr><td>o200k_base</td><td>약 20만</td><td>GPT-4o, GPT-4o-mini, GPT-4.1 계열 등 최신 모델</td></tr><tr><td>cl100k_base</td><td>약 10만</td><td>GPT-4, GPT-3.5-turbo, text-embedding-3-small/large</td></tr></tbody></table></div><h3>10-2. encode · decode · 토큰 하나가 몇 바이트인가</h3><div class="codebox"><div class="codehead"><span>04_tiktoken.ipynb · 10-2</span><button class="copy" type="button">코드 복사</button></div><pre><code>s = "배송 언제 와요?"
+ids = o200k.encode(s)
+print("ids   :", ids)
+print("decode:", o200k.decode(ids))
+for i in ids:
+    b = o200k.decode_single_token_bytes(i)
+    print(f"{i:&gt;7} {str(b):&lt;40} {len(b)}바이트 → {b.decode('utf-8', errors='replace')!r}")</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>o200k.encode(s)</code></td><td>문장 → 번호 리스트</td></tr><tr><td><code>o200k.decode(ids)</code></td><td>번호 리스트 → 문장</td></tr><tr><td><code>o200k.decode_single_token_bytes(i)</code></td><td>번호 하나 → <b>bytes</b>. 토큰은 글자가 아니라 바이트 묶음이라는 것을 보여 줌</td></tr><tr><td><code>b.decode('utf-8', errors='replace')</code></td><td>bytes → 문자열. 반쪽 바이트면 ‘�’로 바꿔 오류를 막음</td></tr><tr><td><code>{b!r}</code></td><td>f-string에서 <code>!r</code>은 repr — 따옴표·공백까지 보이게</td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>ids   : [185040, 171771, 103238, 7952, 30]
+decode: 배송 언제 와요?
+ 185040 b'\xeb\xb0\xb0\xec\x86\xa1'              6바이트 → '배송'
+ 171771 b' \xec\x96\xb8\xec\xa0\x9c'             7바이트 → ' 언제'
+ 103238 b' \xec\x99\x80'                         4바이트 → ' 와'
+   7952 b'\xec\x9a\x94'                          3바이트 → '요'
+     30 b'?'                                     1바이트 → '?'</code></pre></div><div class="mock"><div class="mock-title">‘배송 언제 와요?’ — 토큰과 바이트</div><div class="tablewrap "><table><thead><tr><th>토큰 번호</th><th>바이트</th><th>글자</th></tr></thead><tbody><tr><td>185040</td><td>eb b0 b0 ec 86 a1 (6바이트)</td><td>배송</td></tr><tr><td>171771</td><td>20 ec 96 b8 ec a0 9c (7바이트)</td><td>␣언제</td></tr><tr><td>103238</td><td>20 ec 99 80 (4바이트)</td><td>␣와</td></tr><tr><td>7952</td><td>ec 9a 94 (3바이트)</td><td>요</td></tr><tr><td>30</td><td>3f (1바이트)</td><td>?</td></tr></tbody></table></div></div><p>한글 한 글자는 UTF-8로 3바이트입니다. o200k 어휘에는 ‘배송’ 같은 자주 쓰는 한국어 조각이 많이 들어 있어 한 토큰으로 처리됩니다. 공백(0x20)은 보통 <b>다음 단어의 앞</b>에 붙습니다. 01번 탭의 ‘냉’이 두 토큰으로 갈라진 것은 이 바이트 묶음이 글자 경계와 맞지 않았기 때문입니다.</p><h3>10-3. 같은 뜻, 다른 토큰 수 — 언어와 인코딩</h3><div class="codebox"><div class="codehead"><span>04_tiktoken.ipynb · 10-3</span><button class="copy" type="button">코드 복사</button></div><pre><code>pairs = [("배송은 언제 오나요?", "When will my order arrive?"),
+         ("환불은 3영업일 이내에 처리됩니다.", "Refunds are processed within 3 business days."),
+         ("냉장고 같은 대형 가전은 설치 기사가 방문합니다.", "Large appliances are installed by a technician.")]
+print(f"{'문장':&lt;40} {'글자':&gt;4} {'cl100k':&gt;7} {'o200k':&gt;6}")
+for ko, en in pairs:
+    for s in (ko, en):
+        print(f"{s:&lt;40} {len(s):&gt;4} {len(cl100k.encode(s)):&gt;7} {len(o200k.encode(s)):&gt;6}")</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>for ko, en in pairs: for s in (ko, en):</code></td><td>튜플 리스트를 풀고, 한국어·영어를 차례로</td></tr><tr><td><code>f"{s:&lt;40} {len(s):&gt;4}"</code></td><td>문장 왼쪽 40칸, 숫자 오른쪽 4칸</td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>문장                                         글자  cl100k  o200k
+배송은 언제 오나요?                                11      12      6
+When will my order arrive?                 26       6      6
+환불은 3영업일 이내에 처리됩니다.                        19      18     14
+Refunds are processed within 3 business days.   45      10     10
+냉장고 같은 대형 가전은 설치 기사가 방문합니다.                27      22     16
+Large appliances are installed by a technician.   47       8      8</code></pre></div><p>같은 뜻인데 한국어가 영어보다 토큰이 많습니다(o200k에서 6 대 6은 같지만, 14 대 10, 16 대 8). 그리고 같은 한국어 문장도 <b>cl100k가 o200k보다 훨씬 많습니다</b>(12 대 6). 최신 인코딩일수록 한국어 조각을 많이 갖고 있어 비용과 길이 면에서 유리합니다. 과제 4에서 평가 질문 12개 전체로 확인합니다.</p><h3>10-4. 특수 토큰과 오류</h3><div class="codebox"><div class="codehead"><span>04_tiktoken.ipynb · 10-4</span><button class="copy" type="button">코드 복사</button></div><pre><code>text = "주문 내역 &lt;|endoftext|&gt; 다음 문서"
+try:
+    o200k.encode(text)
+except ValueError as e:
+    print("ValueError:", str(e).splitlines()[0][:80], "...")
+print("글자로 취급:", o200k.encode(text, disallowed_special=()))
+print("특수로 허용:", o200k.encode(text, allowed_special={"&lt;|endoftext|&gt;"}))
+print("특수 토큰 목록:", o200k.special_tokens_set)</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>o200k.encode(text) → ValueError</code></td><td>문서 안에 <code>&lt;|endoftext|&gt;</code> 같은 특수 토큰 문자열이 있으면 기본적으로 <b>오류</b>. 사용자 입력에 특수 토큰이 섞여 프롬프트를 조작하는 것을 막기 위한 장치</td></tr><tr><td><code>disallowed_special=()</code></td><td>검사를 끄고 <b>평범한 글자</b>로 토큰화 (여러 조각이 됨). 외부 문서를 셀 때 안전한 기본값</td></tr><tr><td><code>allowed_special={"&lt;|endoftext|&gt;"}</code></td><td>특수 토큰으로 인정해 <b>번호 하나</b>(199999)로</td></tr><tr><td><code>o200k.special_tokens_set</code></td><td>이 인코딩의 특수 토큰 목록</td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>ValueError: Encountered text corresponding to disallowed special token '&lt;|endoftext|&gt;'. ...
+글자로 취급: [9273, 11397, 21566, 21925, 464, 91, 419, 1440, 919, 91, 29, 68527, 26387, 4865]
+특수로 허용: [9273, 11397, 21566, 21925, 220, 199999, 68527, 26387, 4865]
+특수 토큰 목록: {'&lt;|endofprompt|&gt;', '&lt;|endoftext|&gt;'}</code></pre></div></section>
+<section aria-labelledby="tab-u11" class="panel" hidden="" id="u11" role="tabpanel"><div class="crumb">Part 3. tiktoken (OpenAI) · A3-M1</div><h1>11. 토큰 수 세기 실무 — 비용 어림, 길이 맞추기, 나누기</h1><p class="lead">RAG에서는 ‘근거 문서를 몇 개까지 GPT에 넣을 수 있나’, ‘문서를 임베딩 API에 넣기 전에 몇 토큰으로 나눌까’를 tiktoken으로 계산합니다.</p><h3>11-1. 대화 메시지 토큰 수와 비용 어림</h3><div class="codebox"><div class="codehead"><span>04_tiktoken.ipynb · 11-1</span><button class="copy" type="button">코드 복사</button></div><pre><code>def count_chat_tokens(messages, enc=o200k, per_message=3, reply_prime=3):
+    """메시지마다 역할·구분 토큰 몇 개가 더 붙는다는 OpenAI 안내를 따른 어림값"""
+    total = 0
+    for m in messages:
+        total += per_message
+        for v in m.values():
+            total += len(enc.encode(v))
+    return total + reply_prime
+
+msgs = [{"role": "system", "content": "쇼핑몰 상담원. 근거만 사용해 답하라."},
+        {"role": "user", "content": "[근거] 3만 원 이상 무료 배송입니다.\n[질문] 배송비 얼마예요?"}]
+n_in = count_chat_tokens(msgs)
+PRICE_IN_PER_1M = 0.40          # 예시 단가(USD/100만 토큰). 실제 값은 공식 가격표에서 확인해 바꾼다
+print("입력 토큰:", n_in, f"| 1만 번 호출 비용 ≈ ${n_in * 10000 / 1e6 * PRICE_IN_PER_1M:.2f}")</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>def count_chat_tokens(messages, enc=o200k, per_message=3, reply_prime=3):</code></td><td>기본값 인자 세 개. 메시지마다 역할·구분용 토큰이 몇 개 더 붙는 것을 어림으로 반영</td></tr><tr><td><code>for v in m.values():</code></td><td>사전의 값(role, content)을 모두 셈</td></tr><tr><td><code>PRICE_IN_PER_1M = 0.40</code></td><td><b>예시 단가</b>. 가격은 바뀌므로 반드시 공식 가격표를 보고 바꿔 넣음</td></tr><tr><td><code>n_in * 10000 / 1e6 * PRICE_IN_PER_1M</code></td><td>토큰 × 호출 수 ÷ 100만 × 단가</td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>입력 토큰: 49 | 1만 번 호출 비용 ≈ $0.20</code></pre></div><div class="note"><b>어림값인 이유</b><p>실제 API 응답의 <code>usage.prompt_tokens</code>가 정확한 값입니다. 메시지 형식이 모델마다 조금씩 달라 직접 센 값과 몇 토큰 차이 날 수 있습니다. 예산을 잡을 때는 이 함수로 어림하고, 운영에서는 응답의 usage를 기록합니다.</p></div><h3>11-2. 토큰 기준으로 자르기와 나누기</h3><div class="codebox"><div class="codehead"><span>04_tiktoken.ipynb · 11-2</span><button class="copy" type="button">코드 복사</button></div><pre><code>def truncate_tokens(text, max_tokens, enc=o200k):
+    ids = enc.encode(text)
+    return enc.decode(ids[:max_tokens]), len(ids)
+
+def chunk_tokens(text, size=20, overlap=5, enc=o200k):
+    ids = enc.encode(text)
+    step = size - overlap
+    return [enc.decode(ids[i:i + size]) for i in range(0, max(len(ids) - overlap, 1), step)]
+
+doc = ("냉장고 같은 대형 가전은 설치 기사가 직접 방문합니다. 방문 일정은 문자로 안내됩니다. "
+       "제주와 도서산간은 3~5일 더 걸립니다. 설치 후 포장재는 기사님이 수거합니다.")
+short, n = truncate_tokens(doc, 15)
+print(f"전체 {n}토큰 → 15토큰:", short)
+for i, c in enumerate(chunk_tokens(doc)):
+    print(f"조각 {i} ({len(o200k.encode(c))}토큰): {c}")</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>ids[:max_tokens]</code></td><td>앞에서 max_tokens개만 슬라이싱 → decode = 토큰 기준 자르기</td></tr><tr><td><code>range(0, len(ids) - overlap, step)</code></td><td>step = size − overlap 간격으로 시작점. 조각끼리 overlap토큰씩 겹침</td></tr><tr><td><code>max(..., 1)</code></td><td>문서가 아주 짧아도 range가 비지 않게</td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>전체 54토큰 → 15토큰: 냉장고 같은 대형 가전은 설치 기사가 직접 방문
+조각 0 (20토큰): 냉장고 같은 대형 가전은 설치 기사가 직접 방문합니다. 방문 일정은
+조각 1 (20토큰): 합니다. 방문 일정은 문자로 안내됩니다. 제주와 도서산간은 3~
+조각 2 (20토큰): 간은 3~5일 더 걸립니다. 설치 후 포장재는 기사님이
+조각 3 (9토큰): 재는 기사님이 수거합니다.</code></pre></div><p>토큰 기준으로 자르면 길이는 정확하지만 ‘합니다.’, ‘간은’처럼 <b>단어·문장 중간이 잘립니다</b>. 임베딩은 조각의 뜻을 벡터로 만드는 일이라, 잘린 조각은 뜻이 흐려집니다. 다음 셀이 해결책입니다.</p><h3>11-3. 문장 경계를 지키며 토큰 수로 나누기</h3><div class="codebox"><div class="codehead"><span>04_tiktoken.ipynb · 11-3</span><button class="copy" type="button">코드 복사</button></div><pre><code>from kiwipiepy import Kiwi
+kiwi = Kiwi()
+
+def chunk_by_sentence(text, max_tokens=25, enc=o200k):
+    chunks, cur, cur_n = [], [], 0
+    for sent in (s.text for s in kiwi.split_into_sents(text)):
+        n = len(enc.encode(sent))
+        if cur and cur_n + n &gt; max_tokens:          # 이 문장을 넣으면 넘친다 → 지금까지를 한 조각으로
+            chunks.append(" ".join(cur)); cur, cur_n = [], 0
+        cur.append(sent); cur_n += n
+    if cur:
+        chunks.append(" ".join(cur))
+    return chunks
+
+for i, c in enumerate(chunk_by_sentence(doc)):
+    print(f"조각 {i} ({len(o200k.encode(c))}토큰): {c}")</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>kiwi.split_into_sents(text)</code></td><td>문장 단위로 먼저 나눔</td></tr><tr><td><code>if cur and cur_n + n &gt; max_tokens:</code></td><td>이 문장을 더하면 한도를 넘으면 지금까지 모은 문장을 한 조각으로 확정</td></tr><tr><td><code>chunks.append(" ".join(cur))</code></td><td>문장들을 공백으로 이어 한 조각</td></tr><tr><td><code>if cur: chunks.append(...)</code></td><td>반복이 끝난 뒤 남은 문장 처리 — 빠뜨리기 쉬운 줄</td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>조각 0 (17토큰): 냉장고 같은 대형 가전은 설치 기사가 직접 방문합니다.
+조각 1 (9토큰): 방문 일정은 문자로 안내됩니다.
+조각 2 (17토큰): 제주와 도서산간은 3~5일 더 걸립니다.
+조각 3 (14토큰): 설치 후 포장재는 기사님이 수거합니다.</code></pre></div><div class="tablewrap "><table><thead><tr><th>방법</th><th>길이 정확도</th><th>문장 보존</th><th>언제</th></tr></thead><tbody><tr><td>글자 수로 자르기</td><td>낮음 (토큰 수 들쭉날쭉)</td><td>×</td><td>쓰지 않음</td></tr><tr><td>토큰 수로 자르기 + overlap</td><td>정확</td><td>× (중간이 잘림)</td><td>아주 긴 단락, 문장 구분이 없는 데이터</td></tr><tr><td>문장 경계 + 토큰 한도</td><td>한도 이하 보장</td><td>○</td><td><b>RAG 문서 청킹 기본</b></td></tr></tbody></table></div><details class="qa"><summary>Q. 임베딩 API의 길이 한도는?</summary><p>OpenAI text-embedding-3 계열은 입력 하나에 8,192토큰까지입니다. 하지만 검색 품질은 200~500토큰 정도의 조각이 더 좋은 경우가 많습니다. 한도는 ‘넘으면 안 되는 선’이고, 조각 크기는 평가로 정합니다.</p></details></section>
+<section aria-labelledby="tab-u12" class="panel" hidden="" id="u12" role="tabpanel"><div class="crumb">Part 4. 토큰과 유사도 · A3-M1</div><h1>12. 토큰으로 유사도 계산하기 — 세기 → 벡터 → 코사인</h1><p class="lead">임베딩 모델 없이도 ‘같은 조각을 얼마나 공유하는가’로 문장 유사도를 계산할 수 있습니다. 이것이 키워드 검색(TF-IDF·BM25)의 원리이고, 어떤 토크나이저를 쓰느냐에 따라 결과가 크게 달라집니다.</p><h3>12-1. 준비 — FAQ와 평가 질문, 토크나이저 다섯 개</h3><div class="codebox"><div class="codehead"><span>05_토큰으로_유사도.ipynb · 12-1</span><button class="copy" type="button">코드 복사</button></div><pre><code>import re, numpy as np, tiktoken
+from kiwipiepy import Kiwi
+from tokenizers import Tokenizer
+from shop_faq import FAQ, TESTS
+
+kiwi = Kiwi()
+wp = Tokenizer.from_file("shop_wordpiece.json")         # 02 노트북에서 만든 파일
+o200k = tiktoken.get_encoding("o200k_base")
+KEEP = {"NNG", "NNP", "NNB", "SL", "SN", "VV", "VA", "XR"}
+
+TOKENIZERS = {
+    "띄어쓰기":   lambda s: s.split(),
+    "글자 2-gram": lambda s: [s[i:i+2] for i in range(len(s) - 1) if " " not in s[i:i+2]],
+    "kiwi 형태소": lambda s: [t.form for t in kiwi.tokenize(s) if t.tag in KEEP],
+    "WordPiece":  lambda s: [t for t in wp.encode(s).tokens if t not in ("[CLS]", "[SEP]")],
+    "tiktoken":   lambda s: [str(i) for i in o200k.encode(s)],
+}
+docs = [f"{q} {a}" for _, _, q, a in FAQ]
+ids = [i for i, *_ in FAQ]
+print(len(docs), "문서 /", len(TESTS), "평가 질문")</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>TOKENIZERS = {"이름": lambda s: ...}</code></td><td><b>사전에 함수를 값으로</b> 넣어 이름으로 골라 쓰기. 비교 실험의 핵심 구조</td></tr><tr><td><code>lambda s: s.split()</code></td><td>이름 없는 한 줄 함수. <code>def f(s): return s.split()</code>와 같음</td></tr><tr><td><code>[s[i:i+2] for i in range(len(s) - 1) if " " not in s[i:i+2]]</code></td><td>글자 2개씩 미끄러지며 자르기(2-gram). 공백이 낀 조각은 버림</td></tr><tr><td><code>[str(i) for i in o200k.encode(s)]</code></td><td>tiktoken 번호를 문자열로 — sklearn이 문자열 토큰을 받기 때문</td></tr><tr><td><code>Tokenizer.from_file("shop_wordpiece.json")</code></td><td>02 노트북에서 저장한 토크나이저 재사용</td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>20 문서 / 12 평가 질문</code></pre></div><h3>12-2. 두 문장의 유사도를 손으로 — 토큰 세기 → 벡터 → 코사인·자카드</h3><div class="codebox"><div class="codehead"><span>05_토큰으로_유사도.ipynb · 12-2</span><button class="copy" type="button">코드 복사</button></div><pre><code>from collections import Counter
+a, b = "택배 언제 와요", "배송은 언제 오나요"
+for name in ["띄어쓰기", "kiwi 형태소", "글자 2-gram"]:
+    ta, tb = Counter(TOKENIZERS[name](a)), Counter(TOKENIZERS[name](b))
+    vocab = sorted(set(ta) | set(tb))
+    va = np.array([ta[w] for w in vocab]); vb = np.array([tb[w] for w in vocab])
+    cos = va @ vb / (np.linalg.norm(va) * np.linalg.norm(vb))
+    jac = len(set(ta) &amp; set(tb)) / len(set(ta) | set(tb))
+    print(f"[{name}] 어휘 {vocab}")
+    print(f"   A {va.tolist()}  B {vb.tolist()}  → 코사인 {cos:.3f}  자카드 {jac:.3f}")</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>Counter(tokens)</code></td><td>토큰별 개수 사전</td></tr><tr><td><code>sorted(set(ta) | set(tb))</code></td><td>두 문장의 토큰 합집합(<code>|</code>) = 이 비교에서 쓰는 어휘</td></tr><tr><td><code>np.array([ta[w] for w in vocab])</code></td><td>어휘 순서대로 개수를 늘어놓은 벡터 = <b>Bag of Words</b></td></tr><tr><td><code>va @ vb / (norm(va) * norm(vb))</code></td><td>코사인 유사도 = 내적 ÷ 길이의 곱</td></tr><tr><td><code>len(set(ta) &amp; set(tb)) / len(set(ta) | set(tb))</code></td><td><b>자카드</b> = 공통 토큰 수 ÷ 전체 토큰 수 (개수 무시, 있다/없다만)</td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>[띄어쓰기] 어휘 ['배송은', '언제', '오나요', '와요', '택배']
+   A [0, 1, 0, 1, 1]  B [1, 1, 1, 0, 0]  → 코사인 0.333  자카드 0.200
+[kiwi 형태소] 어휘 ['배송', '오', '택배']
+   A [0, 1, 1]  B [1, 1, 0]  → 코사인 0.500  자카드 0.333
+[글자 2-gram] 어휘 ['나요', '배송', '송은', '언제', '오나', '와요', '택배']
+   A [0, 0, 0, 1, 0, 1, 1]  B [1, 1, 1, 1, 1, 0, 0]  → 코사인 0.258  자카드 0.143</code></pre></div><div class="mock"><div class="mock-title">‘택배 언제 와요’ vs ‘배송은 언제 오나요’ — kiwi 형태소로 만든 벡터</div><div class="tablewrap "><table><thead><tr><th>어휘</th><th>배송</th><th>오</th><th>택배</th></tr></thead><tbody><tr><td>A 택배 언제 와요</td><td>0</td><td>1</td><td>1</td></tr><tr><td>B 배송은 언제 오나요</td><td>1</td><td>1</td><td>0</td></tr><tr><td>공통</td><td></td><td><span class="ok">✓</span></td><td></td></tr></tbody></table></div><p>코사인 = (0·1 + 1·1 + 1·0) ÷ (√2 · √2) = 1/2 = <b>0.500</b>, 자카드 = 공통 1개 ÷ 전체 3개 = <b>0.333</b></p></div><p>띄어쓰기로는 ‘와요’와 ‘오나요’가 다른 조각이라 ‘언제’ 하나만 겹치고(0.333), 형태소 분석은 둘 다 동사 ‘오’로 바꿔 줘서 겹치는 조각이 생깁니다(0.500). 단 ‘언제’는 대명사라 KEEP에서 빠졌습니다. ‘택배’와 ‘배송’은 어떤 토크나이저로도 겹치지 않습니다 — <b>토큰 기반 유사도의 한계</b>이자 임베딩이 필요한 이유입니다.</p><h3>12-3. TF-IDF에 내 토크나이저 끼우기</h3><div class="codebox"><div class="codehead"><span>05_토큰으로_유사도.ipynb · 12-3</span><button class="copy" type="button">코드 복사</button></div><pre><code>from sklearn.feature_extraction.text import TfidfVectorizer
+
+def build(name):
+    vec = TfidfVectorizer(tokenizer=TOKENIZERS[name], lowercase=False, token_pattern=None)
+    X = vec.fit_transform(docs)                       # 문서 20개 → [20, 어휘 수] 희소 행렬
+    return vec, X
+
+vec, X = build("kiwi 형태소")
+print("행렬 모양:", X.shape, "| 0이 아닌 칸:", X.nnz)
+print("어휘 앞 15개:", vec.get_feature_names_out()[:15].tolist())
+q = vec.transform(["택배 언제 와요?"])
+scores = (X @ q.T).toarray().ravel()                  # 행이 길이 1이라 내적 = 코사인
+top = scores.argsort()[::-1][:3]
+print("상위 3:", [(ids[i], round(float(scores[i]), 3), docs[i][:15]) for i in top])</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>TfidfVectorizer(tokenizer=..., lowercase=False, token_pattern=None)</code></td><td>내 토크나이저 함수를 끼움. <code>token_pattern=None</code>은 기본 정규식 토크나이저를 끄라는 표시(안 주면 경고)</td></tr><tr><td><code>vec.fit_transform(docs)</code></td><td>어휘를 만들고(fit) 문서를 TF-IDF 행렬로(transform). 결과는 <b>희소 행렬</b>(대부분 0)</td></tr><tr><td><code>X.shape / X.nnz</code></td><td>(문서 수, 어휘 수) / 0이 아닌 칸 수</td></tr><tr><td><code>vec.get_feature_names_out()</code></td><td>어휘 목록</td></tr><tr><td><code>vec.transform([q])</code></td><td>질문은 transform만 — 문서로 만든 어휘·IDF를 그대로 써야 함</td></tr><tr><td><code>(X @ q.T).toarray().ravel()</code></td><td>희소 행렬 곱 → 일반 배열 → 1차원. TfidfVectorizer는 행 길이를 1로 맞추므로 내적 = 코사인</td></tr><tr><td><code>scores.argsort()[::-1][:3]</code></td><td>오름차순 정렬 번호를 뒤집어(<code>[::-1]</code>) 큰 순 3개</td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>행렬 모양: (20, 151) | 0이 아닌 칸: 245
+어휘 앞 15개: ['1', '150', '2', '3', '30', '3000', '30000', '5', '6', '6000', '7', 'cm', 'kg', '가', '가능']
+상위 3: [(101, 0.244, '배송은 언제 오나요? 주문 '), (702, 0.0, '쿠폰과 적립금을 같이 쓸 수'), (602, 0.0, '회원 탈퇴는 어떻게 하나요?')]</code></pre></div><div class="tablewrap "><table><thead><tr><th>TF-IDF 한 칸</th><th>뜻</th></tr></thead><tbody><tr><td>TF (term frequency)</td><td>이 문서에 이 토큰이 몇 번 나왔나</td></tr><tr><td>IDF (inverse document frequency)</td><td>이 토큰이 나온 문서가 적을수록 큼 — ‘나요’처럼 모든 문서에 나오는 토큰은 점수가 작아짐</td></tr><tr><td>TF × IDF</td><td>‘이 문서를 잘 구별해 주는 토큰’에 높은 점수</td></tr></tbody></table></div></section>
+<section aria-labelledby="tab-u13" class="panel" hidden="" id="u13" role="tabpanel"><div class="crumb">Part 4. 토큰과 유사도 · A3-M1</div><h1>13. 토크나이저만 바꿔 검색 품질 비교하기</h1><p class="lead">FAQ 20건, 고객 말투 질문 12개, 같은 TF-IDF 검색. 토크나이저만 다섯 가지로 바꿔 정답이 1등(Hit@1)·3등 안(Hit@3)에 드는 횟수를 셉니다.</p><h3>13-1. 토크나이저만 바꿔서 검색 품질 비교 — Hit@1·Hit@3</h3><div class="codebox"><div class="codehead"><span>05_토큰으로_유사도.ipynb · 13-1</span><button class="copy" type="button">코드 복사</button></div><pre><code>def evaluate(name, k=3):
+    vec, X = build(name)
+    h1 = h3 = 0
+    fails = []
+    for q, gold in TESTS:
+        s = (X @ vec.transform([q]).T).toarray().ravel()
+        got = [ids[i] for i in s.argsort()[::-1][:k]]
+        h1 += got[0] == gold; h3 += gold in got
+        if got[0] != gold:
+            fails.append((q, gold, got[0]))
+    return h1, h3, fails
+
+results = {}
+for name in TOKENIZERS:
+    h1, h3, fails = evaluate(name)
+    results[name] = fails
+    print(f"{name:&lt;12} Hit@1 {h1:&gt;2}/{len(TESTS)}  Hit@3 {h3:&gt;2}/{len(TESTS)}  어휘 {len(build(name)[0].vocabulary_)}")</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>def evaluate(name, k=3):</code></td><td>토크나이저 이름 하나로 검색 전체를 평가하는 함수</td></tr><tr><td><code>h1 += got[0] == gold</code></td><td>True=1, False=0으로 더해짐</td></tr><tr><td><code>fails.append((q, gold, got[0]))</code></td><td>틀린 질문을 모아 두고 다음 셀에서 분석</td></tr><tr><td><code>len(build(name)[0].vocabulary_)</code></td><td>어휘 수. <code>vocabulary_</code>는 학습 후 생기는 속성(끝의 _)</td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>띄어쓰기         Hit@1  3/12  Hit@3  5/12  어휘 201
+글자 2-gram    Hit@1  7/12  Hit@3 11/12  어휘 329
+kiwi 형태소     Hit@1  7/12  Hit@3  8/12  어휘 151
+WordPiece    Hit@1  2/12  Hit@3  4/12  어휘 142
+tiktoken     Hit@1  8/12  Hit@3 10/12  어휘 283</code></pre></div><div class="mock"><div class="mock-title">결과 정리</div><div class="tablewrap "><table><thead><tr><th>토크나이저</th><th>Hit@1</th><th>Hit@3</th><th>어휘 수</th></tr></thead><tbody><tr><td>띄어쓰기</td><td>3/12</td><td>5/12</td><td>201</td></tr><tr><td>글자 2-gram</td><td>7/12</td><td>11/12</td><td>329</td></tr><tr><td>kiwi 형태소</td><td>7/12</td><td>8/12</td><td>151</td></tr><tr><td>WordPiece</td><td>2/12</td><td>4/12</td><td>142</td></tr><tr><td><b>tiktoken</b></td><td>8/12</td><td>10/12</td><td>283</td></tr></tbody></table></div></div><div class="tablewrap "><table><thead><tr><th>토크나이저</th><th>결과를 이렇게 읽습니다</th></tr></thead><tbody><tr><td>띄어쓰기</td><td>‘와요?’처럼 조사·어미·물음표가 붙은 채라 문서와 겹치는 조각이 거의 없음</td></tr><tr><td>글자 2-gram</td><td>‘택배’·‘언제’처럼 두 글자 조각이 어디서든 겹쳐 Hit@3이 높음. 대신 ‘요?’ 같은 의미 없는 조각도 점수를 받음</td></tr><tr><td>kiwi 형태소</td><td>어미·조사를 떼어 내 정확하지만, 품사 필터로 ‘언제’까지 지워 손해를 봄(과제 5)</td></tr><tr><td>WordPiece(직접 학습)</td><td><b>가장 약함</b>. 다음 셀과 15번 탭 실험에서 이유를 확인</td></tr><tr><td>tiktoken o200k</td><td>큰 다국어 말뭉치로 학습된 조각이라 한국어 어미까지 잘 나뉨. 검색용으로 만들어진 것은 아니지만 의외로 강함</td></tr></tbody></table></div><h3>13-2. 틀린 질문 들여다보기</h3><div class="codebox"><div class="codehead"><span>05_토큰으로_유사도.ipynb · 13-2</span><button class="copy" type="button">코드 복사</button></div><pre><code>for name in ["띄어쓰기", "kiwi 형태소", "글자 2-gram"]:
+    print(f"[{name}] 틀린 질문 {len(results[name])}개")
+    for q, gold, got in results[name][:3]:
+        print(f"   {q} → 정답 {gold} / 1등 {got} | 질문 토큰 {TOKENIZERS[name](q)}")</code></pre></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>[띄어쓰기] 틀린 질문 9개
+   택배 언제 와요? → 정답 101 / 1등 701 | 질문 토큰 ['택배', '언제', '와요?']
+   내 택배 지금 어디쯤인지 보고 싶어요 → 정답 103 / 1등 702 | 질문 토큰 ['내', '택배', '지금', '어디쯤인지', '보고', '싶어요']
+   미국으로 보내줄 수 있나요? → 정답 105 / 1등 502 | 질문 토큰 ['미국으로', '보내줄', '수', '있나요?']
+[kiwi 형태소] 틀린 질문 5개
+   내 택배 지금 어디쯤인지 보고 싶어요 → 정답 103 / 1등 702 | 질문 토큰 ['택배', '보']
+   소파 같은 큰 물건은 어떻게 와요? → 정답 104 / 1등 101 | 질문 토큰 ['소파', '같', '크', '물건', '오']
+   미국으로 보내줄 수 있나요? → 정답 105 / 1등 502 | 질문 토큰 ['미국', '보내', '수', '있']
+[글자 2-gram] 틀린 질문 5개
+   택배 언제 와요? → 정답 101 / 1등 301 | 질문 토큰 ['택배', '언제', '와요', '요?']
+   내 택배 지금 어디쯤인지 보고 싶어요 → 정답 103 / 1등 501 | 질문 토큰 ['택배', '지금', '어디', '디쯤', '쯤인', '인지', '보고', '싶어', '어요']
+   미국으로 보내줄 수 있나요? → 정답 105 / 1등 502 | 질문 토큰 ['미국', '국으', '으로', '보내', '내줄', '있나', '나요', '요?']</code></pre></div><h3>13-3. WordPiece가 약했던 이유 — 학습 말뭉치와 어휘 크기</h3><p>직접 만든 WordPiece가 약했던 원인을 실험합니다. 학습 말뭉치에 FAQ 문서 자체를 넣었을 때와 어휘 크기를 바꿨을 때를 비교합니다.</p><div class="codebox"><div class="codehead"><span>05_토큰으로_유사도.ipynb · 13-3</span><button class="copy" type="button">코드 복사</button></div><pre><code>from tokenizers import models, normalizers, pre_tokenizers, trainers
+from sklearn.feature_extraction.text import TfidfVectorizer
+corpus = open("shop_corpus.txt", encoding="utf-8").read().splitlines()
+
+def train_wp(lines, vocab_size):
+    t = Tokenizer(models.WordPiece(unk_token="[UNK]"))
+    t.normalizer = normalizers.NFKC()
+    t.pre_tokenizer = pre_tokenizers.BertPreTokenizer()
+    t.train_from_iterator(lines, trainers.WordPieceTrainer(vocab_size=vocab_size, min_frequency=2,
+                          special_tokens=["[PAD]", "[UNK]", "[CLS]", "[SEP]", "[MASK]"]))
+    return t
+
+for label, lines in [("말뭉치만", corpus), ("말뭉치+FAQ 문서", corpus + docs)]:
+    for vs in [200, 800]:
+        t = train_wp(lines, vs)
+        f = lambda s, t=t: t.encode(s).tokens
+        vec = TfidfVectorizer(tokenizer=f, lowercase=False, token_pattern=None)
+        X = vec.fit_transform(docs)
+        hit = sum(ids[(X @ vec.transform([q]).T).toarray().ravel().argmax()] == g for q, g in TESTS)
+        unk = sum(tok == "[UNK]" for q, _ in TESTS for tok in f(q))
+        print(f"{label:&lt;12} vocab_size={vs:&lt;4} 실제 어휘 {t.get_vocab_size():&lt;4} Hit@1 {hit:&gt;2}/12  질문 속 [UNK] {unk:&gt;2}개  예: {f('택배 언제 와요?')}")</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>def train_wp(lines, vocab_size):</code></td><td>학습을 함수로 묶어 조건만 바꿔 반복</td></tr><tr><td><code>lambda s, t=t: t.encode(s).tokens</code></td><td><b>기본값으로 현재 t를 고정</b>. 반복문 안 lambda가 마지막 t만 보는 실수를 막는 문법</td></tr><tr><td><code>sum(tok == "[UNK]" for q, _ in TESTS for tok in f(q))</code></td><td>이중 제너레이터: 모든 질문의 모든 토큰 중 [UNK] 개수</td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>말뭉치만         vocab_size=200  실제 어휘 353  Hit@1  2/12  질문 속 [UNK] 21개  예: ['택', '##배', '언', '##제', '[UNK]', '?']
+말뭉치만         vocab_size=800  실제 어휘 646  Hit@1  2/12  질문 속 [UNK] 21개  예: ['택배', '언제', '[UNK]', '?']
+말뭉치+FAQ 문서   vocab_size=200  실제 어휘 480  Hit@1  9/12  질문 속 [UNK] 15개  예: ['택', '##배', '언', '##제', '[UNK]', '?']
+말뭉치+FAQ 문서   vocab_size=800  실제 어휘 800  Hit@1  8/12  질문 속 [UNK] 15개  예: ['택배', '언제', '[UNK]', '?']</code></pre></div><div class="note"><b>결론</b><p>말뭉치에 없던 글자(‘와’, ‘쯤’, ‘뭐’ 등)는 [UNK]가 되고, 서로 다른 질문의 [UNK]끼리 같은 토큰으로 매칭되어 엉뚱한 문서가 뽑힙니다. <b>검색 대상 문서를 학습 말뭉치에 넣는 것</b>만으로 Hit@1이 크게 오릅니다. 직접 토크나이저를 만들 때 가장 중요한 것은 알고리즘보다 <b>말뭉치</b>입니다. 그래서 실무에서는 대부분 큰 말뭉치로 학습된 사전학습 토크나이저를 씁니다.</p></div></section>
+<section aria-labelledby="tab-u14" class="panel" hidden="" id="u14" role="tabpanel"><div class="crumb">Part 4. 토큰과 유사도 · A3-M1</div><h1>14. 임베딩으로 유사도 — Hugging Face e5와 OpenAI</h1><p class="lead">토큰 기반 유사도는 ‘택배’와 ‘배송’이 같은 뜻이라는 것을 모릅니다. 임베딩 모델은 문장을 의미 공간의 벡터로 바꿔 이 문제를 풀어 줍니다. 두 방법으로 같은 평가를 하고 토큰 기반 결과와 비교합니다.</p><div class="flow"><div class="fstep"><b>문장</b><span>‘택배 언제 와요?’</span></div><span class="arrow" aria-hidden="true">→</span><div class="fstep"><b>토크나이저</b><span>모델 전용 (e5: SentencePiece / OpenAI: cl100k)</span></div><span class="arrow" aria-hidden="true">→</span><div class="fstep"><b>모델</b><span>토큰마다 벡터</span></div><span class="arrow" aria-hidden="true">→</span><div class="fstep"><b>풀링·정규화</b><span>문장 벡터 1개, 길이 1</span></div><span class="arrow" aria-hidden="true">→</span><div class="fstep"><b>코사인</b><span>문서 벡터와 내적</span></div></div><h3>14-1. Hugging Face 임베딩 — e5로 문장 벡터 만들기 (모델 다운로드 필요)</h3><div class="codebox"><div class="codehead"><span>06_임베딩으로_유사도.ipynb · 14-1</span><button class="copy" type="button">코드 복사</button></div><pre><code>import torch, torch.nn.functional as F
+from transformers import AutoTokenizer, AutoModel
+from shop_faq import FAQ, TESTS
+
+name = "intfloat/multilingual-e5-small"
+tok = AutoTokenizer.from_pretrained(name)
+model = AutoModel.from_pretrained(name).eval()
+
+@torch.inference_mode()
+def e5(texts, kind):
+    b = tok([f"{kind}: {t}" for t in texts], padding=True, truncation=True, max_length=256, return_tensors="pt")
+    h = model(**b).last_hidden_state
+    m = b["attention_mask"].unsqueeze(-1).float()
+    return F.normalize((h * m).sum(1) / m.sum(1), dim=1)
+
+D = e5([f"{q} {a}" for _, _, q, a in FAQ], "passage")
+print("문서 벡터:", tuple(D.shape))
+ids = [i for i, *_ in FAQ]
+hit1 = 0
+for q, gold in TESTS:
+    s = D @ e5([q], "query")[0]
+    top = s.argsort(descending=True)[:3].tolist()
+    hit1 += ids[top[0]] == gold
+    print(f"{q:&lt;24} → {[ids[i] for i in top]}  {[round(float(s[i]), 3) for i in top]}")
+print("e5 Hit@1 =", hit1, "/", len(TESTS))</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>tok([f"{kind}: {t}" ...], padding=True, truncation=True, max_length=256, return_tensors="pt")</code></td><td>e5 규칙: 질문은 ‘query: ’, 문서는 ‘passage: ’. 07탭 문법 그대로</td></tr><tr><td><code>@torch.inference_mode()</code></td><td>기울기 계산 끄기 — 추론 전용</td></tr><tr><td><code>model(**b).last_hidden_state</code></td><td>[문장 수, 토큰 수, 384] 토큰별 벡터</td></tr><tr><td><code>b["attention_mask"].unsqueeze(-1).float()</code></td><td>[문장, 토큰] → [문장, 토큰, 1]. PAD를 0으로 지우기 위한 마스크</td></tr><tr><td><code>(h * m).sum(1) / m.sum(1)</code></td><td>PAD를 뺀 평균(mean pooling)</td></tr><tr><td><code>F.normalize(..., dim=1)</code></td><td>길이 1 → 내적 = 코사인</td></tr><tr><td><code>s.argsort(descending=True)[:3]</code></td><td>점수 큰 순 3개 번호</td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>문서 벡터: (20, 384)
+택배 언제 와요?                → [101, 301, 103]  [0.846, 0.827, 0.824]
+배송비 무료 기준이 뭐예요?          → [102, 304, 105]  [0.904, 0.863, 0.846]
+내 택배 지금 어디쯤인지 보고 싶어요     → [103, 105, 502]  [0.874, 0.85, 0.843]
+소파 같은 큰 물건은 어떻게 와요?      → [104, 303, 304]  [0.821, 0.806, 0.796]
+미국으로 보내줄 수 있나요?          → [105, 502, 301]  [0.866, 0.849, 0.844]
+카드 할부 몇 개월까지 돼요?         → [202, 401, 301]  [0.901, 0.858, 0.85]
+받은 지 5일 됐는데 반품 돼요?       → [301, 401, 101]  [0.892, 0.872, 0.87]
+물건이 깨져서 왔어요              → [303, 301, 602]  [0.86, 0.833, 0.827]
+환불 며칠 걸려요?               → [401, 402, 301]  [0.885, 0.871, 0.87]
+주문 취소 어떻게 해요?            → [501, 401, 301]  [0.884, 0.858, 0.837]
+비번 까먹었어요                 → [303, 501, 601]  [0.823, 0.81, 0.809]
+포인트 유효기간 있나요?            → [701, 301, 401]  [0.846, 0.841, 0.829]
+e5 Hit@1 = 11 / 12</code></pre></div><h3>14-2. OpenAI 임베딩 — 보내기 전에 tiktoken으로 세기 (API 키 필요)</h3><div class="codebox"><div class="codehead"><span>06_임베딩으로_유사도.ipynb · 14-2</span><button class="copy" type="button">코드 복사</button></div><pre><code>import os, numpy as np, tiktoken
+from dotenv import load_dotenv
+from openai import OpenAI
+from shop_faq import FAQ, TESTS
+load_dotenv(".env")
+
+enc = tiktoken.encoding_for_model("text-embedding-3-small")
+texts = [f"{q} {a}" for _, _, q, a in FAQ]
+n_tok = [len(enc.encode(t)) for t in texts]
+print("문서 토큰 수 합계:", sum(n_tok), "| 가장 긴 문서:", max(n_tok), "토큰 (한 입력 최대 8,192)")
+
+client = OpenAI()
+def oa(texts, dim=None):
+    kw = {"dimensions": dim} if dim else {}
+    r = client.embeddings.create(model="text-embedding-3-small", input=texts, **kw)
+    return np.array([d.embedding for d in r.data], dtype="float32")
+
+D = oa(texts)
+print("문서 벡터:", D.shape, "| 길이:", np.linalg.norm(D[0]).round(3))
+ids = [i for i, *_ in FAQ]
+hit1 = 0
+for q, gold in TESTS:
+    s = D @ oa([q])[0]
+    top = s.argsort()[::-1][:3]
+    hit1 += ids[top[0]] == gold
+    print(f"{q:&lt;24} → {[ids[i] for i in top]}  {[round(float(x), 3) for x in s[top]]}")
+print("OpenAI Hit@1 =", hit1, "/", len(TESTS))</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>tiktoken.encoding_for_model("text-embedding-3-small")</code></td><td>임베딩 모델의 인코딩(cl100k)으로 세야 정확</td></tr><tr><td><code>client.embeddings.create(model=..., input=texts)</code></td><td>리스트를 한 번에 보냄(요청 한 번에 여러 문장). 결과 <code>r.data[i].embedding</code></td></tr><tr><td><code>{"dimensions": dim} if dim else {}</code></td><td>text-embedding-3는 <code>dimensions</code>로 벡터 길이를 줄일 수 있음(예: 256). 저장 공간 절약</td></tr><tr><td><code>np.linalg.norm(D[0])</code></td><td>OpenAI 임베딩은 이미 길이 1로 나옴 → 내적 = 코사인</td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>문서 토큰 수 합계: 1125 | 가장 긴 문서: 77 토큰 (한 입력 최대 8,192)
+문서 벡터: (20, 1536) | 길이: 1.0
+택배 언제 와요?                → [103, 101, 104]  [0.359, 0.356, 0.323]
+배송비 무료 기준이 뭐예요?          → [102, 302, 101]  [0.741, 0.462, 0.378]
+내 택배 지금 어디쯤인지 보고 싶어요     → [103, 501, 502]  [0.459, 0.4, 0.376]
+소파 같은 큰 물건은 어떻게 와요?      → [104, 304, 303]  [0.252, 0.159, 0.136]
+미국으로 보내줄 수 있나요?          → [105, 502, 103]  [0.407, 0.382, 0.366]
+카드 할부 몇 개월까지 돼요?         → [202, 401, 201]  [0.597, 0.479, 0.387]
+받은 지 5일 됐는데 반품 돼요?       → [301, 401, 402]  [0.457, 0.454, 0.426]
+물건이 깨져서 왔어요              → [303, 104, 402]  [0.362, 0.303, 0.217]
+환불 며칠 걸려요?               → [401, 202, 402]  [0.591, 0.401, 0.376]
+주문 취소 어떻게 해요?            → [501, 502, 103]  [0.699, 0.492, 0.488]
+비번 까먹었어요                 → [601, 303, 501]  [0.261, 0.225, 0.204]
+포인트 유효기간 있나요?            → [701, 202, 702]  [0.39, 0.305, 0.258]
+OpenAI Hit@1 = 11 / 12</code></pre></div><h3>14-3. 결과 비교 — 같은 질문, 네 가지 방법</h3><div class="tablewrap "><table><thead><tr><th>질문</th><th>정답</th><th>TF-IDF 글자 2-gram</th><th>TF-IDF tiktoken</th><th>e5 1등</th><th>OpenAI 1등</th></tr></thead><tbody><tr><td>택배 언제 와요?</td><td>101</td><td>301 ✗</td><td>301 ✗</td><td><b>101 ○</b></td><td>103 ✗</td></tr><tr><td>내 택배 지금 어디쯤인지 보고 싶어요</td><td>103</td><td>501 ✗</td><td>501 ✗</td><td><b>103 ○</b></td><td><b>103 ○</b></td></tr><tr><td>미국으로 보내줄 수 있나요?</td><td>105</td><td>502 ✗</td><td>502 ✗</td><td><b>105 ○</b></td><td><b>105 ○</b></td></tr><tr><td>비번 까먹었어요</td><td>601</td><td>501 ✗</td><td><b>601 ○</b></td><td>303 ✗</td><td><b>601 ○</b></td></tr><tr><td>Hit@1 (12문항)</td><td></td><td>7/12</td><td>8/12</td><td><b>11/12</b></td><td><b>11/12</b></td></tr></tbody></table></div><div class="note"><b>결과 읽기</b><p>‘택배 ↔ 배송’, ‘미국 ↔ 해외’처럼 단어가 겹치지 않는 질문은 토큰 기반이 모두 틀리고 임베딩은 맞혔습니다. 임베딩 둘은 12문항 중 11개로 같지만 <b>틀린 질문이 다릅니다</b> — e5는 ‘비번’을, OpenAI는 ‘택배 언제 와요?’를 놓쳤습니다(OpenAI는 101을 2위로, 점수 차 0.003). 점수의 범위도 다릅니다. e5의 1등 점수는 0.82~0.90, OpenAI는 0.25~0.74입니다. 모델마다 점수 눈금이 달라서 ‘0.8 이상이면 답한다’ 같은 기준값은 모델을 바꾸면 다시 정해야 합니다.</p></div><p class="hint">TF-IDF는 05 노트북, e5·OpenAI는 06 노트북 실행값입니다(실습 PC · transformers 5.21 · openai 3.41). e5 결과는 A3-M2-2의 FAISS 검색 점수와 같습니다.</p><div class="tablewrap "><table><thead><tr><th></th><th>토큰 기반 (TF-IDF·BM25)</th><th>임베딩 기반</th></tr></thead><tbody><tr><td>잘하는 것</td><td>모델명·숫자·정확한 단어 일치 (RF85T, 6000원)</td><td>다른 표현, 같은 뜻 (택배 ↔ 배송, 비번 ↔ 비밀번호)</td></tr><tr><td>약한 것</td><td>동의어·말투 차이</td><td>희귀한 고유명사·코드, 숫자 비교</td></tr><tr><td>필요한 것</td><td>좋은 토크나이저(형태소·n-gram)</td><td>모델(다운로드 또는 API 키), 벡터 저장소</td></tr><tr><td>실무</td><td>둘을 섞는 <b>하이브리드 검색</b>이 일반적 — M2 이후 벡터 DB, OpenSearch에서 이어짐</td><td></td></tr></tbody></table></div></section>
+<section aria-labelledby="tab-u15" class="panel" hidden="" id="u15" role="tabpanel"><div class="crumb">Part 5. 마무리 · A3-M1</div><h1>15. 실습 과제</h1><p class="lead">과제 여섯 개는 이 모듈의 순서(kiwi → 토크나이저 만들기 → transformers 문법 → tiktoken → 유사도)를 그대로 따라갑니다. 07_실습과제.ipynb의 준비 셀부터 실행합니다.</p><div class="tablewrap "><table><thead><tr><th>과제</th><th>확인하는 문법</th><th>통과 기준</th></tr></thead><tbody><tr><td>1 사용자 사전</td><td><code>add_user_word</code></td><td>두 제품명이 NNP 한 덩어리</td></tr><tr><td>2 WordPiece 만들기</td><td>Tokenizer 부품 조립, TemplateProcessing</td><td>문장 쌍 type_ids가 0/1로 나뉨</td></tr><tr><td>3 겹쳐 나누기</td><td><code>tokenizer_object=</code>, stride, overflow, offsets</td><td>모든 문장이 어느 조각엔가 들어감</td></tr><tr><td>4 토큰 수 표</td><td>tiktoken 두 인코딩</td><td>차이가 가장 큰 질문 찾기</td></tr><tr><td>5 품사 하나</td><td>KEEP 집합, TfidfVectorizer</td><td>NP·MAG 추가 전후 Hit@1 비교</td></tr><tr><td>6 점수 섞기</td><td>두 TF-IDF 점수 가중합</td><td>섞은 점수의 Hit@1</td></tr></tbody></table></div><h3>15-1. 준비</h3><p>모든 과제가 함께 쓰는 준비 셀입니다.</p><div class="codebox"><div class="codehead"><span>07_실습과제.ipynb · x0</span><button class="copy" type="button">코드 복사</button></div><pre><code>import re, numpy as np, tiktoken
+from kiwipiepy import Kiwi
+from tokenizers import Tokenizer, models, normalizers, pre_tokenizers, trainers, processors
+from transformers import PreTrainedTokenizerFast
+from sklearn.feature_extraction.text import TfidfVectorizer
+from shop_faq import FAQ, TESTS
+kiwi = Kiwi()
+o200k, cl100k = tiktoken.get_encoding("o200k_base"), tiktoken.get_encoding("cl100k_base")
+corpus = open("shop_corpus.txt", encoding="utf-8").read().splitlines()
+docs = [f"{q} {a}" for _, _, q, a in FAQ]
+ids = [i for i, *_ in FAQ]</code></pre></div><h3>15-2. 과제 1 · kiwi 사용자 사전</h3><p><code>"무선이어폰 블루투스스피커 AS 기간"</code>을 kiwi로 분석해 (형태, 품사)를 출력하고, <code>무선이어폰</code>·<code>블루투스스피커</code>를 고유명사(NNP)로 등록한 뒤 다시 출력하세요.</p><div class="codebox"><div class="codehead"><span>07_실습과제.ipynb · x1</span><button class="copy" type="button">코드 복사</button></div><pre><code>s = "무선이어폰 블루투스스피커 AS 기간"
+# TODO</code></pre></div><details class="qa"><summary>정답 코드와 실행 결과 보기</summary><div class="codebox"><div class="codehead"><span>07_실습과제_정답.ipynb</span><button class="copy" type="button">코드 복사</button></div><pre><code>s = "무선이어폰 블루투스스피커 AS 기간"
+print("전:", [(t.form, t.tag) for t in kiwi.tokenize(s)])
+for w in ["무선이어폰", "블루투스스피커"]:
+    kiwi.add_user_word(w, "NNP")
+print("후:", [(t.form, t.tag) for t in kiwi.tokenize(s)])</code></pre></div><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>전: [('무선', 'NNG'), ('이어폰', 'NNG'), ('블루투스', 'NNP'), ('스피커', 'NNG'), ('AS', 'SL'), ('기간', 'NNG')]
+후: [('무선이어폰', 'NNP'), ('블루투스스피커', 'NNP'), ('AS', 'SL'), ('기간', 'NNG')]</code></pre></div></details><h3>15-3. 과제 2 · 우리 WordPiece 만들기</h3><p>말뭉치(<code>corpus</code>)와 FAQ 문서(<code>docs</code>)를 함께 써서 vocab_size=600 WordPiece를 학습하고, <code>[CLS] A [SEP] B [SEP]</code> 후처리를 붙이세요. <code>"무선이어폰 배송 언제 와요?"</code>와 <code>"평일 2~3일 걸립니다"</code>를 문장 쌍으로 encode해 tokens와 type_ids를 출력하세요.</p><div class="codebox"><div class="codehead"><span>07_실습과제.ipynb · x2</span><button class="copy" type="button">코드 복사</button></div><pre><code>tk = Tokenizer(models.WordPiece(unk_token="[UNK]"))
+# TODO: normalizer, pre_tokenizer, trainer, post_processor</code></pre></div><details class="qa"><summary>정답 코드와 실행 결과 보기</summary><div class="codebox"><div class="codehead"><span>07_실습과제_정답.ipynb</span><button class="copy" type="button">코드 복사</button></div><pre><code>tk = Tokenizer(models.WordPiece(unk_token="[UNK]"))
+tk.normalizer = normalizers.NFKC()
+tk.pre_tokenizer = pre_tokenizers.BertPreTokenizer()
+tk.train_from_iterator(corpus + docs, trainers.WordPieceTrainer(vocab_size=600, min_frequency=2,
+                       special_tokens=["[PAD]", "[UNK]", "[CLS]", "[SEP]", "[MASK]"]))
+tk.post_processor = processors.TemplateProcessing(single="[CLS] $A [SEP]", pair="[CLS] $A [SEP] $B:1 [SEP]:1",
+    special_tokens=[("[CLS]", tk.token_to_id("[CLS]")), ("[SEP]", tk.token_to_id("[SEP]"))])
+e = tk.encode("무선이어폰 배송 언제 와요?", "평일 2~3일 걸립니다")
+print(e.tokens)
+print(e.type_ids)</code></pre></div><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>['[CLS]', '무', '##선', '##이', '##어', '##폰', '배송', '언제', '[UNK]', '?', '[SEP]', '평', '##일', '2', '~', '3', '##일', '걸', '##립', '##니다', '[SEP]']
+[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]</code></pre></div></details><h3>15-4. 과제 3 · 겹쳐 나누기</h3><p>과제 2의 토크나이저를 <code>PreTrainedTokenizerFast</code>로 감싸고, 아래 <code>doc</code>을 max_length=20, stride=5로 나눠 조각마다 원문 범위를 출력하세요.</p><div class="codebox"><div class="codehead"><span>07_실습과제.ipynb · x3</span><button class="copy" type="button">코드 복사</button></div><pre><code>doc = "반품은 상품을 받은 날부터 7일 이내에 신청합니다. 단순 변심 반품은 왕복 배송비 6000원을 고객이 부담합니다. 파손 상품은 사진을 첨부하면 무료로 교환합니다."
+# TODO</code></pre></div><details class="qa"><summary>정답 코드와 실행 결과 보기</summary><div class="codebox"><div class="codehead"><span>07_실습과제_정답.ipynb</span><button class="copy" type="button">코드 복사</button></div><pre><code>doc = "반품은 상품을 받은 날부터 7일 이내에 신청합니다. 단순 변심 반품은 왕복 배송비 6000원을 고객이 부담합니다. 파손 상품은 사진을 첨부하면 무료로 교환합니다."
+hf = PreTrainedTokenizerFast(tokenizer_object=tk, unk_token="[UNK]", pad_token="[PAD]", cls_token="[CLS]", sep_token="[SEP]")
+ch = hf(doc, truncation=True, max_length=20, stride=5, return_overflowing_tokens=True, return_offsets_mapping=True)
+for i, offs in enumerate(ch["offset_mapping"]):
+    real = [o for o in offs if o != (0, 0)]
+    print(f"조각 {i}: {doc[real[0][0]:real[-1][1]]}")</code></pre></div><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>조각 0: 반품은 상품을 받은 날부터 7일 이내에 신청합니다. 단순 변
+조각 1: 합니다. 단순 변심 반품은 왕복 배송비 6000원을 고객
+조각 2: 0원을 고객이 부담합니다. 파손 상품은 사진을 첨부하면
+조각 3: 은 사진을 첨부하면 무료로 교환합니다.</code></pre></div></details><h3>15-5. 과제 4 · 인코딩별 토큰 수 표</h3><p>평가 질문 12개(<code>TESTS</code>)의 글자 수, cl100k 토큰 수, o200k 토큰 수를 표로 출력하고, 두 인코딩의 차이가 가장 큰 질문을 찾으세요.</p><div class="codebox"><div class="codehead"><span>07_실습과제.ipynb · x4</span><button class="copy" type="button">코드 복사</button></div><pre><code># TODO</code></pre></div><details class="qa"><summary>정답 코드와 실행 결과 보기</summary><div class="codebox"><div class="codehead"><span>07_실습과제_정답.ipynb</span><button class="copy" type="button">코드 복사</button></div><pre><code>rows = [(q, len(q), len(cl100k.encode(q)), len(o200k.encode(q))) for q, _ in TESTS]
+for q, n, a, b in rows:
+    print(f"{q:&lt;24} 글자 {n:&gt;2}  cl100k {a:&gt;2}  o200k {b:&gt;2}")
+best = max(rows, key=lambda r: r[2] - r[3])
+print("차이가 가장 큰 질문:", best[0], f"({best[2]} → {best[3]})")
+print("합계: cl100k", sum(r[2] for r in rows), "/ o200k", sum(r[3] for r in rows))</code></pre></div><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>택배 언제 와요?                글자  9  cl100k 11  o200k  6
+배송비 무료 기준이 뭐예요?          글자 15  cl100k 18  o200k  9
+내 택배 지금 어디쯤인지 보고 싶어요     글자 20  cl100k 22  o200k 13
+소파 같은 큰 물건은 어떻게 와요?      글자 19  cl100k 23  o200k 11
+미국으로 보내줄 수 있나요?          글자 15  cl100k 13  o200k  9
+카드 할부 몇 개월까지 돼요?         글자 16  cl100k 17  o200k 12
+받은 지 5일 됐는데 반품 돼요?       글자 18  cl100k 20  o200k 15
+물건이 깨져서 왔어요              글자 11  cl100k 15  o200k  9
+환불 며칠 걸려요?               글자 10  cl100k 13  o200k  9
+주문 취소 어떻게 해요?            글자 13  cl100k 14  o200k  8
+비번 까먹었어요                 글자  8  cl100k 12  o200k  6
+포인트 유효기간 있나요?            글자 13  cl100k 15  o200k  8
+차이가 가장 큰 질문: 소파 같은 큰 물건은 어떻게 와요? (23 → 11)
+합계: cl100k 193 / o200k 115</code></pre></div></details><h3>15-6. 과제 5 · 품사 하나가 검색을 바꾼다</h3><p>kiwi 토크나이저의 KEEP 품사 집합에 대명사(<code>NP</code>)와 일반부사(<code>MAG</code>)를 추가했을 때 TF-IDF 검색 Hit@1이 어떻게 바뀌는지 비교하세요.</p><div class="codebox"><div class="codehead"><span>07_실습과제.ipynb · x5</span><button class="copy" type="button">코드 복사</button></div><pre><code>BASE = {"NNG", "NNP", "NNB", "SL", "SN", "VV", "VA", "XR"}
+# TODO: hit1(keep) 함수를 만들어 BASE와 BASE | {"NP", "MAG"} 비교</code></pre></div><details class="qa"><summary>정답 코드와 실행 결과 보기</summary><div class="codebox"><div class="codehead"><span>07_실습과제_정답.ipynb</span><button class="copy" type="button">코드 복사</button></div><pre><code>BASE = {"NNG", "NNP", "NNB", "SL", "SN", "VV", "VA", "XR"}
+def hit1(keep):
+    f = lambda s: [t.form for t in kiwi.tokenize(s) if t.tag in keep]
+    vec = TfidfVectorizer(tokenizer=f, lowercase=False, token_pattern=None)
+    X = vec.fit_transform(docs)
+    return sum(ids[(X @ vec.transform([q]).T).toarray().ravel().argmax()] == g for q, g in TESTS)
+print("기본      :", hit1(BASE), "/ 12")
+print("+NP +MAG  :", hit1(BASE | {"NP", "MAG"}), "/ 12")</code></pre></div><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>기본      : 7 / 12
++NP +MAG  : 8 / 12</code></pre></div></details><h3>15-7. 과제 6 · 두 토크나이저 점수 섞기</h3><p>kiwi 형태소 TF-IDF 점수와 글자 2-gram TF-IDF 점수를 같은 비율(0.5:0.5)로 더해 검색하면 Hit@1이 몇이 되는지 구하세요.</p><div class="codebox"><div class="codehead"><span>07_실습과제.ipynb · x6</span><button class="copy" type="button">코드 복사</button></div><pre><code># TODO</code></pre></div><details class="qa"><summary>정답 코드와 실행 결과 보기</summary><div class="codebox"><div class="codehead"><span>07_실습과제_정답.ipynb</span><button class="copy" type="button">코드 복사</button></div><pre><code>KEEP = {"NNG", "NNP", "NNB", "SL", "SN", "VV", "VA", "XR"}
+fk = lambda s: [t.form for t in kiwi.tokenize(s) if t.tag in KEEP]
+fc = lambda s: [s[i:i+2] for i in range(len(s) - 1) if " " not in s[i:i+2]]
+vk = TfidfVectorizer(tokenizer=fk, lowercase=False, token_pattern=None); Xk = vk.fit_transform(docs)
+vc = TfidfVectorizer(tokenizer=fc, lowercase=False, token_pattern=None); Xc = vc.fit_transform(docs)
+hit = 0
+for q, g in TESTS:
+    s = 0.5 * (Xk @ vk.transform([q]).T).toarray().ravel() + 0.5 * (Xc @ vc.transform([q]).T).toarray().ravel()
+    hit += ids[s.argmax()] == g
+print("섞은 점수 Hit@1:", hit, "/ 12")</code></pre></div><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>섞은 점수 Hit@1: 9 / 12</code></pre></div></details><div class="note"><b>과제 6을 풀고 나면</b><p>토크나이저 두 개의 점수를 섞기만 해도 둘 중 어느 하나보다 좋아질 수 있습니다. 이것이 ‘키워드 + 벡터’ 하이브리드 검색의 아이디어입니다. 같은 방식으로 TF-IDF 점수와 임베딩 점수를 섞을 수 있습니다.</p></div></section>
+<section aria-labelledby="tab-u16" class="panel" hidden="" id="u16" role="tabpanel"><div class="crumb">Part 5. 마무리 · A3-M1</div><h1>16. 정리 — 토크나이저 문법 한 장</h1><p class="lead">이 모듈에서 쓴 문법을 도구별로 모았습니다. 다음 모듈(FAISS)부터는 여기서 만든 ‘문장 → 벡터’를 대량으로 저장하고 빠르게 찾는 방법을 다룹니다.</p><div class="tablewrap "><table><thead><tr><th>하고 싶은 일</th><th>kiwi</th><th>tokenizers / transformers</th><th>tiktoken</th></tr></thead><tbody><tr><td>열기</td><td><code>Kiwi()</code></td><td><code>Tokenizer.from_file(p)</code> / <code>AutoTokenizer.from_pretrained(id·폴더)</code></td><td><code>get_encoding(n)</code>, <code>encoding_for_model(m)</code></td></tr><tr><td>자르기</td><td><code>tokenize(s)</code> → Token(form, tag, start, len)</td><td><code>tok.tokenize(s)</code>, <code>tok(s)</code> → BatchEncoding</td><td><code>encode(s)</code> → 번호</td></tr><tr><td>복원</td><td>—</td><td><code>decode(ids, skip_special_tokens=True)</code></td><td><code>decode(ids)</code>, <code>decode_single_token_bytes(i)</code></td></tr><tr><td>여러 문장</td><td><code>tokenize</code>를 반복</td><td><code>tok([...], padding=True, truncation=True, return_tensors=...)</code></td><td><code>encode_batch([...])</code></td></tr><tr><td>길이 제한</td><td><code>split_into_sents</code> + 토큰 수</td><td><code>max_length</code>, <code>stride</code>, <code>return_overflowing_tokens</code></td><td><code>ids[:n]</code>, 겹쳐 나누기</td></tr><tr><td>원문 위치</td><td><code>t.start</code>, <code>t.len</code></td><td><code>return_offsets_mapping=True</code>, <code>word_ids()</code></td><td>—</td></tr><tr><td>어휘 늘리기</td><td><code>add_user_word(w, tag)</code></td><td><code>tok.add_tokens([...])</code> (+ 모델 resize)</td><td>불가 (고정 어휘)</td></tr><tr><td>저장</td><td>사전 파일</td><td><code>save("x.json")</code> / <code>save_pretrained(폴더)</code></td><td>캐시 자동</td></tr></tbody></table></div><h3>16-1. 꼭 기억할 다섯 가지</h3><ol><li>모델에는 <b>그 모델의 토크나이저</b>만 쓴다. 토크나이저가 다르면 번호의 뜻이 다르다.</li><li>길이 한도는 <b>토큰 수</b>다. truncation은 근거를 조용히 버리니, 긴 문서는 <b>문장 경계 + 토큰 한도</b>로 나눈다.</li><li>한국어는 토큰이 많이 나온다. 비용과 한도는 tiktoken으로 <b>미리 센다</b>. 최신 인코딩(o200k)이 한국어에 유리하다.</li><li>키워드 검색의 품질은 토크나이저가 정한다. 직접 만든 토크나이저는 <b>말뭉치</b>가 생명이다.</li><li>토큰 기반은 정확한 단어에, 임베딩은 뜻에 강하다. 실무는 <b>둘을 섞는다</b>.</li></ol></section>
+</main></div><footer class="footer">© 2026 부성순. All rights reserved.<small>교안의 자체 해설 및 실습 예제에 대한 저작권 표시입니다. 외부 라이브러리·모델의 권리는 각 권리자에게 있습니다. 실습 데이터(쇼핑몰 FAQ·말뭉치)는 교육용 가상 데이터입니다.</small></footer><script>(function(){
+const tabs=[...document.querySelectorAll('[role="tab"]')];
+function setTab(i,focus=false){tabs.forEach((t,j)=>{const on=i===j;t.setAttribute('aria-selected',on?'true':'false');t.tabIndex=on?0:-1;document.getElementById(t.getAttribute('aria-controls')).hidden=!on;});if(focus)tabs[i].focus({preventScroll:true});history.replaceState(null,'','#'+tabs[i].getAttribute('aria-controls'));window.scrollTo({top:0});}
+tabs.forEach((t,i)=>{t.addEventListener('click',()=>setTab(i));t.addEventListener('keydown',e=>{if(['ArrowDown','ArrowUp','ArrowLeft','ArrowRight'].includes(e.key)){e.preventDefault();setTab((i+(e.key==='ArrowDown'||e.key==='ArrowRight'?1:-1)+tabs.length)%tabs.length,true);}})});
+const index=tabs.findIndex(t=>'#'+t.getAttribute('aria-controls')===location.hash);if(index>=0)setTab(index);
+document.querySelectorAll('.copy').forEach(b=>{b.dataset.label=b.textContent;});document.querySelectorAll('.copy').forEach(b=>b.addEventListener('click',async()=>{const code=b.closest('.codebox').querySelector('pre').textContent;try{await navigator.clipboard.writeText(code);b.textContent='복사됨';}catch(e){b.textContent='복사 실패';}setTimeout(()=>b.textContent=b.dataset.label||'코드 복사',1500); }));
+})();</script></body></html>

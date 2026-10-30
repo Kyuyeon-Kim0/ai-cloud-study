@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+
+<html lang="ko"><head><meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/><title>A3-M2-2 · FAISS 실전 — 쇼핑몰 FAQ 검색기</title><link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" rel="stylesheet"/><style>
+:root{--bg:#fff;--surface:#f8fafc;--ink:#0f172a;--muted:#64748b;--line:#e2e8f0;--accent:#ff2e93;--soft:rgba(255,46,147,.065);--codebg:#101d34}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink);font-family:'Pretendard',system-ui,'Malgun Gothic',sans-serif;font-size:18px;line-height:1.81;word-break:keep-all}
+.banner{background:linear-gradient(125deg,#fcfcff,#f8fafc);border-bottom:1px solid var(--line)}.banner-in{max-width:1320px;margin:auto;padding:18px 24px;display:flex;align-items:center;justify-content:space-between;gap:18px}.brand{font-size:16px;font-weight:850;letter-spacing:.03em}.who{font-size:15px;color:var(--muted)}.who a{color:var(--accent);text-decoration:none}.layout{max-width:1320px;margin:auto;padding:32px 24px 84px;display:grid;grid-template-columns:minmax(0,1fr) 290px;gap:38px;align-items:start}.sidebar{order:2;position:sticky;top:22px;max-height:calc(100vh - 44px);overflow:auto;border:1px solid var(--line);border-radius:15px;background:var(--surface);padding:17px}.group{font-size:15px;color:var(--muted);font-weight:800;margin:3px 10px 14px}.tabs{display:flex;flex-direction:column;gap:5px}.tabs button{appearance:none;border:1px solid transparent;border-radius:9px;background:transparent;color:#253348;cursor:pointer;text-align:left;font:600 16px/1.55 'Pretendard',sans-serif;padding:9px 12px}.tabs button span{color:var(--accent);font-weight:850;margin-right:7px}.tabs button:hover{background:#fff;border-color:var(--line)}.tabs button[aria-selected=true]{background:var(--soft);border-color:var(--accent);color:#bd1366}.tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+main{min-width:0}.panel[hidden]{display:none}.panel{display:block}.crumb{color:var(--accent);font-size:15px;font-weight:800;margin:0 0 8px}.panel h1{font-size:31px;line-height:1.4;margin:0 0 12px}.lead{font-size:19px;font-weight:550;color:#344255;margin:6px 0 26px}.panel h3{font-size:21px;margin:33px 0 10px;border-bottom:1px solid var(--line);padding-bottom:6px}.panel h3:before{content:'▸ ';color:var(--accent)}.panel p{margin:13px 0}.panel b,.panel strong{font-weight:790}.panel code:not(pre code){font:15px/1.6 Consolas,monospace;word-break:break-word;background:#f1f5f9;border:1px solid #e5e7eb;padding:1px 5px;border-radius:4px}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;margin:17px 0 24px}.panel table{border-collapse:collapse;width:100%;font-size:17px;line-height:1.65}.panel th,.panel td{border-bottom:1px solid var(--line);padding:12px 14px;vertical-align:top;text-align:left}.panel th{font-size:16px;font-weight:800;background:#f1f5f9;color:#40516a}.panel tbody tr:last-child td{border:0}.panel tbody tr:nth-child(even){background:#fbfcfe}.note,.task,.try{border:1px solid var(--line);border-radius:13px;background:#fafcff;padding:17px 19px;margin:24px 0}.note{border-left:4px solid var(--accent);background:var(--soft)}.note b{color:#ad155e}.note p{margin:6px 0}.task{background:#fff}.task h4{margin:0 0 9px;font-size:19px}.task ol{margin:0;padding-left:23px}.task li{margin:8px 0}
+.codebox{border:1px solid #243953;border-radius:13px;overflow:hidden;margin:21px 0 26px}.codehead{display:flex;justify-content:space-between;align-items:center;gap:15px;padding:8px 13px;background:#1d3452;color:#dceafc;font-size:14px;font-weight:700}.copy{border:1px solid #8598b4;color:#fff;background:#314f78;border-radius:6px;padding:3px 10px;cursor:pointer;font-size:13px}.codebox pre{background:var(--codebg);color:#cbe9fb;margin:0;padding:20px;overflow-x:auto;font:16px/1.7 Consolas,'JetBrains Mono',monospace;word-break:normal;white-space:pre}.qa{padding:13px 17px;margin:13px 0;border:1px solid var(--line);background:#fbfcff;border-radius:10px}.qa summary{font-size:17px;cursor:pointer;font-weight:780}.qa[open] summary{color:#c01168}.qa p{font-size:17px}.try label{display:block;font-size:17px}.tryrow{display:flex;gap:10px;margin-top:10px}.try input{flex:1;min-width:0;border:1px solid #cbd5e1;border-radius:8px;font:17px 'Pretendard',sans-serif;padding:10px 12px}.try button{background:#e72281;color:#fff;border:0;border-radius:8px;padding:10px 16px;font:700 16px 'Pretendard',sans-serif;cursor:pointer}.try pre{font:16px/1.7 Consolas,monospace;background:#101d34;color:#caeeff;padding:12px;border-radius:8px;overflow:auto;white-space:pre-wrap}.hint{font-size:15px;color:var(--muted)}.footer{max-width:1320px;margin:auto;border-top:1px solid var(--line);padding:20px 24px 38px;text-align:center;color:var(--muted);font-size:15px}.footer small{display:block;max-width:950px;margin:5px auto}
+@media(max-width:900px){.layout{grid-template-columns:1fr;gap:12px;padding:15px 16px 64px}.sidebar{order:0;position:sticky;top:0;z-index:10;border-radius:0;max-height:none;overflow:auto;padding:8px 0;background:#fff}.sidebar .group{display:none}.tabs{flex-direction:row;white-space:nowrap;overflow-x:auto}.tabs button{flex:none;font-size:15px}.banner-in{flex-wrap:wrap}.panel h1{font-size:27px}}
+@media(max-width:680px){body{font-size:17px}.panel table{font-size:16px}.panel th{font-size:15px}.panel h1{font-size:24px}.panel h3{font-size:20px}.codebox pre{font-size:15px;padding:15px}.tryrow{flex-direction:column}}
+@media print{.sidebar,.copy{display:none}.layout{display:block}.panel[hidden]{display:block!important}.panel{break-before:page}.banner{background:#fff}}
+
+/* 3-Part expanded guide, retaining supplied visual language */
+.sidebar .tabs .group{margin:18px 10px 7px;font-size:14px;color:#a51662;font-weight:850;border-top:1px solid var(--line);padding-top:12px}
+.sidebar .tabs .group:first-child{margin-top:2px;border-top:0;padding-top:0}
+.panel h2{font-size:23px;line-height:1.5;margin:27px 0 8px}
+.panel ul,.panel ol{padding-left:27px;margin:12px 0}.panel li{margin:7px 0}
+.panel .meta{display:flex;gap:10px}.panel .note span{display:inline-block;margin-right:12px;font-weight:750;color:#ad155e}
+.panel pre:not(.codebox pre){white-space:pre-wrap}.panel .codebox pre{font-size:15px}
+.panel .codebox pre code{white-space:pre;display:block}
+.panel .math,.panel .formula{overflow-x:auto}
+.panel a{color:#bd1366}
+@media(min-width:901px){.sidebar{width:300px}.layout{grid-template-columns:minmax(0,1fr) 300px}}
+@media print{.panel{break-before:auto;page-break-inside:avoid}.sidebar{display:none}}
+
+.merged-subheading{font-size:24px;line-height:1.42;margin:42px 0 17px;padding:11px 14px;border-left:4px solid var(--accent);background:var(--surface);border-radius:0 8px 8px 0;} .panel .merged-subheading:first-of-type{margin-top:25px;}
+
+.paper-figure,.matrix-demo{margin:22px 0 28px;padding:20px 22px;border:1px solid var(--line);border-radius:13px;background:#fbfcfe}.paper-figure h3,.matrix-demo h3{margin-top:0}.paper-figure figure{text-align:center;margin:12px auto}.paper-figure img{display:block;margin:auto;max-width:min(100%,510px);max-height:710px;object-fit:contain;background:#fff;border:1px solid var(--line);border-radius:6px}.paper-figure figcaption{font-size:14px;color:var(--muted);line-height:1.6;margin-top:10px}.paper-figure a{color:#b31968}.matrix-demo .tablewrap{margin-top:12px}.matrix-demo td{font-size:15px}@media print{.paper-figure,.matrix-demo{break-inside:avoid}}
+
+/* Part headings: visual grouping, not selectable tabs */
+.tabs .part-heading{display:block;margin:15px 4px 6px;padding:12px 11px;background:#e5e7eb;color:#334155;border:1px solid #cbd5e1;border-radius:9px;font-size:15px;font-weight:850;line-height:1.5;white-space:normal;}
+.tabs .part-heading:first-child{margin-top:0}.tabs button{padding-left:14px}
+.panel .source-note{font-size:15px;color:#475569;background:#f8fafc;border-left:3px solid #94a3b8;padding:11px 14px;margin:20px 0}
+.panel .minihead{margin-top:24px;font-weight:800;color:#334155}
+@media(max-width:900px){.tabs .part-heading{flex:none;margin:0 6px 0 0;white-space:nowrap;padding:9px 12px}}
+</style><style>.journey{border-left:4px solid #ff2e93;background:#fff5fa;padding:16px 19px;margin:20px 0;border-radius:8px}.journey h3{border:0!important;margin:0 0 8px!important;padding:0!important;font-size:18px!important}.journey h3:before{content:none!important}.modelcode{border:1px solid #d4dce8;background:#f8fafc;border-radius:12px;padding:15px 17px;margin:24px 0}.modelcode h3{border:0!important;margin:0 0 8px!important;font-size:18px!important}.modelcode h3:before{content:none!important}.modelcode pre{background:#101d34;color:#d6ecff;padding:15px;overflow:auto;border-radius:9px;font:15px/1.65 Consolas,monospace;white-space:pre}.matrix-intro{margin:16px 0;padding:15px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px}.miniout{font:15px/1.6 Consolas,monospace;background:#f1f5f9;padding:12px;white-space:pre-wrap;border-radius:8px}</style><style>
+.ragmap{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 22px}.ragmap .chip{display:inline-flex;align-items:center;gap:5px;font-size:14px;line-height:1.4;padding:5px 10px;border:1px solid var(--line);border-radius:999px;background:#fff;color:#64748b}.ragmap .chip em{font-style:normal;font-weight:850;color:#94a3b8}.ragmap .chip.done{background:#f8fafc;color:#334155}.ragmap .chip.done em{color:#bd1366}.ragmap .chip.on{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:800}.ragmap .chip.on em{color:#fff}
+.flow{display:flex;flex-wrap:wrap;align-items:stretch;gap:8px;margin:18px 0 24px}.flow .fstep{flex:1 1 96px;min-width:92px;border:1px solid var(--line);border-top:3px solid var(--accent);border-radius:10px;background:#fff;padding:10px 12px}.flow .fstep b{display:block;font-size:16px;color:#0f172a}.flow .fstep span{display:block;font-size:14px;color:var(--muted);line-height:1.5;margin-top:3px}.flow .arrow{align-self:center;color:var(--accent);font-weight:900}
+.outbox .codehead{background:#203a2c}.outbox{border-color:#2f5a43}.outbox pre{background:#0d1f17;color:#c9f5d9}
+.shot{margin:18px 0 26px;padding:12px;border:1px solid var(--line);border-radius:12px;background:#fbfcfe}.shot img{display:block;max-width:100%;height:auto;border-radius:8px;border:1px solid #1e293b}.shot figcaption{font-size:14px;color:var(--muted);margin-top:8px;text-align:center}
+@media(max-width:680px){.flow .arrow{display:none}.flow .fstep{flex-basis:100%}}
+</style><style>
+.syn td:first-child code{white-space:pre-wrap;word-break:break-all}
+.syn td{vertical-align:top}
+.use{display:inline-block;margin:8px 6px 0 0;padding:1px 7px;border-radius:5px;background:#fde7f2;color:#bd1366;font-size:13px;font-weight:800}
+.use+code{display:inline-block;margin-top:6px;white-space:pre-wrap}
+main p,main li,main td{overflow-wrap:anywhere}
+.mock{border:1px solid #cbd5e1;border-radius:14px;background:#f8fafc;padding:14px 16px;margin:20px 0}
+.mock-title{font-weight:800;font-size:15px;color:#475569;margin-bottom:10px}
+.mock table{border-collapse:collapse;width:100%;font-size:15px;background:#fff}
+.mock td,.mock th{border:1px solid #e2e8f0;padding:6px 8px;text-align:center}
+.mock th{background:#f1f5f9}
+.mock .hl{background:#fde7f2;font-weight:800}
+.mock .dim{color:#94a3b8}
+.mock .ok{background:#dcfce7;font-weight:700}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}
+.chips span{border:1px solid #cbd5e1;background:#fff;border-radius:6px;padding:2px 8px;font:14px Consolas,monospace}
+.chips span.sp{background:#fde7f2;border-color:#f9a8d4}
+.chips span.unk{background:#fef3c7;border-color:#f59e0b}
+.figsvg{width:100%;height:auto;max-width:560px;display:block;margin:6px auto}
+.figrow{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.figcap{font-size:14px;color:#64748b;text-align:center;margin-top:4px}
+@media (max-width:760px){.syn table,.syn tbody,.syn tr,.syn td{display:block;width:100%!important}.syn thead{display:none}.syn tr{padding:10px 12px;border-bottom:1px solid #e2e8f0}.syn td{border:0!important;padding:3px 0!important}.mock{overflow-x:auto}}
+</style></head><body><header class="banner"><div class="banner-in"><div><div class="brand">Part A · A3-M2-2 · FAISS 실전 — 쇼핑몰 FAQ 검색기</div><div style="font-size:23px;font-weight:850">FAQ CSV로 만드는 검색기 · 메타데이터 필터 · RAG 평가 · 리랭킹</div></div><div class="who">© 2026 부성순 · AI·클라우드 실무 과정</div><a href="/lectures/files/index.html#section-a1" style="display:inline-block;padding:7px 11px;border:1px solid #e2e8f0;border-radius:8px;background:#fff;color:#bd1366;text-decoration:none;font-weight:800;white-space:nowrap">📚 강의자료 라이브러리 · Part A</a></div></header><div class="layout"><aside class="sidebar"><div class="group">A3-M2-2 · 세부 목차</div><nav aria-label="교안 세부 목차" class="tabs" role="tablist"><div aria-level="2" class="part-heading" role="heading">Part 0. 데이터</div><button aria-controls="u00" aria-selected="true" id="tab-u00" role="tab" tabindex="0" type="button"><span>00</span>FAQ 데이터 보기</button><button aria-controls="u01" aria-selected="false" id="tab-u01" role="tab" tabindex="-1" type="button"><span>01</span>CSV 읽기와 임베딩</button><div aria-level="2" class="part-heading" role="heading">Part 1. FAISS 검색</div><button aria-controls="u02" aria-selected="false" id="tab-u02" role="tab" tabindex="-1" type="button"><span>02</span>FAISS 검색</button><div aria-level="2" class="part-heading" role="heading">Part 2. 메타데이터</div><button aria-controls="u03" aria-selected="false" id="tab-u03" role="tab" tabindex="-1" type="button"><span>03</span>메타데이터와 ID</button><button aria-controls="u04" aria-selected="false" id="tab-u04" role="tab" tabindex="-1" type="button"><span>04</span>메타데이터 필터</button><button aria-controls="u05" aria-selected="false" id="tab-u05" role="tab" tabindex="-1" type="button"><span>05</span>검색 함수와 저장</button><div aria-level="2" class="part-heading" role="heading">Part 3. RAG 평가와 리랭킹</div><button aria-controls="u06" aria-selected="false" id="tab-u06" role="tab" tabindex="-1" type="button"><span>06</span>RAG 평가</button><button aria-controls="u07" aria-selected="false" id="tab-u07" role="tab" tabindex="-1" type="button"><span>07</span>리랭킹</button><div aria-level="2" class="part-heading" role="heading">Part 4. 마무리</div><button aria-controls="u08" aria-selected="false" id="tab-u08" role="tab" tabindex="-1" type="button"><span>08</span>실습 과제</button><button aria-controls="u09" aria-selected="false" id="tab-u09" role="tab" tabindex="-1" type="button"><span>09</span>정리</button></nav></aside><main><section aria-labelledby="tab-u00" class="panel" id="u00" role="tabpanel"><div class="crumb">Part 0. 데이터 · A3-M2-2</div><h1>00. 쇼핑몰 FAQ 데이터 — 무엇으로 검색기를 만드나</h1><p class="lead">이 모듈은 CSV 파일 두 개만 씁니다. 쇼핑몰 FAQ 20건으로 FAISS 검색기를 만들고, 카테고리로 범위를 좁히는 메타데이터 필터를 붙인 뒤, 평가 질문 12개로 검색 품질을 재고 리랭킹으로 끌어올립니다.</p><div class="journey"><h3>이 모듈에서 할 일</h3><p>CSV 읽기 → Hugging Face 파이프라인으로 임베딩 → FAISS 인덱스에 FAQ 번호(faq_id)와 함께 저장 → 카테고리 필터 검색 → 저장·불러오기 → Hit@1·MRR로 평가 → 리랭커로 순서 다시 매기기. A3-M2에서 익힌 FAISS 문법을 실제 서비스 구조로 조립하는 과정입니다.</p></div><div class="flow"><div class="fstep"><b>shop_faq.csv</b><span>FAQ 20건</span></div><span class="arrow" aria-hidden="true">→</span><div class="fstep"><b>임베딩</b><span>e5 → 384차원</span></div><span class="arrow" aria-hidden="true">→</span><div class="fstep"><b>FAISS</b><span>IDMap2 + FlatIP</span></div><span class="arrow" aria-hidden="true">→</span><div class="fstep"><b>필터</b><span>category</span></div><span class="arrow" aria-hidden="true">→</span><div class="fstep"><b>평가</b><span>Hit@1 · MRR</span></div><span class="arrow" aria-hidden="true">→</span><div class="fstep"><b>리랭킹</b><span>cross-encoder</span></div></div><h3>00-1. shop_faq.csv — FAQ 20건</h3><p>한 행이 FAQ 하나입니다. <code>faq_id</code>는 FAISS에 넣을 번호, <code>category</code>는 필터에 쓸 메타데이터, <code>question</code>+<code>answer</code>는 임베딩할 본문입니다.</p><div class="tablewrap "><table><thead><tr><th>faq_id</th><th>category</th><th>question</th><th>answer</th></tr></thead><tbody><tr><td>101</td><td>배송</td><td>배송은 언제 오나요?</td><td>주문 후 평일 기준 2~3일 이내에 도착합니다. 제주·도서산간은 3~5일 걸립니다.</td></tr><tr><td>102</td><td>배송</td><td>배송비는 얼마인가요?</td><td>30000원 이상 구매 시 무료 배송이며, 미만이면 배송비 3000원이 부과됩니다.</td></tr><tr><td>103</td><td>배송</td><td>주문한 상품의 배송 조회는 어디서 하나요?</td><td>마이페이지 &gt; 주문 내역에서 운송장 번호를 눌러 배송 위치를 확인할 수 있습니다.</td></tr><tr><td>104</td><td>배송</td><td>냉장고 같은 대형 상품은 어떻게 배송되나요?</td><td>무게 30kg 이상 또는 가로 150cm 이상 상품은 화물로 배송되며 설치 일정은 전화로 협의합니다.</td></tr><tr><td>105</td><td>배송</td><td>해외로도 배송되나요?</td><td>현재는 국내 배송만 가능하며 해외 배송은 지원하지 않습니다.</td></tr><tr><td>201</td><td>결제</td><td>어떤 결제 수단을 쓸 수 있나요?</td><td>신용카드, 체크카드, 계좌이체, 휴대폰 결제, 간편결제를 지원합니다.</td></tr><tr><td>202</td><td>결제</td><td>무이자 할부가 되나요?</td><td>5만 원 이상 결제 시 카드사별로 2~6개월 무이자 할부가 가능합니다.</td></tr><tr><td>203</td><td>결제</td><td>현금영수증은 어떻게 발급하나요?</td><td>계좌이체 결제 시 주문서에서 현금영수증 신청을 선택하면 자동 발급됩니다.</td></tr><tr><td>301</td><td>교환반품</td><td>교환이나 반품은 언제까지 되나요?</td><td>상품을 받은 날부터 7일 이내에 마이페이지에서 신청할 수 있습니다.</td></tr><tr><td>302</td><td>교환반품</td><td>단순 변심 반품 배송비는 누가 내나요?</td><td>단순 변심 반품은 왕복 배송비 6000원을 고객이 부담합니다.</td></tr><tr><td>303</td><td>교환반품</td><td>상품이 파손되어 왔어요.</td><td>파손·불량 상품은 사진과 함께 접수하시면 배송비 없이 교환 또는 반품해 드립니다.</td></tr><tr><td>304</td><td>교환반품</td><td>사이즈 교환이 가능한가요?</td><td>같은 상품의 다른 사이즈로 1회 무료 교환이 가능합니다. 재고가 없으면 환불로 처리됩니다.</td></tr><tr><td>401</td><td>환불</td><td>환불은 언제 되나요?</td><td>반품 상품이 확인되면 3영업일 이내에 환불됩니다. 카드 취소는 카드사에 따라 3~7일 더 걸릴 수 있습니다.</td></tr><tr><td>402</td><td>환불</td><td>부분 환불도 되나요?</td><td>여러 상품 중 일부만 반품하면 해당 상품 금액만 부분 환불됩니다.</td></tr><tr><td>501</td><td>주문</td><td>주문을 취소하고 싶어요.</td><td>배송 준비 전이라면 마이페이지 주문 내역에서 직접 취소할 수 있습니다.</td></tr><tr><td>502</td><td>주문</td><td>주문 후 배송지를 바꿀 수 있나요?</td><td>상품이 출고되기 전까지 마이페이지에서 배송지를 변경할 수 있습니다.</td></tr><tr><td>601</td><td>회원</td><td>비밀번호를 잊어버렸어요.</td><td>로그인 화면의 비밀번호 찾기에서 가입한 이메일로 재설정 링크를 받을 수 있습니다.</td></tr><tr><td>602</td><td>회원</td><td>회원 탈퇴는 어떻게 하나요?</td><td>마이페이지 &gt; 회원 정보 &gt; 회원 탈퇴에서 신청할 수 있으며 적립금은 소멸됩니다.</td></tr><tr><td>701</td><td>적립금</td><td>적립금은 언제 소멸되나요?</td><td>구매 금액의 1%가 적립되며 유효기간은 적립일로부터 1년입니다.</td></tr><tr><td>702</td><td>적립금</td><td>쿠폰과 적립금을 같이 쓸 수 있나요?</td><td>쿠폰과 적립금은 한 주문에서 함께 사용할 수 있습니다. 단, 일부 할인 상품은 제외됩니다.</td></tr></tbody></table></div><div class="tablewrap "><table><thead><tr><th>열</th><th>자료형</th><th>역할</th></tr></thead><tbody><tr><td>faq_id</td><td>정수 (101~702)</td><td><b>FAISS id</b>. 백의 자리가 카테고리 묶음(1xx 배송, 2xx 결제 …)</td></tr><tr><td>category</td><td>문자열 7종</td><td><b>메타데이터 필터</b> — 배송 5 · 교환반품 4 · 결제 3 · 환불·주문·회원·적립금 각 2</td></tr><tr><td>question</td><td>문자열</td><td>고객이 물을 법한 대표 질문</td></tr><tr><td>answer</td><td>문자열</td><td>답변. 검색 문서(doc) = question + " " + answer</td></tr></tbody></table></div><h3>00-2. shop_faq_tests.csv — 평가 질문 12개</h3><p>FAQ 문장과 <b>일부러 다른 말</b>로 쓴 질문들입니다. '택배'·'비번'·'포인트'처럼 고객이 실제 쓰는 말이라, 단어가 겹치지 않아도 뜻으로 찾는지 시험할 수 있습니다.</p><div class="tablewrap "><table><thead><tr><th>question</th><th>gold_faq_id</th><th>정답 FAQ</th></tr></thead><tbody><tr><td>택배 언제 와요?</td><td>101</td><td>배송은 언제 오나요?</td></tr><tr><td>배송비 무료 기준이 뭐예요?</td><td>102</td><td>배송비는 얼마인가요?</td></tr><tr><td>내 택배 지금 어디쯤인지 보고 싶어요</td><td>103</td><td>주문한 상품의 배송 조회는 어디서 하나요?</td></tr><tr><td>소파 같은 큰 물건은 어떻게 와요?</td><td>104</td><td>냉장고 같은 대형 상품은 어떻게 배송되나요?</td></tr><tr><td>미국으로 보내줄 수 있나요?</td><td>105</td><td>해외로도 배송되나요?</td></tr><tr><td>카드 할부 몇 개월까지 돼요?</td><td>202</td><td>무이자 할부가 되나요?</td></tr><tr><td>받은 지 5일 됐는데 반품 돼요?</td><td>301</td><td>교환이나 반품은 언제까지 되나요?</td></tr><tr><td>물건이 깨져서 왔어요</td><td>303</td><td>상품이 파손되어 왔어요.</td></tr><tr><td>환불 며칠 걸려요?</td><td>401</td><td>환불은 언제 되나요?</td></tr><tr><td>주문 취소 어떻게 해요?</td><td>501</td><td>주문을 취소하고 싶어요.</td></tr><tr><td>비번 까먹었어요</td><td>601</td><td>비밀번호를 잊어버렸어요.</td></tr><tr><td>포인트 유효기간 있나요?</td><td>701</td><td>적립금은 언제 소멸되나요?</td></tr></tbody></table></div><h3>00-3. 만들 검색기의 구조</h3><div class="mock"><div class="mock-title">FAISS에는 벡터와 번호만, 나머지는 메타데이터 표에</div><div class="tablewrap "><table><thead><tr><th>저장 위치</th><th>내용</th><th>파일</th></tr></thead><tbody><tr><td>FAISS 인덱스</td><td>faq_id(번호) + 384차원 벡터</td><td>faq_store/index.faiss</td></tr><tr><td>메타데이터 표</td><td>faq_id → category, question, answer</td><td>faq_store/meta.csv</td></tr><tr><td>설정</td><td>임베딩 모델 이름, 차원, 개수, 거리 방식</td><td>faq_store/manifest.json</td></tr></tbody></table></div><p class="hint">검색 순서: 질문 임베딩 → (카테고리 → 허용 id 목록) → FAISS 검색 → 나온 id로 메타데이터 표에서 원문 꺼내기</p></div><h3>00-4. 노트북 지도</h3><div class="tablewrap "><table><thead><tr><th>노트북</th><th>탭</th><th>내용</th></tr></thead><tbody><tr><td>01_데이터와_임베딩</td><td>01</td><td>CSV 읽기, 파이프라인 출력, embed(), 벡터 저장</td></tr><tr><td>02_FAISS_검색과_메타데이터</td><td>02~05</td><td>Flat 검색, faq_id, 카테고리 필터, 검색 함수, 저장</td></tr><tr><td>03_RAG평가와_리랭킹</td><td>06~07</td><td>Hit@1·Hit@3·MRR, 기준값, 프롬프트, 리랭킹 전후 비교</td></tr><tr><td>04_실습과제</td><td>08</td><td>과제 3개</td></tr></tbody></table></div></section>
+<section aria-labelledby="tab-u01" class="panel" hidden="" id="u01" role="tabpanel"><div class="crumb">Part 0. 데이터 · A3-M2-2</div><h1>01. CSV 읽기와 임베딩 — 문장을 벡터로</h1><p class="lead">pandas로 CSV를 읽고, Hugging Face 파이프라인으로 FAQ 20건을 384차원 벡터로 바꿔 파일로 저장합니다. 다음 노트북들은 이 파일을 읽어서 시작합니다.</p><h3>01-1. CSV 읽어서 눈으로 보기</h3><div class="codebox"><div class="codehead"><span>01_데이터와_임베딩.ipynb · 01-1</span><button class="copy" type="button">코드 복사</button></div><pre><code>import pandas as pd
+faq = pd.read_csv("shop_faq.csv")
+tests = pd.read_csv("shop_faq_tests.csv")
+print("FAQ:", faq.shape, "| 평가 질문:", tests.shape)
+print(faq.dtypes.to_string())
+print()
+print(faq.head(5).to_string(index=False))
+print()
+print(faq["category"].value_counts().to_string())</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>pd.read_csv("shop_faq.csv")</code></td><td>CSV를 DataFrame(표)으로 읽습니다. 첫 줄이 열 이름이 됩니다.</td></tr><tr><td><code>faq.shape</code></td><td>(행 수, 열 수) = (20, 4).</td></tr><tr><td><code>faq.dtypes</code></td><td>열마다 자료형. faq_id는 정수(int64), 나머지는 문자열(object).</td></tr><tr><td><code>faq.head(5).to_string(index=False)</code></td><td>앞 5행을 행 번호 없이 문자열로.</td></tr><tr><td><code>faq["category"].value_counts()</code></td><td>카테고리별 개수. 필터를 걸었을 때 후보가 몇 개 남는지 미리 알 수 있습니다.</td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>FAQ: (20, 4) | 평가 질문: (12, 2)
+faq_id      int64
+category      str
+question      str
+answer        str
+
+ faq_id category                 question                                                   answer
+    101       배송              배송은 언제 오나요?           주문 후 평일 기준 2~3일 이내에 도착합니다. 제주·도서산간은 3~5일 걸립니다.
+    102       배송              배송비는 얼마인가요?           30000원 이상 구매 시 무료 배송이며, 미만이면 배송비 3000원이 부과됩니다.
+    103       배송  주문한 상품의 배송 조회는 어디서 하나요?            마이페이지 &gt; 주문 내역에서 운송장 번호를 눌러 배송 위치를 확인할 수 있습니다.
+    104       배송 냉장고 같은 대형 상품은 어떻게 배송되나요? 무게 30kg 이상 또는 가로 150cm 이상 상품은 화물로 배송되며 설치 일정은 전화로 협의합니다.
+    105       배송              해외로도 배송되나요?                        현재는 국내 배송만 가능하며 해외 배송은 지원하지 않습니다.
+
+category
+배송      5
+교환반품    4
+결제      3
+환불      2
+주문      2
+회원      2
+적립금     2</code></pre></div><h3>01-2. 검색에 쓸 문장(doc) 만들기</h3><div class="codebox"><div class="codehead"><span>01_데이터와_임베딩.ipynb · 01-2</span><button class="copy" type="button">코드 복사</button></div><pre><code>faq["doc"] = faq["question"] + " " + faq["answer"]
+print(faq.loc[0, "doc"])
+print("doc 글자 수:", faq["doc"].str.len().describe()[["min", "mean", "max"]].round(1).to_dict())</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>faq["question"] + " " + faq["answer"]</code></td><td>열끼리 + 하면 행마다 문자열을 이어 붙입니다. 질문만 넣는 것보다 답까지 넣어야 '무료 배송 기준'처럼 답에만 있는 말로도 찾힙니다.</td></tr><tr><td><code>faq.loc[0, "doc"]</code></td><td>0번 행의 doc 열.</td></tr><tr><td><code>.str.len().describe()</code></td><td>문자열 길이의 통계(최소·평균·최대 …).</td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>배송은 언제 오나요? 주문 후 평일 기준 2~3일 이내에 도착합니다. 제주·도서산간은 3~5일 걸립니다.
+doc 글자 수: {'min': 45.0, 'mean': 59.2, 'max': 81.0}</code></pre></div><h3>01-3. Hugging Face 파이프라인 출력 들여다보기</h3><p>파이프라인은 문장 벡터가 아니라 <b>토큰마다</b> 384차원 벡터를 돌려줍니다.</p><div class="codebox"><div class="codehead"><span>01_데이터와_임베딩.ipynb · 01-3</span><button class="copy" type="button">코드 복사</button></div><pre><code>import numpy as np
+import faiss
+from transformers import pipeline
+from emb import EMB_MODEL
+
+fe = pipeline("feature-extraction", model=EMB_MODEL, device=-1)
+s = "query: 택배 언제 와요?"
+out = fe(s)
+arr = np.array(out)
+print("모델:", EMB_MODEL)
+print("출력 모양:", arr.shape, "← 문장 1개 × 토큰 수 × 384")
+print("토큰:", fe.tokenizer.tokenize(s))
+v = arr[0].mean(axis=0)
+print("토큰 평균:", v.shape, "길이", round(float(np.linalg.norm(v)), 3))</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>pipeline("feature-extraction", model=EMB_MODEL, device=-1)</code></td><td>모델의 마지막 층 출력을 그대로 주는 파이프라인. 처음 실행할 때 모델(약 470MB)을 내려받습니다. <code>device=-1</code>은 CPU.</td></tr><tr><td><code>"query: 택배 언제 와요?"</code></td><td>e5 모델 규칙: 질문 앞에 <code>query: </code>, 문서 앞에 <code>passage: </code>.</td></tr><tr><td><code>np.array(out).shape</code></td><td>(1, 토큰 수, 384). 1은 문장 개수.</td></tr><tr><td><code>fe.tokenizer.tokenize(s)</code></td><td>파이프라인 안의 토크나이저로 토큰 조각 보기. 앞뒤 특수 토큰 2개가 더해져 출력 모양의 토큰 수가 됩니다.</td></tr><tr><td><code>arr[0].mean(axis=0)</code></td><td>토큰 축 평균 → (384,). 문장 하나 = 벡터 하나.</td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>모델: intfloat/multilingual-e5-small
+출력 모양: (1, 12, 384) ← 문장 1개 × 토큰 수 × 384
+토큰: ['▁que', 'ry', ':', '▁', '택', '배', '▁언제', '▁와', '요', '?']
+토큰 평균: (384,) 길이 4.499</code></pre></div><div class="task"><h4>결과에서 볼 곳</h4><ol><li>출력 모양 (1, 12, 384): 토큰 10개에 앞뒤 특수 토큰 2개(<code>&lt;s&gt;</code>, <code>&lt;/s&gt;</code>)가 더해져 12입니다.</li><li>e5는 SentencePiece 토크나이저라 <code>query</code>가 <code>▁que</code> + <code>ry</code>로, <code>택배</code>가 <code>택</code> + <code>배</code>로 나뉩니다. <code>▁</code>는 띄어쓰기 자리 표시입니다.</li><li>토큰 평균만 낸 벡터의 길이는 4.499로 1이 아닙니다. 다음 셀에서 정규화합니다.</li></ol></div><h3>01-4. embed() 함수 만들고 FAQ 20건을 벡터로</h3><div class="codebox"><div class="codehead"><span>01_데이터와_임베딩.ipynb · 01-4</span><button class="copy" type="button">코드 복사</button></div><pre><code>def embed(texts, kind="passage"):
+    outs = fe([f"{kind}: {t}" for t in texts])                       # 문장마다 [1][토큰][384]
+    X = np.array([np.array(o[0]).mean(axis=0) for o in outs], dtype="float32")
+    faiss.normalize_L2(X)                                              # 길이 1 → 내적 = 코사인
+    return X
+
+X = embed(faq["doc"].tolist())
+print("X:", X.shape, X.dtype)
+print("길이:", np.linalg.norm(X, axis=1).round(3)[:5], "...")
+np.save("faq_vectors.npy", X)
+print("저장: faq_vectors.npy")</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>def embed(texts, kind="passage")</code></td><td>문장 목록을 받아 (개수, 384) 배열을 돌려주는 함수. 기본은 문서용 <code>passage</code>.</td></tr><tr><td><code>fe([f"{kind}: {t}" for t in texts])</code></td><td>리스트를 넣으면 문장마다 [1][토큰][384] 결과가 리스트로 나옵니다.</td></tr><tr><td><code>np.array(o[0]).mean(axis=0)</code></td><td>문장마다 토큰 평균. 문장을 하나씩 처리하므로 PAD가 섞이지 않습니다.</td></tr><tr><td><code>dtype="float32"</code></td><td>FAISS는 float32만 받습니다.</td></tr><tr><td><code>faiss.normalize_L2(X)</code></td><td>행마다 길이 1로(제자리 수정). 이후 내적 = 코사인.</td></tr><tr><td><code>np.save("faq_vectors.npy", X)</code></td><td>벡터를 파일로. 다음 노트북에서 <code>np.load</code>로 읽습니다.</td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>X: (20, 384) float32
+길이: [1. 1. 1. 1. 1.] ...
+저장: faq_vectors.npy</code></pre></div><div class="note"><b>emb.py</b><p>같은 <code>embed()</code> 함수를 실습 폴더의 <code>emb.py</code>에 넣어 두었습니다. 02·03 노트북은 <code>from emb import embed</code>로 가져다 씁니다. 문서와 질문을 <b>반드시 같은 함수</b>로 임베딩해야 합니다.</p></div><h3>01-5. FAISS 전에 — 질문 하나와 FAQ 20건 코사인 직접 계산</h3><p>FAISS가 하는 일을 먼저 넘파이로 직접 해 봅니다. 20건이면 이걸로도 충분하지만, 문서가 많아지면 FAISS가 필요합니다.</p><div class="codebox"><div class="codehead"><span>01_데이터와_임베딩.ipynb · 01-5</span><button class="copy" type="button">코드 복사</button></div><pre><code>q = embed(["택배 언제 와요?"], kind="query")
+sims = X @ q[0]                                   # (20, 384) @ (384,) → (20,)
+top = np.argsort(-sims)[:5]
+print(faq.loc[top, ["faq_id", "category", "question"]].assign(cosine=sims[top].round(3)).to_string(index=False))</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>X @ q[0]</code></td><td>(20, 384) 행렬과 (384,) 벡터의 곱 = FAQ 20건과의 코사인 20개.</td></tr><tr><td><code>np.argsort(-sims)[:5]</code></td><td>점수 내림차순 위치 상위 5개.</td></tr><tr><td><code>.assign(cosine=...)</code></td><td>새 열을 붙인 표를 돌려줍니다(원본은 그대로).</td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code> faq_id category                question  cosine
+    101       배송             배송은 언제 오나요?   0.846
+    301     교환반품      교환이나 반품은 언제까지 되나요?   0.827
+    103       배송 주문한 상품의 배송 조회는 어디서 하나요?   0.824
+    502       주문     주문 후 배송지를 바꿀 수 있나요?   0.822
+    105       배송             해외로도 배송되나요?   0.819</code></pre></div><div class="task"><h4>결과에서 볼 곳</h4><ol><li>1위가 정답 101 '배송은 언제 오나요?'(0.846)입니다. '택배'라는 단어가 FAQ에 없어도 뜻으로 찾았습니다.</li><li>점수가 0.82~0.85 사이에 몰려 있습니다. e5는 관련이 적은 문장끼리도 0.8대가 나오는 모델입니다. 06탭의 기준값에서 다시 봅니다.</li><li>다음 탭의 FAISS 검색 결과와 순서·점수가 똑같은지 비교하세요.</li></ol></div></section>
+<section aria-labelledby="tab-u02" class="panel" hidden="" id="u02" role="tabpanel"><div class="crumb">Part 1. FAISS 검색 · A3-M2-2</div><h1>02. FAISS 검색 — 인덱스 만들기, 찾기, 결과 읽기</h1><p class="lead">정규화된 벡터이므로 내적 인덱스 <code>IndexFlatIP</code>를 씁니다. FAQ 20건은 전부 비교(Flat)해도 순식간입니다.</p><h3>02-1. 준비 — CSV와 저장한 벡터 불러오기</h3><p>02 노트북의 준비 셀. CSV와 01에서 저장한 벡터를 불러옵니다.</p><div class="codebox"><div class="codehead"><span>02_FAISS_검색과_메타데이터.ipynb · 02-1</span><button class="copy" type="button">코드 복사</button></div><pre><code>import json, os
+import numpy as np
+import pandas as pd
+import faiss
+from emb import embed, EMB_MODEL
+
+faq = pd.read_csv("shop_faq.csv")
+faq["doc"] = faq["question"] + " " + faq["answer"]
+X = np.load("faq_vectors.npy")
+print("FAQ", len(faq), "건 | 벡터", X.shape)</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>from emb import embed, EMB_MODEL</code></td><td>01과 같은 임베딩 함수와 모델 이름.</td></tr><tr><td><code>np.load("faq_vectors.npy")</code></td><td>저장해 둔 (20, 384) 벡터. 다시 임베딩하지 않습니다.</td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>FAQ 20 건 | 벡터 (20, 384)</code></pre></div><h3>02-2. IndexFlatIP 만들고 검색하기</h3><div class="codebox"><div class="codehead"><span>02_FAISS_검색과_메타데이터.ipynb · 02-2</span><button class="copy" type="button">코드 복사</button></div><pre><code>index = faiss.IndexFlatIP(X.shape[1])
+index.add(X)
+print("저장된 개수:", index.ntotal)
+
+q = embed(["택배 언제 와요?"], kind="query")
+D, I = index.search(q, 3)
+print("D:", D.round(3))
+print("I:", I)
+print(faq.loc[I[0], ["faq_id", "category", "question"]].assign(score=D[0].round(3)).to_string(index=False))</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>faiss.IndexFlatIP(X.shape[1])</code></td><td>384차원 내적 인덱스. <code>shape[1]</code>로 차원을 데이터에서 읽습니다.</td></tr><tr><td><code>index.add(X)</code></td><td>넣은 순서대로 0~19 번호가 붙습니다.</td></tr><tr><td><code>D, I = index.search(q, 3)</code></td><td>D: 점수(코사인, 클수록 가까움), I: 번호(0~19). 둘 다 (질문 수, 3).</td></tr><tr><td><code>faq.loc[I[0], [...]]</code></td><td>번호 배열로 표의 행을 한꺼번에 꺼냅니다. 지금은 번호 = 행 위치라 이렇게 됩니다.</td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>저장된 개수: 20
+D: [[0.846 0.827 0.824]]
+I: [[0 8 2]]
+ faq_id category                question  score
+    101       배송             배송은 언제 오나요?  0.846
+    301     교환반품      교환이나 반품은 언제까지 되나요?  0.827
+    103       배송 주문한 상품의 배송 조회는 어디서 하나요?  0.824</code></pre></div><div class="task"><h4>결과에서 볼 곳</h4><ol><li>01탭 마지막 셀(넘파이 직접 계산)과 같은 결과인지 확인합니다.</li><li>I는 FAQ 번호(101 …)가 아니라 0~19입니다. 다음 탭에서 faq_id를 직접 쓰게 바꿉니다.</li></ol></div><h3>02-3. 질문 여러 개 · k가 문서 수보다 클 때</h3><div class="codebox"><div class="codehead"><span>02_FAISS_검색과_메타데이터.ipynb · 02-3</span><button class="copy" type="button">코드 복사</button></div><pre><code>qs = ["환불 며칠 걸려요?", "포인트 언제 없어져요?"]
+D, I = index.search(embed(qs, kind="query"), 2)
+for q, d, i in zip(qs, D, I):
+    print(q, "→", faq.loc[i, "question"].tolist(), [round(float(x), 3) for x in d])
+
+D, I = index.search(embed(["환불"], kind="query"), 25)      # FAQ는 20건
+print("k=25 마지막 5칸 I:", I[0][-5:].tolist())</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>embed(qs, kind="query")</code></td><td>질문 여러 개를 한 번에 → (2, 384).</td></tr><tr><td><code>zip(qs, D, I)</code></td><td>질문·점수 행·번호 행을 짝지어 꺼냅니다.</td></tr><tr><td><code>index.search(..., 25)</code></td><td>저장된 20건보다 큰 k. 남는 칸은 번호 -1.</td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>환불 며칠 걸려요? → ['환불은 언제 되나요?', '부분 환불도 되나요?'] [0.885, 0.871]
+포인트 언제 없어져요? → ['회원 탈퇴는 어떻게 하나요?', '비밀번호를 잊어버렸어요.'] [0.82, 0.806]
+k=25 마지막 5칸 I: [-1, -1, -1, -1, -1]</code></pre></div><div class="task"><h4>결과에서 볼 곳</h4><ol><li>-1을 그대로 <code>faq.loc[-1]</code>처럼 쓰면 오류가 나거나(loc) 마지막 행이 나옵니다(iloc). 결과에서 -1은 항상 빼야 합니다.</li></ol></div></section>
+<section aria-labelledby="tab-u03" class="panel" hidden="" id="u03" role="tabpanel"><div class="crumb">Part 2. 메타데이터 · A3-M2-2</div><h1>03. 메타데이터 구조 — faq_id로 FAISS와 표를 잇기</h1><p class="lead">실전 검색기는 FAISS 번호가 곧 문서 번호여야 합니다. 그래야 문서를 추가·삭제해도 번호가 밀리지 않고, 메타데이터 표와 바로 연결됩니다.</p><div class="mock"><div class="mock-title">두 저장소를 faq_id로 연결</div><div class="tablewrap "><table><thead><tr><th>FAISS (IndexIDMap2)</th><th></th><th>메타데이터 표 (meta)</th></tr></thead><tbody><tr><td>101 → [0.02, −0.05, …]</td><td>→</td><td>101 · 배송 · 배송은 언제 오나요? · 주문 후 평일 …</td></tr><tr><td>202 → [0.01, 0.03, …]</td><td>→</td><td>202 · 결제 · 무이자 할부가 되나요? · 5만 원 이상 …</td></tr><tr><td>401 → […]</td><td>→</td><td>401 · 환불 · 환불은 언제 되나요? · …</td></tr></tbody></table></div></div><h3>03-1. 메타데이터 구조 — faq_id를 FAISS id로</h3><div class="codebox"><div class="codehead"><span>02_FAISS_검색과_메타데이터.ipynb · 03-1</span><button class="copy" type="button">코드 복사</button></div><pre><code>ids = faq["faq_id"].to_numpy(dtype="int64")
+index = faiss.IndexIDMap2(faiss.IndexFlatIP(X.shape[1]))
+index.add_with_ids(X, ids)
+
+meta = faq.set_index("faq_id")                    # id → category, question, answer
+D, I = index.search(embed(["택배 언제 와요?"], kind="query"), 3)
+print("I:", I)                                    # 이제 FAQ 번호가 나온다
+print(meta.loc[I[0], ["category", "question"]].assign(score=D[0].round(3)).to_string())
+print("401번 벡터 앞 5칸:", index.reconstruct(401)[:5].round(3))</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>faq["faq_id"].to_numpy(dtype="int64")</code></td><td>FAISS id는 int64 배열이어야 합니다.</td></tr><tr><td><code>faiss.IndexIDMap2(faiss.IndexFlatIP(d))</code></td><td>안쪽 인덱스를 감싸서 번호를 직접 지정하게 합니다. 2가 붙으면 <code>reconstruct(id)</code>로 벡터를 다시 꺼낼 수 있습니다.</td></tr><tr><td><code>index.add_with_ids(X, ids)</code></td><td>X의 i번째 행에 ids[i] 번호를 붙여 넣습니다. 두 배열의 순서가 같아야 합니다.</td></tr><tr><td><code>faq.set_index("faq_id")</code></td><td>faq_id 열을 행 이름(index)으로. 이제 <code>meta.loc[202]</code>로 바로 꺼냅니다.</td></tr><tr><td><code>meta.loc[I[0], [...]]</code></td><td>FAISS가 준 faq_id로 메타데이터 표에서 원문을 꺼냅니다.</td></tr><tr><td><code>index.reconstruct(401)</code></td><td>401번에 저장된 벡터. 저장이 잘 됐는지 확인할 때 씁니다.</td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>I: [[101 301 103]]
+       category                 question  score
+faq_id                                         
+101          배송              배송은 언제 오나요?  0.846
+301        교환반품       교환이나 반품은 언제까지 되나요?  0.827
+103          배송  주문한 상품의 배송 조회는 어디서 하나요?  0.824
+401번 벡터 앞 5칸: [ 0.04  -0.01  -0.03  -0.068  0.057]</code></pre></div><div class="task"><h4>결과에서 볼 곳</h4><ol><li>I에 101, 202 같은 FAQ 번호가 그대로 나옵니다. 이제 행 위치를 신경 쓰지 않아도 됩니다.</li></ol></div></section>
+<section aria-labelledby="tab-u04" class="panel" hidden="" id="u04" role="tabpanel"><div class="crumb">Part 2. 메타데이터 · A3-M2-2</div><h1>04. 메타데이터 필터 — 카테고리로 범위 좁히기</h1><p class="lead">고객이 화면에서 '환불' 메뉴를 고르고 질문하면 환불 FAQ 안에서만 찾아야 합니다. FAISS는 카테고리를 모르므로, 우리가 메타데이터 표에서 <b>허용할 faq_id 목록</b>을 만들어 넘깁니다.</p><div class="flow"><div class="fstep"><b>카테고리</b><span>['환불']</span></div><span class="arrow" aria-hidden="true">→</span><div class="fstep"><b>메타데이터 표</b><span>isin으로 고르기</span></div><span class="arrow" aria-hidden="true">→</span><div class="fstep"><b>허용 id</b><span>[401, 402]</span></div><span class="arrow" aria-hidden="true">→</span><div class="fstep"><b>IDSelectorBatch</b><span>FAISS에 전달</span></div><span class="arrow" aria-hidden="true">→</span><div class="fstep"><b>검색</b><span>허용 id 안에서만</span></div></div><h3>04-1. 카테고리 필터 — 검색 안에서 거르기</h3><div class="codebox"><div class="codehead"><span>02_FAISS_검색과_메타데이터.ipynb · 04-1</span><button class="copy" type="button">코드 복사</button></div><pre><code>def ids_of(categories):
+    return meta.index[meta["category"].isin(categories)].to_numpy(dtype="int64")
+
+qv = embed(["돈 언제 돌려줘요?"], kind="query")
+for cats in [None, ["환불"], ["환불", "결제"], ["배송"]]:
+    params = None if cats is None else faiss.SearchParameters(sel=faiss.IDSelectorBatch(ids_of(cats)))
+    D, I = index.search(qv, 3, params=params)
+    got = [(int(i), meta.loc[i, "category"], round(float(d), 3)) for d, i in zip(D[0], I[0]) if i != -1]
+    print("전체" if cats is None else cats, got)</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>meta["category"].isin(categories)</code></td><td>카테고리가 목록 안에 있으면 True인 불리언 열.</td></tr><tr><td><code>meta.index[...]</code></td><td>True인 행의 faq_id만.</td></tr><tr><td><code>faiss.IDSelectorBatch(ids)</code></td><td>이 번호들만 검색 대상으로 하는 선택기.</td></tr><tr><td><code>faiss.SearchParameters(sel=...)</code></td><td>선택기를 검색 설정으로 감쌉니다.</td></tr><tr><td><code>index.search(qv, 3, params=params)</code></td><td>params가 None이면 필터 없이 전체 검색.</td></tr><tr><td><code>if i != -1</code></td><td>허용 id가 k보다 적으면(환불은 2건) 남는 칸 -1을 뺍니다.</td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>전체 [(301, '교환반품', 0.847), (202, '결제', 0.838), (701, '적립금', 0.837)]
+['환불'] [(401, '환불', 0.836), (402, '환불', 0.823)]
+['환불', '결제'] [(202, '결제', 0.838), (401, '환불', 0.836), (201, '결제', 0.828)]
+['배송'] [(101, '배송', 0.835), (105, '배송', 0.829), (102, '배송', 0.825)]</code></pre></div><div class="task"><h4>결과에서 볼 곳</h4><ol><li>필터 없이 찾으면 '돈 언제 돌려줘요?'의 top-3(301 교환반품, 202 결제, 701 적립금)에 환불 FAQ가 하나도 없습니다. ['환불']로 걸면 401 '환불은 언제 되나요?'가 1위입니다. 카테고리를 알면 검색이 훨씬 쉬워집니다.</li><li>['환불']은 2건뿐이라 결과도 2개입니다.</li><li>['배송']으로 걸면 '돈 언제 돌려줘요?'와 상관없는 배송 FAQ만 나옵니다. 필터는 범위를 좁힐 뿐, 관련 없는 결과를 걸러 주지는 않습니다. 그래서 06탭의 점수 기준값이 필요합니다.</li></ol></div><h3>04-2. 검색 뒤에 거르면 왜 안 되나 · 빼고 찾기</h3><p>검색한 다음에 카테고리로 거르는 방법과 비교합니다.</p><div class="codebox"><div class="codehead"><span>02_FAISS_검색과_메타데이터.ipynb · 04-2</span><button class="copy" type="button">코드 복사</button></div><pre><code>D, I = index.search(qv, 3)
+after = [int(i) for i in I[0] if meta.loc[i, "category"] == "결제"]
+print("검색 후 거르기(결제):", after, "→", len(after), "개")
+
+params = faiss.SearchParameters(sel=faiss.IDSelectorBatch(ids_of(["결제"])))
+D, I = index.search(qv, 3, params=params)
+print("검색 안에서 거르기(결제):", I[0].tolist())
+
+keep = faiss.IDSelectorBatch(ids_of(["환불"]))
+params = faiss.SearchParameters(sel=faiss.IDSelectorNot(keep))      # 환불만 빼고
+D, I = index.search(qv, 3, params=params)
+print("환불 빼고:", [(int(i), meta.loc[i, "category"]) for i in I[0]])</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>[int(i) for i in I[0] if ...]</code></td><td>top-3를 먼저 뽑고 결제만 남기기(검색 후 거르기).</td></tr><tr><td><code>faiss.IDSelectorNot(keep)</code></td><td>선택기를 뒤집습니다. 환불 id만 <b>빼고</b> 검색.</td></tr><tr><td><code>keep = faiss.IDSelectorBatch(...)</code></td><td>Not에 넘긴 선택기는 변수로 잡아 두어야 합니다(먼저 사라지면 오류).</td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>검색 후 거르기(결제): [202] → 1 개
+검색 안에서 거르기(결제): [202, 201, 203]
+환불 빼고: [(301, '교환반품'), (202, '결제'), (701, '적립금')]</code></pre></div><div class="task"><h4>결과에서 볼 곳</h4><ol><li>검색 후 거르기는 top-3 안에 결제가 적으면 결과가 3개보다 적게 남습니다. 검색 안에서 거르기는 결제 FAQ로 3개를 다 채웁니다.</li><li>벡터 DB(Chroma·Qdrant·pgvector)의 where·filter가 하는 일이 바로 이것입니다(A3-M3, M4).</li></ol></div><div class="tablewrap "><table><thead><tr><th>방법</th><th>문법</th><th>결과 개수</th><th>쓰임</th></tr></thead><tbody><tr><td>검색 안에서 거르기</td><td><code>IDSelectorBatch</code> + <code>params</code></td><td>k개를 채움(허용 id가 충분하면)</td><td>카테고리 메뉴, 권한별 문서</td></tr><tr><td>빼고 찾기</td><td><code>IDSelectorNot</code></td><td>k개를 채움</td><td>삭제 예정·비공개 문서 제외</td></tr><tr><td>검색 후 거르기</td><td>결과 리스트를 if로</td><td>k보다 적을 수 있음</td><td>후보를 넉넉히 뽑을 때만</td></tr></tbody></table></div></section>
+<section aria-labelledby="tab-u05" class="panel" hidden="" id="u05" role="tabpanel"><div class="crumb">Part 2. 메타데이터 · A3-M2-2</div><h1>05. 검색 함수와 저장 — 검색기를 완성하기</h1><p class="lead">지금까지의 코드를 <code>search(질문, k, categories)</code> 함수 하나로 묶고, 인덱스·메타데이터·설정을 폴더에 저장했다가 다시 엽니다. 06탭부터는 이 폴더만 열어서 씁니다.</p><h3>05-1. 검색 함수 하나로 묶기</h3><div class="codebox"><div class="codehead"><span>02_FAISS_검색과_메타데이터.ipynb · 05-1</span><button class="copy" type="button">코드 복사</button></div><pre><code>def search(question, k=3, categories=None):
+    params = None
+    if categories:
+        params = faiss.SearchParameters(sel=faiss.IDSelectorBatch(ids_of(categories)))
+    D, I = index.search(embed([question], kind="query"), k, params=params)
+    hits = [(int(i), float(d)) for d, i in zip(D[0], I[0]) if i != -1]
+    res = meta.loc[[i for i, _ in hits], ["category", "question", "answer"]].copy()
+    res.insert(0, "score", [round(s, 3) for _, s in hits])
+    return res
+
+print(search("카드 할부 돼요?")[["score", "category", "question"]].to_string())
+print()
+print(search("카드 할부 돼요?", categories=["결제"])[["score", "category", "question"]].to_string())</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>def search(question, k=3, categories=None)</code></td><td>categories를 주면 필터, 안 주면 전체 검색.</td></tr><tr><td><code>hits = [(int(i), float(d)) ...]</code></td><td>-1을 빼고 (faq_id, 점수) 목록으로.</td></tr><tr><td><code>meta.loc[[i for i, _ in hits], [...]].copy()</code></td><td>faq_id 순서대로 원문 행을 꺼내 복사본을 만듭니다.</td></tr><tr><td><code>res.insert(0, "score", ...)</code></td><td>0번 위치(맨 앞)에 점수 열을 넣습니다.</td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>        score category         question
+faq_id                                 
+202     0.876       결제     무이자 할부가 되나요?
+602     0.827       회원  회원 탈퇴는 어떻게 하나요?
+401     0.826       환불      환불은 언제 되나요?
+
+        score category            question
+faq_id                                    
+202     0.876       결제        무이자 할부가 되나요?
+201     0.826       결제  어떤 결제 수단을 쓸 수 있나요?
+203     0.802       결제   현금영수증은 어떻게 발급하나요?</code></pre></div><div class="task"><h4>결과에서 볼 곳</h4><ol><li>필터 없이는 2·3위에 회원 탈퇴(602), 환불(401)이 섞이지만, ['결제']로 걸면 결제 FAQ 3개만 나옵니다.</li><li>결과가 DataFrame이라 화면에 표로 보여 주거나, 평가 코드에서 <code>res.index</code>(faq_id 목록)로 바로 쓸 수 있습니다.</li></ol></div><h3>05-2. 저장하고 다시 열기 — 인덱스 + 메타데이터 + 설정</h3><div class="codebox"><div class="codehead"><span>02_FAISS_검색과_메타데이터.ipynb · 05-2</span><button class="copy" type="button">코드 복사</button></div><pre><code>os.makedirs("faq_store", exist_ok=True)
+faiss.write_index(index, "faq_store/index.faiss")
+meta.drop(columns="doc").to_csv("faq_store/meta.csv", encoding="utf-8-sig")
+manifest = {"model": EMB_MODEL, "dim": int(X.shape[1]), "count": int(index.ntotal), "metric": "cosine(IP)"}
+json.dump(manifest, open("faq_store/manifest.json", "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+for f in sorted(os.listdir("faq_store")):
+    print(f"{f:&lt;14} {os.path.getsize('faq_store/' + f):&gt;7,} bytes")
+
+ix2 = faiss.read_index("faq_store/index.faiss")
+meta2 = pd.read_csv("faq_store/meta.csv").set_index("faq_id")
+man = json.load(open("faq_store/manifest.json", encoding="utf-8"))
+assert man["model"] == EMB_MODEL and ix2.ntotal == len(meta2)
+D, I = ix2.search(embed(["반품 기간"], kind="query"), 2)
+print("다시 연 인덱스:", I[0].tolist(), meta2.loc[I[0], "question"].tolist())</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>os.makedirs("faq_store", exist_ok=True)</code></td><td>폴더가 있으면 그대로 둡니다.</td></tr><tr><td><code>faiss.write_index(index, path)</code></td><td>IDMap2 + Flat 인덱스를 통째로 파일로.</td></tr><tr><td><code>meta.drop(columns="doc").to_csv(..., encoding="utf-8-sig")</code></td><td>doc 열은 다시 만들 수 있으니 빼고 저장. utf-8-sig는 엑셀에서 한글이 깨지지 않게.</td></tr><tr><td><code>json.dump(manifest, ..., ensure_ascii=False, indent=1)</code></td><td>모델 이름·차원·개수를 사람이 읽을 수 있게 저장.</td></tr><tr><td><code>assert man["model"] == EMB_MODEL and ix2.ntotal == len(meta2)</code></td><td>다른 모델로 만든 인덱스이거나 개수가 안 맞으면 멈춥니다.</td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>index.faiss     30,970 bytes
+manifest.json      103 bytes
+meta.csv         3,171 bytes
+다시 연 인덱스: [301, 401] ['교환이나 반품은 언제까지 되나요?', '환불은 언제 되나요?']</code></pre></div><div class="task"><h4>결과에서 볼 곳</h4><ol><li>index.faiss는 20 × 384 × 4바이트(약 30KB)에 id가 더해진 크기입니다.</li><li>다른 모델로 만든 질문 벡터로 검색해도 FAISS는 오류를 내지 않습니다(차원만 같으면). 그래서 manifest로 직접 확인합니다.</li></ol></div></section>
+<section aria-labelledby="tab-u06" class="panel" hidden="" id="u06" role="tabpanel"><div class="crumb">Part 3. RAG 평가와 리랭킹 · A3-M2-2</div><h1>06. RAG 평가 — 검색이 정답 FAQ를 찾아오나</h1><p class="lead">RAG의 답변 품질은 검색이 올바른 근거를 가져오는지에 달려 있습니다. 평가 질문 12개로 정답 FAQ가 몇 위에 나오는지 재고, 틀린 질문을 들여다보고, 답하지 않을 기준을 정한 뒤 LLM에 넘길 프롬프트를 만듭니다.</p><div class="tablewrap "><table><thead><tr><th>지표</th><th>계산</th><th>뜻</th></tr></thead><tbody><tr><td>Hit@1</td><td>정답이 1위인 질문 비율</td><td>LLM에 근거 1개만 줄 때 맞을 확률</td></tr><tr><td>Hit@3</td><td>정답이 3위 안인 질문 비율</td><td>근거 3개를 줄 때 정답이 들어 있을 확률</td></tr><tr><td>MRR</td><td>질문마다 1/정답 순위를 평균(못 찾으면 0)</td><td>1위 1점, 2위 0.5점, 3위 0.33점 … 순위를 함께 반영</td></tr></tbody></table></div><div class="mock"><div class="mock-title">MRR 계산 예</div><div class="tablewrap "><table><thead><tr><th>질문</th><th>정답 순위</th><th>1/순위</th></tr></thead><tbody><tr><td>A</td><td>1</td><td>1.000</td></tr><tr><td>B</td><td>2</td><td>0.500</td></tr><tr><td>C</td><td>없음</td><td>0</td></tr></tbody></table></div><p class="hint">MRR = (1 + 0.5 + 0) / 3 = 0.5</p></div><h3>06-1. 준비 — 저장한 검색기 열기</h3><p>03 노트북의 준비 셀. 05탭에서 저장한 폴더를 열고 <code>search()</code>를 다시 정의합니다.</p><div class="codebox"><div class="codehead"><span>03_RAG평가와_리랭킹.ipynb · 06-1</span><button class="copy" type="button">코드 복사</button></div><pre><code>import json, time
+import numpy as np
+import pandas as pd
+import faiss
+from emb import embed, EMB_MODEL, RERANK_MODEL
+
+index = faiss.read_index("faq_store/index.faiss")
+meta = pd.read_csv("faq_store/meta.csv").set_index("faq_id")
+man = json.load(open("faq_store/manifest.json", encoding="utf-8"))
+assert man["model"] == EMB_MODEL, "다른 모델로 만든 인덱스입니다"
+tests = pd.read_csv("shop_faq_tests.csv")
+
+def ids_of(categories):
+    return meta.index[meta["category"].isin(categories)].to_numpy(dtype="int64")
+
+def search(question, k=3, categories=None):
+    params = None
+    if categories:
+        params = faiss.SearchParameters(sel=faiss.IDSelectorBatch(ids_of(categories)))
+    D, I = index.search(embed([question], kind="query"), k, params=params)
+    hits = [(int(i), float(d)) for d, i in zip(D[0], I[0]) if i != -1]
+    res = meta.loc[[i for i, _ in hits], ["category", "question", "answer"]].copy()
+    res.insert(0, "score", [round(s, 3) for _, s in hits])
+    return res
+
+print("FAQ", index.ntotal, "건 | 평가 질문", len(tests), "개 | 모델", man["model"])</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>faiss.read_index("faq_store/index.faiss")</code></td><td>저장한 인덱스.</td></tr><tr><td><code>pd.read_csv(...).set_index("faq_id")</code></td><td>메타데이터 표를 faq_id 기준으로.</td></tr><tr><td><code>assert man["model"] == EMB_MODEL, "..."</code></td><td>조건이 틀리면 뒤의 메시지와 함께 멈춥니다.</td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>FAQ 20 건 | 평가 질문 12 개 | 모델 intfloat/multilingual-e5-small</code></pre></div><h3>06-2. 평가 질문 12개로 검색 평가 — Hit@1 · Hit@3 · MRR</h3><div class="codebox"><div class="codehead"><span>03_RAG평가와_리랭킹.ipynb · 06-2</span><button class="copy" type="button">코드 복사</button></div><pre><code>rows = []
+for q, gold in tests.itertuples(index=False):
+    res = search(q, k=5)
+    ranked = res.index.tolist()
+    rank = ranked.index(gold) + 1 if gold in ranked else np.nan
+    rows.append({"question": q, "gold": gold, "top1": ranked[0], "rank": rank, "top1_score": res["score"].iloc[0]})
+ev = pd.DataFrame(rows)
+print(ev.assign(rank=ev["rank"].astype("Int64")).to_string(index=False))
+
+hit1 = (ev["rank"] == 1).mean()
+hit3 = (ev["rank"] &lt;= 3).mean()
+mrr = (1 / ev["rank"]).fillna(0).mean()
+print(f"\nHit@1 {hit1:.3f}  Hit@3 {hit3:.3f}  MRR {mrr:.3f}")</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>tests.itertuples(index=False)</code></td><td>행마다 (question, gold_faq_id) 튜플.</td></tr><tr><td><code>ranked.index(gold) + 1 if gold in ranked else np.nan</code></td><td>정답의 순위(1부터). top-5에 없으면 NaN(값 없음).</td></tr><tr><td><code>(ev["rank"] == 1).mean()</code></td><td>True/False의 평균 = True 비율. NaN은 False로 셉니다.</td></tr><tr><td><code>(1 / ev["rank"]).fillna(0).mean()</code></td><td>1/순위, 못 찾은 질문은 0으로 채워 평균 = MRR.</td></tr><tr><td><code>ev["rank"].astype("Int64")</code></td><td>화면에 2.0 대신 2로 보이게(값 없음은 &lt;NA&gt;).</td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>            question  gold  top1  rank  top1_score
+           택배 언제 와요?   101   101     1       0.846
+     배송비 무료 기준이 뭐예요?   102   102     1       0.904
+내 택배 지금 어디쯤인지 보고 싶어요   103   103     1       0.874
+ 소파 같은 큰 물건은 어떻게 와요?   104   104     1       0.821
+     미국으로 보내줄 수 있나요?   105   105     1       0.866
+    카드 할부 몇 개월까지 돼요?   202   202     1       0.901
+  받은 지 5일 됐는데 반품 돼요?   301   301     1       0.892
+         물건이 깨져서 왔어요   303   303     1       0.860
+          환불 며칠 걸려요?   401   401     1       0.885
+       주문 취소 어떻게 해요?   501   501     1       0.884
+            비번 까먹었어요   601   303     3       0.823
+       포인트 유효기간 있나요?   701   701     1       0.846
+
+Hit@1 0.917  Hit@3 1.000  MRR 0.944</code></pre></div><div class="task"><h4>결과에서 볼 곳</h4><ol><li>12개 중 11개가 1위입니다. Hit@1 0.917, Hit@3 1.000, MRR 0.944. '택배'·'미국'·'포인트'처럼 FAQ에 없는 말로 물어도 뜻으로 찾았습니다.</li><li>Hit@1과 Hit@3의 차이는 '찾긴 했는데 1위로 못 올린' 질문입니다. 여기서는 '비번 까먹었어요' 하나(3위)입니다. 07탭의 리랭킹이 노리는 경우입니다.</li><li>top1_score 열은 다음 셀에서 기준값을 정할 때 씁니다.</li></ol></div><h3>06-3. 틀린 질문 들여다보기</h3><div class="codebox"><div class="codehead"><span>03_RAG평가와_리랭킹.ipynb · 06-3</span><button class="copy" type="button">코드 복사</button></div><pre><code>miss = ev[ev["rank"] != 1]
+print(f"1위가 정답이 아닌 질문 {len(miss)}개")
+for r in miss.itertuples(index=False):
+    print(f"\nQ: {r.question}")
+    print(f"  정답 {r.gold} [{meta.loc[r.gold, 'category']}] {meta.loc[r.gold, 'question']}  (정답 순위 {r.rank})")
+    print(f"  1위  {r.top1} [{meta.loc[r.top1, 'category']}] {meta.loc[r.top1, 'question']}")</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>ev[ev["rank"] != 1]</code></td><td>1위가 정답이 아닌 행만(NaN도 포함).</td></tr><tr><td><code>meta.loc[r.gold, 'question']</code></td><td>정답 FAQ의 질문 문장.</td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>1위가 정답이 아닌 질문 1개
+
+Q: 비번 까먹었어요
+  정답 601 [회원] 비밀번호를 잊어버렸어요.  (정답 순위 3)
+  1위  303 [교환반품] 상품이 파손되어 왔어요.</code></pre></div><div class="task"><h4>결과에서 볼 곳</h4><ol><li>'비번 까먹었어요'의 1위가 303 '상품이 파손되어 왔어요'입니다. 줄임말 '비번'을 '비밀번호'와 충분히 가깝게 보지 못했고, '~어요'로 끝나는 짧은 하소연 문장이라는 모양이 비슷한 FAQ가 올라온 것으로 보입니다.</li><li>틀린 질문은 이렇게 직접 읽어 봐야 고칠 방향이 보입니다. 예를 들어 FAQ 601의 질문에 '비번'이라는 표현을 함께 적어 둘 수 있습니다.</li><li>고치는 방법은 세 가지입니다: 카테고리 필터(과제 1), 리랭킹(07탭), FAQ 문장 보강.</li></ol></div><h3>06-4. 답하지 않을 기준 정하기 — 점수 분포 보기</h3><div class="codebox"><div class="codehead"><span>03_RAG평가와_리랭킹.ipynb · 06-4</span><button class="copy" type="button">코드 복사</button></div><pre><code>off = ["오늘 날씨 어때요?", "주식 추천해 주세요", "점심 메뉴 골라줘", "파이썬 설치 방법", "축구 경기 결과 알려줘", "영화 추천해 줘"]
+ok = sorted(ev["top1_score"].round(3).tolist())
+bad = sorted(round(float(search(q, 1)["score"].iloc[0]), 3) for q in off)
+print("쇼핑 질문 1위 점수:", ok)
+print("상관없는 질문 점수:", bad)
+THRESHOLD = round((min(ok) + max(bad)) / 2, 3)
+print("기준값 후보:", THRESHOLD, "| 겹침" if min(ok) &lt;= max(bad) else "| 두 분포가 나뉨")</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>off = [...]</code></td><td>쇼핑몰과 상관없는 질문 6개.</td></tr><tr><td><code>(min(ok) + max(bad)) / 2</code></td><td>쇼핑 질문 최저 점수와 무관 질문 최고 점수의 가운데.</td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>쇼핑 질문 1위 점수: [0.821, 0.823, 0.846, 0.846, 0.86, 0.866, 0.874, 0.884, 0.885, 0.892, 0.901, 0.904]
+상관없는 질문 점수: [0.795, 0.81, 0.816, 0.827, 0.831, 0.833]
+기준값 후보: 0.827 | 겹침</code></pre></div><div class="task"><h4>결과에서 볼 곳</h4><ol><li>쇼핑 질문의 최저 점수는 0.821, 상관없는 질문의 최고 점수는 0.833입니다. <b>두 분포가 겹칩니다.</b> 무관 질문 6개 중 3개(0.827, 0.831, 0.833)가 쇼핑 질문 최저점보다 높습니다.</li><li>e5는 관련 없는 문장끼리도 코사인이 0.8 안팎으로 높게 나오는 모델입니다. 점수의 절댓값이 아니라 <b>두 분포가 어디서 갈라지는지</b>를 봐야 합니다.</li><li>두 분포가 겹치면 기준값 하나로는 완벽히 나눌 수 없습니다. 엉뚱한 답이 더 위험하면 기준을 올리고, 상담원 연결이 더 비싸면 내립니다.</li></ol></div><h3>06-5. LLM에 넘길 프롬프트 만들기 (RAG의 R까지)</h3><p>검색 결과로 LLM에 보낼 프롬프트를 만듭니다. 근거 번호를 붙여 두면 답변이 어떤 FAQ를 썼는지 확인할 수 있습니다.</p><div class="codebox"><div class="codehead"><span>03_RAG평가와_리랭킹.ipynb · 06-5</span><button class="copy" type="button">코드 복사</button></div><pre><code>def build_prompt(question, k=3, categories=None):
+    res = search(question, k, categories)
+    if res["score"].iloc[0] &lt; THRESHOLD:
+        return None
+    ctx = "\n".join(f"[{i}] ({r.category}) Q: {r.question} A: {r.answer}" for i, r in res.iterrows())
+    return f"다음 FAQ만 근거로 답하세요. 답 끝에 근거 번호를 적으세요.\n\n{ctx}\n\n질문: {question}"
+
+print(build_prompt("물건이 깨져서 왔어요"))
+print("\n오늘 날씨 어때요? →", build_prompt("오늘 날씨 어때요?") or "상담원 연결(근거 부족)")</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>if res["score"].iloc[0] &lt; THRESHOLD: return None</code></td><td>1위 점수가 기준 미만이면 프롬프트를 만들지 않습니다(상담원 연결).</td></tr><tr><td><code>for i, r in res.iterrows()</code></td><td>행마다 (faq_id, 행). <code>r.category</code>처럼 열을 꺼냅니다.</td></tr><tr><td><code>"\n".join(...)</code></td><td>근거들을 줄바꿈으로 이어 붙입니다.</td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>다음 FAQ만 근거로 답하세요. 답 끝에 근거 번호를 적으세요.
+
+[303] (교환반품) Q: 상품이 파손되어 왔어요. A: 파손·불량 상품은 사진과 함께 접수하시면 배송비 없이 교환 또는 반품해 드립니다.
+[301] (교환반품) Q: 교환이나 반품은 언제까지 되나요? A: 상품을 받은 날부터 7일 이내에 마이페이지에서 신청할 수 있습니다.
+[602] (회원) Q: 회원 탈퇴는 어떻게 하나요? A: 마이페이지 &gt; 회원 정보 &gt; 회원 탈퇴에서 신청할 수 있으며 적립금은 소멸됩니다.
+
+질문: 물건이 깨져서 왔어요
+
+오늘 날씨 어때요? → 다음 FAQ만 근거로 답하세요. 답 끝에 근거 번호를 적으세요.
+
+[301] (교환반품) Q: 교환이나 반품은 언제까지 되나요? A: 상품을 받은 날부터 7일 이내에 마이페이지에서 신청할 수 있습니다.
+[105] (배송) Q: 해외로도 배송되나요? A: 현재는 국내 배송만 가능하며 해외 배송은 지원하지 않습니다.
+[101] (배송) Q: 배송은 언제 오나요? A: 주문 후 평일 기준 2~3일 이내에 도착합니다. 제주·도서산간은 3~5일 걸립니다.
+
+질문: 오늘 날씨 어때요?</code></pre></div><div class="task"><h4>결과에서 볼 곳</h4><ol><li>'물건이 깨져서 왔어요'는 정답 303이 1번 근거로 들어갔습니다.</li><li>그런데 '오늘 날씨 어때요?'도 1위 점수가 기준값 0.827보다 높아서 프롬프트가 만들어졌습니다. 근거가 반품·해외 배송·배송 기간 FAQ라 LLM이 억지 답을 만들 위험이 있습니다.</li><li>임베딩 점수 하나로는 '답하지 않기'를 확실히 가를 수 없다는 뜻입니다. 07탭에서 리랭커 점수가 관련 있는 것과 없는 것을 훨씬 뚜렷하게 가르는 것을 봅니다.</li></ol></div></section>
+<section aria-labelledby="tab-u07" class="panel" hidden="" id="u07" role="tabpanel"><div class="crumb">Part 3. RAG 평가와 리랭킹 · A3-M2-2</div><h1>07. 리랭킹 — 후보를 뽑고, 다시 줄 세우기</h1><p class="lead">임베딩 검색은 질문과 문서를 <b>따로</b> 벡터로 만들어 비교합니다. 리랭커(cross-encoder)는 질문과 문서를 <b>한 쌍으로</b> 모델에 넣어 관련도를 직접 계산합니다. 보통 더 정확하지만 문서마다 모델을 돌려야 해서 느리므로, FAISS로 후보 몇 개를 뽑은 뒤 그 후보만 다시 줄 세웁니다.</p><div class="tablewrap "><table><thead><tr><th></th><th>임베딩 검색 (bi-encoder)</th><th>리랭커 (cross-encoder)</th></tr></thead><tbody><tr><td>입력</td><td>질문 따로, 문서 따로</td><td>(질문, 문서) 한 쌍</td></tr><tr><td>출력</td><td>벡터 384개 → 코사인</td><td>관련도 점수 1개</td></tr><tr><td>미리 계산</td><td>문서 벡터를 미리 저장 가능</td><td>질문이 와야 계산 가능</td></tr><tr><td>속도</td><td>문서 수만~수억 개도 빠름</td><td>후보 수에 비례해 느림</td></tr><tr><td>이 모듈의 모델</td><td>intfloat/multilingual-e5-small</td><td>cross-encoder/mmarco-mMiniLMv2-L12-H384-v1 (다국어)</td></tr></tbody></table></div><div class="flow"><div class="fstep"><b>질문</b><span>물건이 깨져서 왔어요</span></div><span class="arrow" aria-hidden="true">→</span><div class="fstep"><b>FAISS</b><span>후보 pool개</span></div><span class="arrow" aria-hidden="true">→</span><div class="fstep"><b>리랭커</b><span>쌍마다 점수</span></div><span class="arrow" aria-hidden="true">→</span><div class="fstep"><b>정렬</b><span>상위 k개</span></div><span class="arrow" aria-hidden="true">→</span><div class="fstep"><b>LLM</b><span>근거로 답변</span></div></div><h3>07-1. 리랭커 써 보기 — 질문과 문서를 한 쌍으로 넣는 모델</h3><div class="codebox"><div class="codehead"><span>03_RAG평가와_리랭킹.ipynb · 07-1</span><button class="copy" type="button">코드 복사</button></div><pre><code>from transformers import pipeline
+rr = pipeline("text-classification", model=RERANK_MODEL, device=-1)
+
+q = "물건이 깨져서 왔어요"
+cand = search(q, k=5)
+pairs = [{"text": q, "text_pair": f"{r.question} {r.answer}"} for r in cand.itertuples()]
+scores = rr(pairs, function_to_apply="none")
+print("모델:", RERANK_MODEL)
+print("출력 예:", scores[0])
+cand["rerank"] = [round(s["score"], 3) for s in scores]
+print("\n[FAISS 순서]")
+print(cand[["score", "rerank", "category", "question"]].to_string())
+print("\n[리랭킹 순서]")
+print(cand.sort_values("rerank", ascending=False)[["score", "rerank", "category", "question"]].to_string())</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>pipeline("text-classification", model=RERANK_MODEL)</code></td><td>문장 쌍 분류 파이프라인으로 리랭커를 불러옵니다. 처음 실행할 때 모델(약 470MB)을 내려받습니다.</td></tr><tr><td><code>{"text": q, "text_pair": doc}</code></td><td>쌍 입력 형식. 모델 안에서 <code>[CLS] 질문 [SEP] 문서 [SEP]</code>처럼 이어 붙여 읽습니다.</td></tr><tr><td><code>cand.itertuples()</code></td><td>후보 행마다 <code>r.question</code>, <code>r.answer</code>.</td></tr><tr><td><code>rr(pairs, function_to_apply="none")</code></td><td>점수에 시그모이드·소프트맥스를 씌우지 않은 원래 값(logit). 순서만 쓰므로 그대로 둡니다.</td></tr><tr><td><code>cand.sort_values("rerank", ascending=False)</code></td><td>리랭커 점수 내림차순으로 다시 정렬.</td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>모델: cross-encoder/mmarco-mMiniLMv2-L12-H384-v1
+출력 예: {'label': 'LABEL_0', 'score': 0.7158318161964417}
+
+[FAISS 순서]
+        score  rerank category            question
+faq_id                                            
+303     0.860   0.716     교환반품       상품이 파손되어 왔어요.
+301     0.833  -7.350     교환반품  교환이나 반품은 언제까지 되나요?
+602     0.827  -9.832       회원     회원 탈퇴는 어떻게 하나요?
+501     0.825  -6.085       주문       주문을 취소하고 싶어요.
+101     0.823  -9.121       배송         배송은 언제 오나요?
+
+[리랭킹 순서]
+        score  rerank category            question
+faq_id                                            
+303     0.860   0.716     교환반품       상품이 파손되어 왔어요.
+501     0.825  -6.085       주문       주문을 취소하고 싶어요.
+301     0.833  -7.350     교환반품  교환이나 반품은 언제까지 되나요?
+101     0.823  -9.121       배송         배송은 언제 오나요?
+602     0.827  -9.832       회원     회원 탈퇴는 어떻게 하나요?</code></pre></div><div class="task"><h4>결과에서 볼 곳</h4><ol><li>FAISS 점수는 0.823~0.860으로 거의 붙어 있지만, 리랭커 점수는 정답 303이 <b>0.716</b>, 나머지 넷은 <b>−6 ~ −10</b>으로 뚜렷하게 갈립니다.</li><li>이 질문은 303이 이미 1위라 1위는 그대로이고, 2~5위 순서만 바뀌었습니다.</li><li>리랭커 점수가 이렇게 갈리므로, '답하지 않기' 기준을 임베딩 점수 대신 리랭커 점수(예: 0보다 작으면 상담원 연결)로 정하는 방법도 생각해 볼 수 있습니다.</li></ol></div><h3>07-2. 검색 + 리랭킹 함수로 다시 평가</h3><p>검색 + 리랭킹을 함수로 만들고, 06탭과 같은 방법으로 평가해 나란히 비교합니다.</p><div class="codebox"><div class="codehead"><span>03_RAG평가와_리랭킹.ipynb · 07-2</span><button class="copy" type="button">코드 복사</button></div><pre><code>
+
+def search_rerank(question, k=3, pool=8, categories=None):
+    cand = search(question, k=pool, categories=categories)              # 1단계: FAISS로 후보
+    pairs = [{"text": question, "text_pair": f"{r.question} {r.answer}"} for r in cand.itertuples()]
+    cand["rerank"] = [round(s["score"], 3) for s in rr(pairs, function_to_apply="none")]
+    return cand.sort_values("rerank", ascending=False).head(k)          # 2단계: 다시 줄 세우기
+
+def evaluate(fn, **kw):
+    rows = []
+    for q, gold in tests.itertuples(index=False):
+        ranked = fn(q, **kw).index.tolist()
+        rows.append({"question": q, "gold": gold, "top1": ranked[0],
+                     "rank": ranked.index(gold) + 1 if gold in ranked else np.nan})
+    return pd.DataFrame(rows)
+
+def summary(ev):
+    return {"Hit@1": round((ev["rank"] == 1).mean(), 3), "Hit@3": round((ev["rank"] &lt;= 3).mean(), 3),
+            "MRR": round((1 / ev["rank"]).fillna(0).mean(), 3)}
+
+ev_base = evaluate(search, k=5)
+ev_rr = evaluate(search_rerank, k=5, pool=8)
+print(pd.DataFrame({"검색만": summary(ev_base), "검색+리랭킹": summary(ev_rr)}).to_string())</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>def search_rerank(question, k=3, pool=8, categories=None)</code></td><td>FAISS로 pool개 후보 → 리랭커로 다시 정렬 → 상위 k개. 카테고리 필터도 그대로 됩니다.</td></tr><tr><td><code>def evaluate(fn, **kw)</code></td><td>검색 함수를 인자로 받아 평가 표를 만듭니다. <code>**kw</code>는 k, pool 같은 추가 인자를 그대로 넘깁니다.</td></tr><tr><td><code>def summary(ev)</code></td><td>Hit@1·Hit@3·MRR을 딕셔너리로.</td></tr><tr><td><code>pd.DataFrame({"검색만": ..., "검색+리랭킹": ...})</code></td><td>두 딕셔너리를 열로 놓아 비교표를 만듭니다.</td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>         검색만  검색+리랭킹
+Hit@1  0.917   0.833
+Hit@3  1.000   1.000
+MRR    0.944   0.917</code></pre></div><div class="task"><h4>결과에서 볼 곳</h4><ol><li>이번 데이터에서는 리랭킹 후 Hit@1이 <b>0.917 → 0.833으로 오히려 내려갔습니다</b>(MRR 0.944 → 0.917). e5 검색이 이미 12개 중 11개를 맞힌 상태라 올릴 여지가 거의 없었습니다.</li><li>이 리랭커(mmarco)는 영어 검색 데이터(MS MARCO)를 여러 언어로 기계번역해 학습한 모델이라, 한국어 쇼핑 FAQ에서 항상 낫지는 않습니다.</li><li>리랭킹은 붙이면 무조건 좋아지는 기능이 아니라 <b>평가해서 확인하고 쓰는</b> 단계입니다. 평가 질문을 17개로 늘리면 결과가 달라집니다(과제 3).</li></ol></div><h3>07-3. 어떤 질문이 바뀌었나 · 시간은 얼마나 드나</h3><div class="codebox"><div class="codehead"><span>03_RAG평가와_리랭킹.ipynb · 07-3</span><button class="copy" type="button">코드 복사</button></div><pre><code>both = ev_base[["question", "gold", "rank"]].merge(ev_rr[["question", "rank"]], on="question", suffixes=("_검색", "_리랭킹"))
+both["변화"] = np.where(both["rank_리랭킹"] &lt; both["rank_검색"], "↑", np.where(both["rank_리랭킹"] &gt; both["rank_검색"], "↓", ""))
+print(both.astype({"rank_검색": "Int64", "rank_리랭킹": "Int64"}).to_string(index=False))
+
+for name, fn in [("검색만", lambda q: search(q, 5)), ("검색+리랭킹", lambda q: search_rerank(q, 5, 8))]:
+    t = time.perf_counter()
+    for q in tests["question"]:
+        fn(q)
+    print(f"{name:&lt;8} 질문당 {(time.perf_counter() - t) / len(tests) * 1000:.0f} ms")</code></pre></div><h4 class="minihead">한 줄씩 읽기</h4><div class="tablewrap syn"><table><thead><tr><th style="width:36%">코드</th><th>문법과 뜻</th></tr></thead><tbody><tr><td><code>ev_base[...].merge(ev_rr[...], on="question", suffixes=(...))</code></td><td>질문 기준으로 두 표를 합칩니다. 이름이 겹치는 rank 열에 접미사를 붙입니다.</td></tr><tr><td><code>np.where(조건, 참일 때, 거짓일 때)</code></td><td>행마다 조건에 따라 ↑ / ↓ / 빈칸.</td></tr><tr><td><code>time.perf_counter()</code></td><td>질문 12개를 돌린 시간 ÷ 12 = 질문당 시간.</td></tr></tbody></table></div><h4 class="minihead">실행 결과</h4><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>            question  gold  rank_검색  rank_리랭킹 변화
+           택배 언제 와요?   101        1         1   
+     배송비 무료 기준이 뭐예요?   102        1         1   
+내 택배 지금 어디쯤인지 보고 싶어요   103        1         2  ↓
+ 소파 같은 큰 물건은 어떻게 와요?   104        1         1   
+     미국으로 보내줄 수 있나요?   105        1         1   
+    카드 할부 몇 개월까지 돼요?   202        1         1   
+  받은 지 5일 됐는데 반품 돼요?   301        1         1   
+         물건이 깨져서 왔어요   303        1         1   
+          환불 며칠 걸려요?   401        1         1   
+       주문 취소 어떻게 해요?   501        1         1   
+            비번 까먹었어요   601        3         2  ↑
+       포인트 유효기간 있나요?   701        1         1   
+검색만      질문당 18 ms
+검색+리랭킹   질문당 199 ms</code></pre></div><div class="task"><h4>결과에서 볼 곳</h4><ol><li>↑ '비번 까먹었어요' 3위 → 2위, ↓ '내 택배 지금 어디쯤인지 보고 싶어요' 1위 → 2위. 하나를 고치고 하나를 망가뜨렸습니다.</li><li>질문당 18 ms → 199 ms로 약 11배 느려집니다. 후보 8개마다 모델을 한 번씩 돌리기 때문입니다. 후보 수(pool)를 늘릴수록 더 느려집니다(과제 2).</li></ol></div></section>
+<section aria-labelledby="tab-u08" class="panel" hidden="" id="u08" role="tabpanel"><div class="crumb">Part 4. 마무리 · A3-M2-2</div><h1>08. 실습 과제</h1><p class="lead">04_실습과제.ipynb의 준비 셀부터 실행합니다. 준비 셀에 <code>search</code>, <code>search_rerank</code>, <code>evaluate</code>, <code>summary</code>가 모두 들어 있습니다.</p><div class="tablewrap "><table><thead><tr><th>과제</th><th>확인하는 것</th><th>통과 기준</th></tr></thead><tbody><tr><td>1 카테고리 필터 효과</td><td>search(categories=...), 평가</td><td>필터 없음 / 정답 카테고리 필터 비교표</td></tr><tr><td>2 pool 고르기</td><td>search_rerank(pool=...), 시간</td><td>pool별 Hit@1·MRR·ms 표</td></tr><tr><td>3 평가 질문 늘리기</td><td>평가 데이터 만들기</td><td>17개로 다시 비교</td></tr></tbody></table></div><h3>08-1. 준비</h3><p>모든 과제가 함께 쓰는 준비 셀입니다. 02 노트북을 먼저 실행해 faq_store/가 있어야 합니다.</p><div class="codebox"><div class="codehead"><span>04_실습과제.ipynb · x0</span><button class="copy" type="button">코드 복사</button></div><pre><code>import json, time
+import numpy as np
+import pandas as pd
+import faiss
+from emb import embed, EMB_MODEL, RERANK_MODEL
+
+index = faiss.read_index("faq_store/index.faiss")
+meta = pd.read_csv("faq_store/meta.csv").set_index("faq_id")
+man = json.load(open("faq_store/manifest.json", encoding="utf-8"))
+assert man["model"] == EMB_MODEL, "다른 모델로 만든 인덱스입니다"
+tests = pd.read_csv("shop_faq_tests.csv")
+
+def ids_of(categories):
+    return meta.index[meta["category"].isin(categories)].to_numpy(dtype="int64")
+
+def search(question, k=3, categories=None):
+    params = None
+    if categories:
+        params = faiss.SearchParameters(sel=faiss.IDSelectorBatch(ids_of(categories)))
+    D, I = index.search(embed([question], kind="query"), k, params=params)
+    hits = [(int(i), float(d)) for d, i in zip(D[0], I[0]) if i != -1]
+    res = meta.loc[[i for i, _ in hits], ["category", "question", "answer"]].copy()
+    res.insert(0, "score", [round(s, 3) for _, s in hits])
+    return res
+
+print("FAQ", index.ntotal, "건 | 평가 질문", len(tests), "개 | 모델", man["model"])
+from transformers import pipeline
+rr = pipeline("text-classification", model=RERANK_MODEL, device=-1)
+
+def search_rerank(question, k=3, pool=8, categories=None):
+    cand = search(question, k=pool, categories=categories)              # 1단계: FAISS로 후보
+    pairs = [{"text": question, "text_pair": f"{r.question} {r.answer}"} for r in cand.itertuples()]
+    cand["rerank"] = [round(s["score"], 3) for s in rr(pairs, function_to_apply="none")]
+    return cand.sort_values("rerank", ascending=False).head(k)          # 2단계: 다시 줄 세우기
+
+def evaluate(fn, **kw):
+    rows = []
+    for q, gold in tests.itertuples(index=False):
+        ranked = fn(q, **kw).index.tolist()
+        rows.append({"question": q, "gold": gold, "top1": ranked[0],
+                     "rank": ranked.index(gold) + 1 if gold in ranked else np.nan})
+    return pd.DataFrame(rows)
+
+def summary(ev):
+    return {"Hit@1": round((ev["rank"] == 1).mean(), 3), "Hit@3": round((ev["rank"] &lt;= 3).mean(), 3),
+            "MRR": round((1 / ev["rank"]).fillna(0).mean(), 3)}</code></pre></div><h3>08-2. 과제 1 · 카테고리를 알면 얼마나 좋아지나</h3><p>평가 질문마다 정답 FAQ의 카테고리로 필터를 걸고(<code>categories=[...]</code>) 검색해서, 필터 없을 때와 Hit@1·MRR을 비교하세요. 화면에서 고객이 카테고리를 먼저 고르는 상황입니다.</p><div class="codebox"><div class="codehead"><span>04_실습과제.ipynb · x1</span><button class="copy" type="button">코드 복사</button></div><pre><code># TODO</code></pre></div><details class="qa"><summary>정답 코드와 실행 결과 보기</summary><div class="codebox"><div class="codehead"><span>04_실습과제_정답.ipynb</span><button class="copy" type="button">코드 복사</button></div><pre><code>rows = []
+for q, gold in tests.itertuples(index=False):
+    cat = meta.loc[gold, "category"]
+    ranked = search(q, k=5, categories=[cat]).index.tolist()
+    rows.append({"question": q, "gold": gold, "top1": ranked[0], "rank": ranked.index(gold) + 1 if gold in ranked else np.nan})
+ev_cat = pd.DataFrame(rows)
+print(pd.DataFrame({"필터 없음": summary(evaluate(search, k=5)), "정답 카테고리 필터": summary(ev_cat)}).to_string())</code></pre></div><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>       필터 없음  정답 카테고리 필터
+Hit@1  0.917         1.0
+Hit@3  1.000         1.0
+MRR    0.944         1.0</code></pre></div></details><h3>08-3. 과제 2 · 리랭킹 후보 수(pool) 고르기</h3><p><code>search_rerank</code>의 <code>pool</code>을 3, 5, 8, 20으로 바꿔 Hit@1·MRR과 질문당 시간을 표로 만드세요. 후보가 많을수록 항상 좋은지 확인합니다.</p><div class="codebox"><div class="codehead"><span>04_실습과제.ipynb · x2</span><button class="copy" type="button">코드 복사</button></div><pre><code># TODO</code></pre></div><details class="qa"><summary>정답 코드와 실행 결과 보기</summary><div class="codebox"><div class="codehead"><span>04_실습과제_정답.ipynb</span><button class="copy" type="button">코드 복사</button></div><pre><code>rows = []
+for pool in [3, 5, 8, 20]:
+    t = time.perf_counter()
+    ev = evaluate(search_rerank, k=min(5, pool), pool=pool)
+    ms = (time.perf_counter() - t) / len(tests) * 1000
+    rows.append({"pool": pool, **summary(ev), "ms/질문": round(ms)})
+print(pd.DataFrame(rows).to_string(index=False))</code></pre></div><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code> pool  Hit@1  Hit@3   MRR  ms/질문
+    3  0.917    1.0 0.958     90
+    5  0.833    1.0 0.917    135
+    8  0.833    1.0 0.917    200
+   20  0.833    1.0 0.917    473</code></pre></div></details><h3>08-4. 과제 3 · 평가 질문 늘리기</h3><p>고객이 실제로 쓸 법한 질문 5개를 직접 만들어 정답 FAQ 번호와 함께 <code>tests</code>에 추가하고, 검색만/검색+리랭킹 결과를 다시 비교하세요. 평가 질문이 늘면 숫자가 어떻게 바뀌나요?</p><div class="codebox"><div class="codehead"><span>04_실습과제.ipynb · x3</span><button class="copy" type="button">코드 복사</button></div><pre><code>new = pd.DataFrame([
+    # ("질문", 정답 faq_id),
+], columns=tests.columns)
+# TODO</code></pre></div><details class="qa"><summary>정답 코드와 실행 결과 보기</summary><div class="codebox"><div class="codehead"><span>04_실습과제_정답.ipynb</span><button class="copy" type="button">코드 복사</button></div><pre><code>new = pd.DataFrame([
+    ("주문한 거 없던 걸로 해 주세요", 501), ("로그인 암호가 생각이 안 나요", 601), ("쿠폰이랑 포인트 같이 써도 돼요?", 702),
+    ("마음이 바뀌어서 돌려보내면 택배비 내야 해요?", 302), ("현금영수증 받고 싶어요", 203),
+], columns=tests.columns)
+print(new.assign(faq_question=meta.loc[new["gold_faq_id"], "question"].values).to_string(index=False))
+tests = pd.concat([tests, new], ignore_index=True)
+print("평가 질문", len(tests), "개")
+print(pd.DataFrame({"검색만": summary(evaluate(search, k=5)), "검색+리랭킹": summary(evaluate(search_rerank, k=5, pool=8))}).to_string())</code></pre></div><div class="codebox outbox"><div class="codehead"><span>실행 결과</span><button class="copy" type="button">결과 복사</button></div><pre><code>                 question  gold_faq_id          faq_question
+        주문한 거 없던 걸로 해 주세요          501         주문을 취소하고 싶어요.
+         로그인 암호가 생각이 안 나요          601         비밀번호를 잊어버렸어요.
+       쿠폰이랑 포인트 같이 써도 돼요?          702  쿠폰과 적립금을 같이 쓸 수 있나요?
+마음이 바뀌어서 돌려보내면 택배비 내야 해요?          302 단순 변심 반품 배송비는 누가 내나요?
+             현금영수증 받고 싶어요          203     현금영수증은 어떻게 발급하나요?
+평가 질문 17 개
+         검색만  검색+리랭킹
+Hit@1  0.824   0.824
+Hit@3  0.941   1.000
+MRR    0.873   0.912</code></pre></div></details><h3>08-5. 과제 결과 읽기</h3><div class="tablewrap "><table><thead><tr><th>과제</th><th>결과</th><th>읽을거리</th></tr></thead><tbody><tr><td>1 카테고리 필터</td><td>Hit@1 0.917 → <b>1.000</b>, MRR 0.944 → 1.000</td><td>고객이 카테고리를 먼저 고르면 '비번 까먹었어요'도 회원 FAQ 안에서 찾아 맞힙니다. 메타데이터 필터가 리랭킹보다 싸고 확실한 개선입니다.</td></tr><tr><td>2 pool 고르기</td><td>pool 3: Hit@1 0.917 · 90 ms / pool 5·8·20: 0.833 · 135~473 ms</td><td>후보를 늘릴수록 느려지기만 하고 정확도는 오르지 않았습니다. 이 데이터에서는 pool 3이 가장 좋습니다.</td></tr><tr><td>3 평가 질문 17개</td><td>Hit@1 0.824 = 0.824, Hit@3 0.941 → <b>1.000</b>, MRR 0.873 → <b>0.912</b></td><td>질문이 늘자 리랭킹이 MRR을 올렸습니다. 평가 질문 12개로 내린 결론이 17개에서는 바뀝니다. 평가 세트가 작으면 한두 문제로 결론이 뒤집힙니다.</td></tr></tbody></table></div></section>
+<section aria-labelledby="tab-u09" class="panel" hidden="" id="u09" role="tabpanel"><div class="crumb">Part 4. 마무리 · A3-M2-2</div><h1>09. 정리 — FAQ 검색기 한 장</h1><p class="lead">CSV 하나로 실전 검색기의 뼈대를 모두 만들었습니다. 다음 모듈(Chroma)은 여기서 직접 만든 메타데이터 표·필터·저장을 DB가 대신해 주는 모습입니다.</p><div class="tablewrap "><table><thead><tr><th>단계</th><th>코드</th><th>주의</th></tr></thead><tbody><tr><td>읽기</td><td><code>pd.read_csv</code>, <code>doc = question + answer</code></td><td>답까지 넣어야 답에만 있는 말로도 찾힘</td></tr><tr><td>임베딩</td><td><code>pipeline("feature-extraction")</code> → 토큰 평균 → <code>normalize_L2</code></td><td>문서 <code>passage:</code>, 질문 <code>query:</code>, float32 (개수, 384)</td></tr><tr><td>인덱스</td><td><code>IndexIDMap2(IndexFlatIP(d))</code>, <code>add_with_ids</code></td><td>id는 int64, 결과에서 -1 제거</td></tr><tr><td>메타데이터</td><td><code>meta = faq.set_index("faq_id")</code>, <code>meta.loc[I[0]]</code></td><td>FAISS에는 번호만, 원문은 표에</td></tr><tr><td>필터</td><td><code>IDSelectorBatch</code>, <code>IDSelectorNot</code>, <code>SearchParameters</code></td><td>검색 안에서 거르기 — k개를 채움</td></tr><tr><td>저장</td><td><code>write_index</code> + <code>meta.csv</code> + <code>manifest.json</code></td><td>열 때 모델 이름 확인</td></tr><tr><td>평가</td><td>Hit@1, Hit@3, MRR</td><td>틀린 질문을 직접 읽기</td></tr><tr><td>기준값</td><td>쇼핑 vs 무관 질문 점수 분포</td><td>e5는 점수가 전반적으로 높음</td></tr><tr><td>리랭킹</td><td><code>pipeline("text-classification")</code> + <code>text_pair</code></td><td>순서만 고침, 후보 밖 정답은 못 찾음, 느려짐</td></tr></tbody></table></div><h3>09-1. 이 FAQ 데이터에서 나온 숫자</h3><div class="tablewrap "><table><thead><tr><th>방법</th><th>Hit@1</th><th>Hit@3</th><th>MRR</th><th>질문당 시간</th></tr></thead><tbody><tr><td>검색만 (e5 + FAISS)</td><td>0.917</td><td>1.000</td><td>0.944</td><td>18 ms</td></tr><tr><td>검색 + 리랭킹 (pool 8)</td><td>0.833</td><td>1.000</td><td>0.917</td><td>199 ms</td></tr><tr><td>검색 + 리랭킹 (pool 3)</td><td>0.917</td><td>1.000</td><td>0.958</td><td>90 ms</td></tr><tr><td>검색 + 정답 카테고리 필터</td><td>1.000</td><td>1.000</td><td>1.000</td><td>—</td></tr></tbody></table></div><p class="hint">평가 질문 12개 기준. 실행 환경: Windows · CPU 8코어 · faiss 1.15.1 · transformers 5.21.1 · torch 2.15 CPU. 전체 노트북 실행 93.6초(모델 다운로드 제외).</p></section>
+</main></div><footer class="footer">© 2026 부성순. All rights reserved.<small>교안의 자체 해설 및 실습 예제에 대한 저작권 표시입니다. 외부 라이브러리·모델의 권리는 각 권리자에게 있습니다. 실습 데이터(쇼핑몰 FAQ·말뭉치)는 교육용 가상 데이터입니다.</small></footer><script>(function(){
+const tabs=[...document.querySelectorAll('[role="tab"]')];
+function setTab(i,focus=false){tabs.forEach((t,j)=>{const on=i===j;t.setAttribute('aria-selected',on?'true':'false');t.tabIndex=on?0:-1;document.getElementById(t.getAttribute('aria-controls')).hidden=!on;});if(focus)tabs[i].focus({preventScroll:true});history.replaceState(null,'','#'+tabs[i].getAttribute('aria-controls'));window.scrollTo({top:0});}
+tabs.forEach((t,i)=>{t.addEventListener('click',()=>setTab(i));t.addEventListener('keydown',e=>{if(['ArrowDown','ArrowUp','ArrowLeft','ArrowRight'].includes(e.key)){e.preventDefault();setTab((i+(e.key==='ArrowDown'||e.key==='ArrowRight'?1:-1)+tabs.length)%tabs.length,true);}})});
+const index=tabs.findIndex(t=>'#'+t.getAttribute('aria-controls')===location.hash);if(index>=0)setTab(index);
+document.querySelectorAll('.copy').forEach(b=>{b.dataset.label=b.textContent;});document.querySelectorAll('.copy').forEach(b=>b.addEventListener('click',async()=>{const code=b.closest('.codebox').querySelector('pre').textContent;try{await navigator.clipboard.writeText(code);b.textContent='복사됨';}catch(e){b.textContent='복사 실패';}setTimeout(()=>b.textContent=b.dataset.label||'코드 복사',1500); }));
+})();</script></body></html>
