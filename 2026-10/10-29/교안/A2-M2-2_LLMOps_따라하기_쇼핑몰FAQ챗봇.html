@@ -1,0 +1,2029 @@
+<!DOCTYPE html>
+
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<title>LLMOps 따라하기 | 쇼핑몰 FAQ 챗봇</title>
+<!-- Pretendard & JetBrains Mono Font -->
+<link as="style" crossorigin="" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&amp;display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #ffffff;
+    --surface: #f8fafc;
+    --ink: #0f172a;
+    --quiet: #64748b;
+    --line: #e2e8f0;
+    --edge: #cbd5e1;
+    --accent: #FF2E93;
+    --accent-soft: rgba(255, 46, 147, 0.06);
+    --warn: #f59e0b;
+    --warn-soft: rgba(245, 158, 11, 0.08);
+    --good: #10b981;
+    --good-soft: rgba(16, 185, 129, 0.08);
+    --crit: #ef4444;
+    --code-bg: #0f172a;
+    --banner-bg: #ffffff;
+    --banner-ink: #0f172a;
+  }
+  
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: 'Pretendard', sans-serif;
+    font-size: 18px; line-height: 1.75;
+  }
+
+  /* ── 상단 배너 / 타이틀 영역 ── */
+  .banner { 
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); 
+    color: var(--banner-ink); 
+    border-bottom: 1px solid var(--line); 
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.02);
+  }
+  .banner-in { 
+    max-width: 1320px; 
+    margin: 0 auto; 
+    padding: 16px 24px; 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    gap: 24px; 
+  }
+  .banner-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .banner .org { 
+    font-size: 16px; 
+    font-weight: 800; 
+    color: var(--ink); 
+    letter-spacing: -0.01em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .banner .org::before {
+    content: "";
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    background: var(--accent);
+    border-radius: 50%;
+  }
+  .banner .who { 
+    font-size: 15px; 
+    color: var(--quiet); 
+    font-weight: 600;
+  }
+  .banner .who a {
+    color: var(--accent);
+    text-decoration: none;
+  }
+  .banner .who a:hover {
+    text-decoration: underline;
+  }
+  .banner a { color: inherit; }
+  .banner .home-link { 
+    font-size: 15px; 
+    font-weight: 700; 
+    text-decoration: none; 
+    border: 1px solid var(--line); 
+    border-radius: 8px; 
+    padding: 6px 14px; 
+    background: #ffffff; 
+    color: var(--ink);
+    transition: all 0.2s ease; 
+    letter-spacing: 0.02em;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+  }
+  .banner .home-link:hover { 
+    background: var(--accent); 
+    border-color: var(--accent);
+    color: #ffffff;
+  }
+
+  /* ── 레이아웃: 본문 + 목차 ── */
+  .layout { max-width: 1320px; margin: 0 auto; padding: 32px 24px 96px; display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 40px; align-items: start; }
+  .side { position: sticky; top: 24px; order: 2; max-height: calc(100vh - 48px); overflow-y: auto; background: var(--surface); padding: 16px; border-radius: 16px; border: 1px solid var(--line); }
+  .tabs { display: flex; flex-direction: column; gap: 4px; }
+  .tabs .group { font-size: 15px; font-weight: 800; color: var(--quiet); margin: 16px 0 6px 4px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .tabs .group:first-child { margin-top: 0; }
+  .tabs button {
+    all: unset; cursor: pointer; display: block;
+    font-size: 16px; line-height: 1.45; color: var(--ink);
+    padding: 8px 12px; border-radius: 8px; border: 1px solid transparent;
+    transition: all 0.15s ease;
+  }
+  .tabs button .no { color: var(--accent); font-weight: 700; margin-right: 6px; }
+  .tabs button:hover { background: #f1f5f9; border-color: var(--line); }
+  .tabs button[aria-selected="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); font-weight: 700; }
+  .tabs button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* ── 본문 ── */
+  main { min-width: 0; }
+  .panel { display: none; }
+  .panel:not([hidden]) { display: block; }
+  .crumb { font-size: 15px; font-weight: 800; color: var(--accent); letter-spacing: 0.03em; margin-bottom: 6px; text-transform: uppercase; }
+  h1 { font-size: 32px; line-height: 1.3; margin: 4px 0 16px; letter-spacing: -0.02em; font-weight: 800; }
+  .lead { font-size: 19px; margin: 12px 0 0; color: #334155; font-weight: 500; }
+  h2 { font-size: 26px; line-height: 1.35; margin: 0 0 16px; letter-spacing: -0.01em; font-weight: 800; }
+  h2::before { content: "■ "; color: var(--accent); }
+  h3 { font-size: 20px; margin: 32px 0 12px; font-weight: 700; }
+  h3::before { content: "▶ "; color: var(--accent); font-size: 0.8em; }
+  p { margin: 10px 0; }
+  .sub { color: var(--quiet); font-size: 16px; }
+  .key { font-size: 19px; font-weight: 600; padding: 16px 20px; margin: 20px 0 28px; border-left: 4px solid var(--accent); background: var(--accent-soft); border-radius: 0 12px 12px 0; color: #1e293b; }
+  code { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 16px; background: #f1f5f9; color: #0f172a; padding: 2px 6px; border-radius: 4px; border: 1px solid var(--line); }
+  pre { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 16px; background: var(--code-bg); color: #38bdf8; border: 1px solid #334155; border-radius: 12px; padding: 18px; overflow-x: auto; line-height: 1.6; margin: 16px 0; }
+  pre code { background: none; padding: 0; border: none; color: inherit; }
+
+  .badge { display: inline-block; font-size: 15px; font-weight: 700; color: #fff; background: var(--accent); padding: 1px 8px; border-radius: 6px; margin-left: 6px; line-height: 1.4; vertical-align: 1px; }
+  .stage { display: inline-block; font-size: 15px; font-weight: 700; padding: 2px 8px; border-radius: 6px; border: 1px solid var(--accent); color: var(--accent); white-space: nowrap; line-height: 1.4; background: var(--accent-soft); }
+  .stage.later { border-color: var(--edge); color: var(--quiet); background: #f8fafc; }
+  .num { font-weight: 700; color: var(--accent); white-space: nowrap; }
+
+  /* ── 표 ── */
+  .table-wrap { margin: 16px 0; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); overflow: hidden; }
+  table { border-collapse: collapse; width: 100%; font-size: 16px; }
+  th, td { text-align: left; vertical-align: top; padding: 14px 16px; border-bottom: 1px solid var(--line); }
+  th { font-weight: 700; color: var(--quiet); font-size: 15px; white-space: nowrap; background: #f1f5f9; }
+  tr:last-child td { border-bottom: none; }
+  td.nowrap { white-space: nowrap; }
+  td.nowrap .sub { white-space: normal; font-size: 15px; line-height: 1.5; margin-top: 4px; min-width: 150px; max-width: 220px; }
+  tr.new td { background: var(--accent-soft); }
+
+  /* ── HTML 도형 공통 ── */
+  .fig { margin: 24px 0; padding: 24px; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; }
+  .fig-title { font-size: 18px; font-weight: 800; margin: 0 0 16px; color: var(--ink); }
+  .fig-label { font-size: 15px; font-weight: 800; color: var(--quiet); margin: 20px 0 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .fig-label:first-of-type { margin-top: 0; }
+  .node { position: relative; border: 1px solid var(--edge); border-radius: 12px; padding: 14px 16px; background: var(--bg); transition: border-color 0.2s; }
+  .node.main { border-color: var(--accent); border-width: 2px; background: var(--accent-soft); }
+  .node.newb { border-color: var(--accent); border-width: 2px; }
+  .node.bad { border-color: var(--warn); background: var(--warn-soft); }
+  .node .t { font-size: 16px; font-weight: 700; line-height: 1.4; color: var(--ink); }
+  .node .d { font-size: 15px; color: var(--quiet); line-height: 1.5; margin-top: 4px; }
+  .node .tag { position: absolute; top: -10px; right: 12px; font-size: 15px; font-weight: 700; color: #fff; background: var(--accent); border-radius: 4px; padding: 1px 6px; line-height: 1.4; }
+  .node ul { margin: 6px 0 0; padding-left: 20px; font-size: 15px; }
+  .node ul li { margin: 3px 0; color: var(--quiet); }
+  .node .foot { font-size: 15px; color: var(--quiet); margin-top: 10px; }
+  .node.bad .t { color: #d97706; }
+  .node.main .t.acc { color: var(--accent); }
+
+  /* 가로 흐름: 노드 → 노드 */
+  .flow { display: flex; align-items: stretch; gap: 4px; }
+  .flow > .node { flex: 1 1 0; min-width: 0; text-align: center; }
+  .flow.left > .node { text-align: left; }
+  .arr { flex: none; width: 28px; display: grid; place-items: center; color: var(--edge); font-size: 18px; font-weight: 700; }
+  .arr::before { content: "→"; }
+  .band { margin-top: 16px; padding: 12px 16px; border: 1px solid var(--good); background: var(--good-soft); border-radius: 10px; font-size: 15px; font-weight: 600; color: #065f46; text-align: center; }
+
+  /* V-모델 */
+  .vm { display: grid; grid-template-columns: 1fr 170px 1fr; gap: 12px 0; align-items: center; }
+  .vm .node { text-align: center; }
+  .vm .l2 { margin-left: 14%; }
+  .vm .r2 { margin-right: 14%; }
+  .vm .link { text-align: center; font-size: 15px; color: var(--quiet); border-top: 2px dashed var(--edge); padding-top: 4px; margin: 0 8px; font-weight: 600; }
+  .vm .impl { grid-column: 1 / -1; justify-self: center; width: 40%; }
+  .vm-head { display: grid; grid-template-columns: 1fr 170px 1fr; font-size: 15px; font-weight: 800; color: var(--quiet); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .vm-head span:last-child { text-align: right; }
+
+  /* ── 목업 ── */
+  .mock { border: 1px solid var(--line); border-radius: 16px; overflow: hidden; background: var(--bg); margin: 24px 0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+  .mock-bar { display: flex; align-items: center; gap: 8px; padding: 12px 16px; background: #f1f5f9; border-bottom: 1px solid var(--line); }
+  .mock-bar .dot { width: 10px; height: 10px; border-radius: 50%; background: #cbd5e1; flex: none; }
+  .mock-bar .url { flex: 1; min-width: 0; margin-left: 8px; font-size: 15px; color: var(--quiet); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 4px 12px; font-family: "JetBrains Mono", monospace; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .mock-body { padding: 24px; }
+  .mock-title { font-size: 20px; font-weight: 800; margin: 0 0 16px; }
+  .mock-input { display: flex; gap: 8px; margin-bottom: 20px; }
+  .mock-input .field { flex: 1; min-width: 0; border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; font-family: "JetBrains Mono", monospace; font-size: 15px; background: #f8fafc; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .mock-input .btn { background: var(--accent); color: #fff; border-radius: 8px; padding: 10px 20px; font-weight: 700; font-size: 15px; white-space: nowrap; }
+  .mock-summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+  .mock-summary .cell { border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; background: var(--surface); }
+  .mock-summary .k { font-size: 15px; color: var(--quiet); font-weight: 600; }
+  .mock-summary .v { font-size: 20px; font-weight: 800; margin-top: 2px; }
+  .mock-summary .v.small { font-size: 15px; padding-top: 4px; }
+  .mock-tabs { display: flex; gap: 8px; border-bottom: 1px solid var(--line); margin-bottom: 16px; flex-wrap: wrap; }
+  .mock-tabs span { font-size: 15px; padding: 8px 14px; border-bottom: 2px solid transparent; color: var(--quiet); font-weight: 600; cursor: default; }
+  .mock-tabs span.on { border-color: var(--accent); color: var(--accent); font-weight: 800; }
+  .vcard { border: 1px solid var(--line); border-radius: 12px; padding: 16px; margin-bottom: 16px; background: var(--surface); }
+  .vcard .top { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .sev { font-size: 15px; font-weight: 700; padding: 2px 8px; border-radius: 4px; color: #fff; line-height: 1.4; text-transform: uppercase; }
+  .sev.critical { background: var(--crit); }
+  .sev.major { background: var(--warn); color: #fff; }
+  .rid { font-family: "JetBrains Mono", monospace; font-weight: 700; font-size: 15px; color: var(--ink); }
+  .wc { font-size: 15px; color: var(--quiet); font-weight: 600; }
+  .vcard .msg { font-weight: 700; margin: 4px 0 10px; font-size: 16px; }
+  .vcard .el { font-family: "JetBrains Mono", monospace; font-size: 15px; background: #0f172a; color: #38bdf8; border-radius: 8px; padding: 8px 12px; overflow-x: auto; white-space: nowrap; margin-bottom: 12px; }
+  .vgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .vbox { border: 1px solid var(--line); border-radius: 8px; padding: 12px; font-size: 15px; background: var(--bg); }
+  .vbox .h { font-size: 15px; font-weight: 800; color: var(--quiet); margin-bottom: 6px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .vbox.later { opacity: 0.65; }
+  .score { font-family: "JetBrains Mono", monospace; font-size: 15px; color: var(--quiet); font-weight: 600; }
+
+  .roadmap { display: flex; flex-wrap: wrap; gap: 6px; margin: 16px 0; align-items: center; }
+  .roadmap .chip { font-size: 15px; padding: 6px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--quiet); font-weight: 600; }
+  .roadmap .chip.on { border: 2px solid var(--accent); color: var(--accent); font-weight: 800; background: var(--accent-soft); }
+  .roadmap .sep { color: var(--quiet); margin: 0 4px; font-weight: 800; }
+
+  /* ── 태블릿 이하: 목차를 상단 가로 탭으로 ── */
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: minmax(0, 1fr); gap: 16px; padding: 16px 16px 64px; }
+    .side { order: 0; position: sticky; top: 0; z-index: 5; max-height: none; overflow: visible; background: var(--bg); padding: 12px 0; border-bottom: 1px solid var(--line); border-radius: 0; min-width: 0; }
+    .tabs { flex-direction: row; overflow-x: auto; gap: 6px; scrollbar-width: thin; }
+    .tabs .group { display: none; }
+    .tabs button { white-space: nowrap; font-size: 15px; padding: 6px 12px; border-color: var(--line); background: var(--surface); }
+  }
+
+  /* ── 모바일: 도형은 세로로, 표는 카드로 ── */
+  @media (max-width: 760px) {
+    body { font-size: 17px; }
+    .banner-in { flex-direction: column; align-items: flex-start; padding: 12px 16px; gap: 12px; }
+    .banner-left { flex-direction: column; align-items: flex-start; gap: 4px; }
+    .banner .home-link { align-self: stretch; text-align: center; }
+    h1 { font-size: 24px; }
+    h2 { font-size: 21px; }
+    h3 { font-size: 18px; }
+    .lead, .key { font-size: 16px; }
+    .key { padding: 12px 16px; }
+    .fig { padding: 16px; }
+
+    .flow { flex-direction: column; }
+    .flow > .node { flex: none; }
+    .arr { width: auto; height: 24px; }
+    .arr::before { content: "↓"; }
+
+    .vm, .vm-head { grid-template-columns: 1fr; }
+    .vm-head { display: none; }
+    .vm .l2, .vm .r2 { margin: 0; }
+    .vm .impl { width: 100%; }
+    .vm .link { border-top: none; border-left: 2px dashed var(--edge); text-align: left; padding: 2px 0 2px 12px; margin: 0 0 0 24px; }
+    .vm .gap { height: 10px; }
+
+    .mock-body { padding: 16px; }
+    .mock-summary { grid-template-columns: 1fr 1fr; }
+    .vgrid { grid-template-columns: 1fr; }
+
+    table.cards, table.cards tbody, table.cards tr, table.cards td { display: block; width: 100%; }
+    table.cards { font-size: 15px; }
+    table.cards thead { display: none; }
+    table.cards tr { padding: 12px 16px; border-bottom: 1px solid var(--line); }
+    table.cards tr:last-child { border-bottom: none; }
+    table.cards td { border: none; padding: 4px 0; white-space: normal; }
+    table.cards td::before { content: attr(data-label); display: block; font-size: 15px; font-weight: 800; color: var(--quiet); margin-bottom: 2px; text-transform: uppercase; }
+    table.cards td[data-label=""]::before { display: none; }
+    table.cards td:first-child { font-weight: 700; font-size: 15px; color: var(--ink); }
+    table.cards td:first-child::before { display: none; }
+  }
+
+  /* ── 약자 · 링크 ── */
+  abbr[data-full] { text-decoration: underline dotted var(--edge); text-underline-offset: 3px; cursor: help; }
+  .exp { color: var(--quiet); font-size: 0.9em; }
+  a { color: var(--accent); font-weight: 600; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  a.doc { border-bottom: 1px solid var(--accent); }
+  a.doc::after { content: " ↗"; font-size: 0.8em; }
+  .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); max-width: min(560px, calc(100vw - 32px)); background: var(--dark); color: #fff; font-size: 15px; line-height: 1.5; padding: 14px 18px; border-radius: 12px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.15); z-index: 50; border: 1px solid #334155; }
+  .toast[hidden] { display: none; }
+  .toast b { display: block; font-size: 15px; margin-bottom: 2px; color: #38bdf8; }
+
+  @media print {
+    .side { display: none; }
+    .layout { display: block; }
+    .panel[hidden] { display: block; }
+    .panel { margin-bottom: 48px; break-inside: avoid-page; }
+    body { background: #fff; }
+  }
+
+  /* ── 보완 ── */
+  td.nowrap .sub { white-space: normal; }
+  main h4 { font-size: 17px; margin: 24px 0 8px; font-weight: 700; }
+  .flow.tight > .node { padding: 12px 8px; }
+  .flow.tight .t { font-size: 15px; word-break: keep-all; }
+  .flow.tight .d { word-break: keep-all; }
+  .flow.tight .d { font-size: 15px; }
+  .flow.tight .arr { width: 18px; }
+  .make { font-size: 15px; color: var(--quiet); margin: -12px 0 20px; }
+  .make b { color: var(--accent); margin-right: 6px; }
+  :root { --dark: #0f172a; }
+  main ul:not(.tabs), main ol { list-style: disc; padding-left: 22px; margin: 8px 0; }
+  main ol { list-style: decimal; }
+  main li { margin: 4px 0; }
+
+  /* 1.3 절 가독성 보정: 기존 그리드·탭·표 레이아웃 변경 없음 */
+  #s6 { font-size: 18px; line-height: 1.85; }
+  #s6 p, #s6 li { font-size: 18px; line-height: 1.85; }
+  #s6 h2 { font-size: 27px; }
+  #s6 h3 { font-size: 22px; line-height: 1.5; }
+  #s6 .table-wrap table, #s6 .table-wrap td { font-size: 17px; line-height: 1.75; }
+  #s6 .table-wrap th { font-size: 16px; line-height: 1.6; }
+  #s6 p.sub, #s6 .sub { font-size: 16px; line-height: 1.75; }
+  #s6 code { font-size: 16px; }
+  @media (max-width: 760px) {
+    #s6, #s6 p, #s6 li { font-size: 17px; }
+    #s6 .table-wrap table, #s6 .table-wrap td { font-size: 16px; }
+    #s6 .table-wrap th { font-size: 16px; }
+  }
+
+/* 가독성 보강 */
+body {font-size:18px;line-height:1.78}
+main p, main li {font-size:18px}
+main .sub, main .make, main .exp {font-size:16px}
+main table {font-size:17px}
+main th {font-size:16px}
+main td, main td .sub {font-size:16px;line-height:1.65}
+main code, main pre, main pre code {font-size:16px}
+.tabs button, .banner .who {font-size:16px}
+.tabs .group, .crumb, .banner .home-link {font-size:15px}
+.key {font-size:18px}
+.node .d, .vbox, .fig-label, .mock-bar .url, .fig .foot, .score {font-size:16px}
+@media (max-width:760px){body{font-size:17px}main p,main li{font-size:17px}main table,main td{font-size:16px}main code,main pre,main pre code{font-size:15px}}
+
+/* 가독성 보강 2 */
+body {font-size:18px;}
+.tabs button, .tabs .group {font-size:16px;}
+main p, main li {font-size:18px;}
+main table, main td {font-size:17px;}
+main th, main .sub, main .crumb, .banner .who {font-size:16px;}
+main code, main pre, main pre code {font-size:16px;}
+main .fig-label, main .node .d, main .node .foot, main .badge, main .stage {font-size:16px;}
+@media(max-width:760px){body, main p, main li {font-size:17px;} main table, main td, main code, main pre, main pre code {font-size:16px;} .tabs button{font-size:16px;} }
+
+  details.sol { margin: 12px 0 28px; border: 1px solid var(--good); border-radius: 12px; background: var(--good-soft); }
+  details.sol summary { cursor: pointer; padding: 10px 16px; font-weight: 800; color: #065f46; font-size: 16px; }
+  details.sol > div { padding: 0 16px 8px; }
+  .lv { display: inline-block; font-size: 14px; font-weight: 800; border-radius: 6px; padding: 1px 8px; margin-right: 6px; vertical-align: 2px; }
+  .lv.기본 { background: #e0f2fe; color: #075985; } .lv.응용 { background: #fef3c7; color: #92400e; }
+  .lv.도전 { background: #fce7f3; color: #9d174d; } .lv.준비 { background: #f1f5f9; color: #334155; }
+  pre.out { color: #e2e8f0; }
+</style>
+</head>
+<body>
+<div class="banner">
+<div class="banner-in">
+<div class="banner-left">
+<div class="org">청년취업사관학교 AI_클라우드과정(2026년)</div>
+<div class="who">강사 부성순 · <a href="mailto:bakpak@empas.com">bakpak@empas.com</a></div>
+</div>
+<span style="display:inline-flex;gap:8px;align-items:center;flex-wrap:wrap"><a class="home-link" href="/">🏠 홈으로</a><a class="home-link" href="/lectures/files/index.html">📚 강의자료 라이브러리</a></span>
+</div>
+</div>
+<div class="layout">
+<aside class="side">
+<div aria-label="LLMOps 따라하기 목차" aria-orientation="vertical" class="tabs" role="tablist"><div class="group">LLMOps 따라하기</div>
+<button aria-controls="demo" aria-selected="true" id="tab-demo" role="tab" tabindex="0">체험 · 데이터 정제와 유사도</button><button aria-controls="s1" aria-selected="false" id="tab-s1" role="tab" tabindex="-1">개요 · RAG와 LLMOps</button><button aria-controls="s2" aria-selected="false" id="tab-s2" role="tab" tabindex="-1">LLMOps 프로세스</button><button aria-controls="s3" aria-selected="false" id="tab-s3" role="tab" tabindex="-1">준비 · 환경과 데이터</button><button aria-controls="s4" aria-selected="false" id="tab-s4" role="tab" tabindex="-1">구현 ① 정제·검색·생성</button><button aria-controls="s5" aria-selected="false" id="tab-s5" role="tab" tabindex="-1">구현 ② 검증·평가·파이프라인</button><button aria-controls="s6" aria-selected="false" id="tab-s6" role="tab" tabindex="-1">구현 ③ 서빙·피드백</button><button aria-controls="s7" aria-selected="false" id="tab-s7" role="tab" tabindex="-1">시나리오 · 새 데이터가 들어오면</button><button aria-controls="s8" aria-selected="false" id="tab-s8" role="tab" tabindex="-1">실습 과제</button><button aria-controls="s9" aria-selected="false" id="tab-s9" role="tab" tabindex="-1">정리</button></div>
+</aside>
+<main>
+<!-- ═════════════ 체험 ═════════════ -->
+<section aria-labelledby="tab-demo" class="panel" id="demo" role="tabpanel"><div class="crumb">LLMOps 따라하기 · 도입 체험</div>
+<h1>“택배 언제 와요?”와 “배송은 언제 오나요?”는 같은 질문일까?</h1>
+<p class="lead">사람에게는 같은 질문이지만 컴퓨터에게는 글자가 다른 두 문장입니다. 쇼핑몰 고객센터 챗봇을 만들려면 먼저 <b>표기를 하나로 맞추는 데이터 정제</b>를 하고, 그다음 두 문장이 얼마나 비슷한지 <b>코사인 유사도</b>로 계산합니다.</p>
+<h3>① 데이터 정제 체험 — 분야마다 규칙이 다르다</h3>
+<p>분야를 고르면 현장에서 실제로 볼 법한 지저분한 문장이 채워집니다. 문장을 고쳐 보거나 그대로 <b>정제 실행</b>을 눌러 어떤 규칙이 몇 번 적용되는지 확인해 보세요.</p>
+<div class="fig" style="max-width:760px"><div class="fig-title">분야별 정제기</div>
+<div aria-label="분야 선택" role="radiogroup" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px">
+<label class="stage" style="cursor:pointer"><input checked="" name="dom" type="radio" value="쇼핑"/> 쇼핑몰</label>
+<label class="stage" style="cursor:pointer"><input name="dom" type="radio" value="제조"/> 제조</label>
+<label class="stage" style="cursor:pointer"><input name="dom" type="radio" value="의료"/> 의료</label>
+</div>
+<label for="raw" style="font-weight:700;font-size:16px">정제 전 원문</label>
+<textarea id="raw" rows="3" style="display:block;width:100%;font-family:'JetBrains Mono',monospace;font-size:15px;padding:10px 12px;border:1px solid var(--edge);border-radius:8px;margin:4px 0 12px;resize:vertical"></textarea>
+<button id="clean-run" style="cursor:pointer;background:var(--accent);color:#fff;border:0;border-radius:8px;padding:10px 18px;font-size:15px;font-weight:700" type="button">▶ 정제 실행</button>
+<div class="fig-label" style="margin-top:16px">정제 후</div>
+<div class="vcard" style="margin-bottom:12px"><div class="el" id="cleaned" style="white-space:pre-wrap">-</div>
+<div style="font-weight:800;color:var(--quiet);font-size:15px">적용된 규칙</div>
+<ul id="clean-log" style="margin:6px 0 0;padding-left:20px;font-size:15px"><li class="sub">아직 실행하지 않았습니다.</li></ul></div>
+<p aria-live="polite" class="sub" id="clean-status" role="status"></p>
+<p class="sub" id="dom-note" style="margin:0"></p></div>
+<div class="table-wrap"><table><thead><tr><th>정제 단계</th><th>하는 일</th><th>예시</th></tr></thead><tbody>
+<tr><td><b>개인정보 마스킹</b></td><td>외부 LLM API로 보내거나 로그에 남기기 <b>전에</b> 가장 먼저 지운다.</td><td><code>010-1234-5678</code> → <code>[전화번호]</code></td></tr>
+<tr><td><b>공통 정제</b></td><td>전각·호환 문자 정규화(NFKC), HTML 태그, 반복 부호, 천 단위 쉼표</td><td><code>３만</code> → <code>3만</code>, <code>1,200</code> → <code>1200</code></td></tr>
+<tr><td><b>단위 정규화</b></td><td>같은 양의 여러 표기를 숫자 + 표준 단위로 통일</td><td><code>35키로</code> → <code>35kg</code>, <code>５㎞</code> → <code>5km</code>, <code>3만 원</code> → <code>30000원</code></td></tr>
+<tr><td><b>분야별 사전</b></td><td>약어·동의어·줄임말을 표준 용어로 치환</td><td>쇼핑 <code>택배</code>→배송, 제조 <code>NG</code>→불량, 의료 <code>HTN</code>→고혈압</td></tr>
+</tbody></table></div>
+<h3>② 정제 전후로 유사도 계산해 보기</h3>
+<p>버튼을 누르면 <b>원문 그대로</b>와 <b>정제 + 조사 제거 후</b>의 코사인 유사도를 비교합니다. 이 체험은 브라우저에서 단어 개수만 세는 가장 단순한 방식(Bag-of-Words)입니다.</p>
+<div class="fig" style="max-width:760px"><div class="fig-title">문장 유사도 계산기</div>
+<label for="sa" style="font-weight:700;font-size:16px">고객 질문 A</label>
+<input id="sa" style="display:block;width:100%;font:inherit;font-size:16px;padding:10px 12px;border:1px solid var(--edge);border-radius:8px;margin:4px 0 12px" type="text" value="택배 언제 와요?"/>
+<label for="sb" style="font-weight:700;font-size:16px">FAQ 제목 B</label>
+<input id="sb" style="display:block;width:100%;font:inherit;font-size:16px;padding:10px 12px;border:1px solid var(--edge);border-radius:8px;margin:4px 0 14px" type="text" value="배송은 언제 오나요?"/>
+<button id="calc" style="cursor:pointer;background:var(--accent);color:#fff;border:0;border-radius:8px;padding:10px 18px;font-size:15px;font-weight:700" type="button">▶ 코사인 유사도 계산</button>
+<div class="vgrid" style="margin-top:16px">
+<div class="vbox"><div class="h">방법 1 · 원문 어절 그대로</div><div class="score" id="r1">-</div><div class="sub" id="t1" style="margin-top:6px"></div></div>
+<div class="vbox"><div class="h">방법 2 · 정제 + 간이 조사 제거</div><div class="score" id="r2">-</div><div class="sub" id="t2" style="margin-top:6px"></div></div>
+</div>
+<p aria-live="polite" class="sub" id="calc-status" role="status">버튼을 누르면 두 방법의 결과를 비교합니다.</p></div>
+<h3>③ 체험 결과 해석</h3>
+<p>정제 사전이 <code>택배</code>를 <code>배송</code>으로 바꾸고 조사(<code>은</code>)를 떼어 내면 겹치는 단어가 늘어 유사도가 올라갑니다. 방법 2의 조사 제거는 체험용 흉내이고, 실제로는 <b>Kiwi 형태소 분석기</b>가 정확히 분리합니다. ‘와요’와 ‘오나요’처럼 활용형이 다른 경우도 Kiwi는 둘 다 <code>오</code>로 돌려 놓습니다.</p>
+<p>하지만 사전에 없는 새 표현(예: “언제쯤 <b>받아볼</b> 수 있나요?”)은 정제로도 못 잡습니다. 이런 실패는 미리 다 알 수 없고 <b>서비스를 운영하면서 발견</b>됩니다. 바로 여기서 LLMOps가 필요해집니다.</p>
+<div class="key">이번 실습에서는 쇼핑몰 FAQ 챗봇(RAG)을 만들고, <b>FAQ·사전·평가셋 파일이 바뀌면</b> 검증 → 정제·재색인 → 회귀 평가 → 게이트 → 활성 버전 교체가 <b>자동으로</b> 일어나는 LLMOps를 내 PC에 구현합니다. 정제 사전에 없던 “받아볼” 같은 표현이 운영 중에 발견되면 어떻게 고쳐지는지도 직접 따라가 봅니다.</div>
+<h3>참고. 코사인 유사도 한 줄 공식</h3>
+<pre><code>cos(A, B) = (A · B) / (‖A‖ × ‖B‖)
+
+A = 배송 언제 오   → [1, 1, 1]
+B = 배송 언제 오   → [1, 1, 1]   → cos = 1.0 (같은 방향)
+A = 배송 언제      → [1, 1, 0],  B = 배송 오 → [1, 0, 1]
+A·B = 1,  ‖A‖ = ‖B‖ = √2  → cos = 1 / 2 = 0.5</code></pre>
+<p class="sub">1에 가까울수록 비슷하고, 0이면 겹치는 정보가 없습니다. 거리로 쓰려면 <code>코사인 거리 = 1 − 코사인 유사도</code>입니다.</p>
+</section>
+
+<!-- ═════════════ 개념 ═════════════ -->
+<section aria-labelledby="tab-s1" class="panel" hidden="" id="s1" role="tabpanel"><div class="crumb">LLMOps 따라하기 · 개요</div><h1>LLMOps 따라하기 — 쇼핑몰 FAQ 챗봇</h1>
+<p class="key">학습 목표: 쇼핑몰 FAQ 챗봇(RAG)을 만들고, <b>FAQ·사전·평가셋 파일이 바뀌면 검증 → 정제·재색인 → 회귀 평가 → 게이트 → 활성 버전 교체가 자동으로 일어나는</b> LLMOps를 내 PC에 구현한다. 서버 배포는 다루지 않는다.</p>
+<h3>1. RAG를 만드는 일과 LLMOps는 무엇이 다른가?</h3>
+<p><b>RAG</b>는 앱의 구조다. 질문과 비슷한 FAQ를 찾아 LLM에게 함께 주고 답을 만들게 한다. 한 번 만들면 끝나는 것처럼 보이지만, 실제 서비스에서는 <b>FAQ가 매일 바뀌고, 고객은 예상 못 한 말투로 묻고, 누군가는 잘못된 데이터를 올린다</b>. <b>LLMOps</b>는 이런 변화가 생길 때마다 사람이 처음부터 다시 작업하지 않고, <b>정해진 절차가 자동으로 돌아 검증된 것만 서비스에 반영</b>되게 만드는 운영 방식이다.</p>
+<div class="table-wrap"><table><thead><tr><th>상황</th><th>RAG만 있는 경우</th><th>이번에 만드는 LLMOps</th></tr></thead><tbody>
+<tr><td><b>새 FAQ를 추가했다</b></td><td>개발자가 정제·색인을 다시 돌리고 몇 개 물어본다</td><td>파일 저장 → 변경 감지 → 파이프라인 자동 실행 → 통과하면 새 버전 활성</td></tr>
+<tr><td><b>새 FAQ가 기존 답을 망가뜨렸다</b></td><td>고객 민원이 와야 안다</td><td>회귀 평가가 “이전엔 맞혔는데 지금 틀린 질문”을 찾아 게이트에서 막는다</td></tr>
+<tr><td><b>전화번호가 섞인 FAQ가 올라왔다</b></td><td>그대로 고객에게 노출된다</td><td>데이터 검증 단계에서 멈추고 활성 버전은 그대로 유지된다</td></tr>
+<tr><td><b>고객이 못 알아듣는 말투로 물었다</b></td><td>어디서 실패했는지 모른다</td><td>로그 · 👎 피드백 → 검토 큐 → 라벨링 → 평가셋에 추가 → 다시 자동 실행</td></tr>
+<tr><td><b>새 버전이 이상하다</b></td><td>코드를 되돌리기 어렵다</td><td>버전마다 색인·점수를 보관 → <code>rollback()</code> 한 줄로 되돌림</td></tr>
+</tbody></table></div>
+<h3>2. 이번에 만드는 것 — 파일 3개가 시스템을 움직인다</h3>
+<div class="fig"><div class="fig-title">사람은 파일만 고치고, 나머지는 자동으로</div>
+<div class="flow tight">
+<div class="node bad"><div class="t">사람</div><div class="d">FAQ 추가·수정<br/>사전 추가<br/>라벨링</div></div>
+<div class="arr"></div>
+<div class="node newb"><div class="t">data/ 파일 3개</div><div class="d">faq.csv<br/>synonyms.csv<br/>eval_set.jsonl</div></div>
+<div class="arr"></div>
+<div class="node main"><div class="t acc">변경 감지</div><div class="d">fingerprint()<br/>check_and_run()</div></div>
+<div class="arr"></div>
+<div class="node main"><div class="t acc">파이프라인</div><div class="d">검증 → 색인 → 회귀 평가 → 게이트</div></div>
+<div class="arr"></div>
+<div class="node"><div class="t">활성 버전</div><div class="d">registry.json<br/>artifacts/v00N</div></div>
+</div>
+<div class="band">챗봇(ask)은 항상 “게이트를 통과한 활성 버전”으로만 답한다</div></div>
+<h3>3. 사용하는 기술</h3>
+<div class="table-wrap"><table><thead><tr><th>기술</th><th>역할</th><th>이번 실습에서 하는 일</th></tr></thead><tbody>
+<tr><td><b>데이터 정제</b></td><td>표기 통일 · 개인정보 제거</td><td>“35키로”→35kg, “3만 원”→30000원, 사전 파일로 “택배”→배송, 전화번호 마스킹</td></tr>
+<tr><td><b>Kiwi</b> (kiwipiepy)</td><td>한국어 형태소 분석</td><td>“와요/오나요” → <code>오</code>처럼 조사·어미를 떼고 핵심어만 남긴다</td></tr>
+<tr><td><b>TF-IDF</b></td><td>단어 빈도 기반 키워드 벡터</td><td>FAQ마다 중요한 단어에 가중치를 준다</td></tr>
+<tr><td><b>허깅페이스 토크나이저 · BERT</b></td><td>서브워드 분할 · 문장 의미 벡터(768차원)</td><td>표현이 달라도 뜻이 비슷한 FAQ를 찾는다</td></tr>
+<tr><td><b>코사인 유사도</b></td><td>벡터 방향 비교</td><td>TF-IDF 점수와 BERT 점수를 섞어 순위를 정한다</td></tr>
+<tr><td><b>GPT</b> (OpenAI API)</td><td>문장 생성</td><td>찾은 FAQ만 근거로 답하고 근거 id를 붙인다 (키가 없으면 mock)</td></tr>
+<tr><td><b>LLMOps 장치</b></td><td>운영 자동화</td><td>데이터 검증 · 회귀 평가 · 게이트 · 버전 레지스트리 · 로그 · 피드백 · 롤백</td></tr>
+</tbody></table></div>
+</section>
+
+<!-- ═════════════ 프로세스 ═════════════ -->
+<section aria-labelledby="tab-s2" class="panel" hidden="" id="s2" role="tabpanel"><div class="crumb">LLMOps 따라하기 · LLMOps 프로세스</div>
+<h2>LLMOps 프로세스 한눈에 보기</h2>
+<p class="lead">먼저 실제 서비스에서 LLMOps가 어떻게 자동으로 도는지 전체 그림을 보고, 이어서 이번 실습이 그중 무엇을 내 PC에서 그대로 구현하는지 확인한다.</p>
+<style>
+  .lm-wrap { margin: 24px 0; padding: 24px; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; }
+  .lm-lane { display: grid; grid-template-columns: 150px minmax(0,1fr); gap: 12px; align-items: stretch; }
+  .lm-head { border-radius: 12px; padding: 14px 12px; display: flex; flex-direction: column; justify-content: center; gap: 4px; }
+  .lm-head .n { font-size: 17px; font-weight: 800; line-height: 1.3; }
+  .lm-head .s { font-size: 14px; line-height: 1.4; opacity: .85; }
+  .lm-head.trig { background: #e2e8f0; color: #0f172a; }
+  .lm-head.pipe { background: #24292f; color: #fff; }
+  .lm-head.dep  { background: #232f3e; color: #fff; border-left: 6px solid #ff9900; }
+  .lm-head.obs  { background: #0f766e; color: #fff; }
+  .lm-head.hum  { background: var(--accent); color: #fff; }
+  .lm-body { min-width: 0; }
+  .lm-body .flow > .node { text-align: left; padding: 12px; }
+  .lm-body .node .t { font-size: 15px; word-break: keep-all; }
+  .lm-body .node .d { font-size: 14px; word-break: keep-all; }
+  .lm-trig { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 10px; }
+  .lm-chip { display: inline-block; font-family: "JetBrains Mono", monospace; font-size: 12.5px; line-height: 1.5; background: #f1f5f9; border: 1px solid var(--line); border-radius: 5px; padding: 0 5px; margin: 4px 3px 0 0; color: #0f172a; white-space: nowrap; }
+  .lm-chip.aws { background: #fff7ed; border-color: #fed7aa; color: #9a3412; }
+  .lm-chip.git { background: #f6f8fa; border-color: #d0d7de; color: #24292f; }
+  .lm-conn { display: grid; grid-template-columns: 150px minmax(0,1fr); gap: 12px; margin: 6px 0; }
+  .lm-conn span { grid-column: 2; font-size: 14px; font-weight: 700; color: var(--quiet); padding-left: 12px; border-left: 2px dashed var(--edge); }
+  .lm-conn.back span { color: #9d174d; border-left-color: var(--accent); }
+  .lm-auto { display: inline-block; font-size: 12px; font-weight: 800; color: #065f46; background: var(--good-soft); border: 1px solid var(--good); border-radius: 4px; padding: 0 5px; margin-left: 4px; vertical-align: 1px; }
+  .lm-man { display: inline-block; font-size: 12px; font-weight: 800; color: #9d174d; background: var(--accent-soft); border: 1px solid var(--accent); border-radius: 4px; padding: 0 5px; margin-left: 4px; vertical-align: 1px; }
+  .lm-legend { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 16px; font-size: 14px; color: var(--quiet); }
+  .lm-legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
+  .lm-tl { margin: 16px 0 0; border: 1px solid var(--line); border-radius: 12px; background: var(--bg); padding: 16px 18px; }
+  .lm-tl .row { display: grid; grid-template-columns: 64px minmax(0,1fr) auto; gap: 10px; padding: 7px 0; border-bottom: 1px dashed var(--line); font-size: 15px; align-items: baseline; }
+  .lm-tl .row:last-child { border-bottom: none; }
+  .lm-tl .tm { font-family: "JetBrains Mono", monospace; font-weight: 700; color: var(--accent); }
+  @media (max-width: 760px) {
+    .lm-wrap { padding: 16px; }
+    .lm-lane, .lm-conn { grid-template-columns: 1fr; }
+    .lm-conn span { grid-column: 1; }
+    .lm-trig { grid-template-columns: 1fr; }
+    .lm-tl .row { grid-template-columns: 56px minmax(0,1fr); }
+    .lm-tl .row > :last-child { grid-column: 2; }
+  }
+</style>
+<h3>실제 LLMOps — 변경이 생기면 파이프라인이 자동으로 돈다 (목업)</h3>
+<p>FAQ 답변이 새로 들어오거나 바뀔 때마다 사람이 정제·색인·평가·배포를 다시 하면 운영할 수 없다. 실제 LLMOps는 <b>어떤 변경이든 이벤트로 감지</b>해 <b>같은 자동 파이프라인</b>을 태우고, 평가를 통과한 것만 <b>단계적으로 배포</b>하며, 운영 신호가 나빠지면 <b>자동으로 롤백</b>한다. 사람은 라벨링·승인 같은 <b>판단</b>만 한다. Git과 AWS는 구조를 이해하기 위한 그림이며, 각 칸의 함수 이름은 이번 실습 코드에서 같은 역할을 하는 부분이다. <b>③ 단계적 배포는 이번 실습에서 제외</b>하고, 그 자리를 로컬의 “활성 버전 교체”로 대신한다.</p>
+<div class="lm-wrap" role="img" aria-label="LLMOps 전체 프로세스 목업: 데이터·코드·운영 신호 세 가지 트리거가 같은 자동 파이프라인으로 들어가 평가와 게이트를 거쳐 단계적으로 배포되고, 관측과 사람의 검토 결과가 다시 트리거가 되는 순환 구조">
+<div class="fig-title">LLMOps 전체 프로세스 — 쇼핑몰 FAQ 챗봇</div>
+
+<!-- ① 트리거 -->
+<div class="lm-lane">
+<div class="lm-head trig"><span class="n">① 변경 감지</span><span class="s">트리거 3종</span></div>
+<div class="lm-body"><div class="lm-trig">
+<div class="node newb"><div class="t">📄 데이터 변경<span class="lm-auto">자동</span></div><div class="d">운영자가 관리자 화면에서 FAQ 답변을 추가·수정 → 저장소 업로드 이벤트</div><span class="lm-chip aws">S3 업로드</span><span class="lm-chip aws">EventBridge</span></div>
+<div class="node newb"><div class="t">🧩 코드·프롬프트 변경<span class="lm-auto">자동</span></div><div class="d">정제 규칙·프롬프트·검색 설정을 고쳐 PR 생성 → CI 실행</div><span class="lm-chip git">git push</span><span class="lm-chip git">GitHub Actions</span></div>
+<div class="node newb"><div class="t">📉 운영 신호<span class="lm-auto">자동</span></div><div class="d">검색 실패율·👎 비율 경보, 또는 매일 밤 정기 재평가</div><span class="lm-chip aws">CloudWatch 경보</span><span class="lm-chip aws">스케줄</span></div>
+</div></div>
+</div>
+<div class="lm-conn"><span>↓ 어떤 변경이든 같은 파이프라인으로 들어간다</span></div>
+
+<!-- ② 자동 파이프라인 -->
+<div class="lm-lane">
+<div class="lm-head pipe"><span class="n">② 자동 파이프라인</span><span class="s">CI/CD · 오케스트레이션</span></div>
+<div class="lm-body"><div class="flow tight">
+<div class="node"><span class="tag">validate()</span><div class="t">데이터 검증</div><div class="d">필수 항목·중복·개인정보 포함 여부 검사, 실패 시 중단</div></div>
+<div class="arr"></div>
+<div class="node"><span class="tag">clean_text()</span><div class="t">정제·형태소</div><div class="d">단위·동의어 사전 적용 (clean-v2)</div></div>
+<div class="arr"></div>
+<div class="node"><span class="tag">make_index()</span><div class="t">재색인</div><div class="d">새 색인 <b>v13</b> 생성, 운영 중인 v12는 그대로 보존</div><span class="lm-chip aws">S3</span><span class="lm-chip aws">OpenSearch</span></div>
+<div class="arr"></div>
+<div class="node"><span class="tag">evaluate()</span><div class="t">회귀 평가</div><div class="d">기존 평가셋 전체 + 새 FAQ 질문으로 채점, LLM 평가자 병행</div></div>
+<div class="arr"></div>
+<div class="node main"><span class="tag">run_pipeline()</span><div class="t acc">배포 게이트</div><div class="d">기준 통과 → 배포 후보<br/>미달 → 차단 + 담당자 알림</div></div>
+</div>
+<p class="sub" style="margin:8px 0 0">실행 도구 예: <span class="lm-chip git">GitHub Actions</span><span class="lm-chip aws">Step Functions</span><span class="lm-chip aws">CodePipeline</span> — 단계마다 결과·버전을 실험 기록에 남긴다.</p>
+</div>
+</div>
+<div class="lm-conn"><span>↓ 통과한 버전만 레지스트리에 등록 (설정 ID · 색인 버전 · 프롬프트 버전 · 평가 점수)</span></div>
+
+<!-- ③ 단계적 배포 -->
+<div class="lm-lane">
+<div class="lm-head dep"><span class="n">③ 단계적 배포</span><span class="s">AWS 운영 환경 · 이번 실습 제외</span></div>
+<div class="lm-body"><div class="flow tight">
+<div class="node"><div class="t">스테이징</div><div class="d">운영과 같은 환경에서 대표 질문으로 스모크 테스트</div><span class="lm-chip aws">ECR 이미지</span></div>
+<div class="arr"></div>
+<div class="node"><div class="t">카나리 10%</div><div class="d">일부 사용자만 새 버전으로 응답, 기존 버전과 지표 비교</div><span class="lm-chip aws">API Gateway</span></div>
+<div class="arr"></div>
+<div class="node main"><span class="tag">ask()</span><div class="t acc">전체 100%</div><div class="d">지표가 같거나 좋으면 운영 포인터를 v13으로 교체</div><span class="lm-chip aws">ECS / Lambda</span><span class="lm-chip aws">Secrets Manager</span></div>
+<div class="arr"></div>
+<div class="node bad"><span class="tag">rollback()</span><div class="t">자동 롤백</div><div class="d">카나리·운영 중 지표 악화 시 포인터를 v12로 되돌림</div></div>
+</div></div>
+</div>
+<div class="lm-conn"><span>↓ 모든 요청을 기록</span></div>
+
+<!-- ④ 관측 -->
+<div class="lm-lane">
+<div class="lm-head obs"><span class="n">④ 관측·모니터링</span><span class="s">로그 · 지표 · 경보</span></div>
+<div class="lm-body"><div class="flow tight">
+<div class="node"><span class="tag">ask()</span><div class="t">요청 로그</div><div class="d">trace_id · 버전 · 근거 · 지연 · 토큰 · 비용 (개인정보 마스킹)</div><span class="lm-chip aws">CloudWatch Logs</span></div>
+<div class="arr"></div>
+<div class="node"><span class="tag">monitor()</span><div class="t">대시보드</div><div class="d">버전별 검색 실패율 · 👎 비율 · p95 지연 · 일 비용</div></div>
+<div class="arr"></div>
+<div class="node"><span class="tag">monitor()</span><div class="t">경보</div><div class="d">기준 초과 → 담당자 알림 + ① 트리거 · ③ 자동 롤백</div><span class="lm-chip aws">SNS</span></div>
+</div></div>
+</div>
+<div class="lm-conn"><span>↓ 실패·불만족 사례만 사람에게</span></div>
+
+<!-- ⑤ 사람 -->
+<div class="lm-lane">
+<div class="lm-head hum"><span class="n">⑤ 사람의 판단</span><span class="s">Human-in-the-loop</span></div>
+<div class="lm-body"><div class="flow tight">
+<div class="node"><span class="tag">review_queue()</span><div class="t">검토 큐<span class="lm-auto">자동</span></div><div class="d">👎 · 검색 실패 · 상담원 이관 질문이 자동으로 모인다</div><span class="lm-chip aws">DynamoDB</span></div>
+<div class="arr"></div>
+<div class="node bad"><div class="t">라벨링<span class="lm-man">사람</span></div><div class="d">“이 질문의 정답 FAQ는 D1” 또는 “새 FAQ가 필요함” 판정</div></div>
+<div class="arr"></div>
+<div class="node bad"><div class="t">반영<span class="lm-man">사람</span></div><div class="d">평가셋에 추가 · 새 FAQ 작성 · 사전 규칙 제안</div></div>
+<div class="arr"></div>
+<div class="node newb"><div class="t">다시 ①로<span class="lm-auto">자동</span></div><div class="d">저장하는 순간 트리거가 걸려 파이프라인이 다시 돈다</div></div>
+</div></div>
+</div>
+<div class="lm-conn back"><span>↺ ⑤의 결과가 ① 트리거가 되어 순환 — 평가셋은 운영할수록 커지고 같은 실수는 게이트가 막는다</span></div>
+
+<div class="lm-legend"><span><span class="lm-auto">자동</span> 사람 손 없이 실행</span><span><span class="lm-man">사람</span> 판단이 필요한 지점</span><span><i style="border:2px solid var(--accent)"></i>핵심 관문</span><span><i style="background:var(--warn-soft);border:1px solid var(--warn)"></i>실패·되돌림 경로</span></div>
+
+<div class="lm-tl">
+<div style="font-weight:800;margin-bottom:6px">예시 — 운영자가 새 FAQ “명절 배송 지연 안내”를 등록했을 때</div>
+<div class="row"><span class="tm">10:00</span><span>운영자가 관리자 화면에서 FAQ D9를 저장</span><span class="lm-man">사람</span></div>
+<div class="row"><span class="tm">10:01</span><span>S3 업로드 이벤트 → 파이프라인 시작, 데이터 검증 통과</span><span class="lm-auto">자동</span></div>
+<div class="row"><span class="tm">10:04</span><span>정제(clean-v2) · 재색인 v13 생성 — 운영 중인 v12는 그대로</span><span class="lm-auto">자동</span></div>
+<div class="row"><span class="tm">10:07</span><span>회귀 평가: 기존 질문 Hit@1 유지, “추석에도 택배 와요?” → D9 정답</span><span class="lm-auto">자동</span></div>
+<div class="row"><span class="tm">10:08</span><span>게이트 통과 → 레지스트리 등록 → 스테이징 스모크 테스트</span><span class="lm-auto">자동</span></div>
+<div class="row"><span class="tm">10:10</span><span>카나리 10% 배포, 30분간 v12와 실패율·👎 비교</span><span class="lm-auto">자동</span></div>
+<div class="row"><span class="tm">10:40</span><span>지표 이상 없음 → 전체 100% 전환 (이상 시 v12로 자동 롤백)</span><span class="lm-auto">자동</span></div>
+<div class="row"><span class="tm">다음 날</span><span>검토 큐에 쌓인 👎 3건을 담당자가 라벨링 → 평가셋 추가 → 다시 자동 실행</span><span class="lm-man">사람</span></div>
+</div>
+</div>
+
+<div class="table-wrap"><table><thead><tr><th>그림 속 요소</th><th>하는 일</th><th>이번 실습에서 대신한 것</th></tr></thead><tbody>
+<tr><td><b>트리거</b> (S3 이벤트 · git push · 경보 · 스케줄)</td><td>변경을 감지해 사람 대신 파이프라인을 시작</td><td><code>fingerprint()</code> + <code>check_and_run()</code>, <code>watch.py</code>(5초마다 확인)</td></tr>
+<tr><td><b>자동 파이프라인</b> (GitHub Actions · Step Functions)</td><td>검증 → 정제 → 재색인 → 회귀 평가 → 게이트를 순서대로 실행</td><td><code>run_pipeline()</code> = <code>validate()</code> → <code>make_index()</code> → <code>evaluate()</code> → 게이트</td></tr>
+<tr><td><b>레지스트리</b></td><td>통과한 설정·색인·프롬프트 버전과 점수를 묶어 보관</td><td><code>registry.json</code>, <code>artifacts/v001…</code></td></tr>
+<tr><td><b>단계적 배포</b> (스테이징 · 카나리 · 롤백)</td><td>새 버전을 조금씩 내보내고 나쁘면 자동으로 되돌림</td><td><b>제외</b> — 로컬에서 활성 버전 포인터만 교체, <code>rollback()</code></td></tr>
+<tr><td><b>관측</b> (CloudWatch · SNS)</td><td>요청 로그, 버전별 지표, 경보 알림</td><td><code>serve_log.jsonl</code>, <code>monitor()</code>의 <code>ALERT</code></td></tr>
+<tr><td><b>검토 큐 · 라벨링</b> (DynamoDB)</td><td>실패 사례만 사람에게 보여 주고 판단을 평가셋으로 축적</td><td><code>feedback()</code> → <code>review_queue()</code> → <code>label()</code> → <code>eval_set.jsonl</code></td></tr>
+</tbody></table></div>
+
+
+<h3>이번 실습의 범위 — 배포만 빼고 같은 순환을 로컬에서</h3>
+<div class="fig"><div class="fig-title">로컬 LLMOps 순환 (이번 실습)</div>
+<div class="fig-label">① 변경 감지 · 자동</div>
+<div class="flow tight">
+<div class="node newb"><div class="t">데이터 파일 저장</div><div class="d">faq.csv · synonyms.csv · eval_set.jsonl · CONFIG</div></div>
+<div class="arr"></div>
+<div class="node main"><div class="t acc">지문 비교</div><div class="d">fingerprint() — 파일 해시가 지난번과 다른가?</div></div>
+<div class="arr"></div>
+<div class="node main"><div class="t acc">트리거</div><div class="d">check_and_run() · watch.py가 5초마다 호출</div></div>
+</div>
+<div class="fig-label">② 파이프라인 · 자동 · run_pipeline()</div>
+<div class="flow tight">
+<div class="node"><div class="t">① 데이터 검증</div><div class="d">빈 항목·중복·개인정보·정규식·정답 id</div></div>
+<div class="arr"></div>
+<div class="node"><div class="t">② 정제·색인</div><div class="d">사전 적용 → Kiwi → TF-IDF·BERT → artifacts/v00N</div></div>
+<div class="arr"></div>
+<div class="node"><div class="t">③ 회귀 평가</div><div class="d">평가셋 전체 채점 + 활성 버전과 질문별 비교</div></div>
+<div class="arr"></div>
+<div class="node main"><div class="t acc">④ 게이트</div><div class="d">통과 → 활성 교체<br/>미달 → 보류</div></div>
+</div>
+<div class="fig-label">③ 운영 · ask() → 사람의 판단</div>
+<div class="flow tight">
+<div class="node"><div class="t">서빙·로그</div><div class="d">활성 버전으로 답, trace_id·버전·점수 기록</div></div>
+<div class="arr"></div>
+<div class="node"><div class="t">피드백·모니터링</div><div class="d">👎 → 검토 큐, 실패율 경보</div></div>
+<div class="arr"></div>
+<div class="node bad"><div class="t">라벨링·수정 (사람)</div><div class="d">정답 FAQ 지정, 사전·FAQ 보강</div></div>
+<div class="arr"></div>
+<div class="node newb"><div class="t">데이터 파일 변경</div><div class="d">→ 다시 ① 변경 감지</div></div>
+</div>
+<div class="band">배포(스테이징·카나리·서버)는 제외 — 그 자리를 “활성 버전 포인터 교체”와 rollback()이 대신한다</div></div>
+<h3>프로젝트 폴더 구조</h3>
+<pre><code>llmops-faq/
+├─ llmops_core.py          ← 01 노트북의 코드를 모은 파일 (watch.py · 과제가 불러다 씀)
+├─ watch.py                ← 켜 두면 5초마다 변경 감지 → 파이프라인 자동 실행
+├─ 01_따라하기.ipynb
+├─ 02_실습과제.ipynb  /  02_실습과제_정답.ipynb
+├─ .env                    ← OPENAI_API_KEY=sk-...  (없으면 mock)
+├─ data/                   ← 사람이 고치는 곳
+│   ├─ faq.csv             FAQ (id, title, text) — 엑셀로 열어도 된다
+│   ├─ synonyms.csv        동의어 사전 (pattern, replace, note)
+│   └─ eval_set.jsonl      평가셋 {"q": 질문, "gold": 정답 FAQ id}
+├─ artifacts/              ← 파이프라인이 만드는 버전별 색인
+│   └─ v001/ v002/ …       docs.json · emb.npy · manifest.json(점수·질문별 결과)
+├─ registry.json           ← 활성 버전 · 이력 · 마지막으로 본 파일 지문
+└─ logs/                   ← pipeline_runs · serve_log · feedback · review_queue (.jsonl)</code></pre>
+</section>
+
+<!-- ═════════════ 준비 ═════════════ -->
+<section aria-labelledby="tab-s3" class="panel" hidden="" id="s3" role="tabpanel"><div class="crumb">LLMOps 따라하기 · 준비</div>
+<h2>준비 — 실습 환경 · 설정 · 데이터 파일</h2>
+<p class="lead">내려받은 <code>llmops-faq</code> 폴더를 VS Code로 열고, 가상환경을 만든 뒤 <code>01_따라하기.ipynb</code>를 위에서부터 실행한다. 이 탭부터 나오는 코드 블록은 노트북 셀과 같다.</p>
+<h3>환경 만들기 (터미널)</h3>
+<pre><code>cd llmops-faq
+python -m venv .venv
+.venv\Scripts\activate            # Windows
+source .venv/bin/activate         # macOS · Linux
+pip install kiwipiepy scikit-learn transformers torch openai python-dotenv ipykernel</code></pre>
+<p class="sub">VS Code에서 노트북을 연 뒤 오른쪽 위 커널을 <b>.venv</b>로 고른다. GPT를 쓰려면 폴더에 <code>.env</code> 파일을 만들고 <code>OPENAI_API_KEY=sk-...</code>를 적는다. 키가 없어도 mock 답변으로 끝까지 실행된다.</p>
+<h3>[셀 1] 프로젝트 폴더와 설정</h3>
+<p>폴더 경로, 챗봇 설정(<code>CONFIG</code>), 활성화 기준(<code>GATE</code>), 경보 기준(<code>ALERT</code>)을 한곳에 모은다. <code>CONFIG</code>도 변경 감지 대상이라 값을 바꾸면 파이프라인이 다시 돈다. <code>CUSTOM_…</code> 세 칸은 실습 과제에서 기능을 끼워 넣는 자리다.</p>
+<pre><code># [셀 1] 프로젝트 폴더와 설정
+import os, re, csv, json, time, uuid, hashlib, datetime, unicodedata
+from pathlib import Path
+import numpy as np
+
+def set_project(root="."):
+    """실습 폴더 위치를 정하고 하위 폴더를 만든다."""
+    global ROOT, DATA, ART, LOGS, FAQ_FILE, EVAL_FILE, SYN_FILE, REGISTRY_FILE
+    ROOT = Path(root)
+    DATA, ART, LOGS = ROOT / "data", ROOT / "artifacts", ROOT / "logs"
+    FAQ_FILE = DATA / "faq.csv"                 # 운영자가 고치는 FAQ
+    SYN_FILE = DATA / "synonyms.csv"            # 분야별 동의어 사전
+    EVAL_FILE = DATA / "eval_set.jsonl"         # 평가셋 (라벨링 결과가 쌓인다)
+    REGISTRY_FILE = ROOT / "registry.json"      # 버전 기록 + 현재 활성 버전
+    for d in (DATA, ART, LOGS):
+        d.mkdir(parents=True, exist_ok=True)
+
+set_project(".")
+
+CONFIG = {                       # 이 값이 바뀌어도 파이프라인이 다시 돈다
+    "use_bert": True,
+    "embed_model": "klue/bert-base",
+    "alpha": 0.5,                # TF-IDF 비중 (1-alpha = BERT 비중)
+    "top_k": 3,
+    "min_score": 0.05,
+    "prompt_version": "faq-v1",
+    "use_llm": True,             # False면 GPT 대신 mock (비용 0, 결과 재현용)
+    "llm_model": os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
+    "temperature": 0.2,
+}
+GATE = {"hit1": 0.80, "cite_rate": 0.80, "max_new_fail": 0}   # 활성화 기준
+ALERT = {"no_hit_rate": 0.10, "bad_feedback_rate": 0.20, "p95_latency_ms": 3000}
+
+# 실습 과제에서 기능을 끼워 넣는 자리 (함수를 리스트/딕셔너리에 추가하면 된다)
+CUSTOM_CHECKS = []    # fn(docs, evals) -&gt; [오류 메시지]
+CUSTOM_GATES = []     # fn(result) -&gt; (통과 여부, 메시지)
+CUSTOM_METRICS = {}   # 이름 -&gt; fn(logs, feedbacks) -&gt; 값
+
+def now():
+    return datetime.datetime.now().isoformat(timespec="seconds")
+
+def read_jsonl(path):
+    path = Path(path)
+    if not path.exists():
+        return []
+    return [json.loads(l) for l in path.read_text(encoding="utf-8").splitlines() if l.strip()]
+
+def append_jsonl(path, rec):
+    with open(path, "a", encoding="utf-8") as f:
+        f.write(json.dumps(rec, ensure_ascii=False) + "\n")</code></pre>
+<h3>[셀 2] 처음 데이터 만들기</h3>
+<p>FAQ 8건, 동의어 사전 9건, 평가 질문 8건을 <b>파일</b>로 만든다. 이후 사람이 하는 일은 이 파일들을 고치는 것뿐이다. CSV는 <code>utf-8-sig</code>로 저장해서 엑셀로 열어도 한글이 깨지지 않는다.</p>
+<pre><code># [셀 2] 처음 데이터 만들기 — FAQ · 동의어 사전 · 평가셋
+SEED_FAQ = [
+    ("D1", "배송은 언제 오나요?", "주문 후 평일 기준 2~3일 이내에 배송이 도착합니다. 제주·도서산간 지역은 3~5일이 걸립니다."),
+    ("D2", "배송비는 얼마인가요?", "30000원 이상 구매 시 무료 배송이며, 미만이면 배송비 3000원이 부과됩니다."),
+    ("D3", "교환·반품은 언제까지 되나요?", "상품을 수령한 날부터 7일 이내에 교환 또는 반품을 신청할 수 있습니다."),
+    ("D4", "반품 배송비는 누가 내나요?", "단순 변심으로 반품하면 왕복 배송비 6000원을 고객이 부담합니다. 상품 불량은 무료입니다."),
+    ("D5", "환불은 언제 되나요?", "반품 상품이 확인되면 3영업일 이내에 환불됩니다. 카드 결제 취소는 카드사에 따라 3~7일이 더 걸릴 수 있습니다."),
+    ("D6", "주문을 취소하고 싶어요", "배송 준비 전이라면 마이페이지 주문 내역에서 직접 취소할 수 있습니다."),
+    ("D7", "대형 상품은 어떻게 배송되나요?", "냉장고·소파처럼 무게 30kg 이상이거나 가로 150cm 이상인 상품은 화물로 배송되며 설치 일정은 전화로 협의합니다."),
+    ("D8", "적립금은 언제 소멸되나요?", "구매 금액의 1%가 적립금으로 쌓이며 유효기간은 적립일로부터 1년입니다."),
+]
+SEED_SYNONYMS = [   # (찾을 말 — 정규식, 바꿀 말, 설명)
+    ("택배비|배달비", "배송비", "동의어"),
+    ("택배로|배달로", "배송으로", "조사까지 함께 바꿔 '배송로'가 되지 않게"),
+    ("택배|배달", "배송", "동의어"),
+    ("리턴", "반품", "동의어"),
+    ("캔슬", "취소", "동의어"),
+    ("무배", "무료 배송", "줄임말"),
+    ("포인트", "적립금", "동의어"),
+    ("사라지|사라져|없어지|없어져", "소멸", "동의어"),
+    ("일주일", "7일", "기간 표기"),
+]
+SEED_EVAL = [
+    ("택배 언제 와요?", "D1"), ("2만 원어치 사면 배송비 얼마예요?", "D2"),
+    ("받은 지 5일 됐는데 리턴 되나요?", "D3"), ("단순 변심이면 반품 택배비 내야 해요?", "D4"),
+    ("환불은 며칠 걸려요?", "D5"), ("주문 캔슬하고 싶어요", "D6"),
+    ("35키로 냉장고도 일반 택배로 와요?", "D7"), ("포인트는 언제 사라져요?", "D8"),
+]
+
+def write_csv(path, header, rows):
+    with open(path, "w", encoding="utf-8-sig", newline="") as f:   # utf-8-sig: 엑셀에서 열어도 한글이 안 깨진다
+        w = csv.writer(f)
+        w.writerow(header)
+        w.writerows(rows)
+
+def read_csv(path):
+    with open(path, encoding="utf-8-sig", newline="") as f:
+        return list(csv.DictReader(f))
+
+def init_project(reset=False):
+    """처음 한 번 실행. reset=True면 데이터·버전·로그를 모두 처음 상태로 되돌린다."""
+    if reset:
+        for p in [REGISTRY_FILE, *LOGS.glob("*.jsonl")]:
+            p.unlink(missing_ok=True)
+        for d in ART.glob("v*"):
+            for f in d.iterdir():
+                f.unlink()
+            d.rmdir()
+    if reset or not FAQ_FILE.exists():
+        write_csv(FAQ_FILE, ["id", "title", "text"], SEED_FAQ)
+    if reset or not SYN_FILE.exists():
+        write_csv(SYN_FILE, ["pattern", "replace", "note"], SEED_SYNONYMS)
+    if reset or not EVAL_FILE.exists():
+        EVAL_FILE.write_text("".join(json.dumps({"q": q, "gold": g, "source": "초기"}, ensure_ascii=False) + "\n"
+                                     for q, g in SEED_EVAL), encoding="utf-8")
+    print("data/ 준비 완료:", [p.name for p in sorted(DATA.iterdir())])</code></pre>
+<pre><code># 처음 한 번: data/ 폴더에 FAQ·사전·평가셋 파일을 만든다
+init_project()</code></pre>
+<h4>실행 결과</h4>
+<pre><code>data/ 준비 완료: ['eval_set.jsonl', 'faq.csv', 'synonyms.csv']</code></pre>
+<div class="table-wrap"><table><thead><tr><th>파일</th><th>누가 고치나</th><th>예시 한 줄</th></tr></thead><tbody>
+<tr><td><code>data/faq.csv</code></td><td>운영자 (새 FAQ 등록·수정)</td><td><code>D1,배송은 언제 오나요?,주문 후 평일 기준 2~3일 이내에…</code></td></tr>
+<tr><td><code>data/synonyms.csv</code></td><td>담당자 (고객 말투 → FAQ 표준어)</td><td><code>택배|배달,배송,동의어</code></td></tr>
+<tr><td><code>data/eval_set.jsonl</code></td><td>담당자 (라벨링 결과가 쌓임)</td><td><code>{"q": "택배 언제 와요?", "gold": "D1"}</code></td></tr>
+</tbody></table></div>
+</section>
+
+<!-- ═════════════ 구현 ① ═════════════ -->
+<section aria-labelledby="tab-s4" class="panel" hidden="" id="s4" role="tabpanel"><div class="crumb">LLMOps 따라하기 · 구현 ①</div>
+<h2>구현 ① 정제 · 형태소 · 색인 · 검색 · 생성 (RAG 앱)</h2>
+<p class="lead">먼저 챗봇 자체를 만든다. 이 부분은 파이프라인 안에서 버전마다 다시 실행된다.</p>
+<h3>[셀 3] 데이터 정제 — 개인정보 → 공통 → 단위 → 동의어 사전</h3>
+<p>개인정보·공통·단위 규칙은 코드에 두고, <b>분야마다 달라지는 동의어 사전은 파일</b>에서 읽는다. 그래서 분야를 바꾸거나 사전을 고칠 때 코드를 건드리지 않는다. 규칙 순서가 중요하다. 예를 들어 ‘킬로그램’을 먼저 kg으로 바꾸지 않으면 ‘킬로’ 규칙이 먼저 걸린다.</p>
+<pre><code># [셀 3] 데이터 정제 — 개인정보 → 공통 → 단위 → 동의어 사전(파일)
+def _won(m, mult):
+    return f"{int(float(m.group(1)) * mult)}원"
+
+PRIVACY_RULES = [
+    (r"\d{6}-?[1-4]\d{6}", "[주민번호]", "개인정보 마스킹"),
+    (r"01[016789]-?\d{3,4}-?\d{4}", "[전화번호]", "개인정보 마스킹"),
+    (r"[\w.+-]+@[\w-]+\.[\w.]+", "[이메일]", "개인정보 마스킹"),
+]
+COMMON_RULES = [
+    (r"&lt;[^&gt;]+&gt;", " ", "HTML 태그 제거"),
+    (r"([!?.])\1+", r"\1", "반복 문장부호 축약"),
+    (r"(?&lt;=\d),(?=\d{3}(?!\d))", "", "천 단위 쉼표 제거"),
+]
+UNIT_RULES = [   # 순서 중요: kg을 km보다 먼저, mm·cm를 m보다 먼저
+    (r"(\d+(?:\.\d+)?)\s*만\s*원", lambda m: _won(m, 10000), "금액 → 숫자(만원)"),
+    (r"(\d+(?:\.\d+)?)\s*천\s*원", lambda m: _won(m, 1000), "금액 → 숫자(천원)"),
+    (r"(\d+)\s+원", r"\1원", "금액 띄어쓰기"),
+    (r"(\d+(?:\.\d+)?)\s*(?:킬로그램|키로그램|kg|KG|Kg)", r"\1kg", "kg 단위 통일"),
+    (r"(\d+(?:\.\d+)?)\s*(?:킬로미터|키로미터|km|KM|Km)", r"\1km", "km 단위 통일"),
+    (r"(\d+(?:\.\d+)?)\s*(?:킬로|키로)", r"\1kg", "킬로(무게) → kg"),
+    (r"(\d+(?:\.\d+)?)\s*(?:밀리미터|미리|mm|MM)(?![A-Za-z])", r"\1mm", "mm 단위 통일"),
+    (r"(\d+(?:\.\d+)?)\s*(?:센티미터|센티|센치|cm|CM)(?![A-Za-z])", r"\1cm", "cm 단위 통일"),
+    (r"(\d+(?:\.\d+)?)\s*(?:미터)", r"\1m", "m 단위 통일"),
+    (r"(\d+(?:\.\d+)?)\s*(?:밀리그램|mg|MG)(?![A-Za-z/])", r"\1mg", "mg 단위 통일"),
+    (r"(\d+(?:\.\d+)?)\s*(?:°\s?C|도씨)", r"\1°C", "°C 단위 통일"),
+]
+
+def load_synonyms(path=None):
+    return [(r["pattern"], r["replace"], r.get("note", "")) for r in read_csv(path or SYN_FILE)]
+
+def mask_pii(text):
+    for pat, rep, _ in PRIVACY_RULES:
+        text = re.sub(pat, rep, text)
+    return text
+
+def clean_text(text, synonyms=(), log=None):
+    s = unicodedata.normalize("NFKC", text)             # ３만→3만, ㎏→kg, ℃→°C
+    if log is not None and s != text:
+        log.append(("유니코드 정규화(NFKC)", 1))
+    rules = PRIVACY_RULES + COMMON_RULES + UNIT_RULES + [(p, r, f"사전: {n or p}") for p, r, n in synonyms]
+    for pat, rep, name in rules:
+        s, n = re.subn(pat, rep, s)
+        if n and log is not None:
+            log.append((name, n))
+    return re.sub(r"\s+", " ", s).strip()</code></pre>
+<pre><code># 정제 확인 — 쇼핑몰 사전은 파일에서 읽고, 다른 분야는 사전만 바꿔 끼운다
+FACTORY = [(r"\bM/C\b|엠씨", "머시닝센터", "설비 약어"), (r"\bN\.?G\b|엔지", "불량", "판정 용어"),
+           (r"#\s?(\d+)(?:\s?호기)?", r"\1호기", "설비 번호")]
+MEDICAL = [(r"\bpt\b", "환자", "약어"), (r"\bHTN\b", "고혈압", "약어"), (r"\bBP\b", "혈압", "약어"),
+           (r"\b(?:bid|BID)\b", "1일 2회", "약어"), (r"mmhg", "mmHg", "단위 표기")]
+for name, syn, raw in [
+    ("쇼핑몰", load_synonyms(), "택배비 얼마예요?? ３만 원 이상이면 무배인가요, 35키로 냉장고는요?"),
+    ("제조", FACTORY, "CNC M/C #3 NG 발생!! 치수 12.05MM, 이송거리 1,200 미리 / 온도 ８５℃"),
+    ("의료", MEDICAL, "pt 010-1234-5678. HTN 있음. BP 150/95 mmhg, 메트포르민 500밀리그램 bid")]:
+    log = []
+    print(f"[{name}] {raw}\n   → {clean_text(raw, syn, log)}")
+    print("   ", ", ".join(f"{n}×{c}" for n, c in log))</code></pre>
+<h4>실행 결과</h4>
+<pre><code>[쇼핑몰] 택배비 얼마예요?? ３만 원 이상이면 무배인가요, 35키로 냉장고는요?
+   → 배송비 얼마예요? 30000원 이상이면 무료 배송인가요, 35kg 냉장고는요?
+    유니코드 정규화(NFKC)×1, 반복 문장부호 축약×1, 금액 → 숫자(만원)×1, 킬로(무게) → kg×1, 사전: 동의어×1, 사전: 줄임말×1
+[제조] CNC M/C #3 NG 발생!! 치수 12.05MM, 이송거리 1,200 미리 / 온도 ８５℃
+   → CNC 머시닝센터 3호기 불량 발생! 치수 12.05mm, 이송거리 1200mm / 온도 85°C
+    유니코드 정규화(NFKC)×1, 반복 문장부호 축약×1, 천 단위 쉼표 제거×1, mm 단위 통일×2, °C 단위 통일×1, 사전: 설비 약어×1, 사전: 판정 용어×1, 사전: 설비 번호×1
+[의료] pt 010-1234-5678. HTN 있음. BP 150/95 mmhg, 메트포르민 500밀리그램 bid
+   → 환자 [전화번호]. 고혈압 있음. 혈압 150/95 mmHg, 메트포르민 500mg 1일 2회
+    개인정보 마스킹×1, mg 단위 통일×1, 사전: 약어×1, 사전: 약어×1, 사전: 약어×1, 사전: 약어×1, 사전: 단위 표기×1</code></pre>
+<div class="table-wrap"><table><thead><tr><th>분야</th><th>사전에 넣을 것</th><th>주의할 점</th></tr></thead><tbody>
+<tr><td><b>쇼핑몰</b></td><td>택배·리턴·캔슬·무배·포인트, 금액(만 원)·무게(키로)</td><td>‘택배로’를 그냥 바꾸면 ‘배송로’가 되어 Kiwi가 ‘로’를 명사로 오인한다 → ‘택배로→배송으로’를 먼저</td></tr>
+<tr><td><b>제조</b></td><td>설비 약어(M/C), 설비 번호(#3·3호기), 판정(NG·OK), 치수 단위(mm)</td><td>현장마다 약어가 다르다. 공차 정밀도를 해치는 단위 환산은 하지 않는다</td></tr>
+<tr><td><b>의료</b></td><td>약어(HTN·BP·bid), 검사 단위(mmHg·mg/dL)</td><td>개인정보는 외부 API·로그로 나가기 <b>전에</b> 지운다. 약어 사전은 의료진이 검토한다</td></tr>
+</tbody></table></div>
+<h3>[셀 4] Kiwi 형태소 분석</h3>
+<pre><code># [셀 4] Kiwi 형태소 분석
+from kiwipiepy import Kiwi
+kiwi = Kiwi()
+KEEP = {"NNG", "NNP", "VV", "VA", "XR", "SL", "SN"}   # 명사·동사·형용사·어근·외국어·숫자
+STOP = {"있", "하", "되", "수"}                         # 어디에나 나와 검색을 흐리는 말
+
+def tokenize_ko(text):
+    return [t.form for t in kiwi.tokenize(text) if t.tag in KEEP and t.form not in STOP]</code></pre>
+<pre><code>q = clean_text("35키로 냉장고도 일반 택배로 와요?", load_synonyms())
+print(q)
+for t in kiwi.tokenize(q):
+    print(t.form, t.tag, end=" | ")
+print("\n검색용 토큰:", tokenize_ko(q))</code></pre>
+<h4>실행 결과</h4>
+<pre><code>35kg 냉장고도 일반 배송으로 와요?
+35 SN | kg SL | 냉장고 NNG | 도 JX | 일반 NNG | 배송 NNG | 으로 JKB | 오 VV | 어요 EF | ? SF | 
+검색용 토큰: ['35', 'kg', '냉장고', '일반', '배송', '오']</code></pre>
+<p class="sub">‘언제’는 부사(MAG)라서 검색어에서 빠진다. 시나리오의 Day 1 실패 원인과 이어지니 기억해 두자.</p>
+<h3>허깅페이스 토크나이저 살펴보기</h3>
+<p>Kiwi는 사람이 보기 좋은 <b>형태소</b>로 나누지만, BERT는 학습 때 정해 둔 <b>서브워드(WordPiece) 사전</b>으로만 읽는다. 처음 실행하면 모델 파일(약 440MB)을 내려받는다.</p>
+<pre><code># 허깅페이스 토크나이저 살펴보기 — BERT는 형태소가 아니라 서브워드(WordPiece)로 읽는다
+from transformers import AutoTokenizer
+tok = AutoTokenizer.from_pretrained(CONFIG["embed_model"])
+s = "35kg 냉장고도 일반 배송으로 와요?"
+print("WordPiece 토큰:", tok.tokenize(s))
+ids = tok(s)["input_ids"]
+print("input_ids     :", ids)
+print("decode        :", tok.decode(ids))</code></pre>
+<p class="sub">앞 토큰에 이어지는 조각은 <code>##</code>으로 시작하고, 맨 앞 <code>[CLS]</code>·맨 뒤 <code>[SEP]</code>가 자동으로 붙는다. 토큰 수는 곧 비용과 길이 제한이다.</p>
+<h3>[셀 5] 색인 — TF-IDF + BERT 임베딩, 버전 폴더에 저장</h3>
+<p>색인은 <b>버전 폴더</b>(<code>artifacts/v001</code>…)에 저장한다. 새 버전을 만들어도 운영 중인 버전은 그대로 남아 있어야 비교·롤백을 할 수 있기 때문이다. TF-IDF는 빠르게 다시 만들 수 있으니 정제된 문서만 저장하고, 계산이 무거운 BERT 임베딩은 <code>emb.npy</code>로 저장한다.</p>
+<pre><code># [셀 5] 색인 — TF-IDF + 허깅페이스 BERT 임베딩, 버전 폴더에 저장·불러오기
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+
+_bert = {}
+def load_bert(name):
+    """허깅페이스 토크나이저 + BERT를 불러와 문장 → 768차원 벡터 함수를 돌려준다."""
+    if name not in _bert:
+        import torch
+        from transformers import AutoTokenizer, AutoModel
+        tok = AutoTokenizer.from_pretrained(name)
+        mdl = AutoModel.from_pretrained(name).eval()
+        def embed(texts):
+            enc = tok(texts, padding=True, truncation=True, max_length=128, return_tensors="pt")
+            with torch.no_grad():
+                out = mdl(**enc)
+            mask = enc["attention_mask"].unsqueeze(-1).float()
+            return ((out.last_hidden_state * mask).sum(1) / mask.sum(1)).numpy()   # 평균 풀링
+        _bert[name] = embed
+    return _bert[name]
+
+def get_embedder(cfg):
+    if not cfg["use_bert"]:
+        return None
+    try:
+        return load_bert(cfg["embed_model"])
+    except Exception as e:
+        if "_warned" not in _bert:
+            print(f"   (BERT 사용 불가: {type(e).__name__} → TF-IDF만 사용)")
+            _bert["_warned"] = True
+        return None
+
+def make_index(docs, synonyms, cfg, emb=None):
+    corpus = [clean_text(d["title"] + " " + d["text"], synonyms) for d in docs]
+    vec = TfidfVectorizer(tokenizer=tokenize_ko, token_pattern=None, lowercase=False)
+    X = vec.fit_transform(corpus)
+    embed = get_embedder(cfg)
+    if embed is not None and emb is None:
+        emb = embed(corpus)
+    return {"docs": docs, "synonyms": synonyms, "corpus": corpus, "vec": vec, "X": X,
+            "embed": embed if emb is not None else None, "emb": emb}
+
+def save_index(version, idx, manifest):
+    d = ART / version
+    d.mkdir(parents=True, exist_ok=True)
+    (d / "docs.json").write_text(json.dumps({"docs": idx["docs"], "synonyms": idx["synonyms"]},
+                                            ensure_ascii=False, indent=1), encoding="utf-8")
+    if idx["emb"] is not None:
+        np.save(d / "emb.npy", idx["emb"])
+    (d / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=1), encoding="utf-8")
+
+def load_index(version, cfg):
+    d = ART / version
+    saved = json.loads((d / "docs.json").read_text(encoding="utf-8"))
+    emb = np.load(d / "emb.npy") if (d / "emb.npy").exists() else None
+    return make_index(saved["docs"], [tuple(s) for s in saved["synonyms"]], cfg, emb=emb)</code></pre>
+<h3>[셀 6] 코사인 유사도 검색 (하이브리드)</h3>
+<p>TF-IDF 점수와 BERT 점수는 범위가 다르므로 0~1로 맞춘 뒤(min-max) <code>alpha</code> 비율로 섞는다. <code>min_score</code>보다 낮으면 근거로 쓰지 않는다.</p>
+<pre><code># [셀 6] 코사인 유사도 검색 (하이브리드)
+def cosine(a, b):
+    return float(np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b) + 1e-9))
+
+def minmax(x):
+    return (x - x.min()) / (x.max() - x.min() + 1e-9)
+
+def search(q, idx, cfg):
+    qc = clean_text(q, idx["synonyms"])
+    t = cosine_similarity(idx["vec"].transform([qc]), idx["X"])[0]
+    if idx["embed"] is not None:
+        qv = idx["embed"]([qc])[0]
+        b = np.array([cosine(qv, v) for v in idx["emb"]])
+        score = cfg["alpha"] * minmax(t) + (1 - cfg["alpha"]) * minmax(b)
+    else:
+        score = t
+    top = np.argsort(-score)[:cfg["top_k"]]
+    return [{"id": idx["docs"][i]["id"], "i": int(i), "score": round(float(score[i]), 3)}
+            for i in top if score[i] &gt;= cfg["min_score"]]</code></pre>
+<h3>[셀 7] 생성 — 프롬프트 + GPT (+ mock · 장애 시 폴백)</h3>
+<p>프롬프트에 “근거만 사용, 근거 id 표기”를 지시한다. 근거 id가 있어야 평가에서 <b>인용률</b>을 자동으로 셀 수 있다. API 장애가 나도 서비스가 멈추지 않도록 mock으로 폴백한다.</p>
+<pre><code># [셀 7] 생성 — 프롬프트 + GPT API (키가 없거나 장애면 mock)
+try:
+    from dotenv import load_dotenv
+    load_dotenv(".env")                     # 실습 폴더의 .env → OPENAI_API_KEY
+except ImportError:
+    pass
+
+PROMPTS = {
+    "faq-v1": "너는 쇼핑몰 고객센터 상담원이다. [근거]에 있는 내용만 사용해 2문장 이내로 답하고, "
+              "끝에 근거 id를 [D1]처럼 붙여라. 근거가 없으면 '상담원 연결이 필요합니다'라고 답하라.",
+}
+PRICE_PER_1M = {"input": 0.0, "output": 0.0}   # 사용하는 모델의 단가(USD/100만 토큰)로 채운다
+
+def mock_answer(hits, idx):
+    if not hits:
+        return "상담원 연결이 필요합니다."
+    d = idx["docs"][hits[0]["i"]]
+    return f"{d['text']} [{d['id']}]"
+
+def generate(q, hits, idx, cfg):
+    if not cfg.get("use_llm") or not os.getenv("OPENAI_API_KEY"):
+        return mock_answer(hits, idx), {"input": 0, "output": 0}, "mock"
+    ctx = "\n".join(f"[{idx['docs'][h['i']]['id']}] {idx['docs'][h['i']]['title']}: {idx['docs'][h['i']]['text']}"
+                    for h in hits) or "(근거 없음)"
+    try:
+        from openai import OpenAI
+        resp = OpenAI().chat.completions.create(
+            model=cfg["llm_model"], temperature=cfg["temperature"],
+            messages=[{"role": "system", "content": PROMPTS[cfg["prompt_version"]]},
+                      {"role": "user", "content": f"[근거]\n{ctx}\n\n[질문]\n{clean_text(q, idx['synonyms'])}"}])
+        u = resp.usage
+        return resp.choices[0].message.content, {"input": u.prompt_tokens, "output": u.completion_tokens}, "openai"
+    except Exception as e:                    # API 장애가 나도 서비스는 멈추지 않게
+        return mock_answer(hits, idx), {"input": 0, "output": 0}, f"fallback:{type(e).__name__}"</code></pre>
+<pre><code># 아직 LLMOps 없이 RAG만 한 번 돌려 보기
+docs = read_csv(FAQ_FILE)                        # [{'id':..., 'title':..., 'text':...}, ...]
+idx = make_index(docs, load_synonyms(), CONFIG)
+q = "35키로 냉장고도 일반 택배로 와요?"
+hits = search(q, idx, CONFIG)
+print(hits)
+print(generate(q, hits, idx, CONFIG)[0])</code></pre>
+<h4>실행 결과 (BERT·GPT 끈 상태)</h4>
+<pre><code>[{'id': 'D7', 'i': 6, 'score': 0.34}, {'id': 'D1', 'i': 0, 'score': 0.235}, {'id': 'D6', 'i': 5, 'score': 0.069}]
+냉장고·소파처럼 무게 30kg 이상이거나 가로 150cm 이상인 상품은 화물로 배송되며 설치 일정은 전화로 협의합니다. [D7]</code></pre>
+<div class="key">여기까지가 <b>RAG 앱</b>이다. 지금은 셀을 직접 돌려야 색인이 만들어진다. 다음 탭에서 이 과정을 <b>데이터가 바뀌면 저절로 돌아가는 파이프라인</b>으로 감싼다.</div>
+</section>
+
+<!-- ═════════════ 구현 ② ═════════════ -->
+<section aria-labelledby="tab-s5" class="panel" hidden="" id="s5" role="tabpanel"><div class="crumb">LLMOps 따라하기 · 구현 ②</div>
+<h2>구현 ② 검증 · 평가 · 레지스트리 · 파이프라인 · 변경 감지</h2>
+<p class="lead">LLMOps의 핵심이다. “데이터가 바뀌었다 → 믿을 만한가 확인한다 → 새 버전을 만든다 → 이전보다 나빠지지 않았는지 본다 → 통과한 것만 쓴다”를 코드로 만든다.</p>
+<h3>[셀 8] 데이터 불러오기와 검증</h3>
+<p>나쁜 데이터는 색인을 만들기 <b>전에</b> 멈춘다. 빈 항목, 중복 id, 개인정보, 사전의 잘못된 정규식, 평가셋 정답이 FAQ에 없는 경우를 잡는다.</p>
+<pre><code># [셀 8] 데이터 불러오기와 검증 — 나쁜 데이터는 여기서 멈춘다
+def load_data():
+    docs = [{"id": r["id"].strip(), "title": r["title"].strip(), "text": r["text"].strip()} for r in read_csv(FAQ_FILE)]
+    return docs, load_synonyms(), read_jsonl(EVAL_FILE)
+
+def validate(docs, synonyms, evals):
+    errors, ids = [], [d["id"] for d in docs]
+    for d in docs:
+        if not (d["id"] and d["title"] and d["text"]):
+            errors.append(f"FAQ {d['id'] or '(id 없음)'}: 빈 항목이 있음")
+        if mask_pii(d["title"] + d["text"]) != d["title"] + d["text"]:
+            errors.append(f"FAQ {d['id']}: 개인정보(전화번호·주민번호·이메일)가 들어 있음")
+    for dup in sorted({i for i in ids if ids.count(i) &gt; 1}):
+        errors.append(f"FAQ id 중복: {dup}")
+    for p, _, _ in synonyms:
+        try:
+            re.compile(p)
+        except re.error:
+            errors.append(f"동의어 사전: 잘못된 정규식 '{p}'")
+    for e in evals:
+        if e["gold"] not in ids:
+            errors.append(f"평가셋: '{e['q']}'의 정답 {e['gold']}가 FAQ에 없음")
+    for check in CUSTOM_CHECKS:
+        errors += check(docs, evals)
+    return errors</code></pre>
+<h3>[셀 9] 회귀 평가</h3>
+<p>평가셋 <b>전체</b>를 다시 채점한다. 그리고 <b>활성 버전에서는 맞혔는데 이번에 틀린 질문</b>(회귀)을 따로 찾는다. 새 FAQ 하나가 기존 질문의 답을 가로채는 사고를 여기서 잡는다.</p>
+<pre><code># [셀 9] 회귀 평가 — 평가셋 전체를 다시 채점하고, 활성 버전과 비교한다
+def evaluate(idx, evals, cfg):
+    rows = []
+    for e in evals:
+        hits = search(e["q"], idx, cfg)
+        ids = [h["id"] for h in hits]
+        ans, _, _ = generate(e["q"], hits, idx, cfg)
+        rows.append({"q": e["q"], "gold": e["gold"], "top": ids,
+                     "hit1": bool(ids) and ids[0] == e["gold"], "hit3": e["gold"] in ids,
+                     "cited": f"[{e['gold']}]" in ans, "must_pass": e.get("must_pass", False)})
+    n = max(len(rows), 1)
+    metrics = {k: round(sum(r[f] for r in rows) / n, 2) for k, f in
+               [("hit1", "hit1"), ("hit3", "hit3"), ("cite_rate", "cited")]}
+    return metrics, rows
+
+def new_failures(rows, prev_rows):
+    """활성 버전에서는 맞혔는데 이번에 틀린 질문 = 회귀(regression)"""
+    before = {r["q"]: r["hit1"] for r in prev_rows}
+    return [r["q"] for r in rows if before.get(r["q"]) and not r["hit1"]]</code></pre>
+<div class="table-wrap"><table><thead><tr><th>지표</th><th>뜻</th></tr></thead><tbody>
+<tr><td><b>Hit@1</b></td><td>정답 FAQ가 1위로 검색된 비율</td></tr>
+<tr><td><b>Hit@3</b></td><td>정답 FAQ가 3위 안에 든 비율 (GPT에게 정답 근거가 전달됐는지)</td></tr>
+<tr><td><b>인용률</b></td><td>답변에 정답 근거 id(<code>[D1]</code> 등)가 들어 있는 비율</td></tr>
+<tr><td><b>새로 틀린 질문</b></td><td>활성 버전에서는 맞혔는데 이번 버전에서 틀린 질문 수</td></tr>
+</tbody></table></div>
+<h3>[셀 10] 버전 레지스트리와 롤백</h3>
+<p><code>registry.json</code>에 어떤 버전이 활성인지, 이전 활성 버전 이력, 버전별 상태(활성·이전·보류·검증 실패·롤백됨)를 기록한다.</p>
+<pre><code># [셀 10] 버전 레지스트리 — 어떤 버전이 활성인지, 이력은 어떤지
+def load_registry():
+    if REGISTRY_FILE.exists():
+        return json.loads(REGISTRY_FILE.read_text(encoding="utf-8"))
+    return {"active": None, "history": [], "versions": {}, "last_seen": {}}
+
+def save_registry(reg):
+    REGISTRY_FILE.write_text(json.dumps(reg, ensure_ascii=False, indent=1), encoding="utf-8")
+
+def manifest_of(version):
+    return json.loads((ART / version / "manifest.json").read_text(encoding="utf-8"))
+
+def rollback():
+    reg = load_registry()
+    if not reg["history"]:
+        print("되돌릴 이전 버전이 없습니다.")
+        return
+    old = reg["active"]
+    reg["active"] = reg["history"].pop()
+    reg["versions"][old]["status"] = "롤백됨"
+    reg["versions"][reg["active"]]["status"] = "활성"
+    save_registry(reg)
+    print(f"↩️ 롤백: {old} → {reg['active']}")</code></pre>
+<h3>[셀 11] 파이프라인</h3>
+<p>검증 → 정제·색인 → 회귀 평가 → 게이트 → 활성 버전 교체를 한 함수로 묶는다. 게이트를 못 넘은 버전도 <b>보류</b> 상태로 저장해서 왜 막혔는지 나중에 볼 수 있게 한다. 모든 실행은 <code>logs/pipeline_runs.jsonl</code>에 남는다.</p>
+<pre><code># [셀 11] 파이프라인 — 검증 → 정제·색인 → 회귀 평가 → 게이트 → 활성 버전 교체
+def run_pipeline(reason="수동 실행", fp=None):
+    reg = load_registry()
+    version = f"v{len(reg['versions']) + 1:03d}"
+    print(f"▶ 파이프라인 {version} 시작 — {reason}")
+    rec = {"version": version, "time": now(), "reason": reason, "config": CONFIG}
+
+    docs, synonyms, evals = load_data()                                   # ① 검증
+    errors = validate(docs, synonyms, evals)
+    if errors:
+        print("  ① 데이터 검증 ⛔ 중단")
+        for e in errors:
+            print("     -", e)
+        rec.update(status="검증 실패", errors=errors)
+        reg["versions"][version] = {"status": "검증 실패", "time": rec["time"], "reason": reason}
+        save_registry(reg)
+        append_jsonl(LOGS / "pipeline_runs.jsonl", rec)
+        print(f"  → 활성 버전 그대로: {reg['active']}")
+        return rec
+    print(f"  ① 데이터 검증 ✅ FAQ {len(docs)}건 · 사전 {len(synonyms)}건 · 평가 {len(evals)}건")
+
+    idx = make_index(docs, synonyms, CONFIG)                              # ② 정제·색인
+    print(f"  ② 정제·색인 ✅ TF-IDF {idx['X'].shape} · BERT {'있음' if idx['emb'] is not None else '없음'}")
+
+    metrics, rows = evaluate(idx, evals, CONFIG)                          # ③ 회귀 평가
+    prev = reg["active"]
+    fails = new_failures(rows, manifest_of(prev)["rows"]) if prev else []
+    print(f"  ③ 회귀 평가 Hit@1 {metrics['hit1']:.2f} · Hit@3 {metrics['hit3']:.2f} · "
+          f"인용률 {metrics['cite_rate']:.2f} · 새로 틀린 질문 {len(fails)}")
+    for r in rows:
+        if not r["hit1"]:
+            print(f"     ✗ {r['q']}  정답 {r['gold']}  검색 {r['top']}")
+
+    result = {"metrics": metrics, "rows": rows, "new_fails": fails}       # ④ 게이트
+    checks = [(metrics["hit1"] &gt;= GATE["hit1"], f"Hit@1 ≥ {GATE['hit1']}"),
+              (metrics["cite_rate"] &gt;= GATE["cite_rate"], f"인용률 ≥ {GATE['cite_rate']}"),
+              (len(fails) &lt;= GATE["max_new_fail"], f"새로 틀린 질문 ≤ {GATE['max_new_fail']}")]
+    checks += [g(result) for g in CUSTOM_GATES]
+    passed = all(ok for ok, _ in checks)
+    for ok, msg in checks:
+        if not ok:
+            print(f"     ⛔ 기준 미달: {msg}")
+    for q in fails:
+        print(f"     ⛔ 회귀: '{q}' — {prev}에서는 맞혔음")
+
+    status = "활성" if passed else "보류"
+    save_index(version, idx, {"version": version, "time": rec["time"], "reason": reason, "config": CONFIG,
+                              "metrics": metrics, "rows": rows, "new_fails": fails, "status": status})
+    reg["versions"][version] = {"status": status, "time": rec["time"], "reason": reason, "metrics": metrics, "fp": fp}
+    if passed:                                                            # ⑤ 활성 버전 교체
+        if prev:
+            reg["history"].append(prev)
+            reg["versions"][prev]["status"] = "이전"
+        reg["active"] = version
+        print(f"  ④ 게이트 ✅ 통과 → {version} 활성 (이전 {prev})")
+    else:
+        print(f"  ④ 게이트 ⛔ 보류 → 활성 버전 그대로: {prev}")
+    save_registry(reg)
+    rec.update(status=status, metrics=metrics, new_fails=fails)
+    append_jsonl(LOGS / "pipeline_runs.jsonl", rec)
+    return rec</code></pre>
+<div class="fig"><div class="fig-title">게이트의 세 가지 기준 (GATE)</div>
+<div class="flow tight left">
+<div class="node"><div class="t">Hit@1 ≥ 0.80</div><div class="d">전체적으로 충분히 맞히는가</div></div>
+<div class="node"><div class="t">인용률 ≥ 0.80</div><div class="d">답변이 올바른 근거를 쓰는가</div></div>
+<div class="node main"><div class="t acc">새로 틀린 질문 ≤ 0</div><div class="d">이전보다 나빠진 질문이 하나도 없는가</div></div>
+</div></div>
+<h3>[셀 12] 변경 감지 — 자동 실행의 출발점</h3>
+<p>데이터 파일 3개와 <code>CONFIG</code>의 해시(지문)를 지난번과 비교한다. 다르면 파이프라인을 실행하고, 같으면 아무것도 하지 않는다. 바뀌었더라도 <b>활성 버전과 똑같은 데이터로 되돌아온 경우</b>는 실행을 생략한다. 이 함수를 5초마다 부르는 것이 <code>watch.py</code>다.</p>
+<pre><code># [셀 12] 변경 감지 — 데이터 파일이나 설정이 바뀌었으면 파이프라인 실행
+def fingerprint():
+    fp = {p.name: hashlib.sha256(p.read_bytes()).hexdigest()[:12] for p in (FAQ_FILE, SYN_FILE, EVAL_FILE)}
+    fp["CONFIG"] = hashlib.sha256(json.dumps(CONFIG, sort_keys=True).encode()).hexdigest()[:12]
+    return fp
+
+def check_and_run(force=False, quiet=False):
+    reg = load_registry()
+    fp = fingerprint()
+    changed = [k for k in fp if reg["last_seen"].get(k) != fp[k]]
+    if not changed and not force:
+        if not quiet:
+            print(f"변경 없음 — 활성 버전 {reg['active']}")
+        return None
+    reg["last_seen"] = fp
+    save_registry(reg)
+    active = reg["versions"].get(reg["active"] or "", {})
+    if active.get("fp") == fp and not force:
+        print(f"변경 감지: {', '.join(changed)} — 활성 버전 {reg['active']}와 같은 데이터로 돌아와 실행 생략")
+        return None
+    return run_pipeline("변경 감지: " + ", ".join(changed) if changed else "강제 실행", fp)</code></pre>
+<pre><code>"""터미널에서 켜 두면 data/ 폴더를 지켜보다가 바뀌는 순간 파이프라인을 자동으로 실행한다.
+실행:  python watch.py        (멈추기: Ctrl+C)
+실제 서비스의 'S3 업로드 이벤트·Git push·스케줄러' 역할을 5초 간격 확인으로 대신한다."""
+import time
+from llmops_core import init_project, check_and_run, status
+
+INTERVAL = 5  # 초
+
+if __name__ == "__main__":
+    init_project()
+    print(f"data/ 폴더를 {INTERVAL}초마다 확인합니다. faq.csv · synonyms.csv · eval_set.jsonl을 고쳐 보세요. (멈추기: Ctrl+C)\n")
+    try:
+        while True:
+            if check_and_run(quiet=True):
+                status()
+                print()
+            time.sleep(INTERVAL)
+    except KeyboardInterrupt:
+        print("\n감시를 멈춥니다.")</code></pre>
+<p class="sub">실제 서비스에서는 S3 업로드 이벤트, Git push, 스케줄러가 <code>check_and_run()</code>을 부른다. 원리는 같다.</p>
+</section>
+
+<!-- ═════════════ 구현 ③ ═════════════ -->
+<section aria-labelledby="tab-s6" class="panel" hidden="" id="s6" role="tabpanel"><div class="crumb">LLMOps 따라하기 · 구현 ③</div>
+<h2>구현 ③ 서빙 · 피드백 · 모니터링 · 운영자 도구</h2>
+<p class="lead">챗봇은 항상 활성 버전으로만 답한다. 답이 틀리면 그 신호가 다시 데이터 파일로 돌아가도록 길을 만든다.</p>
+<h3>[셀 13] 서빙 — 활성 버전으로 답하고 로그 남기기</h3>
+<p>활성 버전이 바뀌면 그 버전의 색인을 자동으로 불러온다. 로그에는 <b>개인정보를 지운 질문</b>만 저장한다.</p>
+<pre><code># [셀 13] 서빙 — 활성 버전으로 답하고 모든 요청을 로그로 남긴다
+_serving = {}
+
+def ask(q, show=True):
+    reg = load_registry()
+    version = reg["active"]
+    if version is None:
+        print("아직 활성 버전이 없습니다. check_and_run()을 먼저 실행하세요.")
+        return None
+    if _serving.get("version") != version:                # 활성 버전이 바뀌면 새 색인을 불러온다
+        _serving.update(version=version, idx=load_index(version, CONFIG))
+    idx = _serving["idx"]
+    t0 = time.time()
+    hits = search(q, idx, CONFIG)
+    ans, usage, mode = generate(q, hits, idx, CONFIG)
+    rec = {"trace_id": uuid.uuid4().hex[:8], "time": now(), "version": version, "mode": mode,
+           "query": mask_pii(q),                           # 로그에는 개인정보를 지운 질문만
+           "retrieved": [h["id"] for h in hits], "top_score": hits[0]["score"] if hits else 0.0,
+           "no_hit": not hits, "latency_ms": round((time.time() - t0) * 1000, 1), "tokens": usage,
+           "cost_usd": round(usage["input"] / 1e6 * PRICE_PER_1M["input"]
+                             + usage["output"] / 1e6 * PRICE_PER_1M["output"], 6),
+           "answer": ans}
+    append_jsonl(LOGS / "serve_log.jsonl", rec)
+    if show:
+        print(f"[{rec['trace_id']} · {version}] {rec['query']}\n   → {ans}")
+    return rec</code></pre>
+<div class="table-wrap"><table><thead><tr><th>로그 항목</th><th>왜 남기나</th></tr></thead><tbody>
+<tr><td><code>trace_id</code></td><td>“이 답 이상해요” 민원이 오면 해당 요청을 바로 찾는다</td></tr>
+<tr><td><code>version</code></td><td>어떤 데이터·설정 버전이 그 답을 만들었는지 추적한다</td></tr>
+<tr><td><code>retrieved</code> · <code>top_score</code> · <code>no_hit</code></td><td>검색에서 실패했는지, 생성에서 실패했는지 구분한다</td></tr>
+<tr><td><code>latency_ms</code> · <code>tokens</code> · <code>cost_usd</code> · <code>mode</code></td><td>속도·비용·API 장애(fallback)를 관리한다</td></tr>
+</tbody></table></div>
+<h3>[셀 14] 피드백 · 검토 큐 · 모니터링</h3>
+<p>👎를 받은 답은 <b>검토 큐</b>로 간다. 사람은 모든 로그를 볼 필요 없이 이 큐만 처리하면 된다.</p>
+<pre><code># [셀 14] 피드백 · 검토 큐 · 모니터링
+def feedback(trace_id, good, comment=""):
+    log = {r["trace_id"]: r for r in read_jsonl(LOGS / "serve_log.jsonl")}[trace_id]
+    append_jsonl(LOGS / "feedback.jsonl", {"trace_id": trace_id, "time": now(), "version": log["version"],
+                                           "good": good, "comment": comment})
+    if not good:                                           # 👎는 사람이 검토할 큐로
+        append_jsonl(LOGS / "review_queue.jsonl", {"trace_id": trace_id, "time": now(), "query": log["query"],
+                                                   "retrieved": log["retrieved"], "version": log["version"],
+                                                   "status": "대기"})
+
+def review_queue():
+    items = [r for r in read_jsonl(LOGS / "review_queue.jsonl") if r["status"] == "대기"]
+    for r in items:
+        print(f"  {r['trace_id']}  {r['query']}  (검색 {r['retrieved'] or '없음'}, {r['version']})")
+    return items
+
+def monitor(version=None):
+    logs = [r for r in read_jsonl(LOGS / "serve_log.jsonl") if version in (None, r["version"])]
+    fbs = [r for r in read_jsonl(LOGS / "feedback.jsonl") if version in (None, r["version"])]
+    if not logs:
+        print("로그가 없습니다.")
+        return {}
+    m = {"requests": len(logs),
+         "no_hit_rate": round(sum(r["no_hit"] for r in logs) / len(logs), 2),
+         "bad_feedback_rate": round(sum(not f["good"] for f in fbs) / len(fbs), 2) if fbs else 0.0,
+         "p95_latency_ms": round(float(np.percentile([r["latency_ms"] for r in logs], 95)), 1),
+         "cost_usd": round(sum(r["cost_usd"] for r in logs), 4)}
+    for name, fn in CUSTOM_METRICS.items():
+        m[name] = fn(logs, fbs)
+    print(f"모니터링 ({version or '전체 버전'})")
+    for k, v in m.items():
+        alarm = k in ALERT and v &gt; ALERT[k]
+        print(f"  {k:&lt;18} {v:&lt;8} {'🚨 경보 (기준 ' + str(ALERT[k]) + ')' if alarm else ''}")
+    return m</code></pre>
+<h3>[셀 15] 운영자 도구 — 사람이 하는 일은 데이터 파일 수정뿐</h3>
+<p>FAQ 추가·수정·삭제, 사전 추가, 평가 질문 추가, 라벨링은 모두 <b>data/ 파일을 고치는 함수</b>다. 엑셀이나 VS Code에서 직접 고쳐도 똑같이 변경 감지에 걸린다.</p>
+<pre><code># [셀 15] 운영자 도구 — 사람이 하는 일은 '데이터 파일 수정'뿐이다
+def add_faq(id, title, text):
+    rows = read_csv(FAQ_FILE) + [{"id": id, "title": title, "text": text}]
+    write_csv(FAQ_FILE, ["id", "title", "text"], [[r["id"], r["title"], r["text"]] for r in rows])
+    print(f"faq.csv에 {id} 추가")
+
+def edit_faq(id, title=None, text=None):
+    rows = read_csv(FAQ_FILE)
+    for r in rows:
+        if r["id"] == id:
+            r["title"] = title or r["title"]
+            r["text"] = text or r["text"]
+    write_csv(FAQ_FILE, ["id", "title", "text"], [[r["id"], r["title"], r["text"]] for r in rows])
+    print(f"faq.csv의 {id} 수정")
+
+def remove_faq(id):
+    rows = [r for r in read_csv(FAQ_FILE) if r["id"] != id]
+    write_csv(FAQ_FILE, ["id", "title", "text"], [[r["id"], r["title"], r["text"]] for r in rows])
+    print(f"faq.csv에서 {id} 삭제")
+
+def add_synonym(pattern, replace, note=""):
+    rows = read_csv(SYN_FILE) + [{"pattern": pattern, "replace": replace, "note": note}]
+    write_csv(SYN_FILE, ["pattern", "replace", "note"], [[r["pattern"], r["replace"], r["note"]] for r in rows])
+    print(f"synonyms.csv에 '{pattern}' → '{replace}' 추가")
+
+def add_eval(q, gold, source="수동", must_pass=False):
+    rec = {"q": q, "gold": gold, "source": source}
+    if must_pass:
+        rec["must_pass"] = True
+    append_jsonl(EVAL_FILE, rec)
+    print(f"eval_set.jsonl에 추가: '{q}' → {gold}")
+
+def label(trace_id, gold):
+    """검토 큐의 질문에 정답 FAQ를 달아 평가셋으로 보낸다."""
+    path = LOGS / "review_queue.jsonl"
+    items = read_jsonl(path)
+    for r in items:
+        if r["trace_id"] == trace_id and r["status"] == "대기":
+            r["status"] = f"라벨링 완료 → {gold}"
+            add_eval(r["query"], gold, source=f"피드백 {trace_id}")
+    path.write_text("".join(json.dumps(r, ensure_ascii=False) + "\n" for r in items), encoding="utf-8")
+
+def status():
+    reg = load_registry()
+    print(f"활성 버전: {reg['active']}   이력: {reg['history']}")
+    for v, info in reg["versions"].items():
+        m = info.get("metrics", {})
+        score = f"Hit@1 {m['hit1']:.2f}" if m else ""
+        print(f"  {v}  {info['status']:&lt;6} {score:&lt;11} {info['reason']}")</code></pre>
+</section>
+
+<!-- ═════════════ 시나리오 ═════════════ -->
+<section aria-labelledby="tab-s7" class="panel" hidden="" id="s7" role="tabpanel"><div class="crumb">LLMOps 따라하기 · 시나리오</div>
+<h2>시나리오 — 새 데이터가 들어오면</h2>
+<p class="lead">쇼핑몰 챗봇을 사흘 동안 운영한다고 가정한다. 매일 데이터가 바뀌고, 그때마다 <code>check_and_run()</code> 한 줄로 전체 파이프라인이 돈다. 아래 실행 결과는 <b>BERT와 GPT를 끈 상태</b>(TF-IDF + mock)로 실제 실행한 출력이다. 켜면 점수와 답변 문장은 달라질 수 있지만 흐름은 같다.</p>
+<div class="fig"><div class="fig-title">사흘간의 운영 기록</div>
+<div class="flow tight">
+<div class="node"><div class="t">Day 0</div><div class="d">첫 실행<br/>v001 활성</div></div>
+<div class="arr"></div>
+<div class="node bad"><div class="t">Day 1</div><div class="d">고객 질문 실패 → 👎 → 라벨링·사전<br/>v002 활성</div></div>
+<div class="arr"></div>
+<div class="node newb"><div class="t">Day 2</div><div class="d">새 FAQ D9<br/>v003 자동 활성</div></div>
+<div class="arr"></div>
+<div class="node bad"><div class="t">Day 3</div><div class="d">개인정보 · 답 가로채기<br/>검증 실패 · 보류</div></div>
+<div class="arr"></div>
+<div class="node"><div class="t">롤백</div><div class="d">필요할 때<br/>한 줄로 되돌림</div></div>
+</div></div>
+<h3>Day 0 — 처음 실행</h3>
+<p>처음에는 파일 3개가 “새로 생긴 것”이므로 변경으로 감지된다.</p>
+<pre><code># Day 0 — 처음 실행: 파일이 '새로 생긴 것'도 변경이다
+check_and_run()</code></pre>
+<pre><code>▶ 파이프라인 v001 시작 — 변경 감지: faq.csv, synonyms.csv, eval_set.jsonl, CONFIG
+  ① 데이터 검증 ✅ FAQ 8건 · 사전 9건 · 평가 8건
+  ② 정제·색인 ✅ TF-IDF (8, 75) · BERT 없음
+  ③ 회귀 평가 Hit@1 1.00 · Hit@3 1.00 · 인용률 1.00 · 새로 틀린 질문 0
+  ④ 게이트 ✅ 통과 → v001 활성 (이전 None)</code></pre>
+<h3>Day 1 — 고객 질문이 들어온다</h3>
+<pre><code># Day 1 — 고객 질문이 들어온다 (활성 버전으로 답하고 로그를 남긴다)
+questions = ["택배 언제 와요?", "3만원 넘으면 무배예요?", "리턴은 며칠까지 돼요?",
+             "언제쯤 받아볼 수 있나요?", "주문한 거 언제 받아보죠? 010-1234-5678로 연락 주세요",
+             "환불은 며칠 걸려요?"]
+recs = [ask(q) for q in questions]</code></pre>
+<pre><code>[f6bd50be · v001] 택배 언제 와요?
+   → 주문 후 평일 기준 2~3일 이내에 배송이 도착합니다. 제주·도서산간 지역은 3~5일이 걸립니다. [D1]
+[93ed7b6a · v001] 3만원 넘으면 무배예요?
+   → 30000원 이상 구매 시 무료 배송이며, 미만이면 배송비 3000원이 부과됩니다. [D2]
+[30249101 · v001] 리턴은 며칠까지 돼요?
+   → 상품을 수령한 날부터 7일 이내에 교환 또는 반품을 신청할 수 있습니다. [D3]
+[ef2b4624 · v001] 언제쯤 받아볼 수 있나요?
+   → 상담원 연결이 필요합니다.
+[48698b89 · v001] 주문한 거 언제 받아보죠? [전화번호]로 연락 주세요
+   → 배송 준비 전이라면 마이페이지 주문 내역에서 직접 취소할 수 있습니다. [D6]
+[7ba827ee · v001] 환불은 며칠 걸려요?
+   → 반품 상품이 확인되면 3영업일 이내에 환불됩니다. 카드 결제 취소는 카드사에 따라 3~7일이 더 걸릴 수 있습니다. [D5]</code></pre>
+<p>“언제쯤 받아볼 수 있나요?”는 ‘언제’가 부사라 빠지고 ‘받아볼’은 FAQ에 없는 말이라 아무것도 찾지 못했다. 전화번호는 로그에서 <code>[전화번호]</code>로 지워졌다.</p>
+<pre><code># Day 1 — 고객 피드백과 모니터링
+for r in recs:
+    feedback(r["trace_id"], good=not r["no_hit"])   # 실습용 가정: 답을 못 받은 고객이 👎
+monitor()
+print("\n검토 큐:")
+queue = review_queue()</code></pre>
+<pre><code>모니터링 (전체 버전)
+  requests           6        
+  no_hit_rate        0.17     🚨 경보 (기준 0.1)
+  bad_feedback_rate  0.17     
+  p95_latency_ms     2.2      
+  cost_usd           0.0      
+
+검토 큐:
+  ef2b4624  언제쯤 받아볼 수 있나요?  (검색 없음, v001)</code></pre>
+<h3>Day 1 저녁 — 담당자가 검토 큐를 처리한다</h3>
+<p>사람은 두 가지를 판단한다. ① 이 질문의 정답은 D1이다 → 평가셋에 추가. ② 고객의 ‘받아볼’을 FAQ에 있는 말 ‘도착’으로 바꾸는 사전 한 줄을 추가.</p>
+<pre><code># Day 1 저녁 — 담당자가 검토 큐를 처리한다 (사람이 하는 일)
+label(queue[0]["trace_id"], "D1")                        # ① 이 질문의 정답은 D1 → 평가셋에 추가
+add_synonym(r"받아\s?[보볼봐]\w*", "도착", "운영 피드백")   # ② FAQ에 있는 말('도착')로 바꾸는 사전 추가</code></pre>
+<pre><code>eval_set.jsonl에 추가: '언제쯤 받아볼 수 있나요?' → D1
+synonyms.csv에 '받아\s?[보볼봐]\w*' → '도착' 추가</code></pre>
+<pre><code># 데이터 파일이 바뀌었으니 파이프라인이 다시 돈다
+check_and_run()
+ask("언제쯤 받아볼 수 있나요?")</code></pre>
+<pre><code>▶ 파이프라인 v002 시작 — 변경 감지: synonyms.csv, eval_set.jsonl
+  ① 데이터 검증 ✅ FAQ 8건 · 사전 10건 · 평가 9건
+  ② 정제·색인 ✅ TF-IDF (8, 75) · BERT 없음
+  ③ 회귀 평가 Hit@1 1.00 · Hit@3 1.00 · 인용률 1.00 · 새로 틀린 질문 0
+  ④ 게이트 ✅ 통과 → v002 활성 (이전 v001)
+[3d3af7a8 · v002] 언제쯤 받아볼 수 있나요?
+   → 주문 후 평일 기준 2~3일 이내에 배송이 도착합니다. 제주·도서산간 지역은 3~5일이 걸립니다. [D1]</code></pre>
+<p>파일 2개가 바뀐 것이 감지되어 v002가 만들어졌고, 평가셋이 9문항으로 늘어난 상태로 통과했다. 이제 같은 실수는 게이트가 막는다.</p>
+<h3>Day 2 — 운영자가 새 FAQ를 등록했다</h3>
+<pre><code># Day 2 — 운영자가 새 FAQ를 등록했다
+add_faq("D9", "명절에도 배송되나요?",
+        "설·추석 연휴에는 택배사 휴무로 배송이 평소보다 2~3일 늦어질 수 있습니다. "
+        "연휴 전 마지막 출고일은 공지사항에서 확인하세요.")
+add_eval("추석에도 택배 와요?", "D9")
+check_and_run()
+ask("추석 연휴에도 택배 와요?")</code></pre>
+<pre><code>faq.csv에 D9 추가
+eval_set.jsonl에 추가: '추석에도 택배 와요?' → D9
+▶ 파이프라인 v003 시작 — 변경 감지: faq.csv, eval_set.jsonl
+  ① 데이터 검증 ✅ FAQ 9건 · 사전 10건 · 평가 10건
+  ② 정제·색인 ✅ TF-IDF (9, 87) · BERT 없음
+  ③ 회귀 평가 Hit@1 1.00 · Hit@3 1.00 · 인용률 1.00 · 새로 틀린 질문 0
+  ④ 게이트 ✅ 통과 → v003 활성 (이전 v002)
+[4a40c64a · v003] 추석 연휴에도 택배 와요?
+   → 설·추석 연휴에는 택배사 휴무로 배송이 평소보다 2~3일 늦어질 수 있습니다. 연휴 전 마지막 출고일은 공지사항에서 확인하세요. [D9]</code></pre>
+<p>개발자 개입 없이 새 FAQ가 검증·재색인·회귀 평가를 거쳐 자동으로 반영됐다. 기존 질문 9개가 하나도 나빠지지 않았기 때문에 통과했다.</p>
+<h3>Day 3 — 개인정보가 섞인 FAQ</h3>
+<pre><code># Day 3 — 개인정보가 섞인 FAQ가 올라왔다
+add_faq("D10", "대량 구매 문의", "50개 이상 대량 구매는 담당자 김민수(010-9876-5432)에게 연락 주세요.")
+check_and_run()
+remove_faq("D10")
+check_and_run()</code></pre>
+<pre><code>faq.csv에 D10 추가
+▶ 파이프라인 v004 시작 — 변경 감지: faq.csv
+  ① 데이터 검증 ⛔ 중단
+     - FAQ D10: 개인정보(전화번호·주민번호·이메일)가 들어 있음
+  → 활성 버전 그대로: v003
+faq.csv에서 D10 삭제
+변경 감지: faq.csv — 활성 버전 v003와 같은 데이터로 돌아와 실행 생략</code></pre>
+<p>검증 단계에서 멈춰 색인조차 만들지 않았다. 삭제해서 활성 버전과 같은 데이터로 돌아오자 실행도 생략됐다.</p>
+<h3>Day 3 — 기존 질문의 답을 가로채는 FAQ</h3>
+<pre><code># Day 3 — 기존 질문의 답을 가로채는 FAQ가 올라왔다
+add_faq("D10", "배송 언제 와요?", "배송 관련 문의는 1:1 게시판에 남겨 주세요.")
+check_and_run()
+remove_faq("D10")
+check_and_run()</code></pre>
+<pre><code>faq.csv에 D10 추가
+▶ 파이프라인 v005 시작 — 변경 감지: faq.csv
+  ① 데이터 검증 ✅ FAQ 10건 · 사전 10건 · 평가 10건
+  ② 정제·색인 ✅ TF-IDF (10, 91) · BERT 없음
+  ③ 회귀 평가 Hit@1 0.80 · Hit@3 1.00 · 인용률 0.80 · 새로 틀린 질문 2
+     ✗ 택배 언제 와요?  정답 D1  검색 ['D10', 'D1', 'D9']
+     ✗ 추석에도 택배 와요?  정답 D9  검색 ['D10', 'D9', 'D1']
+     ⛔ 기준 미달: 새로 틀린 질문 ≤ 0
+     ⛔ 회귀: '택배 언제 와요?' — v003에서는 맞혔음
+     ⛔ 회귀: '추석에도 택배 와요?' — v003에서는 맞혔음
+  ④ 게이트 ⛔ 보류 → 활성 버전 그대로: v003
+faq.csv에서 D10 삭제
+변경 감지: faq.csv — 활성 버전 v003와 같은 데이터로 돌아와 실행 생략</code></pre>
+<p>“배송 언제 와요?”라는 짧은 제목의 FAQ가 들어오자 ‘택배 언제 와요?’와 ‘추석에도 택배 와요?’의 답을 가로챘다. 데이터 자체는 멀쩡해서 검증은 통과했지만 <b>회귀 평가</b>가 이전에 맞히던 질문 2개가 틀린 것을 찾아내 보류시켰다. 고객은 그동안 계속 v003으로 정상 답변을 받는다.</p>
+<h3>버전 이력과 롤백</h3>
+<pre><code># 지금까지의 버전 이력
+status()</code></pre>
+<pre><code>활성 버전: v003   이력: ['v001', 'v002']
+  v001  이전     Hit@1 1.00  변경 감지: faq.csv, synonyms.csv, eval_set.jsonl, CONFIG
+  v002  이전     Hit@1 1.00  변경 감지: synonyms.csv, eval_set.jsonl
+  v003  활성     Hit@1 1.00  변경 감지: faq.csv, eval_set.jsonl
+  v004  검증 실패              변경 감지: faq.csv
+  v005  보류     Hit@1 0.80  변경 감지: faq.csv</code></pre>
+<pre><code># 롤백 — 운영 중 문제가 생기면 직전 활성 버전으로 즉시 되돌린다
+rollback()
+status()
+# 다시 최신 데이터로 돌아가려면: check_and_run(force=True)</code></pre>
+<pre><code>↩️ 롤백: v003 → v002
+활성 버전: v002   이력: ['v001']
+  v001  이전     Hit@1 1.00  변경 감지: faq.csv, synonyms.csv, eval_set.jsonl, CONFIG
+  v002  활성     Hit@1 1.00  변경 감지: synonyms.csv, eval_set.jsonl
+  v003  롤백됨    Hit@1 1.00  변경 감지: faq.csv, eval_set.jsonl
+  v004  검증 실패              변경 감지: faq.csv
+  v005  보류     Hit@1 0.80  변경 감지: faq.csv</code></pre>
+<h3>진짜 자동으로 — watch.py</h3>
+<p>노트북 대신 터미널에서 <code>python watch.py</code>를 켜 두고 엑셀이나 VS Code에서 <code>data/faq.csv</code>를 고쳐 저장해 보자. 5초 안에 같은 출력이 저절로 나온다. 사람이 하는 일은 <b>파일 저장</b>뿐이다.</p>
+<pre><code>$ python watch.py
+data/ 준비 완료: ['eval_set.jsonl', 'faq.csv', 'synonyms.csv']
+data/ 폴더를 5초마다 확인합니다. faq.csv · synonyms.csv · eval_set.jsonl을 고쳐 보세요. (멈추기: Ctrl+C)
+
+▶ 파이프라인 v004 시작 — 변경 감지: faq.csv
+  ① 데이터 검증 ✅ …
+  ④ 게이트 ✅ 통과 → v004 활성 (이전 v003)
+활성 버전: v004   이력: ['v001', 'v002', 'v003']</code></pre>
+</section>
+
+<!-- ═════════════ 실습 과제 ═════════════ -->
+<section aria-labelledby="tab-s8" class="panel" hidden="" id="s8" role="tabpanel"><div class="crumb">LLMOps 따라하기 · 실습 과제</div>
+<h2>실습 과제</h2>
+<p class="lead"><code>02_실습과제.ipynb</code>를 열어 순서대로 푼다. 각 과제의 <b>확인</b> 셀이 <code>✅</code>를 출력하면 통과다. 과제는 따라하기와 섞이지 않도록 <code>practice/</code> 폴더에서 진행하고, 결과를 똑같이 재현하려고 과제 1~6은 BERT·GPT를 끈 상태로 푼다.</p>
+<div class="table-wrap"><table><thead><tr><th>과제</th><th>난이도</th><th>LLMOps에서 해당하는 일</th></tr></thead><tbody>
+<tr><td><b>1</b> 새 FAQ 넣고 자동 반영 확인</td><td>기본</td><td>데이터 변경 → 자동 파이프라인</td></tr>
+<tr><td><b>2</b> 사전으로 안 되면 FAQ 보강</td><td>기본</td><td>실패 원인 분석 → 데이터 개선</td></tr>
+<tr><td><b>3</b> 미터 → 센티미터 환산 규칙</td><td>기본</td><td>단위 정제 · 코드 변경은 감지되지 않는다</td></tr>
+<tr><td><b>4</b> 데이터 검증 규칙 추가</td><td>응용</td><td>나쁜 데이터 차단</td></tr>
+<tr><td><b>5</b> 꼭 맞혀야 하는 질문 게이트</td><td>응용</td><td>배포 기준 강화</td></tr>
+<tr><td><b>6</b> 모니터링 지표 추가</td><td>응용</td><td>조용한 오답 관측</td></tr>
+<tr><td><b>7</b> 설정 실험</td><td>응용</td><td>설정 변경도 같은 파이프라인으로 검증</td></tr>
+<tr><td><b>8</b> 제조 현장 FAQ에 적용</td><td>도전</td><td>코드는 그대로, 데이터만 바꿔 새 분야 운영</td></tr>
+<tr><td><b>9</b> watch.py로 자동 실행</td><td>도전</td><td>이벤트 기반 자동화</td></tr>
+</tbody></table></div>
+<h3><span class="lv 준비">준비</span>준비. 준비 — 실습용 프로젝트 만들기</h3>
+<p>따라하기와 섞이지 않도록 <code>practice/</code> 폴더에 새 프로젝트를 만든다. 결과를 모두 같게 재현하려고 과제 1~6은 <b>BERT와 GPT를 끈 상태</b>(TF-IDF + mock)로 진행한다. 과제 7에서 켜 본다.</p>
+<pre><code>import llmops_core as lc
+
+lc.set_project("practice")          # 실습 전용 폴더
+lc.CONFIG["use_bert"] = False
+lc.CONFIG["use_llm"] = False
+lc.init_project(reset=True)
+lc.check_and_run()</code></pre>
+<h3><span class="lv 기본">기본</span>과제 1. 새 FAQ를 넣고 자동 반영 확인하기</h3>
+<p>쇼핑몰이 <b>선물 포장</b> 서비스를 시작했다. FAQ <code>D9</code>를 추가하고, 고객이 물어볼 만한 질문 2개를 평가셋에 넣은 뒤 파이프라인을 실행하라. 새 버전이 활성화되고 챗봇이 D9로 답하면 성공이다.</p>
+<ul><li>제목: <code>선물 포장이 되나요?</code></li><li>답변: <code>주문서에서 선물 포장을 선택하면 2000원에 포장해 드립니다. 메시지 카드는 무료입니다.</code></li><li>평가 질문 예: <code>선물용으로 포장 가능해요?</code>, <code>포장해서 보내줄 수 있어요?</code></li></ul>
+<div class="fig-label">문제 코드 (TODO를 채운다)</div><pre><code># TODO 1: lc.add_faq(...)로 D9 추가
+
+# TODO 2: lc.add_eval(...)로 평가 질문 2개 추가 (정답 D9)
+
+# TODO 3: 변경 감지 → 파이프라인 실행
+</code></pre>
+<div class="fig-label">확인 셀</div><pre><code>r = lc.ask("선물 포장 얼마예요?")
+assert lc.load_registry()["active"] != "v001", "새 버전이 활성화되지 않았습니다"
+assert "[D9]" in r["answer"], "D9로 답하지 않았습니다"
+print("✅ 과제 1 통과")</code></pre>
+<details class="sol"><summary>정답 코드와 실행 결과 보기</summary><div><pre><code>lc.add_faq("D9", "선물 포장이 되나요?",
+           "주문서에서 선물 포장을 선택하면 2000원에 포장해 드립니다. 메시지 카드는 무료입니다.")
+lc.add_eval("선물용으로 포장 가능해요?", "D9")
+lc.add_eval("포장해서 보내줄 수 있어요?", "D9")
+rec = lc.check_and_run()</code></pre><div class="fig-label">실행 결과 (BERT·GPT 끈 상태)</div><pre class="out"><code>faq.csv에 D9 추가
+eval_set.jsonl에 추가: '선물용으로 포장 가능해요?' → D9
+eval_set.jsonl에 추가: '포장해서 보내줄 수 있어요?' → D9
+▶ 파이프라인 v002 시작 — 변경 감지: faq.csv, eval_set.jsonl
+  ① 데이터 검증 ✅ FAQ 9건 · 사전 9건 · 평가 10건
+  ② 정제·색인 ✅ TF-IDF (9, 81) · BERT 없음
+  ③ 회귀 평가 Hit@1 1.00 · Hit@3 1.00 · 인용률 1.00 · 새로 틀린 질문 0
+  ④ 게이트 ✅ 통과 → v002 활성 (이전 v001)
+
+# 확인 셀 출력
+[099cbbfb · v002] 선물 포장 얼마예요?
+   → 주문서에서 선물 포장을 선택하면 2000원에 포장해 드립니다. 메시지 카드는 무료입니다. [D9]
+✅ 과제 1 통과</code></pre></div></details>
+<h3><span class="lv 기본">기본</span>과제 2. 틀린 질문 고치기 — 사전으로 안 되면 FAQ를 보강한다</h3>
+<p>고객이 <code>공짜 배송 기준이 뭐예요?</code>라고 물었다. 정답은 D2(배송비)다.</p>
+<ol><li>평가셋에 넣고 실행해 <b>틀리는 것</b>을 확인한다.</li><li>동의어 사전에 <code>공짜 → 무료</code>를 넣고 다시 실행한다. 여전히 틀린다.</li><li>원인 분석 셀로 어떤 단어 때문에 D1이 이기는지 확인한다.</li><li>D2의 <b>제목을 보강</b>해(<code>lc.edit_faq</code>) 통과시킨다.</li></ol>
+<div class="fig-label">문제 코드 (TODO를 채운다)</div><pre><code># 1) 문제 재현
+lc.add_eval("공짜 배송 기준이 뭐예요?", "D2")
+lc.check_and_run()
+
+# 2) TODO: 동의어 사전에 '공짜' → '무료' 추가 후 실행
+
+
+# 3) 원인 분석 — 질문과 겹치는 단어를 문서별로 본다
+idx = lc.load_index(sorted(lc.load_registry()["versions"])[-1], lc.CONFIG)   # 가장 최근 버전
+q = lc.clean_text("공짜 배송 기준이 뭐예요?", idx["synonyms"])
+print("질문 토큰:", lc.tokenize_ko(q))
+for d, c in zip(idx["docs"], idx["corpus"]):
+    print(d["id"], [t for t in lc.tokenize_ko(c) if t in lc.tokenize_ko(q)])
+
+# 4) TODO: lc.edit_faq("D2", title=...)로 D2 제목을 보강하고 실행
+</code></pre>
+<div class="fig-label">확인 셀</div><pre><code>m = lc.manifest_of(lc.load_registry()["active"])
+row = [r for r in m["rows"] if r["q"] == "공짜 배송 기준이 뭐예요?"][0]
+assert row["hit1"], f"아직 틀립니다: {row['top']}"
+print("✅ 과제 2 통과")</code></pre>
+<details class="sol"><summary>정답 코드와 실행 결과 보기</summary><div><pre><code>lc.add_eval("공짜 배송 기준이 뭐예요?", "D2")
+lc.check_and_run()
+
+lc.add_synonym("공짜", "무료", "과제 2")
+lc.check_and_run()                       # 여전히 D1이 1위
+
+idx = lc.load_index(sorted(lc.load_registry()["versions"])[-1], lc.CONFIG)
+q = lc.clean_text("공짜 배송 기준이 뭐예요?", idx["synonyms"])
+print("질문 토큰:", lc.tokenize_ko(q))
+for d, c in zip(idx["docs"], idx["corpus"]):
+    print(d["id"], [t for t in lc.tokenize_ko(c) if t in lc.tokenize_ko(q)])
+# → D1이 '배송'·'기준'을 모두 갖고 있다 (평일 '기준'). D2 제목에 '무료 배송 기준'을 넣는다.
+
+lc.edit_faq("D2", title="무료 배송 기준과 배송비는 얼마인가요?")
+lc.check_and_run()</code></pre><div class="fig-label">실행 결과 (BERT·GPT 끈 상태)</div><pre class="out"><code>eval_set.jsonl에 추가: '공짜 배송 기준이 뭐예요?' → D2
+▶ 파이프라인 v003 시작 — 변경 감지: eval_set.jsonl
+  ① 데이터 검증 ✅ FAQ 9건 · 사전 9건 · 평가 11건
+  ② 정제·색인 ✅ TF-IDF (9, 81) · BERT 없음
+  ③ 회귀 평가 Hit@1 0.91 · Hit@3 0.91 · 인용률 0.91 · 새로 틀린 질문 0
+     ✗ 공짜 배송 기준이 뭐예요?  정답 D2  검색 ['D1', 'D7', 'D6']
+  ④ 게이트 ✅ 통과 → v003 활성 (이전 v002)
+synonyms.csv에 '공짜' → '무료' 추가
+▶ 파이프라인 v004 시작 — 변경 감지: synonyms.csv
+  ① 데이터 검증 ✅ FAQ 9건 · 사전 10건 · 평가 11건
+  ② 정제·색인 ✅ TF-IDF (9, 81) · BERT 없음
+  ③ 회귀 평가 Hit@1 0.91 · Hit@3 1.00 · 인용률 0.91 · 새로 틀린 질문 0
+     ✗ 공짜 배송 기준이 뭐예요?  정답 D2  검색 ['D1', 'D2', 'D7']
+  ④ 게이트 ✅ 통과 → v004 활성 (이전 v003)
+질문 토큰: ['무료', '배송', '기준']
+D1 ['배송', '기준', '배송']
+D2 ['무료', '배송']
+D3 []
+D4 ['무료']
+D5 []
+D6 ['배송']
+D7 ['배송', '배송']
+D8 []
+D9 ['무료']
+faq.csv의 D2 수정
+▶ 파이프라인 v005 시작 — 변경 감지: faq.csv
+  ① 데이터 검증 ✅ FAQ 9건 · 사전 10건 · 평가 11건
+  ② 정제·색인 ✅ TF-IDF (9, 81) · BERT 없음
+  ③ 회귀 평가 Hit@1 1.00 · Hit@3 1.00 · 인용률 1.00 · 새로 틀린 질문 0
+  ④ 게이트 ✅ 통과 → v005 활성 (이전 v004)
+
+# 확인 셀 출력
+✅ 과제 2 통과</code></pre></div></details>
+<h3><span class="lv 기본">기본</span>과제 3. 단위 정제 — 미터를 센티미터로 환산하기</h3>
+<p>FAQ D7에는 <code>가로 150cm 이상</code>이라고 적혀 있는데 고객은 <code>2미터 책장도 화물로 와요?</code>라고 묻는다. 현재 정제는 <code>2미터 → 2m</code>까지만 바꾼다. <code>m</code>를 <code>cm</code>로 <b>숫자까지 환산</b>하는 규칙을 <code>lc.UNIT_RULES</code>에 추가하라.</p>
+<ul><li>힌트: 바꿀 값에 함수(<code>lambda m: ...</code>)를 쓰면 숫자를 계산할 수 있다. <code>12mm</code>, <code>150cm</code>, <code>5km</code>는 건드리면 안 된다.</li><li>생각해 보기: 규칙은 <b>코드</b>라서 <code>check_and_run()</code>이 변경을 감지하지 못한다. 실제 서비스에서는 무엇이 이 역할을 할까?</li></ul>
+<div class="fig-label">문제 코드 (TODO를 채운다)</div><pre><code># 1) 문제 재현
+lc.add_eval("2미터 책장도 화물로 와요?", "D7")
+lc.check_and_run()
+
+# 2) TODO: m → cm 환산 규칙을 lc.UNIT_RULES에 append
+
+
+print(lc.clean_text("2미터 책장, 1.5m 소파, 12mm 볼트, 150cm, 5km"))
+
+# 3) 코드가 바뀐 것은 감지되지 않는다 → 강제 실행
+lc.check_and_run()
+lc.check_and_run(force=True)</code></pre>
+<div class="fig-label">확인 셀</div><pre><code>assert lc.clean_text("2미터 책장, 1.5m 소파, 12mm 볼트, 150cm, 5km") == "200cm 책장, 150cm 소파, 12mm 볼트, 150cm, 5km"
+m = lc.manifest_of(lc.load_registry()["active"])
+assert all(r["hit1"] for r in m["rows"] if r["gold"] == "D7"), "D7 질문이 아직 틀립니다"
+print("✅ 과제 3 통과")</code></pre>
+<details class="sol"><summary>정답 코드와 실행 결과 보기</summary><div><pre><code>lc.add_eval("2미터 책장도 화물로 와요?", "D7")
+lc.check_and_run()
+
+lc.UNIT_RULES.append((r"(\d+(?:\.\d+)?)m(?![A-Za-z])",
+                      lambda m: f"{round(float(m.group(1)) * 100)}cm", "m → cm 환산"))
+print(lc.clean_text("2미터 책장, 1.5m 소파, 12mm 볼트, 150cm, 5km"))
+
+lc.check_and_run()            # 변경 없음 — 데이터 파일은 그대로다
+lc.check_and_run(force=True)  # 실제 서비스에서는 Git push가 이 트리거 역할</code></pre><div class="fig-label">실행 결과 (BERT·GPT 끈 상태)</div><pre class="out"><code>eval_set.jsonl에 추가: '2미터 책장도 화물로 와요?' → D7
+▶ 파이프라인 v006 시작 — 변경 감지: eval_set.jsonl
+  ① 데이터 검증 ✅ FAQ 9건 · 사전 10건 · 평가 12건
+  ② 정제·색인 ✅ TF-IDF (9, 81) · BERT 없음
+  ③ 회귀 평가 Hit@1 0.92 · Hit@3 1.00 · 인용률 0.92 · 새로 틀린 질문 0
+     ✗ 2미터 책장도 화물로 와요?  정답 D7  검색 ['D1', 'D7']
+  ④ 게이트 ✅ 통과 → v006 활성 (이전 v005)
+200cm 책장, 150cm 소파, 12mm 볼트, 150cm, 5km
+변경 없음 — 활성 버전 v006
+▶ 파이프라인 v007 시작 — 강제 실행
+  ① 데이터 검증 ✅ FAQ 9건 · 사전 10건 · 평가 12건
+  ② 정제·색인 ✅ TF-IDF (9, 81) · BERT 없음
+  ③ 회귀 평가 Hit@1 1.00 · Hit@3 1.00 · 인용률 1.00 · 새로 틀린 질문 0
+  ④ 게이트 ✅ 통과 → v007 활성 (이전 v006)
+
+# 확인 셀 출력
+✅ 과제 3 통과</code></pre></div></details>
+<h3><span class="lv 응용">응용</span>과제 4. 데이터 검증 규칙 추가하기</h3>
+<p>운영자가 실수로 너무 짧은 답변이나 <b>이미 있는 제목</b>으로 FAQ를 올리는 일이 생긴다. 두 가지 검사 함수를 만들어 <code>lc.CUSTOM_CHECKS</code>에 넣어라. 검사 함수는 <code>(docs, evals)</code>를 받아 <b>오류 메시지 리스트</b>를 돌려준다.</p>
+<ul><li><code>check_answer_length</code>: 답변이 15자 미만이면 오류</li><li><code>check_duplicate_title</code>: 제목이 같은 FAQ가 2개 이상이면 오류</li></ul>
+<div class="fig-label">문제 코드 (TODO를 채운다)</div><pre><code>def check_answer_length(docs, evals):
+    # TODO
+    return []
+
+def check_duplicate_title(docs, evals):
+    # TODO
+    return []
+
+lc.CUSTOM_CHECKS += [check_answer_length, check_duplicate_title]
+
+# 시험 — 둘 다 '검증 실패'가 나와야 한다
+lc.add_faq("D10", "쿠폰은 어디서 받나요?", "이벤트 페이지")
+r1 = lc.check_and_run()
+lc.remove_faq("D10")
+lc.add_faq("D11", "교환·반품은 언제까지 되나요?", "교환과 반품 기간은 상품 상세 페이지의 안내를 따릅니다.")
+r2 = lc.check_and_run()
+lc.remove_faq("D11")
+lc.check_and_run()</code></pre>
+<div class="fig-label">확인 셀</div><pre><code>assert r1 and r1["status"] == "검증 실패", "짧은 답변이 걸러지지 않았습니다"
+assert r2 and r2["status"] == "검증 실패", "중복 제목이 걸러지지 않았습니다"
+print("✅ 과제 4 통과")</code></pre>
+<details class="sol"><summary>정답 코드와 실행 결과 보기</summary><div><pre><code>def check_answer_length(docs, evals):
+    return [f"FAQ {d['id']}: 답변이 너무 짧음({len(d['text'])}자)" for d in docs if len(d["text"]) &lt; 15]
+
+def check_duplicate_title(docs, evals):
+    titles = [d["title"] for d in docs]
+    return [f"FAQ 제목 중복: {t}" for t in sorted({t for t in titles if titles.count(t) &gt; 1})]
+
+lc.CUSTOM_CHECKS += [check_answer_length, check_duplicate_title]
+
+lc.add_faq("D10", "쿠폰은 어디서 받나요?", "이벤트 페이지")
+r1 = lc.check_and_run()
+lc.remove_faq("D10")
+lc.add_faq("D11", "교환·반품은 언제까지 되나요?", "교환과 반품 기간은 상품 상세 페이지의 안내를 따릅니다.")
+r2 = lc.check_and_run()
+lc.remove_faq("D11")
+lc.check_and_run()</code></pre><div class="fig-label">실행 결과 (BERT·GPT 끈 상태)</div><pre class="out"><code>faq.csv에 D10 추가
+▶ 파이프라인 v008 시작 — 변경 감지: faq.csv
+  ① 데이터 검증 ⛔ 중단
+     - FAQ D10: 답변이 너무 짧음(7자)
+  → 활성 버전 그대로: v007
+faq.csv에서 D10 삭제
+faq.csv에 D11 추가
+▶ 파이프라인 v009 시작 — 변경 감지: faq.csv
+  ① 데이터 검증 ⛔ 중단
+     - FAQ 제목 중복: 교환·반품은 언제까지 되나요?
+  → 활성 버전 그대로: v007
+faq.csv에서 D11 삭제
+변경 감지: faq.csv — 활성 버전 v007와 같은 데이터로 돌아와 실행 생략
+
+# 확인 셀 출력
+✅ 과제 4 통과</code></pre></div></details>
+<h3><span class="lv 응용">응용</span>과제 5. 게이트 강화 — 꼭 맞혀야 하는 질문</h3>
+<p>지금 게이트는 <b>새로 추가한 질문이 틀려도</b> 전체 점수만 넘으면 통과시킨다 (과제 2·3에서 확인). 평가셋에 <code>must_pass: true</code>로 표시한 질문은 반드시 1위로 맞혀야 통과하도록 게이트 함수를 만들어 <code>lc.CUSTOM_GATES</code>에 넣어라. 게이트 함수는 <code>result</code>를 받아 <code>(통과 여부, 메시지)</code>를 돌려준다. <code>result["rows"]</code>의 각 행에 <code>must_pass</code>, <code>hit1</code>이 있다.</p>
+<p>그다음 필수 질문 <code>주문한 거 언제 받아보죠?</code>(정답 D1)가 <b>보류</b>되는 것을 확인하고, FAQ를 고쳐 통과시켜라.</p>
+<div class="fig-label">문제 코드 (TODO를 채운다)</div><pre><code>def gate_must_pass(result):
+    # TODO: must_pass인데 hit1이 False인 질문을 찾는다
+    return True, ""
+
+lc.CUSTOM_GATES.append(gate_must_pass)
+
+lc.add_synonym(r"받아\s?[보볼봐]\w*", "도착", "따라하기와 같은 사전")
+lc.add_eval("주문한 거 언제 받아보죠?", "D1", must_pass=True)
+r1 = lc.check_and_run()      # '보류'가 나와야 한다
+
+# TODO: D1을 보강해 통과시키기 (힌트: 질문의 '도착'이 D1 제목에도 있으면?)
+</code></pre>
+<div class="fig-label">확인 셀</div><pre><code>ok, _ = gate_must_pass({"rows": [{"q": "시험", "must_pass": True, "hit1": False}]})
+assert not ok, "gate_must_pass가 틀린 필수 질문을 잡지 못합니다"
+assert r1 and r1["status"] == "보류", "필수 질문이 틀렸는데 게이트를 통과했습니다"
+m = lc.manifest_of(lc.load_registry()["active"])
+must = [r for r in m["rows"] if r.get("must_pass")]
+assert must and all(r["hit1"] for r in must), "필수 질문이 활성 버전에서 아직 틀립니다"
+print("✅ 과제 5 통과")</code></pre>
+<details class="sol"><summary>정답 코드와 실행 결과 보기</summary><div><pre><code>def gate_must_pass(result):
+    bad = [r["q"] for r in result["rows"] if r["must_pass"] and not r["hit1"]]
+    return (not bad, f"필수 질문 실패: {bad}")
+
+lc.CUSTOM_GATES.append(gate_must_pass)
+
+lc.add_synonym(r"받아\s?[보볼봐]\w*", "도착", "따라하기와 같은 사전")
+lc.add_eval("주문한 거 언제 받아보죠?", "D1", must_pass=True)
+r1 = lc.check_and_run()
+
+lc.edit_faq("D1", title="배송은 언제 오나요? 언제 도착하나요?")
+lc.check_and_run()</code></pre><div class="fig-label">실행 결과 (BERT·GPT 끈 상태)</div><pre class="out"><code>synonyms.csv에 '받아\s?[보볼봐]\w*' → '도착' 추가
+eval_set.jsonl에 추가: '주문한 거 언제 받아보죠?' → D1
+▶ 파이프라인 v010 시작 — 변경 감지: synonyms.csv, eval_set.jsonl
+  ① 데이터 검증 ✅ FAQ 9건 · 사전 11건 · 평가 13건
+  ② 정제·색인 ✅ TF-IDF (9, 81) · BERT 없음
+  ③ 회귀 평가 Hit@1 0.92 · Hit@3 1.00 · 인용률 0.92 · 새로 틀린 질문 0
+     ✗ 주문한 거 언제 받아보죠?  정답 D1  검색 ['D6', 'D1']
+     ⛔ 기준 미달: 필수 질문 실패: ['주문한 거 언제 받아보죠?']
+  ④ 게이트 ⛔ 보류 → 활성 버전 그대로: v007
+faq.csv의 D1 수정
+▶ 파이프라인 v011 시작 — 변경 감지: faq.csv
+  ① 데이터 검증 ✅ FAQ 9건 · 사전 11건 · 평가 13건
+  ② 정제·색인 ✅ TF-IDF (9, 81) · BERT 없음
+  ③ 회귀 평가 Hit@1 1.00 · Hit@3 1.00 · 인용률 1.00 · 새로 틀린 질문 0
+  ④ 게이트 ✅ 통과 → v011 활성 (이전 v007)
+
+# 확인 셀 출력
+✅ 과제 5 통과</code></pre></div></details>
+<h3><span class="lv 응용">응용</span>과제 6. 모니터링 지표 추가하기</h3>
+<p>검색은 됐지만 점수가 낮은 답은 <b>조용한 오답</b>일 가능성이 크다. <code>top_score</code>가 0.2 미만인 요청의 비율 <code>low_confidence_rate</code>를 <code>lc.CUSTOM_METRICS</code>에 추가하고, <code>lc.ALERT</code>에 경보 기준 0.3을 넣어라. 지표 함수는 <code>(logs, feedbacks)</code>를 받아 숫자를 돌려준다.</p>
+<div class="fig-label">문제 코드 (TODO를 채운다)</div><pre><code># TODO: lc.CUSTOM_METRICS["low_confidence_rate"] = ...
+# TODO: lc.ALERT["low_confidence_rate"] = 0.3
+
+for q in ["택배 언제 와요?", "오배송 왔어요", "상품이 깨져서 왔어요", "환불 며칠 걸려요?"]:
+    lc.ask(q)
+m = lc.monitor()</code></pre>
+<div class="fig-label">확인 셀</div><pre><code>assert "low_confidence_rate" in m, "지표가 추가되지 않았습니다"
+assert 0 &lt;= m["low_confidence_rate"] &lt;= 1
+print("✅ 과제 6 통과 — 점수가 낮았던 질문:", [r["query"] for r in lc.read_jsonl(lc.LOGS / "serve_log.jsonl") if r["top_score"] &lt; 0.2])</code></pre>
+<details class="sol"><summary>정답 코드와 실행 결과 보기</summary><div><pre><code>lc.CUSTOM_METRICS["low_confidence_rate"] = (
+    lambda logs, fbs: round(sum(r["top_score"] &lt; 0.2 for r in logs) / len(logs), 2))
+lc.ALERT["low_confidence_rate"] = 0.3
+
+for q in ["택배 언제 와요?", "오배송 왔어요", "상품이 깨져서 왔어요", "환불 며칠 걸려요?"]:
+    lc.ask(q)
+m = lc.monitor()</code></pre><div class="fig-label">실행 결과 (BERT·GPT 끈 상태)</div><pre class="out"><code>[d8961369 · v011] 택배 언제 와요?
+   → 주문 후 평일 기준 2~3일 이내에 배송이 도착합니다. 제주·도서산간 지역은 3~5일이 걸립니다. [D1]
+[40c25682 · v011] 오배송 왔어요
+   → 주문 후 평일 기준 2~3일 이내에 배송이 도착합니다. 제주·도서산간 지역은 3~5일이 걸립니다. [D1]
+[24a6349b · v011] 상품이 깨져서 왔어요
+   → 주문 후 평일 기준 2~3일 이내에 배송이 도착합니다. 제주·도서산간 지역은 3~5일이 걸립니다. [D1]
+[da4ee29c · v011] 환불 며칠 걸려요?
+   → 반품 상품이 확인되면 3영업일 이내에 환불됩니다. 카드 결제 취소는 카드사에 따라 3~7일이 더 걸릴 수 있습니다. [D5]
+모니터링 (전체 버전)
+  requests           5        
+  no_hit_rate        0.0      
+  bad_feedback_rate  0.0      
+  p95_latency_ms     1.2      
+  cost_usd           0.0      
+  low_confidence_rate 0.2
+
+# 확인 셀 출력
+✅ 과제 6 통과 — 점수가 낮았던 질문: ['상품이 깨져서 왔어요']</code></pre></div></details>
+<h3><span class="lv 응용">응용</span>과제 7. 설정 실험 — 설정을 바꿔도 파이프라인이 돈다</h3>
+<p><code>CONFIG</code>도 변경 감지 대상이다. 값을 하나씩 바꿔 <code>check_and_run()</code>을 실행하고 결과를 표에 기록하라. 바꾼 값을 원래대로 돌리면 '같은 데이터로 돌아와 실행 생략'이 나오는 것도 확인한다.</p>
+<div class="table-wrap"><table><thead><tr><th>실험</th><th>바꾼 설정</th><th>Hit@1</th><th>게이트</th><th>관찰</th></tr></thead><tbody><tr><td>A</td><td><code>min_score</code> 0.05 → 0.3</td><td></td><td></td><td></td></tr><tr><td>B</td><td><code>top_k</code> 3 → 1</td><td></td><td></td><td></td></tr><tr><td>C</td><td><code>use_bert</code> True (torch 필요)</td><td></td><td></td><td></td></tr><tr><td>D</td><td>C + <code>alpha</code> 0.3</td><td></td><td></td><td></td></tr><tr><td>E</td><td><code>use_llm</code> True (API 키 필요)</td><td></td><td></td><td>인용률 변화</td></tr></tbody></table></div>
+<div class="fig-label">문제 코드 (TODO를 채운다)</div><pre><code># 실험 A
+lc.CONFIG["min_score"] = 0.3
+lc.check_and_run()
+lc.CONFIG["min_score"] = 0.05
+lc.check_and_run()
+
+# TODO: 실험 B~E도 같은 방식으로 실행하고 표를 채운다
+</code></pre>
+<details class="sol"><summary>정답 코드와 실행 결과 보기</summary><div><pre><code>for key, val, back in [("min_score", 0.3, 0.05), ("top_k", 1, 3)]:
+    print(f"\n■ 실험: {key} = {val}")
+    lc.CONFIG[key] = val
+    lc.check_and_run()
+    lc.CONFIG[key] = back
+    lc.check_and_run()
+
+# BERT·GPT는 내 PC에서 켜 본다 (켜면 그 설정이 새 버전 후보가 된다)
+lc.CONFIG["use_bert"] = True
+lc.check_and_run()
+lc.CONFIG["alpha"] = 0.3
+lc.check_and_run()
+lc.CONFIG.update(use_bert=False, alpha=0.5)
+lc.check_and_run()</code></pre><p class="sub">BERT·GPT를 켜는 실험이라 실행 결과는 내 PC에서 확인해 표에 기록한다.</p></div></details>
+<h3><span class="lv 도전">도전</span>과제 8. 도전 — 같은 LLMOps를 제조 현장 FAQ에 적용하기</h3>
+<p>코드는 그대로 두고 <b>데이터만 바꿔</b> 제조 설비 FAQ 챗봇을 만든다. <code>factory/</code> 프로젝트를 만들고 아래를 채워라.</p>
+<ol><li>동의어 사전: 현장 약어를 표준 용어로 (<code>M/C→머시닝센터</code>, <code>NG→불량</code>, <code>에러→알람</code>, <code>#3→3호기</code>, <code>툴→공구</code>, <code>갈아→교체</code> 등)</li><li>평가 질문 5개가 모두 통과하는 v001 만들기</li><li>새 FAQ <code>F6 절삭유 보충</code>과 질문 <code>쿨런트 언제 채워요?</code>를 넣었을 때 틀리면, 사전을 보강해 통과시키기</li></ol>
+<div class="fig-label">문제 코드 (TODO를 채운다)</div><pre><code>import json
+lc.set_project("factory")
+lc.write_csv(lc.FAQ_FILE, ["id", "title", "text"], [
+    ("F1", "설비 알람이 뜨면 어떻게 하나요?", "설비 화면의 알람 코드를 확인하고 비상정지한 뒤 설비 담당자에게 알립니다. 임의로 재가동하지 않습니다."),
+    ("F2", "불량이 나오면 어떻게 처리하나요?", "불량품은 빨간 상자에 격리하고 불량 일지에 수량과 원인을 기록합니다."),
+    ("F3", "치수 공차는 얼마인가요?", "가공 치수 공차는 ±0.05mm 이내이며 벗어나면 불량으로 판정합니다."),
+    ("F4", "작업 전 점검은 무엇을 하나요?", "작업 전 절삭유 수위, 공구 마모, 안전 커버 닫힘을 확인하고 점검표에 서명합니다."),
+    ("F5", "머시닝센터 공구 교체 주기는?", "머시닝센터 공구는 가공 500개마다 또는 마모가 보이면 교체합니다."),
+])
+# TODO 1: 제조 동의어 사전 (pattern, replace, note)
+lc.write_csv(lc.SYN_FILE, ["pattern", "replace", "note"], [
+    # (r"\bM/C\b|엠씨", "머시닝센터", "설비 약어"),
+])
+lc.EVAL_FILE.write_text("".join(json.dumps({"q": q, "gold": g, "source": "초기"}, ensure_ascii=False) + "\n" for q, g in [
+    ("#3 M/C 툴 언제 갈아요?", "F5"), ("NG 나오면 어디다 둬요?", "F2"), ("에러 뜨면 어떡해요?", "F1"),
+    ("치수 0.05미리 넘으면 어떻게 돼요?", "F3"), ("작업 시작 전에 뭐 확인해요?", "F4")]), encoding="utf-8")
+lc.check_and_run()
+
+# TODO 2: 새 FAQ F6 추가 + 평가 질문 → 실행 → 틀리면 사전 보강 → 실행
+# 답변 예: 절삭유 수위가 게이지의 MIN 선 아래로 내려가면 지정 절삭유로 MAX 선까지 보충합니다.
+</code></pre>
+<div class="fig-label">확인 셀</div><pre><code>m = lc.manifest_of(lc.load_registry()["active"])
+assert len(m["rows"]) &gt;= 6 and all(r["hit1"] for r in m["rows"]), [r["q"] for r in m["rows"] if not r["hit1"]]
+print("✅ 과제 8 통과 — 제조 FAQ 챗봇", lc.load_registry()["active"], "활성")</code></pre>
+<details class="sol"><summary>정답 코드와 실행 결과 보기</summary><div><pre><code>import json
+lc.set_project("factory")
+lc.write_csv(lc.FAQ_FILE, ["id", "title", "text"], [
+    ("F1", "설비 알람이 뜨면 어떻게 하나요?", "설비 화면의 알람 코드를 확인하고 비상정지한 뒤 설비 담당자에게 알립니다. 임의로 재가동하지 않습니다."),
+    ("F2", "불량이 나오면 어떻게 처리하나요?", "불량품은 빨간 상자에 격리하고 불량 일지에 수량과 원인을 기록합니다."),
+    ("F3", "치수 공차는 얼마인가요?", "가공 치수 공차는 ±0.05mm 이내이며 벗어나면 불량으로 판정합니다."),
+    ("F4", "작업 전 점검은 무엇을 하나요?", "작업 전 절삭유 수위, 공구 마모, 안전 커버 닫힘을 확인하고 점검표에 서명합니다."),
+    ("F5", "머시닝센터 공구 교체 주기는?", "머시닝센터 공구는 가공 500개마다 또는 마모가 보이면 교체합니다."),
+])
+lc.write_csv(lc.SYN_FILE, ["pattern", "replace", "note"], [
+    (r"\bM/C\b|엠씨", "머시닝센터", "설비 약어"),
+    (r"\bN\.?G\b|엔지", "불량", "판정 용어"),
+    ("에러|경보", "알람", "동의어"),
+    (r"#\s?(\d+)(?:\s?호기)?", r"\1호기", "설비 번호"),
+    ("툴", "공구", "동의어"),
+    ("갈아", "교체", "구어체"),
+])
+lc.EVAL_FILE.write_text("".join(json.dumps({"q": q, "gold": g, "source": "초기"}, ensure_ascii=False) + "\n" for q, g in [
+    ("#3 M/C 툴 언제 갈아요?", "F5"), ("NG 나오면 어디다 둬요?", "F2"), ("에러 뜨면 어떡해요?", "F1"),
+    ("치수 0.05미리 넘으면 어떻게 돼요?", "F3"), ("작업 시작 전에 뭐 확인해요?", "F4")]), encoding="utf-8")
+lc.check_and_run()
+
+lc.add_faq("F6", "절삭유는 언제 보충하나요?", "절삭유 수위가 게이지의 MIN 선 아래로 내려가면 지정 절삭유로 MAX 선까지 보충합니다.")
+lc.add_eval("쿨런트 언제 채워요?", "F6")
+lc.check_and_run()                 # 쿨런트·채워 를 몰라서 틀린다
+lc.add_synonym("쿨런트", "절삭유", "현장 용어")
+lc.add_synonym("채워|채우", "보충", "구어체")
+lc.check_and_run()
+lc.ask("2호기 쿨런트 부족하면 언제 채워요?")</code></pre><div class="fig-label">실행 결과 (BERT·GPT 끈 상태)</div><pre class="out"><code>▶ 파이프라인 v001 시작 — 변경 감지: faq.csv, synonyms.csv, eval_set.jsonl, CONFIG
+  ① 데이터 검증 ✅ FAQ 5건 · 사전 6건 · 평가 5건
+  ② 정제·색인 ✅ TF-IDF (5, 52) · BERT 없음
+  ③ 회귀 평가 Hit@1 1.00 · Hit@3 1.00 · 인용률 1.00 · 새로 틀린 질문 0
+  ④ 게이트 ✅ 통과 → v001 활성 (이전 None)
+faq.csv에 F6 추가
+eval_set.jsonl에 추가: '쿨런트 언제 채워요?' → F6
+▶ 파이프라인 v002 시작 — 변경 감지: faq.csv, eval_set.jsonl
+  ① 데이터 검증 ✅ FAQ 6건 · 사전 6건 · 평가 6건
+  ② 정제·색인 ✅ TF-IDF (6, 61) · BERT 없음
+  ③ 회귀 평가 Hit@1 0.83 · Hit@3 0.83 · 인용률 0.83 · 새로 틀린 질문 0
+     ✗ 쿨런트 언제 채워요?  정답 F6  검색 []
+  ④ 게이트 ✅ 통과 → v002 활성 (이전 v001)
+synonyms.csv에 '쿨런트' → '절삭유' 추가
+synonyms.csv에 '채워|채우' → '보충' 추가
+▶ 파이프라인 v003 시작 — 변경 감지: synonyms.csv
+  ① 데이터 검증 ✅ FAQ 6건 · 사전 8건 · 평가 6건
+  ② 정제·색인 ✅ TF-IDF (6, 61) · BERT 없음
+  ③ 회귀 평가 Hit@1 1.00 · Hit@3 1.00 · 인용률 1.00 · 새로 틀린 질문 0
+  ④ 게이트 ✅ 통과 → v003 활성 (이전 v002)
+[dd7e569d · v003] 2호기 쿨런트 부족하면 언제 채워요?
+   → 절삭유 수위가 게이지의 MIN 선 아래로 내려가면 지정 절삭유로 MAX 선까지 보충합니다. [F6]
+
+# 확인 셀 출력
+✅ 과제 8 통과 — 제조 FAQ 챗봇 v003 활성</code></pre></div></details>
+<h3><span class="lv 도전">도전</span>과제 9. 도전 — watch.py로 진짜 자동 실행 보기</h3>
+<p>노트북 대신 <b>파일 저장만으로</b> 파이프라인이 도는 것을 확인한다.</p>
+<ol><li>터미널에서 실습 폴더로 이동해 <code>python watch.py</code>를 실행한다.</li><li>VS Code나 엑셀에서 <code>data/faq.csv</code>를 열어 FAQ를 한 줄 추가하고 저장한다. → 5초 안에 파이프라인 출력이 나온다.</li><li>답변에 전화번호를 넣어 저장해 본다. → 검증 실패로 멈추고 활성 버전은 그대로다.</li><li>그 줄을 지우고 저장한다. → '같은 데이터로 돌아와 실행 생략'.</li><li>터미널 출력을 캡처해 제출한다.</li></ol>
+</section>
+
+<!-- ═════════════ 정리 ═════════════ -->
+<section aria-labelledby="tab-s9" class="panel" hidden="" id="s9" role="tabpanel"><div class="crumb">LLMOps 따라하기 · 정리</div>
+<h2>정리 — 무엇이 RAG이고 무엇이 LLMOps였나</h2>
+<div class="table-wrap"><table><thead><tr><th>구분</th><th>만든 것</th><th>함수 · 파일</th></tr></thead><tbody>
+<tr><td><b>RAG 앱</b></td><td>정제 · Kiwi · TF-IDF · BERT · 코사인 검색 · GPT 생성</td><td><code>clean_text</code> · <code>tokenize_ko</code> · <code>make_index</code> · <code>search</code> · <code>generate</code></td></tr>
+<tr><td><b>변경 감지</b></td><td>데이터·설정이 바뀌면 자동 실행</td><td><code>fingerprint</code> · <code>check_and_run</code> · <code>watch.py</code></td></tr>
+<tr><td><b>파이프라인</b></td><td>검증 → 색인 → 회귀 평가 → 게이트 → 활성 교체</td><td><code>run_pipeline</code> · <code>validate</code> · <code>evaluate</code> · <code>new_failures</code></td></tr>
+<tr><td><b>버전 관리</b></td><td>버전별 색인·점수 보관, 이력, 롤백</td><td><code>registry.json</code> · <code>artifacts/</code> · <code>rollback</code></td></tr>
+<tr><td><b>운영 루프</b></td><td>서빙 로그 · 피드백 · 검토 큐 · 라벨링 · 모니터링</td><td><code>ask</code> · <code>feedback</code> · <code>review_queue</code> · <code>label</code> · <code>monitor</code></td></tr>
+</tbody></table></div>
+<h3>이 실습이 실제 서비스와 다른 점</h3>
+<div class="table-wrap"><table><thead><tr><th>이번 실습</th><th>실제 서비스</th></tr></thead><tbody>
+<tr><td><code>watch.py</code>가 5초마다 파일 확인</td><td>S3 업로드 이벤트 · Git push · 스케줄러가 트리거</td></tr>
+<tr><td>JSON 파일 레지스트리·로그</td><td>MLflow · Langfuse · CloudWatch 등 추적 도구, 벡터 DB</td></tr>
+<tr><td>활성 버전 포인터만 교체</td><td>스테이징 → 카나리 → 전체 배포, 지표 악화 시 자동 롤백</td></tr>
+<tr><td>평가 질문 수십 개, 👎는 실습용 가정</td><td>실제 문의 로그에서 수백 개 평가셋, 실제 사용자 버튼·상담원 이관 신호</td></tr>
+<tr><td>답변 품질은 인용률로만 채점</td><td>사람 검토 + LLM 평가자를 함께 사용</td></tr>
+</tbody></table></div>
+<h3>이해도 확인</h3>
+<div class="table-wrap"><table><thead><tr><th>질문</th><th>확인할 관점</th></tr></thead><tbody>
+<tr><td><b>Q1.</b> 새 FAQ를 추가했을 때 사람이 해야 하는 일은?</td><td>파일 저장뿐. 검증·색인·평가·활성화는 파이프라인이 한다</td></tr>
+<tr><td><b>Q2.</b> 검증은 통과했는데 게이트에서 막히는 데이터는 어떤 것인가?</td><td>데이터 자체는 정상이지만 기존 질문의 답을 망가뜨리는 데이터(회귀)</td></tr>
+<tr><td><b>Q3.</b> 실패한 고객 질문을 평가셋에 먼저 넣는 이유는?</td><td>같은 실수가 다시 생기면 게이트가 자동으로 막는다(회귀 테스트)</td></tr>
+<tr><td><b>Q4.</b> 정제 규칙(코드)을 바꾸면 왜 자동 실행이 안 됐나?</td><td>변경 감지는 데이터 파일과 CONFIG만 본다 → 실제로는 Git push가 트리거</td></tr>
+<tr><td><b>Q5.</b> 보류된 버전도 artifacts에 저장하는 이유는?</td><td>왜 막혔는지(질문별 결과)를 나중에 확인하기 위해</td></tr>
+<tr><td><b>Q6.</b> 의료 데이터를 다룰 때 정제 단계에서 가장 먼저 할 일은?</td><td>개인정보 마스킹 — 외부 API와 로그로 나가기 전에</td></tr>
+</tbody></table></div>
+<div class="key"><b>다음으로 이어지는 질문</b> — 활성 버전이 바뀌는 순간 서버 여러 대가 동시에 새 색인을 쓰게 하려면 무엇이 필요할까? 일부 사용자에게만 먼저 새 버전을 보여 주려면? 이 질문이 이번에 제외한 <b>배포</b>(스테이징·카나리·CI/CD)로 이어진다.</div>
+<p class="sub">참고: <a class="doc" href="https://github.com/bab2min/kiwipiepy" rel="noopener" target="_blank">kiwipiepy</a> · <a class="doc" href="https://huggingface.co/klue/bert-base" rel="noopener" target="_blank">klue/bert-base</a> · <a class="doc" href="https://huggingface.co/docs/transformers/main_classes/tokenizer" rel="noopener" target="_blank">Hugging Face Tokenizer</a> · <a class="doc" href="https://scikit-learn.org/stable/modules/generated/sklearn.feature_extraction.text.TfidfVectorizer.html" rel="noopener" target="_blank">scikit-learn TfidfVectorizer</a> · <a class="doc" href="https://platform.openai.com/docs" rel="noopener" target="_blank">OpenAI API 문서</a></p>
+</section></main>
+</div>
+<div class="toast" hidden="" id="toast" role="status"></div>
+<script>(function(){const ts=[...document.querySelectorAll('[role="tab"]')];function set(i,focus){ts.forEach((t,j)=>{let on=i===j;t.setAttribute('aria-selected',String(on));t.tabIndex=on?0:-1;document.getElementById(t.getAttribute('aria-controls')).hidden=!on;});if(focus)ts[i].focus({preventScroll:true});history.replaceState(null,'','#'+ts[i].getAttribute('aria-controls'));window.scrollTo({top:0});}ts.forEach((t,i)=>{t.addEventListener('click',()=>set(i,false));t.addEventListener('keydown',e=>{if(['ArrowDown','ArrowRight','ArrowUp','ArrowLeft'].includes(e.key)){e.preventDefault();set((i+(e.key==='ArrowDown'||e.key==='ArrowRight'?1:-1)+ts.length)%ts.length,true)}})});let n=ts.findIndex(t=>'#'+t.getAttribute('aria-controls')===location.hash);set(n<0?0:n,false);document.querySelectorAll('.table-wrap table').forEach(t=>{let h=[...t.querySelectorAll('th')].map(x=>x.textContent.trim());if(h.length<3)return;t.classList.add('cards');t.querySelectorAll('tbody tr').forEach(tr=>[...tr.children].forEach((td,i)=>td.dataset.label=h[i]||''))})})();</script>
+<script>(function(){
+/* ── ① 데이터 정제 체험 ── (파이썬 STEP 2의 clean_text와 같은 규칙) */
+const won=(m)=>(n,mult)=>Math.round(parseFloat(n)*mult)+'원';
+const PRIVACY=[[/\d{6}-?[1-4]\d{6}/g,'[주민번호]','개인정보 마스킹'],[/01[016789]-?\d{3,4}-?\d{4}/g,'[전화번호]','개인정보 마스킹']];
+const COMMON=[[/<[^>]+>/g,' ','HTML 태그 제거'],[/([!?.])\1+/g,'$1','반복 문장부호 축약'],[/(?<=\d),(?=\d{3}(?!\d))/g,'','천 단위 쉼표 제거']];
+const UNIT=[
+ [/(\d+(?:\.\d+)?)\s*만\s*원/g,(m,n)=>Math.round(parseFloat(n)*10000)+'원','금액 → 숫자(만원)'],
+ [/(\d+(?:\.\d+)?)\s*천\s*원/g,(m,n)=>Math.round(parseFloat(n)*1000)+'원','금액 → 숫자(천원)'],
+ [/(\d+)\s+원/g,'$1원','금액 띄어쓰기'],
+ [/(\d+(?:\.\d+)?)\s*(?:킬로그램|키로그램|kg|KG|Kg)/g,'$1kg','kg 단위 통일'],
+ [/(\d+(?:\.\d+)?)\s*(?:킬로미터|키로미터|km|KM|Km)/g,'$1km','km 단위 통일'],
+ [/(\d+(?:\.\d+)?)\s*(?:킬로|키로)/g,'$1kg','킬로(무게) → kg'],
+ [/(\d+(?:\.\d+)?)\s*(?:밀리미터|미리|mm|MM)(?![A-Za-z])/g,'$1mm','mm 단위 통일'],
+ [/(\d+(?:\.\d+)?)\s*(?:센티미터|센티|센치|cm|CM)(?![A-Za-z])/g,'$1cm','cm 단위 통일'],
+ [/(\d+(?:\.\d+)?)\s*(?:미터)/g,'$1m','m 단위 통일'],
+ [/(\d+(?:\.\d+)?)\s*(?:밀리그램|mg|MG)(?![A-Za-z\/])/g,'$1mg','mg 단위 통일'],
+ [/(\d+(?:\.\d+)?)\s*(?:°\s?C|도씨)/g,'$1°C','°C 단위 통일']];
+const DOMAIN={
+ '쇼핑':[[/택배비|배달비/g,'배송비','동의어 → 배송비'],[/택배로|배달로/g,'배송으로','동의어 → 배송(조사 보정)'],[/택배|배달/g,'배송','동의어 → 배송'],[/리턴/g,'반품','동의어 → 반품'],[/캔슬/g,'취소','동의어 → 취소'],[/무배/g,'무료 배송','줄임말 → 무료 배송'],[/포인트/g,'적립금','동의어 → 적립금'],[/사라지|사라져|없어지|없어져/g,'소멸','동의어 → 소멸'],[/일주일/g,'7일','기간 → 7일']],
+ '제조':[[/\bM\/C\b/g,'머시닝센터','약어 → 머시닝센터'],[/#\s?(\d+)(?:\s?호기)?/g,'$1호기','설비 번호 → N호기'],[/\bN\.?G\b|엔지/g,'불량','NG → 불량'],[/\bO\.?K\b/g,'양품','OK → 양품']],
+ '의료':[[/\bpt\b/g,'환자','약어 → 환자'],[/\bHTN\b/g,'고혈압','약어 → 고혈압'],[/\bDM\b/g,'당뇨병','약어 → 당뇨병'],[/\bHx\b/g,'병력','약어 → 병력'],[/\bBP\b/g,'혈압','약어 → 혈압'],[/\bp\.o\.|\bPO\b/g,'경구','약어 → 경구'],[/\b(?:bid|BID)\b/g,'1일 2회','약어 → 1일 2회'],[/mmhg/g,'mmHg','단위 표기 → mmHg'],[/mg\/dl/g,'mg/dL','단위 표기 → mg/dL']]};
+const SAMPLE={
+ '쇼핑':'택배비 얼마예요?? ３만 원 이상이면 무배인가요, 35키로 냉장고도 택배로 와요? 연락처 010-1234-5678',
+ '제조':'CNC M/C #3 NG 발생!! 치수 12.05MM, 이송거리 1,200 미리 / 온도 ８５℃, 출하 ５㎞ 구간',
+ '의료':'pt 010-1234-5678, 800101-1234567. HTN Hx 있음. BP 150/95 mmhg, 공복혈당 135 mg/dl. 메트포르민 500밀리그램 p.o. bid, 체중 72키로그램'};
+const NOTE={
+ '쇼핑':'쇼핑: 고객은 택배·무배·리턴처럼 줄임말과 구어체를 씁니다. 금액(３만 원 → 30000원)과 무게(35키로 → 35kg)를 숫자+표준 단위로 맞춰야 FAQ의 “30000원 이상”, “30kg 이상”과 비교할 수 있습니다.',
+ '제조':'제조: 설비 약어(M/C), 설비 번호 표기(#3·3호기), 판정 용어(NG/OK)가 현장마다 다릅니다. 치수 단위(mm)는 통일하되, 공차 정밀도를 해치는 단위 환산은 하지 않습니다.',
+ '의료':'의료: 외부 API로 보내기 전에 개인정보를 가장 먼저 마스킹합니다. 약어(DM 등)는 문맥에 따라 뜻이 달라질 수 있어 사전은 반드시 의료진이 검토합니다.'};
+function clean(text,dom){const log=[];let s=text.normalize('NFKC');if(s!==text)log.push(['유니코드 정규화(NFKC)',1]);
+ for(const [re,rep,name] of [...PRIVACY,...COMMON,...UNIT,...(DOMAIN[dom]||[])]){const n=(s.match(re)||[]).length;if(n){s=s.replace(re,rep);log.push([name,n]);}}
+ return [s.replace(/\s+/g,' ').trim(),log];}
+const raw=document.getElementById('raw'),out=document.getElementById('cleaned'),ul=document.getElementById('clean-log'),note=document.getElementById('dom-note'),cst=document.getElementById('clean-status');
+const dom=()=>document.querySelector('input[name="dom"]:checked').value;
+function load(){raw.value=SAMPLE[dom()];note.textContent=NOTE[dom()];out.textContent='-';ul.innerHTML='<li class="sub">아직 실행하지 않았습니다.</li>';cst.textContent='';}
+document.querySelectorAll('input[name="dom"]').forEach(r=>r.addEventListener('change',load));
+document.getElementById('clean-run').addEventListener('click',()=>{const [s,log]=clean(raw.value,dom());out.textContent=s;
+ ul.innerHTML=log.length?log.map(([n,c])=>'<li>'+n+' <b>×'+c+'</b></li>').join(''):'<li class="sub">적용된 규칙이 없습니다.</li>';
+ cst.textContent='['+dom()+'] 규칙 '+log.length+'종 적용 완료';});
+load();
+
+/* ── ② 유사도 계산 체험 ── */
+const a=document.getElementById('sa'),b=document.getElementById('sb'),st=document.getElementById('calc-status');
+const SUF=['에서','에게','으로','이다','이나','에는','의','에','가','이','을','를','은','는','로','와','과','도','만'];
+const words=s=>s.trim().split(/\s+/).filter(Boolean).map(w=>w.replace(/[.,?!]/g,''));
+const strip=w=>{for(const x of SUF){if(w.length>x.length&&w.endsWith(x))return w.slice(0,-x.length);}return w;};
+function cos(x,y){const v=new Set([...x,...y]);let d=0,nx=0,ny=0;v.forEach(t=>{const p=x.filter(z=>z===t).length,q=y.filter(z=>z===t).length;d+=p*q;nx+=p*p;ny+=q*q;});return nx&&ny?d/Math.sqrt(nx*ny):0;}
+function show(id,tid,x,y){const c=cos(x,y);document.getElementById(id).textContent='cos = '+c.toFixed(3);document.getElementById(tid).textContent='A: ['+x.join(', ')+']  B: ['+y.join(', ')+']';return c;}
+document.getElementById('calc').addEventListener('click',()=>{
+ const wa=words(a.value),wb=words(b.value);
+ const c1=show('r1','t1',wa,wb);
+ const ca=words(clean(a.value,'쇼핑')[0]).map(strip),cb=words(clean(b.value,'쇼핑')[0]).map(strip);
+ const c2=show('r2','t2',ca,cb);
+ st.textContent='원문 어절 기준 '+c1.toFixed(3)+' → 정제 + 조사 제거 후 '+c2.toFixed(3)+(c2>c1?' (같은 단어가 늘어 유사도 상승)':'');});
+})();
+</script></body>
+</html>

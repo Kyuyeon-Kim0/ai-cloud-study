@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+
+<html lang="ko"><head><meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/><title>A2-M1-2 · BERT·GPT·T5와 토크나이저 심화</title><link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" rel="stylesheet"/><style>
+:root{--bg:#fff;--surface:#f8fafc;--ink:#0f172a;--muted:#64748b;--line:#e2e8f0;--accent:#ff2e93;--soft:rgba(255,46,147,.065);--codebg:#101d34}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink);font-family:'Pretendard',system-ui,'Malgun Gothic',sans-serif;font-size:18px;line-height:1.81;word-break:keep-all}
+.banner{background:linear-gradient(125deg,#fcfcff,#f8fafc);border-bottom:1px solid var(--line)}.banner-in{max-width:1320px;margin:auto;padding:18px 24px;display:flex;align-items:center;justify-content:space-between;gap:18px}.brand{font-size:16px;font-weight:850;letter-spacing:.03em}.who{font-size:15px;color:var(--muted)}.who a{color:var(--accent);text-decoration:none}.layout{max-width:1320px;margin:auto;padding:32px 24px 84px;display:grid;grid-template-columns:minmax(0,1fr) 290px;gap:38px;align-items:start}.sidebar{order:2;position:sticky;top:22px;max-height:calc(100vh - 44px);overflow:auto;border:1px solid var(--line);border-radius:15px;background:var(--surface);padding:17px}.group{font-size:15px;color:var(--muted);font-weight:800;margin:3px 10px 14px}.tabs{display:flex;flex-direction:column;gap:5px}.tabs button{appearance:none;border:1px solid transparent;border-radius:9px;background:transparent;color:#253348;cursor:pointer;text-align:left;font:600 16px/1.55 'Pretendard',sans-serif;padding:9px 12px}.tabs button span{color:var(--accent);font-weight:850;margin-right:7px}.tabs button:hover{background:#fff;border-color:var(--line)}.tabs button[aria-selected=true]{background:var(--soft);border-color:var(--accent);color:#bd1366}.tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+main{min-width:0}.panel[hidden]{display:none}.panel{display:block}.crumb{color:var(--accent);font-size:15px;font-weight:800;margin:0 0 8px}.panel h1{font-size:31px;line-height:1.4;margin:0 0 12px}.lead{font-size:19px;font-weight:550;color:#344255;margin:6px 0 26px}.panel h3{font-size:21px;margin:33px 0 10px;border-bottom:1px solid var(--line);padding-bottom:6px}.panel h3:before{content:'▸ ';color:var(--accent)}.panel p{margin:13px 0}.panel b,.panel strong{font-weight:790}.panel code:not(pre code){font:15px/1.6 Consolas,monospace;word-break:break-word;background:#f1f5f9;border:1px solid #e5e7eb;padding:1px 5px;border-radius:4px}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;margin:17px 0 24px}.panel table{border-collapse:collapse;width:100%;font-size:17px;line-height:1.65}.panel th,.panel td{border-bottom:1px solid var(--line);padding:12px 14px;vertical-align:top;text-align:left}.panel th{font-size:16px;font-weight:800;background:#f1f5f9;color:#40516a}.panel tbody tr:last-child td{border:0}.panel tbody tr:nth-child(even){background:#fbfcfe}.note,.task,.try{border:1px solid var(--line);border-radius:13px;background:#fafcff;padding:17px 19px;margin:24px 0}.note{border-left:4px solid var(--accent);background:var(--soft)}.note b{color:#ad155e}.note p{margin:6px 0}.task{background:#fff}.task h4{margin:0 0 9px;font-size:19px}.task ol{margin:0;padding-left:23px}.task li{margin:8px 0}
+.codebox{border:1px solid #243953;border-radius:13px;overflow:hidden;margin:21px 0 26px}.codehead{display:flex;justify-content:space-between;align-items:center;gap:15px;padding:8px 13px;background:#1d3452;color:#dceafc;font-size:14px;font-weight:700}.copy{border:1px solid #8598b4;color:#fff;background:#314f78;border-radius:6px;padding:3px 10px;cursor:pointer;font-size:13px}.codebox pre{background:var(--codebg);color:#cbe9fb;margin:0;padding:20px;overflow-x:auto;font:16px/1.7 Consolas,'JetBrains Mono',monospace;word-break:normal;white-space:pre}.qa{padding:13px 17px;margin:13px 0;border:1px solid var(--line);background:#fbfcff;border-radius:10px}.qa summary{font-size:17px;cursor:pointer;font-weight:780}.qa[open] summary{color:#c01168}.qa p{font-size:17px}.try label{display:block;font-size:17px}.tryrow{display:flex;gap:10px;margin-top:10px}.try input{flex:1;min-width:0;border:1px solid #cbd5e1;border-radius:8px;font:17px 'Pretendard',sans-serif;padding:10px 12px}.try button{background:#e72281;color:#fff;border:0;border-radius:8px;padding:10px 16px;font:700 16px 'Pretendard',sans-serif;cursor:pointer}.try pre{font:16px/1.7 Consolas,monospace;background:#101d34;color:#caeeff;padding:12px;border-radius:8px;overflow:auto;white-space:pre-wrap}.hint{font-size:15px;color:var(--muted)}.footer{max-width:1320px;margin:auto;border-top:1px solid var(--line);padding:20px 24px 38px;text-align:center;color:var(--muted);font-size:15px}.footer small{display:block;max-width:950px;margin:5px auto}
+@media(max-width:900px){.layout{grid-template-columns:1fr;gap:12px;padding:15px 16px 64px}.sidebar{order:0;position:sticky;top:0;z-index:10;border-radius:0;max-height:none;overflow:auto;padding:8px 0;background:#fff}.sidebar .group{display:none}.tabs{flex-direction:row;white-space:nowrap;overflow-x:auto}.tabs button{flex:none;font-size:15px}.banner-in{flex-wrap:wrap}.panel h1{font-size:27px}}
+@media(max-width:680px){body{font-size:17px}.panel table{font-size:16px}.panel th{font-size:15px}.panel h1{font-size:24px}.panel h3{font-size:20px}.codebox pre{font-size:15px;padding:15px}.tryrow{flex-direction:column}}
+@media print{.sidebar,.copy{display:none}.layout{display:block}.panel[hidden]{display:block!important}.panel{break-before:page}.banner{background:#fff}}
+
+/* 3-Part expanded guide, retaining supplied visual language */
+.sidebar .tabs .group{margin:18px 10px 7px;font-size:14px;color:#a51662;font-weight:850;border-top:1px solid var(--line);padding-top:12px}
+.sidebar .tabs .group:first-child{margin-top:2px;border-top:0;padding-top:0}
+.panel h2{font-size:23px;line-height:1.5;margin:27px 0 8px}
+.panel ul,.panel ol{padding-left:27px;margin:12px 0}.panel li{margin:7px 0}
+.panel .meta{display:flex;gap:10px}.panel .note span{display:inline-block;margin-right:12px;font-weight:750;color:#ad155e}
+.panel pre:not(.codebox pre){white-space:pre-wrap}.panel .codebox pre{font-size:15px}
+.panel .codebox pre code{white-space:pre;display:block}
+.panel .math,.panel .formula{overflow-x:auto}
+.panel a{color:#bd1366}
+@media(min-width:901px){.sidebar{width:300px}.layout{grid-template-columns:minmax(0,1fr) 300px}}
+@media print{.panel{break-before:auto;page-break-inside:avoid}.sidebar{display:none}}
+
+.merged-subheading{font-size:24px;line-height:1.42;margin:42px 0 17px;padding:11px 14px;border-left:4px solid var(--accent);background:var(--surface);border-radius:0 8px 8px 0;} .panel .merged-subheading:first-of-type{margin-top:25px;}
+
+.paper-figure,.matrix-demo{margin:22px 0 28px;padding:20px 22px;border:1px solid var(--line);border-radius:13px;background:#fbfcfe}.paper-figure h3,.matrix-demo h3{margin-top:0}.paper-figure figure{text-align:center;margin:12px auto}.paper-figure img{display:block;margin:auto;max-width:min(100%,510px);max-height:710px;object-fit:contain;background:#fff;border:1px solid var(--line);border-radius:6px}.paper-figure figcaption{font-size:14px;color:var(--muted);line-height:1.6;margin-top:10px}.paper-figure a{color:#b31968}.matrix-demo .tablewrap{margin-top:12px}.matrix-demo td{font-size:15px}@media print{.paper-figure,.matrix-demo{break-inside:avoid}}
+
+/* Part headings: visual grouping, not selectable tabs */
+.tabs .part-heading{display:block;margin:15px 4px 6px;padding:12px 11px;background:#e5e7eb;color:#334155;border:1px solid #cbd5e1;border-radius:9px;font-size:15px;font-weight:850;line-height:1.5;white-space:normal;}
+.tabs .part-heading:first-child{margin-top:0}.tabs button{padding-left:14px}
+.panel .source-note{font-size:15px;color:#475569;background:#f8fafc;border-left:3px solid #94a3b8;padding:11px 14px;margin:20px 0}
+.panel .minihead{margin-top:24px;font-weight:800;color:#334155}
+@media(max-width:900px){.tabs .part-heading{flex:none;margin:0 6px 0 0;white-space:nowrap;padding:9px 12px}}
+
+.diagram {background:#0b1223;color:#f8fafc;padding:20px;border-radius:14px;margin:20px 0}.diagram h4{margin:0 0 12px;color:#fff;font-size:20px}.duo{display:grid;grid-template-columns:1fr 1fr;gap:18px}.mini-panel{background:#151f34;border:1px solid #33435e;border-radius:12px;padding:16px}.mini-panel strong{display:block;margin-bottom:9px;font-size:18px}.mini-panel p{color:#d7e1ef;font-size:15px;margin:7px 0}.chain{display:flex;gap:6px;flex-wrap:wrap;margin:12px 0}.tk{background:#294167;color:white;padding:7px 9px;border-radius:7px;font-size:14px}.tk.mask{background:#cf3c72}.tk.future{background:#38455a;color:#b6c0cf}.arrow{font-weight:bold;color:#74bbff}.diagram .mini-panel.bert strong{color:#61a1ff}.diagram .mini-panel.gpt strong{color:#26d4a1}.panel .lesson-intro{font-size:18px;color:#344255}.sidenote{font-size:15px;color:#57677c}.panel h2.merged-subheading{font-size:23px;margin:28px 0 10px}.compare{width:100%}@media(max-width:700px){.duo{grid-template-columns:1fr}}
+</style><style>.journey{border-left:4px solid #ff2e93;background:#fff5fa;padding:16px 19px;margin:20px 0;border-radius:8px}.journey h3{border:0!important;margin:0 0 8px!important;padding:0!important;font-size:18px!important}.journey h3:before{content:none!important}.modelcode{border:1px solid #d4dce8;background:#f8fafc;border-radius:12px;padding:15px 17px;margin:24px 0}.modelcode h3{border:0!important;margin:0 0 8px!important;font-size:18px!important}.modelcode h3:before{content:none!important}.modelcode pre{background:#101d34;color:#d6ecff;padding:15px;overflow:auto;border-radius:9px;font:15px/1.65 Consolas,monospace;white-space:pre}.matrix-intro{margin:16px 0;padding:15px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px}.miniout{font:15px/1.6 Consolas,monospace;background:#f1f5f9;padding:12px;white-space:pre-wrap;border-radius:8px}</style></head><body><header class="banner"><div class="banner-in"><div><div class="brand">Part A · A2-M1-2 · BERT·GPT·T5와 토크나이저 심화</div><div style="font-size:23px;font-weight:850">Part 1 입력 벡터 · Part 2 Transformer · Part 3 BERT·GPT와 RAG</div></div><div class="who">© 2026 부성순 · AI·클라우드 실무 과정</div><a href="/lectures/files/index.html#section-a1" style="display:inline-block;padding:7px 11px;border:1px solid #e2e8f0;border-radius:8px;background:#fff;color:#bd1366;text-decoration:none;font-weight:800;white-space:nowrap">📚 강의자료 라이브러리 · Part A</a></div></header><div class="layout"><aside class="sidebar"><div class="group">A2-M1-2 · 학습 목차</div><nav aria-label="교안 세부 목차" class="tabs" role="tablist"><div aria-level="2" class="part-heading" role="heading">Part 1. BERT·GPT 기초와 학습</div><button aria-controls="m2sec01" aria-selected="true" id="m2tab01" role="tab" tabindex="0" type="button"><span>01</span>BERT는 무엇이며 어떻게 학습하는가?</button><button aria-controls="m2sec02" aria-selected="false" id="m2tab02" role="tab" tabindex="-1" type="button"><span>02</span>GPT는 무엇이며 어떻게 생성하는가?</button><button aria-controls="m2sec03" aria-selected="false" id="m2tab03" role="tab" tabindex="-1" type="button"><span>03</span>BERT와 GPT 비교·실습</button><div aria-level="2" class="part-heading" role="heading">Part 2. 토크나이저와 모델 계열</div><button aria-controls="m2sec04" aria-selected="false" id="m2tab04" role="tab" tabindex="-1" type="button"><span>04</span>WordPiece·BPE·Unigram 실전 예제</button><button aria-controls="m2sec05" aria-selected="false" id="m2tab05" role="tab" tabindex="-1" type="button"><span>05</span>한국어 토큰화와 특수 토큰</button><button aria-controls="m2sec06" aria-selected="false" id="m2tab06" role="tab" tabindex="-1" type="button"><span>06</span>T5·RoBERTa·LLaMA 등 구조 비교</button><div aria-level="2" class="part-heading" role="heading">Part 3. 모델 선택·RAG 연결</div><button aria-controls="m2sec07" aria-selected="false" id="m2tab07" role="tab" tabindex="-1" type="button"><span>07</span>검색 임베딩·생성·평가의 역할</button><button aria-controls="m2sec08" aria-selected="false" id="m2tab08" role="tab" tabindex="-1" type="button">08 초간단 RAG: 모델 선택을 코드로 연결</button></nav></aside><main><section aria-labelledby="m2tab01" class="panel" id="m2sec01" role="tabpanel"><div class="crumb">Part A · A2-M1-2 · Part 1. BERT·GPT 기초와 학습</div><h1>01. BERT는 무엇이며 어떻게 학습하는가?</h1><p class="lead">BERT(Bidirectional Encoder Representations from Transformers)는 Transformer의 Encoder를 중심으로 만든 언어 이해 모델이다. 이름 자체가 양방향 문맥 표현을 뜻한다.</p><h3>BERT 입력에 등장하는 특수 토큰부터 알아보기</h3><p>일반 단어가 아닌 <b>특수 토큰(Special Token)</b>은 문장의 시작·구분·학습할 빈칸처럼 모델에 필요한 표식을 붙인다. A2-M1-1에서 배운 PAD·UNK와 같은 종류의 약속이지만 용도는 다르다. 여기서 먼저 뜻을 알고 나면 뒤의 코드에서 처음 보는 기호가 갑자기 등장하지 않는다.</p><div class="tablewrap"><table><thead><tr><th>표기</th><th>의미</th><th>어디에 쓰이나?</th></tr></thead><tbody><tr><td><code>[CLS]</code></td><td>Classification: 입력 시퀀스 앞에 붙는 표식</td><td>BERT의 문장 단위 분류에서는 이 위치의 문맥 표현을 활용할 수 있다. BERT가 모든 작업에서 이 토큰으로만 결과를 내는 것은 아니다.</td></tr><tr><td><code>[SEP]</code></td><td>Separator: 시퀀스 구분 및 끝 표식</td><td>한 문장 끝 또는 두 문장 사이 경계를 표시한다.</td></tr><tr><td><code>[MASK]</code></td><td>Masked Token: 가려진 위치 표식</td><td>BERT의 MLM 사전학습에서 원래 토큰을 맞히도록 지정한 위치. 일반적인 문장 분류 입력에 항상 넣는 것은 아니다.</td></tr><tr><td><code>[PAD]</code></td><td>Padding: 배치 길이 맞추기</td><td>실제 내용이 없는 위치를 채우며 마스크로 제외한다.</td></tr><tr><td><code>[UNK]</code></td><td>Unknown: 사전에 없는 토큰</td><td>해당 토크나이저가 표현하지 못한 조각의 대체 표식이다.</td></tr></tbody></table></div><div class="note"><b>한 문장과 두 문장의 입력 예시</b><p><code>[CLS] 오늘 점심은 [MASK] 를 먹었다 [SEP]</code> — <code>[MASK]</code> 위치의 단어를 예측하는 교육용 예시다. <code>[CLS] 질문 [SEP] 문서 [SEP]</code> — 두 시퀀스를 구분한 형태다. 실제 토큰 분할과 ID는 모델 토크나이저에 따라 달라진다.</p></div><h3>왜 등장했을까?</h3><p>같은 단어도 앞뒤 문맥에 따라 의미가 달라진다. BERT는 입력 전체를 함께 참고해 각 토큰의 문맥 표현을 학습한다. 대표적인 사전학습 방식은 문장의 일부 토큰을 가리고 원래 토큰을 예측하는 <b>Masked Language Modeling(MLM)</b>이다.</p><div class="tablewrap"><table><thead><tr><th>항목</th><th>BERT의 특징</th></tr></thead><tbody><tr><td>구조</td><td>Encoder-only: 입력 위치들이 일반적으로 앞뒤 문맥을 함께 참고</td></tr><tr><td>대표 학습 목표</td><td>Masked Language Modeling: 가려진 토큰 맞히기</td></tr><tr><td>입력 예</td><td>[CLS] 나는 [MASK]를 먹었다 [SEP]</td></tr><tr><td>대표 활용</td><td>분류·개체명 인식·추출형 질의응답·문맥 표현 추출</td></tr><tr><td>주의</td><td>BERT 자체는 GPT처럼 긴 문장을 자유롭게 계속 생성하는 모델이 아님</td></tr></tbody></table></div><h3>빈칸을 맞히는 학습 목업</h3><div class="diagram"><h4>양방향 문맥을 이용해 가려진 토큰 예측</h4><div class="chain"><span class="tk">오늘 점심은</span><span class="tk mask">[MASK]</span><span class="tk">를 먹었다</span></div><p>앞 문맥 + 뒤 문맥을 함께 확인 → 가운데 토큰의 후보 점수를 계산</p><div class="chain"><span class="tk">후보: 피자</span><span class="tk">후보: 밥</span><span class="tk">후보: 김밥</span></div><p class="sidenote" style="color:#b9c9e0">후보는 설명용이며 실제 모델의 출력이나 순위를 뜻하지 않습니다.</p></div><h3>사전학습과 파인튜닝의 차이</h3><p>MLM으로 언어 표현을 학습한 뒤, 분류 작업에는 분류 헤드를 붙이고 정답 라벨로 추가 학습한다. 임베딩 검색에는 문장 유사도에 맞게 별도로 훈련된 인코더 모델이 유리하다.</p><div class="codebox"><div class="codehead"><span>bert_mask.py</span><button class="copy" type="button">코드 복사</button></div><pre><code>from transformers import AutoTokenizer, AutoModelForMaskedLM, pipeline
+name = "klue/bert-base"
+tok = AutoTokenizer.from_pretrained(name)
+model = AutoModelForMaskedLM.from_pretrained(name)
+print("마스크 토큰:", tok.mask_token, tok.mask_token_id)
+text = "나는 오늘 점심으로 " + tok.mask_token + "를 먹었다."
+ids = tok(text, return_tensors="pt")
+print("입력 토큰:", tok.convert_ids_to_tokens(ids["input_ids"][0]))
+print("토큰 ID:", ids["input_ids"][0].tolist())
+print("다시 디코딩:", tok.decode(ids["input_ids"][0]))
+fill = pipeline("fill-mask", model=model, tokenizer=tok, device=-1)
+for result in fill(text, top_k=5):
+    print(result["token_str"], round(result["score"], 4), result["sequence"])
+</code></pre></div></section><section aria-labelledby="m2tab02" class="panel" hidden="" id="m2sec02" role="tabpanel"><div class="crumb">Part A · A2-M1-2 · Part 1. BERT·GPT 기초와 학습</div><h1>02. GPT는 무엇이며 어떻게 생성하는가?</h1><p class="lead">GPT(Generative Pre-trained Transformer)는 앞서 주어진 토큰을 바탕으로 다음 토큰을 예측하며 텍스트를 생성하는 모델 계열이다.</p><h3>왜 필요한가?</h3><p>문서 이해나 분류만으로는 답변을 새로 작성하기 어렵다. GPT 계열은 다음 토큰 예측을 반복해 문장을 이어 만든다. 일반적인 Decoder-only 언어 모델은 미래 토큰을 볼 수 없게 Causal Mask를 적용한다.</p><div class="tablewrap"><table><thead><tr><th>구성</th><th>뜻</th><th>예</th></tr></thead><tbody><tr><td>Prompt</td><td>이미 주어진 입력</td><td>나는 오늘 점심으로</td></tr><tr><td>Next-token logits</td><td>다음 토큰 후보들의 점수</td><td>피자 / 밥 / 국수</td></tr><tr><td>Decoding</td><td>확률 분포에서 토큰 선택</td><td>Greedy 또는 샘플링</td></tr><tr><td>Autoregressive</td><td>선택된 토큰을 붙이고 다음 토큰을 다시 예측</td><td>나는 오늘 점심으로 피자를 …</td></tr><tr><td>KV Cache</td><td>이전 위치의 Key·Value를 재사용해 중복 계산을 줄임</td><td>긴 문장 생성 효율화</td></tr></tbody></table></div><h3>이어 말하기 학습 목업</h3><div class="diagram"><h4>왼쪽 문맥으로 다음 토큰 예측</h4><div class="chain"><span class="tk">나는</span><span class="tk">오늘</span><span class="tk">점심으로</span><span class="tk future">다음 토큰 ?</span></div><p>이미 입력된 토큰만 참고하여 다음 위치의 후보 분포를 만든 뒤 하나를 선택</p><div class="chain"><span class="tk">피자를</span><span class="arrow">→</span><span class="tk">먹었다</span><span class="arrow">→</span><span class="tk">…</span></div><p style="color:#b9c9e0">예시는 모델이 실제로 생성한 문장이 아니라 작동 방식 설명용입니다.</p></div><h3>생성 옵션의 의미</h3><p><code>max_new_tokens</code>는 새로 생성할 토큰 수의 상한이다. <code>do_sample=False</code>는 일반적인 Greedy 계열 결정적 선택에 사용된다. <code>temperature</code>, <code>top_k</code>, <code>top_p</code>는 샘플링할 때 다양성을 조정한다.</p><div class="codebox"><div class="codehead"><span>gpt_generate.py</span><button class="copy" type="button">코드 복사</button></div><pre><code>from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline, set_seed
+name = "skt/kogpt2-base-v2"
+tok = AutoTokenizer.from_pretrained(name)
+model = AutoModelForCausalLM.from_pretrained(name)
+set_seed(42)
+prompt = "나는 오늘 점심으로"
+ids = tok(prompt)["input_ids"]
+print("토큰:", tok.convert_ids_to_tokens(ids))
+print("ID:", ids)
+print("복원:", tok.decode(ids))
+print("pad / eos:", tok.pad_token_id, tok.eos_token_id)
+gen = pipeline("text-generation", model=model, tokenizer=tok, device=-1)
+result = gen(prompt, do_sample=False, max_new_tokens=30,
+             pad_token_id=tok.eos_token_id)
+print(result[0]["generated_text"])
+</code></pre></div></section><section aria-labelledby="m2tab03" class="panel" hidden="" id="m2sec03" role="tabpanel"><div class="crumb">Part A · A2-M1-2 · Part 1. BERT·GPT 기초와 학습</div><h1>03. BERT와 GPT 비교·실습</h1><p class="lead">두 계열의 가장 중요한 차이는 입력을 참고하는 방식과 학습 목표이다. Encoder와 Decoder라는 이름을 외우기보다 실제 마스크와 출력을 비교한다.</p><div class="diagram"><h4>AI의 학습 방식: 빈칸 채우기 vs 이어 말하기</h4><div class="duo"><div class="mini-panel bert"><strong>BERT · 빈칸 맞히기</strong><p>문장 전체를 한꺼번에 확인한다.</p><div class="chain"><span class="tk">나는</span><span class="tk mask">[MASK]</span><span class="tk">먹었다</span></div><p>← 앞뒤 문맥 →</p><p>가려진 위치의 원래 토큰을 예측</p></div><div class="mini-panel gpt"><strong>GPT · 다음 말 이어가기</strong><p>지금까지의 토큰을 이용한다.</p><div class="chain"><span class="tk">나는</span><span class="tk">밥을</span><span class="tk future">다음?</span></div><p>왼쪽 문맥 → 다음 토큰</p><p>선택한 토큰을 이어 붙여 계속 생성</p></div></div></div><div class="tablewrap"><table><thead><tr><th>기준</th><th>BERT</th><th>GPT 계열</th></tr></thead><tbody><tr><td>대표 구조</td><td>Encoder-only</td><td>Decoder-only</td></tr><tr><td>문맥 범위</td><td>양방향</td><td>인과적(과거 및 현재)</td></tr><tr><td>대표 사전학습</td><td>Masked LM</td><td>Causal LM</td></tr><tr><td>주 출력</td><td>문맥 벡터·태스크 헤드 예측</td><td>다음 토큰 점수·생성 텍스트</td></tr><tr><td>대표 특수 토큰</td><td>[CLS] [SEP] [MASK]</td><td>모델별 BOS/EOS 등 (고정 아님)</td></tr><tr><td>실습 호출</td><td>pipeline("fill-mask")</td><td>pipeline("text-generation")</td></tr><tr><td>RAG 활용</td><td>인코더·재순위화 계열</td><td>검색 결과를 근거로 답변 작성</td></tr></tbody></table></div><h3>같은 문장을 모델마다 토큰화</h3><p>동일한 한국어 문장을 입력해도 모델별 토큰화·ID·길이는 달라진다. 아래 실습으로 직접 확인한다.</p><div class="codebox"><div class="codehead"><span>compare_tokenizers.py</span><button class="copy" type="button">코드 복사</button></div><pre><code>from transformers import AutoTokenizer
+samples = ["나는 오늘 점심으로 피자를 먹었다.", "파이썬으로 RAG 검색을 구현합니다."]
+names = ["klue/bert-base", "skt/kogpt2-base-v2"]
+for name in names:
+    tok = AutoTokenizer.from_pretrained(name)
+    print("\n모델:", name, "어휘 크기:", tok.vocab_size)
+    for sent in samples:
+        ids = tok(sent)["input_ids"]
+        print("문장:",sent)
+        print("토큰:",tok.convert_ids_to_tokens(ids))
+        print("개수:",len(ids), "복원:",tok.decode(ids, skip_special_tokens=True))
+</code></pre></div></section><section aria-labelledby="m2tab04" class="panel" hidden="" id="m2sec04" role="tabpanel"><div class="crumb">Part A · A2-M1-2 · Part 2. 토크나이저와 모델 계열</div><h1>04. WordPiece·BPE·Unigram 실전 예제</h1><p class="lead">단어 단위와 문자 단위의 단점을 살펴본 뒤, 서브워드가 왜 등장했는지 배우고 WordPiece·BPE·Unigram의 원리와 장단점을 비교한다.</p><h3>서브워드(Subword)가 무엇인가?</h3><p>서브워드는 <b>하나의 단어 전체와 글자 하나 사이의 중간 크기 조각</b>이다. 모든 단어를 통째로 저장하는 대신, 자주 등장하는 단어는 하나의 토큰으로, 드물거나 새로운 단어는 여러 조각으로 표현한다. 이 조각은 반드시 사전적 형태소나 의미 단위와 일치하는 것은 아니다.</p><div class="tablewrap"><table><thead><tr><th>방식</th><th>예시: playing</th><th>문제 또는 특징</th></tr></thead><tbody><tr><td>단어 단위</td><td><code>[playing]</code></td><td>간단하지만 play, playing, played를 각각 등록하면 어휘가 커지고 미등록 단어 문제가 발생한다.</td></tr><tr><td>문자 단위</td><td><code>[p,l,a,y,i,n,g]</code></td><td>대부분의 글자를 표현하기 쉽지만 시퀀스가 길어지고 한 토큰이 지닌 언어 정보가 적다.</td></tr><tr><td>서브워드 단위</td><td><code>[play, ##ing]</code> (가상 WordPiece 사전)</td><td>여러 단어가 <code>play</code> 조각을 공유한다. 어휘 크기와 입력 길이를 절충한다.</td></tr></tbody></table></div><p>한국어에서도 <code>학교에</code>가 <code>학교 + 에</code>처럼 나뉠 수 있지만, 실제 분할은 학습된 어휘와 규칙에 따라 결정된다. 따라서 <b>서브워드 토크나이저가 형태소 분석기를 그대로 대체하거나 문법적으로 정확하게 분리한다고 생각하면 안 된다.</b></p><h3>왜 여러 서브워드 알고리즘이 생겼을까?</h3><p>기본 아이디어는 같아도 <b>어떤 조각을 어휘로 채택하는지</b>와 <b>입력 시 어떤 순서로 결합하는지</b>가 다르다. 그 결과 어휘 크기, 미등록 토큰 처리, 한국어 문장 길이, 추론 비용에 차이가 생긴다. 어느 한 알고리즘이 언제나 우수하다고 단정할 수 없으므로 동일 문장으로 실제 모델을 비교한다.</p><h3>WordPiece — BERT 계열</h3><p>어휘 사전에 포함된 가능한 긴 부분 문자열부터 찾는 방식으로 인코딩한다. 단어 중간에 이어지는 조각은 <code>##</code>로 표시할 수 있다. 예시 어휘에 <code>play</code>, <code>##ing</code>이 있으면 <code>playing → [play, ##ing]</code>으로 표현할 수 있다. 실제 분리는 사전에 따라 달라진다.</p><div class="tablewrap"><table><thead><tr><th>순서</th><th>입력/조회</th><th>결과</th></tr></thead><tbody><tr><td>①</td><td>playing 전체가 어휘에 있는지 확인</td><td>없음</td></tr><tr><td>②</td><td>왼쪽에서 가장 긴 조각 play 선택</td><td>play</td></tr><tr><td>③</td><td>나머지 접미부를 중간 토큰으로 조회</td><td>##ing</td></tr><tr><td>④</td><td>원래 문자열 복원</td><td>play + ing = playing</td></tr></tbody></table></div><div class="note"><b>BPE 실습: 먼저 원문부터 확인</b><p>아래는 학습 원리를 보여주기 위한 <b>가상 말뭉치</b>입니다. 같은 글자 조각이 반복되어 자주 등장하는 인접 쌍을 병합할 수 있다는 점을 확인합니다. 실제 GPT-2 토크나이저가 아래 병합 순서를 그대로 따른다는 의미가 아닙니다.</p><div class="tablewrap"><table><thead><tr><th>원문에 등장한 단어</th><th>반복 횟수</th><th>초기 문자 분리</th></tr></thead><tbody><tr><td>low</td><td>5</td><td>l | o | w</td></tr><tr><td>lower</td><td>2</td><td>l | o | w | e | r</td></tr><tr><td>lowest</td><td>3</td><td>l | o | w | e | s | t</td></tr><tr><td>newer</td><td>2</td><td>n | e | w | e | r</td></tr></tbody></table></div><p>예를 들어 <code>low</code>의 문자 쌍 <code>l+o</code>와 <code>o+w</code>는 여러 단어에서 반복됩니다. 전체 말뭉치의 인접 쌍 빈도를 세고 가장 자주 등장한 쌍을 병합하는 절차를 반복합니다. 학습된 규칙에 따라 <code>l|o|w → lo|w → low</code>처럼 조각이 변할 수 있습니다.</p><p>새로운 원문 <code>lower</code>를 인코딩할 때는 <code>low|e|r</code> 또는 <code>low|er</code>처럼 <b>학습된 병합 규칙에 존재하는 조합만</b> 만들어집니다. BPE의 병합 규칙을 모르는 상태에서 최종 분할을 단정하지 않습니다.</p></div><h3>BPE — GPT-2 등에서 사용</h3><p>BPE는 학습 말뭉치에 많이 반복되는 인접 기호 쌍을 반복해서 병합해 토큰 목록과 병합 규칙을 구성한다. 예를 들어 <code>l o w</code>에서 <code>l+o → lo</code>, <code>lo+w → low</code> 같은 규칙이 학습될 수 있다. 이는 빈도나 학습된 병합 순서에 따른 예시이며 무조건 그 순서로 합쳐지는 것은 아니다.</p><div class="tablewrap"><table><thead><tr><th>단계</th><th>기호 배열</th><th>설명</th></tr></thead><tbody><tr><td>0</td><td>l | o | w</td><td>초기 기호</td></tr><tr><td>1</td><td>lo | w</td><td>병합 규칙 적용</td></tr><tr><td>2</td><td>low</td><td>다음 규칙이 존재하면 결합</td></tr><tr><td>실제 GPT-2</td><td>Byte-level BPE</td><td>문자를 UTF-8 바이트 수준으로 다루므로 공백 표시도 특수하게 보일 수 있음</td></tr></tbody></table></div><h3>두 방식의 핵심 차이</h3><div class="tablewrap"><table><thead><tr><th>비교</th><th>WordPiece</th><th>BPE</th></tr></thead><tbody><tr><td>사전 학습</td><td>문장 확률을 높이는 병합 기준</td><td>빈번한 기호 쌍의 순차 병합</td></tr><tr><td>인코딩</td><td>Longest-match 기반 조회</td><td>학습된 병합 규칙 적용</td></tr><tr><td>표시</td><td>## 접미부 표시 가능</td><td>GPT-2는 공백을 나타내는 Ġ 등이 보일 수 있음</td></tr><tr><td>일반 예</td><td>BERT</td><td>GPT-2</td></tr></tbody></table></div><h3>WordPiece와 BPE의 장단점은 무엇인가?</h3><div class="tablewrap"><table><thead><tr><th>방식</th><th>장점</th><th>한계·주의점</th></tr></thead><tbody><tr><td><b>WordPiece</b></td><td>자주 쓰이는 부분 문자열을 재사용해 단어 단위보다 어휘 수를 절약할 수 있고, <code>##</code> 경계가 읽기 쉽다. BERT 계열에서 널리 검증되었다.</td><td>사전에 적합한 조각이 없으면 <code>[UNK]</code>가 발생할 수 있으며, 토크나이저 구현에 따라 전체 단어가 UNK로 바뀌기도 한다. 일반적인 탐욕적 최장 일치가 문법적 최선은 아니다.</td></tr><tr><td><b>BPE</b></td><td>빈번한 인접 기호를 병합해 반복 패턴을 압축한다. 바이트 기반 BPE는 임의의 UTF-8 텍스트도 표현할 수 있어 OOV에 강하다.</td><td>병합 규칙에 따라 형태소 경계와 무관하게 나뉘며, 드문 한국어 표현에서 여러 토큰으로 길어질 수 있다. 모든 BPE가 바이트 기반인 것은 아니다.</td></tr><tr><td><b>Unigram</b></td><td>여러 분할 후보를 확률적으로 평가할 수 있고, 일부 구현은 학습 중 분할 다양성을 활용할 수 있다.</td><td>학습·분할 원리가 상대적으로 복잡하며, 품질은 말뭉치와 어휘 설계에 좌우된다.</td></tr></tbody></table></div><div class="note"><b>선택 기준</b><p>WordPiece=언어 이해, BPE=생성이라는 등식은 성립하지 않는다. 모델 학습에 사용된 토크나이저와 정확히 일치시켜야 하며, 한국어 성능은 <b>실제 토큰 수·복원 정확성·모델 성능</b>으로 비교한다.</p></div><h3>Unigram도 구분</h3><p>Unigram은 여러 분할 후보 가운데 확률적 점수가 높은 분할을 찾는 계열이다. SentencePiece는 이처럼 BPE나 Unigram을 구현할 수 있는 라이브러리이므로, SentencePiece 자체를 별도의 한 가지 토큰화 알고리즘이라고 단정하지 않는다.</p><div class="note"><b>실제 토큰은 모델에서 확인</b><p>단순 예시는 원리 설명용이다. 정확한 결과는 <code>tokenizer.tokenize()</code>, <code>convert_ids_to_tokens()</code>, <code>decode()</code>로 확인한다.</p></div><div class="codebox"><div class="codehead"><span>tokenizer_wordpiece_bpe_real.py</span><button class="copy" type="button">코드 복사</button></div><pre><code>from transformers import AutoTokenizer
+samples = ["나는 오늘 점심으로 피자를 먹었다.", "파이썬으로 RAG 검색을 구현합니다."]
+names = ["klue/bert-base", "skt/kogpt2-base-v2"]
+for name in names:
+    tok = AutoTokenizer.from_pretrained(name)
+    print("\n모델:", name, "어휘 크기:", tok.vocab_size)
+    for sent in samples:
+        ids = tok(sent)["input_ids"]
+        print("문장:",sent)
+        print("토큰:",tok.convert_ids_to_tokens(ids))
+        print("개수:",len(ids), "복원:",tok.decode(ids, skip_special_tokens=True))
+</code></pre></div></section><section aria-labelledby="m2tab05" class="panel" hidden="" id="m2sec05" role="tabpanel"><div class="crumb">Part A · A2-M1-2 · Part 2. 토크나이저와 모델 계열</div><h1>05. 한국어 토큰화와 특수 토큰</h1><p class="lead">한국어는 조사·어미가 어절에 붙는 교착어이므로 공백 분리만으로 의미 단위를 안정적으로 구분하기 어렵다. 모델마다 학습 데이터와 어휘 사전이 다르므로 토큰 수·속도·품질을 직접 평가해야 한다.</p><div class="tablewrap"><table><thead><tr><th>입력</th><th>공백 분리</th><th>가능한 서브워드 관찰 포인트</th></tr></thead><tbody><tr><td>학교에 갑니다</td><td>학교에 / 갑니다</td><td>학교·에, 갑·니다 등의 조각 가능</td></tr><tr><td>메타정합검증</td><td>메타정합검증</td><td>하나의 토큰일 수도, 여러 조각일 수도 있음</td></tr><tr><td>WCAG 2.4.4 링크 목적</td><td>WCAG / 2.4.4 / 링크 / 목적</td><td>영숫자·마침표 분리와 토큰 수 확인</td></tr><tr><td>좋지 않다</td><td>좋지 / 않다</td><td>부정 의미가 보존되는지 확인</td></tr></tbody></table></div><h3>BERT에서 먼저 배운 특수 토큰을 실제 ID로 확인</h3><p>앞의 BERT 단원에서 [CLS]·[SEP]·[MASK]를 이미 살펴보았다. 여기서는 정의를 다시 소개하기보다 각 모델에 어떤 특수 토큰이 실제로 등록되어 있는지와 ID를 확인한다. GPT 계열의 EOS·BOS·PAD 존재 여부도 모델마다 다르다.</p><div class="codebox"><div class="codehead"><span>korean_tokens.py</span><button class="copy" type="button">코드 복사</button></div><pre><code>from transformers import AutoTokenizer
+for name in ["klue/bert-base", "skt/kogpt2-base-v2"]:
+    tok = AutoTokenizer.from_pretrained(name)
+    print("\n", name)
+    print("vocab_size:",tok.vocab_size)
+    print("special:",tok.special_tokens_map)
+    print("all ids:",tok.all_special_ids)
+    encoded = tok("메타정합검증 WCAG 2.4.4", return_offsets_mapping=True)
+    print("tokens:",tok.convert_ids_to_tokens(encoded["input_ids"]))
+    print("ids:",encoded["input_ids"])
+    print("offsets:",encoded["offset_mapping"])
+    print("decoded:",tok.decode(encoded["input_ids"],skip_special_tokens=True))
+</code></pre></div><p class="sidenote">Fast Tokenizer의 offset 지원 여부를 확인해야 한다. 특정 모델 환경에서는 Offset이 지원되지 않을 수 있으므로 해당 부분만 건너뛰어 비교한다.</p></section><section aria-labelledby="m2tab06" class="panel" hidden="" id="m2sec06" role="tabpanel"><div class="crumb">Part A · A2-M1-2 · Part 2. 토크나이저와 모델 계열</div><h1>06. T5·RoBERTa·LLaMA 등 구조 비교</h1><p class="lead">Transformer 기반 모델도 구조·학습 목표·출력이 다르므로 기능별로 구분해서 선택한다.</p><div class="tablewrap"><table><thead><tr><th>모델</th><th>전체 이름/구조</th><th>학습 목표·특징</th><th>활용</th></tr></thead><tbody><tr><td>BERT</td><td>Bidirectional Encoder Representations from Transformers / 인코더</td><td>MLM 중심</td><td>분류·NER·추출형 QA</td></tr><tr><td>RoBERTa</td><td>Robustly Optimized BERT Pretraining Approach / 인코더</td><td>BERT 학습 방식 개선, 원래 NSP 제거</td><td>텍스트 분류·문맥 표현</td></tr><tr><td>XLM-R</td><td>다국어 RoBERTa / 인코더</td><td>다국어 학습</td><td>다국어 문서 분석</td></tr><tr><td>T5</td><td>Text-to-Text Transfer Transformer / 인코더-디코더</td><td>손상된 span 복원·텍스트 입력→텍스트 출력</td><td>번역·요약·QA</td></tr><tr><td>BART</td><td>Encoder–Decoder</td><td>Denoising 학습</td><td>요약·생성</td></tr><tr><td>GPT-2·KoGPT2</td><td>Decoder-only</td><td>Causal LM</td><td>텍스트 생성</td></tr><tr><td>LLaMA 계열</td><td>Decoder-only</td><td>자기회귀 생성·효율적 변형</td><td>생성형 LLM 응용</td></tr></tbody></table></div><h3>세 가지 구조를 구별하기</h3><p>인코더는 입력 전체의 문맥 정보를 계산한다. 디코더는 생성 시 미래 토큰을 가린다. 인코더–디코더 모델은 입력을 인코딩한 결과를 디코더의 Cross-Attention이 참고하며 답을 만든다.</p><div class="note"><b>버전별 모델 스펙</b><p>구체적인 토크나이저, 컨텍스트 길이, 레이어 수, 라이선스는 같은 계열이라도 모델 버전마다 달라진다. 제품군의 고정 속성으로 외우지 않는다.</p></div></section><section aria-labelledby="m2tab07" class="panel" hidden="" id="m2sec07" role="tabpanel"><div class="crumb">Part A · A2-M1-2 · Part 3. 모델 선택·RAG 연결</div><h1>07. 검색 임베딩·생성·평가의 역할</h1><p class="lead">RAG에서는 문서를 찾는 모델과 답변을 생성하는 모델의 목적이 다르다. 동일한 벡터가 모든 업무를 자동으로 해결하는 것은 아니다.</p><div class="tablewrap"><table><thead><tr><th>작업</th><th>권장 역할</th><th>주의할 점</th></tr></thead><tbody><tr><td>문서 벡터 변환</td><td>검색에 맞게 학습된 Bi-Encoder·Sentence Embedding</td><td>일반 BERT의 은닉 벡터 평균만으로 고품질 검색이 보장되지 않음</td></tr><tr><td>유사도 계산</td><td>코사인 유사도·Top-k 검색</td><td>점수가 정답 확률은 아님</td></tr><tr><td>재순위화</td><td>Cross-Encoder가 질문·문서 쌍 점수화</td><td>실행비용과 지연 고려</td></tr><tr><td>답변 작성</td><td>GPT 등 생성 모델</td><td>근거 없는 문장 생성 가능</td></tr><tr><td>검증</td><td>rule_id·출처·상태 필터·평가</td><td>A1의 결정적 판정을 생성 모델로 덮어쓰지 않음</td></tr></tbody></table></div><h3>검색과 생성 연결</h3><p>질문 → 질문 임베딩 → 문서 유사도 검색 → 규칙 상태/출처 검증 → 검색 결과 포함 프롬프트 → 생성 모델 응답. 이때 A1의 원본 <code>rules.csv</code>는 변경하지 않는다.</p><h3>왜 BERT와 GPT를 함께 배우나?</h3><p>검색할 근거를 잘 찾는 문제와 읽기 쉬운 답을 만드는 문제는 서로 다르다. 둘의 차이를 알면 사용 목적에 맞는 모델을 선택하고, 모델 비용·응답 속도·출처 정확도까지 설계할 수 있다.</p><h3>모델을 고르는 일이 왜 RAG의 출발점인가?</h3><p>RAG는 한 모델이 모든 일을 하는 서비스가 아니다. 텍스트 분할과 길이 제한, 질문·문서의 검색 벡터, 검색 결과의 재정렬, 근거를 읽고 답하는 생성 모델이 각각 다른 조건을 요구한다. <b>검색이 틀리면 생성 모델이 훌륭해도 필요한 근거를 받지 못한다.</b> 도구를 사용하는 에이전트에서는 이 문제에 더해 도구 호출 형식·인자·권한·실패 복구까지 검토해야 한다.</p><div class="tablewrap"><table><thead><tr><th>선택 대상</th><th>실제 확인 질문</th><th>잘못 고르면</th></tr></thead><tbody><tr><td>토크나이저 + 모델 조합</td><td>한국어 조사, WCAG 2.4.4, aria-label, 고유 용어가 몇 토큰인가? 최대 길이 초과 시 어디서 잘리는가?</td><td>핵심 규칙 근거가 누락되거나 처리 비용이 증가한다.</td></tr><tr><td>검색 임베딩 모델</td><td>한국어·도메인 질의에서 정답 근거가 Top-k에 들어오는가? query/passage 접두사가 필요한가?</td><td>질의와 유사한 말이 있어도 필요한 문서를 못 찾는다.</td></tr><tr><td>재순위화 모델(선택)</td><td>Top-10 후보를 읽고 올바른 규칙을 더 위로 올리는가? 추가 지연은 얼마인가?</td><td>정답 후보가 있어도 상위 문서에 오답 근거가 놓일 수 있다.</td></tr><tr><td>생성 모델</td><td>주어진 문서에서만 답하는가? 출처를 표시하는가? 근거 없을 때 보류하는가?</td><td>검색 점수가 높아도 과장·환각이 발생한다.</td></tr><tr><td>에이전트용 생성 모델</td><td>도구 스키마를 준수하고 올바른 도구·인자를 선택하는가? 실패 시 멈추는가?</td><td>검색 이외의 외부 작업에서 오류가 커진다.</td></tr></tbody></table></div><h3>실무 사례: 모델을 먼저 고르지 말고, 실패 조건을 먼저 정의한다</h3>
+<p>목표는 “WCAG 접근성 규칙 문서에서 질문에 맞는 <b>현행 근거</b>를 찾아 출처 ID와 함께 답변하는 서비스”이다. 영어 일반 문서 검색과 달리 <code>aria-label</code>, <code>alt=""</code>, <code>WCAG 2.4.4</code>, 사내 규칙 ID가 함께 등장한다. 따라서 모델을 고르기 전에 이러한 질의에서 검색 실패가 발생하는지부터 검증한다.</p>
+<div class="tablewrap"><table><thead><tr><th>사전 요구사항</th><th>후보를 비교할 질문</th><th>불합격 조건</th></tr></thead><tbody>
+<tr><td>한국어 기술 용어</td><td>한글+영문 속성명을 같이 표현하는가?</td><td>정답 문서가 Top-2에 반복적으로 누락</td></tr>
+<tr><td>긴 규칙 문서</td><td>모델별 최대 입력 길이와 잘림 지점은?</td><td>핵심 근거가 잘려 검색 불가</td></tr>
+<tr><td>규칙의 현재 상태</td><td><code>status=applied</code> 문서만 사용하는가?</td><td>제안 중인 규칙을 현행으로 답변</td></tr>
+<tr><td>운영 환경</td><td>CPU 메모리·처리시간·라이선스는?</td><td>운영 한도나 사용 조건 위반</td></tr>
+<tr><td>에이전트 확장</td><td>도구 호출 모델이 올바른 인자를 생성하는가?</td><td>권한 없는 도구 실행·실패 시 무한 재시도</td></tr>
+</tbody></table></div>
+<h3>후보 모델 선정 실험: 결과를 먼저 예측하지 않는다</h3>
+<p>교육용 후보 A는 <code>intfloat/multilingual-e5-small</code>, 후보 B는 <code>sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2</code>이다. 두 모델은 같은 입력 문서와 질문으로 평가하되, <b>각 모델에 맞는 토크나이저와 입력 형식</b>을 사용한다. E5는 질문에 <code>query:</code>, 문서에 <code>passage:</code>를 붙인다. 서로 다른 모델의 코사인 점수 자체를 직접 비교하지 않는다.</p>
+<div class="tablewrap"><table><thead><tr><th>질문</th><th>정답 문서 ID</th><th>모델 A 순위(직접 기록)</th><th>모델 B 순위(직접 기록)</th></tr></thead><tbody>
+<tr><td>의미 있는 이미지에서 alt는?</td><td>R01</td><td>실행 후 입력</td><td>실행 후 입력</td></tr>
+<tr><td>장식 이미지는 alt를 비워도 되나?</td><td>R02</td><td>실행 후 입력</td><td>실행 후 입력</td></tr>
+<tr><td>입력 필드 이름은 어떻게 제공하나?</td><td>R04</td><td>실행 후 입력</td><td>실행 후 입력</td></tr>
+</tbody></table></div>
+<h3>선정은 점수가 아니라 근거를 기록하는 과정</h3>
+<p>먼저 각 질문에 대한 <b>Hit@1·Hit@2</b>를 비교한다. 두 모델의 검색 품질이 비슷하다면 로딩을 제외한 추론 지연·메모리·배포 라이선스를 확인한다. 검색에 실패한 질문을 찾았다면 토큰 분할과 잘림, 관련 문서의 표현, 접두사 정책을 다시 조사한다. 세 문장의 교육용 점수만으로 실제 서비스에 적합하다고 확정하지 않는다.</p>
+<div class="task"><h4>선정 근거 작성 실습</h4><ol>
+<li>두 모델의 토크나이저로 <code>aria-label</code>, <code>WCAG 2.4.4</code>, <code>메타정합검증</code>을 인코딩하고 실제 토큰 수를 기록한다.</li>
+<li>제공된 검색 비교 프로그램을 실행하여 모델별 문서 순위와 Hit@1·Hit@2를 적는다.</li>
+<li>모델 A와 B 중 어떤 후보를 임시 선정했는지, 품질 근거와 아직 검증하지 못한 기준을 3문장으로 작성한다.</li>
+<li>상위 문서가 맞더라도 생성 모델이 근거를 잘못 설명할 수 있는지 확인한다. 생성 품질은 검색 품질과 별도 평가한다.</li>
+<li>도구 호출이 필요한 에이전트에서는 검색 점수와 별개로 도구 선택, 인자 검증, 권한과 중단 조건을 평가한다.</li>
+</ol></div>
+<div class="note"><b>실습 결과의 의미</b><p>“가장 성능 좋은 모델”을 발표하는 것이 아니다. <b>우리 업무에서 정답 근거가 잘 검색되는지</b>, <b>그 판단을 어떤 평가 자료로 뒷받침하는지</b>를 설명할 수 있어야 한다. RAG 구현의 난이도는 이 선택과 검증에서 시작된다.</p></div><h3>토크나이저를 독립적으로 갈아 끼우면 안 되는 이유</h3><p>대부분의 사전학습 모델은 특정 <b>어휘 사전, 토큰 ID, 임베딩 행렬</b> 조합으로 학습되어 있다. BERT 모델에 GPT-2 토크나이저를 임의로 결합하면 ID가 가리키는 행의 의미가 달라지거나 크기가 맞지 않는다. 따라서 실무에서는 <b>모델과 공식 토크나이저를 함께 후보로 선정</b>하고, 같은 평가 질문으로 여러 모델 조합을 비교해야 한다.</p><h3>같은 RAG 목적이라도 모델이 달라질 수 있다</h3><div class="tablewrap"><table><thead><tr><th>서비스 목적</th><th>평가할 모델 유형</th><th>먼저 확인할 평가 항목</th></tr></thead><tbody><tr><td>한국어 웹 접근성 규칙 검색</td><td>한국어 지원 검색용 문장 임베딩</td><td>Hit@k, MRR, 규칙 ID/상태 필터, 한글·영문 혼용</td></tr><tr><td>제품 매뉴얼 기반 상담</td><td>길이가 긴 문서를 지원하는 임베딩 + 근거형 생성</td><td>잘림, 버전, 답변의 근거 일치</td></tr><tr><td>사내 문서 권한별 응답</td><td>검색 모델 + 메타데이터·접근제어</td><td>권한 없는 문서가 검색·답변에 들어오지 않는가</td></tr><tr><td>도구를 실행하는 AI 에이전트</td><td>도구 호출을 지원하는 생성 모델 + 검색 모델</td><td>도구 선택 정확도, 인자 적합성, 중단 조건</td></tr></tbody></table></div><h3>모델 비교의 최소 실험 설계</h3><p>후보 모델 두 개를 <b>같은 5~20개 질문과 정답 문서 ID</b>로 평가한다. 질의별 정답 근거가 검색 상위 1개 또는 3개에 들어오는지 기록한다. 벡터 차원이나 코사인 점수의 절대값만으로 모델을 평가하지 않는다.</p><div class="tablewrap"><table><thead><tr><th>측정</th><th>의미</th><th>주의</th></tr></thead><tbody><tr><td>Hit@1, Hit@3</td><td>정답 근거가 상위 1·3개 안에 있는 질문의 비율</td><td>정답 문서 ID가 먼저 정의되어야 함</td></tr><tr><td>MRR</td><td>첫 정답 문서가 나타난 순위를 역수로 평균</td><td>상위 순위의 차이를 반영</td></tr><tr><td>토큰 수·Truncation</td><td>한국어·기술 용어가 얼마나 잘리고 분할되는지</td><td>모델의 전용 토크나이저 사용</td></tr><tr><td>추론 시간·메모리</td><td>운영 환경에서 실행 가능한가</td><td>CPU/GPU와 배치 크기를 함께 기록</td></tr><tr><td>라이선스·보안</td><td>서비스 사용과 데이터 처리 가능 여부</td><td>실제 모델 카드와 사내 정책 확인</td></tr></tbody></table></div><div class="note"><b>실습의 결론을 먼저 정하지 않는다</b><p>어떤 임베딩 모델이 항상 더 좋다고 가정하지 않는다. 동일한 문서·질문·정답 ID로 비교하고, 검색 실패 문장을 분석한 다음 목적에 맞는 모델을 선택한다. 다음 실습은 후보 모델을 바꾸어 직접 비교할 수 있다.</p></div></section><section aria-labelledby="m2tab08" class="panel" hidden="" id="m2sec08" role="tabpanel"><div class="crumb">Part A · A2-M1-2 · Part 3. 모델 선택·RAG 연결</div><h1>08. 모델 선택 실험에서 RAG 연결까지</h1><p><b>이 실습에서 확인할 핵심 질문:</b> “왜 이 검색 모델을 골랐는가?”, “어떤 질문을 놓쳤는가?”, “검색 모델과 생성 모델이 서로 다른 이유는 무엇인가?” 코드를 실행한 뒤 두 모델의 Hit@1·Hit@2와 실패 사례를 반드시 비교한다.</p><p class="lead">후보 토크나이저·임베딩 모델의 차이를 확인하고, 정답 문서를 찾은 뒤 생성 모델에 전달하는 통합 실습.</p><div class="task"><h4>실습 A — BERT 빈칸 후보 확인</h4><ol><li><code>bert_mask.py</code> 실행 후 [MASK] 토큰 ID 확인</li><li>앞 문맥만 바꾸고 후보 순위가 달라지는지 관찰</li><li>뒤 문맥만 바꾼 뒤 후보 점수 비교</li></ol></div><div class="task"><h4>실습 B — GPT 다음 토큰 생성</h4><ol><li><code>gpt_generate.py</code>로 30개 토큰 이내 생성</li><li><code>max_new_tokens</code>를 10으로 바꾸고 결과 비교</li><li>Greedy와 샘플링 방식의 출력 차이 확인</li></ol></div><div class="task"><h4>실습 C — 토크나이저와 한국어</h4><ol><li>두 모델에 같은 문장 입력</li><li>토큰 목록·토큰 ID·토큰 개수 출력</li><li>전문 용어·조사·영문 혼용 문장에서 분할 차이 관찰</li></ol></div><div class="codebox"><div class="codehead"><span>설치 및 실행 예</span><button class="copy" type="button">코드 복사</button></div><pre><code># Windows PowerShell 또는 Ubuntu
+python -m pip install "torch" "transformers&gt;=4.45,&lt;5"
+python bert_mask.py
+python gpt_generate.py
+python compare_tokenizers.py
+python korean_tokens.py
+</code></pre></div><h3>이해도 확인</h3><details class="qa"><summary>BERT가 문장을 자유롭게 계속 생성하지 않는 이유는?</summary><p>기본 BERT는 인코더 기반 MLM을 중심으로 사전학습하며, GPT와 같은 다음 토큰 생성 헤드 및 인과적 생성 목적과 다르기 때문이다.</p></details><details class="qa"><summary>WordPiece의 ##은 모든 토크나이저에 공통인가?</summary><p>아니다. WordPiece 계열에서 이어지는 조각을 표시하는 방식이며 GPT-2 Byte-level BPE는 다른 공백 표기를 사용한다.</p></details><details class="qa"><summary>RAG에서 GPT가 검색 엔진까지 대체하는가?</summary><p>아니다. 검색용 임베딩·인덱스 및 규칙 필터와 생성 모델의 역할을 구분해야 한다.</p></details><div class="note"><b>마무리 실습의 목적</b><p>모델 선택이 왜 어려운지 이해하기 위해 다국어 임베딩 모델의 토크나이저와 평균 풀링을 사용해 문서를 검색하고, 검색한 근거를 별도 생성 모델에 전달합니다. 벡터 DB·LangChain 없이 RAG의 핵심 단계를 한 파일에 담았습니다. 아래 문서는 A1의 실제 rules.csv를 수정하거나 판정하지 않는 교육용 예시입니다.</p></div><div class="note"><b>마무리 실습의 학습 목표</b><p>코드 한 줄로 RAG를 만들었다고 끝나는 것이 아니다. <b>후보 임베딩 모델 선택 → 전용 토크나이저 확인 → 동일한 정답 질문으로 Hit@k 비교 → 검색 실패 확인 → 문서 근거를 생성 모델에 전달</b>이라는 모델 선정과 검증의 전체 흐름을 직접 경험한다.</p><p>아래 파일의 <code>MODEL_IDS</code>를 바꾸면 각 모델에 맞는 토크나이저를 함께 불러온다. 실제 검색 품질은 모델을 내려받아 실행해야 확인할 수 있으며, 예제 데이터 3개 질문의 결과로 실무 성능을 단정해서는 안 된다.</p></div><h3>검색과 생성의 연결 — 단계별로 확인</h3><h4>1. 임베딩 모델</h4><p>intfloat/multilingual-e5-small 모델과 호환 토크나이저를 함께 불러옵니다.</p><h4>2. 문서 임베딩</h4><p>passage: 접두어가 붙은 문서를 토큰화해 은닉 벡터를 추출하고 Masked Mean Pooling과 L2 정규화를 적용합니다.</p><h4>3. 질문 검색</h4><p>query: 접두어로 질문 벡터를 만들고 정규화된 벡터 간 내적으로 코사인 유사도 Top-2 문서를 찾습니다.</p><h4>4. 생성 모델</h4><p>검색된 문서 ID와 본문만 근거로 답하도록 OpenAI API에 전달합니다. API 키가 없어도 검색 결과까지 확인할 수 있습니다.</p><div class="codebox"><div class="codehead"><span>A2_M1_2_mini_rag.py — 전체 실행 코드</span><button class="copy" type="button">코드 복사</button></div><pre><code>"""A2-M1-2: RAG 모델 선택 미니 실습 — 모델 비교 -&gt; 검색 -&gt; 근거 기반 생성.
+설치: pip install torch transformers openai python-dotenv
+실행: python A2_M1_2_mini_rag.py
+선택: .env 파일의 OPENAI_API_KEY=... 를 설정하면 생성 모델까지 호출한다.
+"""
+import os
+import time
+import torch
+import torch.nn.functional as F
+from dotenv import load_dotenv
+from transformers import AutoTokenizer, AutoModel
+
+# 1. 문서 원본: A1 규칙의 주제를 단순화한 학습용 데이터이며 실제 rules.csv가 아님.
+DOCS = [
+    {"id": "R01", "text": "의미 있는 이미지에는 이미지 목적을 설명하는 alt 대체 텍스트가 필요합니다."},
+    {"id": "R02", "text": "장식용 이미지에는 문맥에 따라 빈 alt 속성(alt="")을 사용할 수 있습니다."},
+    {"id": "R03", "text": "링크 텍스트만으로 링크의 목적을 이해할 수 있도록 작성해야 합니다."},
+    {"id": "R04", "text": "입력 필드에는 화면 레이블 또는 접근 가능한 이름을 제공해야 합니다."},
+    {"id": "R05", "text": "모호한 '자세히' 링크는 문맥에서 목적이 명확한지 확인해야 합니다."},
+]
+
+# 2. 질문마다 '정답 근거 문서 ID'를 미리 지정해야 검색 모델을 평가할 수 있음.
+#    현업에서는 도메인 담당자가 정답 데이터를 검수해야 함.
+TESTS = [
+    {"question": "의미 있는 이미지에 alt가 없으면 무엇을 확인하나요?", "gold": "R01"},
+    {"question": "장식용 이미지의 alt를 비워도 되나요?", "gold": "R02"},
+    {"question": "입력창에 레이블이 필요한가요?", "gold": "R04"},
+]
+
+# 3. 모델 후보: 각각 자신의 토크나이저/임베딩 모델을 한 쌍으로 로딩.
+#    두 번째 모델은 비교 실습용이며 다운로드 시간이 더 걸릴 수 있음.
+MODEL_IDS = [
+    "intfloat/multilingual-e5-small",
+    "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
+]
+TOP_K = 2
+
+
+def encode_texts(texts, tokenizer, model, prefix=""):
+    """문장 -&gt; 토큰 ID -&gt; 은닉 벡터 -&gt; PAD 제외 평균 -&gt; L2 정규화."""
+    batch = tokenizer([prefix + t for t in texts],
+                      padding=True, truncation=True, max_length=256,
+                      return_tensors="pt")
+    with torch.inference_mode():  # 추론은 역전파가 필요 없으므로 메모리를 절약
+        hidden = model(**batch).last_hidden_state  # (문장 수, 토큰 수, 차원)
+    mask = batch["attention_mask"].unsqueeze(-1)  # PAD=0, 실제 토큰=1
+    pooled = (hidden * mask).sum(dim=1) / mask.sum(dim=1).clamp(min=1)
+    return F.normalize(pooled, p=2, dim=1)  # 내적을 코사인 유사도로 사용
+
+
+def search(question, doc_vecs, tokenizer, model, q_prefix=""):
+    """질문 벡터와 문서 벡터의 코사인 유사도 상위 문서 반환."""
+    q = encode_texts([question], tokenizer, model, q_prefix)
+    similarities = (q @ doc_vecs.T)[0]  # 정규화 후 내적 = 코사인 유사도
+    scores, indices = torch.topk(similarities, k=min(TOP_K, len(DOCS)))
+    return [(DOCS[idx], score) for score, idx in zip(scores.tolist(), indices.tolist())]
+
+
+def main():
+    load_dotenv()  # API 키는 .env로만 관리. 코드에 키 직접 입력 금지.
+    reports = []
+    best = None
+
+    # 4. 후보별로 같은 문서/질문을 사용해야 공정한 비교가 됨.
+    for model_id in MODEL_IDS:
+        print("\n=== 모델 후보:", model_id, "===")
+        started = time.perf_counter()
+        tokenizer = AutoTokenizer.from_pretrained(model_id)
+        model = AutoModel.from_pretrained(model_id).eval()
+        # e5의 query:/passage: 접두사 정책을 반드시 지킨다.
+        is_e5 = "multilingual-e5" in model_id
+        q_prefix = "query: " if is_e5 else ""
+        p_prefix = "passage: " if is_e5 else ""
+        doc_vecs = encode_texts([d["text"] for d in DOCS], tokenizer, model, p_prefix)
+        print("문서 벡터 shape:", tuple(doc_vecs.shape))
+        print("질문 첫 문장 토큰 수:", len(tokenizer(q_prefix + TESTS[0]["question"])["input_ids"]))
+
+        hits1 = hits2 = 0
+        for case in TESTS:
+            ranked = search(case["question"], doc_vecs, tokenizer, model, q_prefix)
+            retrieved = [doc["id"] for doc, _ in ranked]
+            hits1 += int(case["gold"] in retrieved[:1])
+            hits2 += int(case["gold"] in retrieved[:2])
+            print("질문:", case["question"])
+            print("정답:", case["gold"], "검색:", [(d["id"], round(sc, 4)) for d, sc in ranked])
+        score1, score2 = hits1 / len(TESTS), hits2 / len(TESTS)
+        elapsed = time.perf_counter() - started  # 로딩+인코딩 포함: 순수 추론속도 아님
+        reports.append((model_id, score1, score2, elapsed))
+        print(f"Hit@1={score1:.2f}, Hit@2={score2:.2f}, 총시간={elapsed:.1f}초")
+        # 실제 프로젝트라면 더 많은 평가 질문·품질·비용·라이선스를 함께 비교
+        if best is None or (score1, score2) &gt; (best[0], best[1]):
+            best = (score1, score2, model_id, tokenizer, model, doc_vecs, q_prefix)
+
+    print("\n=== 모델 비교표 (소규모 교육용 평가) ===")
+    for mid, h1, h2, secs in reports:
+        print(mid, f"Hit@1={h1:.2f} Hit@2={h2:.2f} 전체={secs:.1f}s")
+
+    # 5. 선정 모델로 검색된 근거가 답변에 어떤 영향을 주는지 확인.
+    _, _, selected_id, tokenizer, model, doc_vecs, q_prefix = best
+    question = TESTS[0]["question"]
+    ranked = search(question, doc_vecs, tokenizer, model, q_prefix)
+    context = "\n".join(f"[{doc['id']}] {doc['text']}" for doc, _ in ranked)
+    print("\n선정 모델:", selected_id, "\n검색 근거:\n", context)
+
+    # 6. API 키가 없으면 검색 결과까지만 실행하여 비용 없이 원리 확인 가능.
+    if not os.getenv("OPENAI_API_KEY"):
+        print("OPENAI_API_KEY 미설정: 생성 단계 생략. .env에 키를 추가하면 실행됩니다.")
+        return
+
+    # 7. 생성 모델은 검색 모델과 역할이 다름: 검색 근거를 읽고 문장으로 답함.
+    from openai import OpenAI
+    client = OpenAI()
+    response = client.responses.create(
+        model="gpt-4.1-mini",  # 계정에서 이용 가능한 모델로 변경 가능
+        instructions=("제공한 근거에만 기반하여 답하세요. 근거가 부족하면 보류하세요. "
+                      "근거 문서 ID를 표시하세요. 검색 점수는 정답 확률이 아닙니다."),
+        input=f"질문: {question}\n\n검색 근거:\n{context}",
+    )
+    print("\n[생성 답변]\n", response.output_text)
+
+
+if __name__ == "__main__":
+    main()
+</code></pre></div><div class="note"><b>실행 및 검토</b><p><code>pip install torch transformers openai python-dotenv</code> → <code>python A2_M1_2_mini_rag.py</code>. 생성까지 확인하려면 실행 폴더의 <code>.env</code>에 <code>OPENAI_API_KEY=...</code>를 직접 작성합니다. API 호출은 비용이 발생할 수 있습니다. 검색 점수가 높아도 규칙 적합 판정을 대신하지는 않습니다.</p><p>변형 실습: TOP_K를 1/3으로 바꾸고 결과를 비교한 뒤, 의미 있는 이미지와 장식용 이미지에 관한 질문으로 교체해 문서 누락과 답변 변화를 기록합니다.</p></div></section></main></div><footer class="footer">© 2026 부성순. All rights reserved.<small>교안의 자체 해설 및 실습 예제에 대한 저작권 표시입니다. 외부 출처와 모델·라이브러리의 권리는 각 권리자에게 있으며, 교육용 가상 숫자는 실제 AI 모델 결과가 아닙니다.</small><small>개념 참고: Vaswani et al., <a href="https://arxiv.org/abs/1706.03762" rel="noopener" target="_blank">Attention Is All You Need</a> · Devlin et al., <a href="https://arxiv.org/abs/1810.04805" rel="noopener" target="_blank">BERT</a> · <a href="https://huggingface.co/docs/transformers" rel="noopener" target="_blank">Hugging Face Transformers Documentation</a></small><small>참고: Hugging Face Tokenization Algorithms · BERT 원 논문 · GPT 원 논문 · 사용자 제공 Notion 강의자료와 비교 실습 노트북. 목업 그림은 자체 제작.</small></footer><script>(function(){
+const tabs=[...document.querySelectorAll('[role="tab"]')];
+function setTab(i,focus=false){tabs.forEach((t,j)=>{const on=i===j;t.setAttribute('aria-selected',on?'true':'false');t.tabIndex=on?0:-1;document.getElementById(t.getAttribute('aria-controls')).hidden=!on;});if(focus)tabs[i].focus({preventScroll:true});history.replaceState(null,'','#'+tabs[i].getAttribute('aria-controls'));window.scrollTo({top:0});}
+tabs.forEach((t,i)=>{t.addEventListener('click',()=>setTab(i));t.addEventListener('keydown',e=>{if(['ArrowDown','ArrowUp','ArrowLeft','ArrowRight'].includes(e.key)){e.preventDefault();setTab((i+(e.key==='ArrowDown'||e.key==='ArrowRight'?1:-1)+tabs.length)%tabs.length,true);}})});
+const index=tabs.findIndex(t=>'#'+t.getAttribute('aria-controls')===location.hash);if(index>=0)setTab(index);
+document.querySelectorAll('.copy').forEach(b=>b.addEventListener('click',async()=>{const code=b.closest('.codebox').querySelector('pre').textContent;try{await navigator.clipboard.writeText(code);b.textContent='복사됨';}catch(e){b.textContent='복사 실패';}setTimeout(()=>b.textContent='코드 복사',1500); }));
+})();</script></body></html>

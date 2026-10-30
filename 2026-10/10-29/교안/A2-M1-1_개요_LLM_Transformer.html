@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+
+<html lang="ko"><head><meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/><title>A2-M1-1 · 토큰화·임베딩·Transformer 구조</title><link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" rel="stylesheet"/><style>
+:root{--bg:#fff;--surface:#f8fafc;--ink:#0f172a;--muted:#64748b;--line:#e2e8f0;--accent:#ff2e93;--soft:rgba(255,46,147,.065);--codebg:#101d34}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink);font-family:'Pretendard',system-ui,'Malgun Gothic',sans-serif;font-size:18px;line-height:1.81;word-break:keep-all}
+.banner{background:linear-gradient(125deg,#fcfcff,#f8fafc);border-bottom:1px solid var(--line)}.banner-in{max-width:1320px;margin:auto;padding:18px 24px;display:flex;align-items:center;justify-content:space-between;gap:18px}.brand{font-size:16px;font-weight:850;letter-spacing:.03em}.who{font-size:15px;color:var(--muted)}.who a{color:var(--accent);text-decoration:none}.layout{max-width:1320px;margin:auto;padding:32px 24px 84px;display:grid;grid-template-columns:minmax(0,1fr) 290px;gap:38px;align-items:start}.sidebar{order:2;position:sticky;top:22px;max-height:calc(100vh - 44px);overflow:auto;border:1px solid var(--line);border-radius:15px;background:var(--surface);padding:17px}.group{font-size:15px;color:var(--muted);font-weight:800;margin:3px 10px 14px}.tabs{display:flex;flex-direction:column;gap:5px}.tabs button{appearance:none;border:1px solid transparent;border-radius:9px;background:transparent;color:#253348;cursor:pointer;text-align:left;font:600 16px/1.55 'Pretendard',sans-serif;padding:9px 12px}.tabs button span{color:var(--accent);font-weight:850;margin-right:7px}.tabs button:hover{background:#fff;border-color:var(--line)}.tabs button[aria-selected=true]{background:var(--soft);border-color:var(--accent);color:#bd1366}.tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+main{min-width:0}.panel[hidden]{display:none}.panel{display:block}.crumb{color:var(--accent);font-size:15px;font-weight:800;margin:0 0 8px}.panel h1{font-size:31px;line-height:1.4;margin:0 0 12px}.lead{font-size:19px;font-weight:550;color:#344255;margin:6px 0 26px}.panel h3{font-size:21px;margin:33px 0 10px;border-bottom:1px solid var(--line);padding-bottom:6px}.panel h3:before{content:'▸ ';color:var(--accent)}.panel p{margin:13px 0}.panel b,.panel strong{font-weight:790}.panel code:not(pre code){font:15px/1.6 Consolas,monospace;word-break:break-word;background:#f1f5f9;border:1px solid #e5e7eb;padding:1px 5px;border-radius:4px}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;margin:17px 0 24px}.panel table{border-collapse:collapse;width:100%;font-size:17px;line-height:1.65}.panel th,.panel td{border-bottom:1px solid var(--line);padding:12px 14px;vertical-align:top;text-align:left}.panel th{font-size:16px;font-weight:800;background:#f1f5f9;color:#40516a}.panel tbody tr:last-child td{border:0}.panel tbody tr:nth-child(even){background:#fbfcfe}.note,.task,.try{border:1px solid var(--line);border-radius:13px;background:#fafcff;padding:17px 19px;margin:24px 0}.note{border-left:4px solid var(--accent);background:var(--soft)}.note b{color:#ad155e}.note p{margin:6px 0}.task{background:#fff}.task h4{margin:0 0 9px;font-size:19px}.task ol{margin:0;padding-left:23px}.task li{margin:8px 0}
+.codebox{border:1px solid #243953;border-radius:13px;overflow:hidden;margin:21px 0 26px}.codehead{display:flex;justify-content:space-between;align-items:center;gap:15px;padding:8px 13px;background:#1d3452;color:#dceafc;font-size:14px;font-weight:700}.copy{border:1px solid #8598b4;color:#fff;background:#314f78;border-radius:6px;padding:3px 10px;cursor:pointer;font-size:13px}.codebox pre{background:var(--codebg);color:#cbe9fb;margin:0;padding:20px;overflow-x:auto;font:16px/1.7 Consolas,'JetBrains Mono',monospace;word-break:normal;white-space:pre}.qa{padding:13px 17px;margin:13px 0;border:1px solid var(--line);background:#fbfcff;border-radius:10px}.qa summary{font-size:17px;cursor:pointer;font-weight:780}.qa[open] summary{color:#c01168}.qa p{font-size:17px}.try label{display:block;font-size:17px}.tryrow{display:flex;gap:10px;margin-top:10px}.try input{flex:1;min-width:0;border:1px solid #cbd5e1;border-radius:8px;font:17px 'Pretendard',sans-serif;padding:10px 12px}.try button{background:#e72281;color:#fff;border:0;border-radius:8px;padding:10px 16px;font:700 16px 'Pretendard',sans-serif;cursor:pointer}.try pre{font:16px/1.7 Consolas,monospace;background:#101d34;color:#caeeff;padding:12px;border-radius:8px;overflow:auto;white-space:pre-wrap}.hint{font-size:15px;color:var(--muted)}.footer{max-width:1320px;margin:auto;border-top:1px solid var(--line);padding:20px 24px 38px;text-align:center;color:var(--muted);font-size:15px}.footer small{display:block;max-width:950px;margin:5px auto}
+@media(max-width:900px){.layout{grid-template-columns:1fr;gap:12px;padding:15px 16px 64px}.sidebar{order:0;position:sticky;top:0;z-index:10;border-radius:0;max-height:none;overflow:auto;padding:8px 0;background:#fff}.sidebar .group{display:none}.tabs{flex-direction:row;white-space:nowrap;overflow-x:auto}.tabs button{flex:none;font-size:15px}.banner-in{flex-wrap:wrap}.panel h1{font-size:27px}}
+@media(max-width:680px){body{font-size:17px}.panel table{font-size:16px}.panel th{font-size:15px}.panel h1{font-size:24px}.panel h3{font-size:20px}.codebox pre{font-size:15px;padding:15px}.tryrow{flex-direction:column}}
+@media print{.sidebar,.copy{display:none}.layout{display:block}.panel[hidden]{display:block!important}.panel{break-before:page}.banner{background:#fff}}
+
+/* 3-Part expanded guide, retaining supplied visual language */
+.sidebar .tabs .group{margin:18px 10px 7px;font-size:14px;color:#a51662;font-weight:850;border-top:1px solid var(--line);padding-top:12px}
+.sidebar .tabs .group:first-child{margin-top:2px;border-top:0;padding-top:0}
+.panel h2{font-size:23px;line-height:1.5;margin:27px 0 8px}
+.panel ul,.panel ol{padding-left:27px;margin:12px 0}.panel li{margin:7px 0}
+.panel .meta{display:flex;gap:10px}.panel .note span{display:inline-block;margin-right:12px;font-weight:750;color:#ad155e}
+.panel pre:not(.codebox pre){white-space:pre-wrap}.panel .codebox pre{font-size:15px}
+.panel .codebox pre code{white-space:pre;display:block}
+.panel .math,.panel .formula{overflow-x:auto}
+.panel a{color:#bd1366}
+@media(min-width:901px){.sidebar{width:300px}.layout{grid-template-columns:minmax(0,1fr) 300px}}
+@media print{.panel{break-before:auto;page-break-inside:avoid}.sidebar{display:none}}
+
+.merged-subheading{font-size:24px;line-height:1.42;margin:42px 0 17px;padding:11px 14px;border-left:4px solid var(--accent);background:var(--surface);border-radius:0 8px 8px 0;} .panel .merged-subheading:first-of-type{margin-top:25px;}
+
+.paper-figure,.matrix-demo{margin:22px 0 28px;padding:20px 22px;border:1px solid var(--line);border-radius:13px;background:#fbfcfe}.paper-figure h3,.matrix-demo h3{margin-top:0}.paper-figure figure{text-align:center;margin:12px auto}.paper-figure img{display:block;margin:auto;max-width:min(100%,510px);max-height:710px;object-fit:contain;background:#fff;border:1px solid var(--line);border-radius:6px}.paper-figure figcaption{font-size:14px;color:var(--muted);line-height:1.6;margin-top:10px}.paper-figure a{color:#b31968}.matrix-demo .tablewrap{margin-top:12px}.matrix-demo td{font-size:15px}@media print{.paper-figure,.matrix-demo{break-inside:avoid}}
+
+/* Part headings: visual grouping, not selectable tabs */
+.tabs .part-heading{display:block;margin:15px 4px 6px;padding:12px 11px;background:#e5e7eb;color:#334155;border:1px solid #cbd5e1;border-radius:9px;font-size:15px;font-weight:850;line-height:1.5;white-space:normal;}
+.tabs .part-heading:first-child{margin-top:0}.tabs button{padding-left:14px}
+.panel .source-note{font-size:15px;color:#475569;background:#f8fafc;border-left:3px solid #94a3b8;padding:11px 14px;margin:20px 0}
+.panel .minihead{margin-top:24px;font-weight:800;color:#334155}
+@media(max-width:900px){.tabs .part-heading{flex:none;margin:0 6px 0 0;white-space:nowrap;padding:9px 12px}}
+</style><style>.journey{border-left:4px solid #ff2e93;background:#fff5fa;padding:16px 19px;margin:20px 0;border-radius:8px}.journey h3{border:0!important;margin:0 0 8px!important;padding:0!important;font-size:18px!important}.journey h3:before{content:none!important}.modelcode{border:1px solid #d4dce8;background:#f8fafc;border-radius:12px;padding:15px 17px;margin:24px 0}.modelcode h3{border:0!important;margin:0 0 8px!important;font-size:18px!important}.modelcode h3:before{content:none!important}.modelcode pre{background:#101d34;color:#d6ecff;padding:15px;overflow:auto;border-radius:9px;font:15px/1.65 Consolas,monospace;white-space:pre}.matrix-intro{margin:16px 0;padding:15px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px}.miniout{font:15px/1.6 Consolas,monospace;background:#f1f5f9;padding:12px;white-space:pre-wrap;border-radius:8px}</style></head><body><header class="banner"><div class="banner-in"><div><div class="brand">Part A · A2-M1-1 · 토큰화·임베딩·Transformer 구조</div><div style="font-size:23px;font-weight:850">Part 1 입력 벡터 · Part 2 Transformer · Part 3 BERT·GPT와 RAG</div></div><div class="who">© 2026 부성순 · AI·클라우드 실무 과정</div><a href="/lectures/files/index.html#section-a1" style="display:inline-block;padding:7px 11px;border:1px solid #e2e8f0;border-radius:8px;background:#fff;color:#bd1366;text-decoration:none;font-weight:800;white-space:nowrap">📚 강의자료 라이브러리 · Part A</a></div></header><div class="layout"><aside class="sidebar"><div class="group">A2-M1-1 · 세부 목차</div><nav aria-label="교안 세부 목차" class="tabs" role="tablist"><div aria-level="2" class="part-heading" role="heading">Part 1. 토큰화와 임베딩 벡터</div><button aria-controls="unit01" aria-selected="true" id="unit-tab01" role="tab" tabindex="0" type="button"><span>1-1</span>LLM 개요·토큰화·어휘 사전</button><button aria-controls="unit02" aria-selected="false" id="unit-tab02" role="tab" tabindex="-1" type="button"><span>1-2</span>패딩·배치·어텐션 마스크</button><button aria-controls="unit03" aria-selected="false" id="unit-tab03" role="tab" tabindex="-1" type="button"><span>1-3</span>임베딩 행렬·Lookup·문장 벡터</button><button aria-controls="unit04" aria-selected="false" id="unit-tab04" role="tab" tabindex="-1" type="button"><span>1-4</span>위치 정보가 필요한 이유</button><div aria-level="2" class="part-heading" role="heading">Part 2. Transformer 모델 구조</div><button aria-controls="unit05" aria-selected="false" id="unit-tab05" role="tab" tabindex="-1" type="button"><span>2-1</span>Transformer 구조·위치 표현</button><button aria-controls="unit06" aria-selected="false" id="unit-tab06" role="tab" tabindex="-1" type="button"><span>2-2</span>Attention 원리·QKV·점수 계산</button><button aria-controls="unit07" aria-selected="false" id="unit-tab07" role="tab" tabindex="-1" type="button"><span>2-3</span>Self·Cross·Multi-Head·마스크</button><button aria-controls="unit08" aria-selected="false" id="unit-tab08" role="tab" tabindex="-1" type="button"><span>2-4</span>FFN·잔차 연결·정규화</button><button aria-controls="unit09" aria-selected="false" id="unit-tab09" role="tab" tabindex="-1" type="button"><span>2-5</span>블록 조립·층·은닉 상태·출력</button><button aria-controls="unit10" aria-selected="false" id="unit-tab10" role="tab" tabindex="-1" type="button"><span>2-6</span>자기회귀 생성과 KV Cache</button></nav></aside><main><section aria-labelledby="unit-tab01" class="panel" id="unit01" role="tabpanel"><div class="crumb">Part A · A2-M1 · Part 1</div><h1>1-1. LLM 개요·토큰화·어휘 사전</h1><h2 class="merged-subheading">1-1. 왜 A1 다음에 LLM과 Transformer인가?</h2><p>A1에서는 <code>rules.csv</code>와 Python 조건문으로 검사 결과를 재현 가능하게 판정했습니다. 키워드 검색은 문서 안의 단어를 통계적으로 비교했습니다. 그런데 같은 표현도 문맥에 따라 역할이 달라지고, 질문에 맞는 설명을 생성하려면 단어 사이의 관계를 모델링해야 합니다. 여기서 <strong>언어 모델</strong>을 공부할 필요가 생깁니다.</p>
+<ul>
+<li><strong>Tokenizer</strong>: 텍스트를 모델이 다룰 토큰 단위로 나누고 ID로 바꿉니다.</li>
+<li><strong>Embedding</strong>: ID를 벡터로 조회하여 숫자 계산의 출발점을 만듭니다.</li>
+<li><strong>Transformer</strong>: 여러 토큰의 표현을 결합·변환하는 신경망 구조입니다.</li>
+<li><strong>LLM</strong>: 대량의 데이터와 파라미터로 학습된 대규모 언어 모델을 뜻하며, Transformer가 널리 쓰입니다.</li>
+</ul>
+<p><strong>수업 전체의 구분:</strong> 이번 M1은 교육용 고정 숫자를 통해 원리를 확인합니다. 학습된 실제 HF 모델은 M2에서, 임베딩 검색·RAG 구축은 M3에서 다룹니다. Python 코드에서 설명한 숫자를 실제 GPT 모델의 벡터·ID로 착각하지 않습니다.</p>
+<h2 class="merged-subheading">1-2. 토큰화: 단어·문자·서브워드</h2><p><strong>문장을 통째로 행렬에 넣을 수 없으므로</strong> 먼저 작은 처리 단위인 토큰(Token)으로 나눕니다. <code>파이썬 좋아</code>를 공백 기준으로 자르면 <code>['파이썬','좋아']</code>입니다. 이는 <strong>교육용 공백 토큰화</strong>입니다. 실제 모델은 서브워드 또는 바이트 등으로 나눌 수 있으므로 공백 하나가 반드시 토큰 하나가 되지는 않습니다.</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>방식</th>
+<th>교육용 예시</th>
+<th>장점과 한계</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>단어</td>
+<td><code>파이썬 / 좋아</code></td>
+<td>쉬우나 미등록 단어가 많아질 수 있음</td>
+</tr>
+<tr>
+<td>문자</td>
+<td><code>파 / 이 / 썬</code></td>
+<td>미등록 문제 완화, 토큰 수 증가</td>
+</tr>
+<tr>
+<td>서브워드</td>
+<td>빈번한 부분 문자열 조합</td>
+<td>사전 크기·미등록 문제의 절충</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>실행:</strong> <code>print('파이썬 좋아'.split())</code>를 먼저 실행합니다. A1의 Kiwi 형태소 분석과 LLM 토크나이저는 분석 목적 및 토큰 결정 방법이 다르다는 점도 짚습니다.</p>
+<h2 class="merged-subheading">1-3. Vocabulary·Token ID·UNK·OOV</h2><p>토큰마다 정수 인덱스인 <strong>Token ID</strong>를 부여합니다. Vocabulary는 문자열을 ID에 연결하는 어휘 사전입니다. ID 숫자의 크기 자체가 단어의 의미나 중요도를 뜻하지는 않습니다.</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>표기</th>
+<th style="text-align:right">ID</th>
+<th>설명</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>[PAD]</code></td>
+<td style="text-align:right">0</td>
+<td>없는 자리 표시용</td>
+</tr>
+<tr>
+<td><code>[UNK]</code></td>
+<td style="text-align:right">1</td>
+<td>사전에 없는 실제 입력 토큰을 대신 표시</td>
+</tr>
+<tr>
+<td>파이썬 / 좋아</td>
+<td style="text-align:right">2 / 3</td>
+<td>등록된 단어</td>
+</tr>
+<tr>
+<td>하늘 / 파랗고 / 함수</td>
+<td style="text-align:right">4 / 5 / 6</td>
+<td>등록된 단어</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>OOV(Out-of-Vocabulary)</strong>는 입력 토큰이 사전에 없다는 <em>상황</em>이고, <code>[UNK](Unknown)</code>는 그 상황에서 사용할 수 있는 <em>대체 토큰</em>입니다. 따라서 <code>비행기 좋아 → [1,3]</code>이지만 <code>비행기</code>는 빈 자리가 아닙니다. 실제 현대 토크나이저는 모델별로 OOV에 다르게 대응합니다.</p>
+<div class="codebox"><div class="codehead"><span>Python 실습 · 예제 코드</span><button class="copy" type="button">코드 복사</button></div><pre><code class="language-python">VOCAB = {'[PAD]':0, '[UNK]':1, '파이썬':2, '좋아':3}
+words = '비행기 좋아'.split()
+ids = []
+for word in words:
+    ids.append(VOCAB.get(word, VOCAB['[UNK]']))
+print(words, ids)  # ['비행기','좋아'] [1,3]
+</code></pre></div>
+</section><section aria-labelledby="unit-tab02" class="panel" hidden="" id="unit02" role="tabpanel"><div class="crumb">Part A · A2-M1 · Part 1</div><h1>1-2. 패딩·배치·어텐션 마스크</h1><h2 class="merged-subheading">1-4. PAD·Padding·Truncation·Batch</h2><p><strong>왜 패딩을 하는가?</strong> 한 배치(batch, 입력 묶음)를 직사각형 행렬로 다룰 때 문장 길이를 맞추면 편리합니다. 문장 세 개의 길이가 2·3·3이라면 최대 길이 4로 정해 뒤를 <code>[PAD]=0</code>으로 채웁니다.</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>원문</th>
+<th>패딩 전</th>
+<th>패딩 후 (길이 4)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>파이썬 좋아</td>
+<td><code>[2,3]</code></td>
+<td><code>[2,3,0,0]</code></td>
+</tr>
+<tr>
+<td>하늘 파랗고 좋아</td>
+<td><code>[4,5,3]</code></td>
+<td><code>[4,5,3,0]</code></td>
+</tr>
+<tr>
+<td>함수 좋아 파이썬</td>
+<td><code>[6,3,2]</code></td>
+<td><code>[6,3,2,0]</code></td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li><strong>Padding:</strong> 길이가 모자라는 입력에 빈 자리를 채우는 것.</li>
+<li><strong>Truncation:</strong> 최대 길이를 초과하는 토큰을 잘라내는 정책. 근거 문서가 잘릴 위험이 있으므로 RAG에서 특히 주의합니다.</li>
+<li><strong>Batch:</strong> 여러 입력을 한 번에 처리하는 묶음. 여기서는 3×4의 ID 행렬이 됩니다.</li>
+</ul>
+<p>현재 교육용 <code>encode()</code>는 4개 초과 시 <strong>오류를 발생</strong>시킵니다. 임의로 자료를 조용히 자르지 않도록 하려는 설계입니다.</p>
+<h2 class="merged-subheading">1-5. Attention Mask: 패딩과 실제 내용 구분</h2>
+<p>앞 절에서 얻은 입력은 <code>input_ids=[2,3,0,0]</code>입니다. 앞의 2·3은 실제 단어이고 뒤의 0·0은 배치 길이를 맞춘 빈 자리입니다. 지금 단계에서는 <b>아직 임베딩 벡터를 만들지 않습니다.</b></p><div class="tablewrap"><table><thead><tr><th>위치</th><th>토큰</th><th>Token ID</th><th>Attention Mask</th><th>뜻</th></tr></thead><tbody><tr><td>0</td><td>파이썬</td><td>2</td><td>1</td><td>유효</td></tr><tr><td>1</td><td>좋아</td><td>3</td><td>1</td><td>유효</td></tr><tr><td>2</td><td>PAD</td><td>0</td><td>0</td><td>빈 자리</td></tr><tr><td>3</td><td>PAD</td><td>0</td><td>0</td><td>빈 자리</td></tr></tbody></table></div><p><b>왜 마스크가 필요한가?</b> ID 값 0을 받았다는 사실과 모델이 그 위치를 참조해도 되는지는 별개의 문제입니다. Attention 계산에서 패딩 위치를 제외하려면 유효 위치를 표시하는 마스크가 필요합니다. <b>다음 절에서 임베딩을 만든 후, 풀링에서 같은 마스크를 사용하는 이유도 살펴봅니다.</b></p><div class="codebox"><div class="codehead"><span>1-5 입력 ID와 마스크만 확인하기</span><button class="copy" type="button">코드 복사</button></div><pre><code>input_ids = [2, 3, 0, 0]
+attention_mask = [1, 1, 0, 0]
+for position in range(len(input_ids)):
+    print(position, input_ids[position], attention_mask[position])
+print('유효 토큰 수:', sum(attention_mask))</code></pre></div></section><section aria-labelledby="unit-tab03" class="panel" hidden="" id="unit03" role="tabpanel"><div class="crumb">Part A · A2-M1 · Part 1</div><h1>1-3. 임베딩 행렬·Lookup·문장 벡터</h1><h2 class="merged-subheading">1-6. 임베딩 행렬과 Embedding Lookup</h2>
+<p>이제 앞 절의 <code>Token ID</code>를 실제 계산용 벡터로 변환합니다. Transformer 계열 모델은 일반적으로 <b>임베딩 테이블(행렬)의 행을 ID로 직접 조회</b>합니다. 원핫 벡터로 바꾸어야만 조회할 수 있는 것은 아닙니다.</p><div class="note"><b>숫자가 7×3인 이유</b><p>ID 0~6까지이므로 행은 총 7개입니다(PAD, UNK, 일반 토큰 5개). 예제에서는 각 행에 실수 3개를 저장합니다. 따라서 임베딩 행렬의 크기는 <b>7행 × 3열</b>입니다. 값은 설명을 위해 임의 지정했으며 학습된 임베딩이 아닙니다.</p></div><div class="tablewrap"><table><thead><tr><th>행 번호(ID)</th><th>토큰</th><th>차원 0</th><th>차원 1</th><th>차원 2</th></tr></thead><tbody><tr><td>0</td><td>PAD</td><td>0.0</td><td>0.0</td><td>0.0</td></tr><tr><td>1</td><td>UNK</td><td>0.2</td><td>0.1</td><td>0.3</td></tr><tr><td>2</td><td>파이썬</td><td>0.8</td><td>0.2</td><td>0.1</td></tr><tr><td>3</td><td>좋아</td><td>0.3</td><td>0.9</td><td>0.4</td></tr><tr><td>4</td><td>하늘</td><td>0.1</td><td>0.7</td><td>0.8</td></tr><tr><td>5</td><td>파랗고</td><td>0.2</td><td>0.6</td><td>0.9</td></tr><tr><td>6</td><td>함수</td><td>0.9</td><td>0.1</td><td>0.2</td></tr></tbody></table></div><div class="codebox"><div class="codehead"><span>1-6 전체 7×3 임베딩 행렬과 Lookup — 단독 실행</span><button class="copy" type="button">코드 복사</button></div><pre><code>import numpy as np
+
+embedding_table = np.array([
+    [0.0, 0.0, 0.0],  # PAD
+    [0.2, 0.1, 0.3],  # UNK
+    [0.8, 0.2, 0.1],  # 파이썬
+    [0.3, 0.9, 0.4],  # 좋아
+    [0.1, 0.7, 0.8],  # 하늘
+    [0.2, 0.6, 0.9],  # 파랗고
+    [0.9, 0.1, 0.2]   # 함수
+])
+input_ids = [2, 3, 0, 0]
+result = embedding_table[input_ids]
+print('테이블:', embedding_table.shape)  # (7,3)
+print('조회 결과:', result.shape)         # (4,3)
+print(result)</code></pre></div><p><b>조회 결과:</b> 2행, 3행, 0행, 0행을 순서대로 가져온 4×3 행렬입니다. 시퀀스 길이 4가 사라진 것이 아니라 각 위치에 3차원 벡터가 붙었습니다.</p><div class="modelcode"><h3>▣ Transformer 모델에서는 여기에 해당합니다</h3><pre><code>import numpy as np
+E = np.array([[0,0,0],[.2,.1,.3],[.8,.2,.1],[.3,.9,.4],[.1,.7,.8],[.2,.6,.9],[.9,.1,.2]])
+ids = np.array([2,3,0,0])
+print(E.shape, E[ids].shape)  # (7,3) (4,3)</code></pre></div><h2 class="merged-subheading">1-7. Embedding Lookup·텐서 모양·평균 풀링</h2>
+<p>임베딩 조회 결과는 <b>4행 × 3열</b>입니다. 4행은 패딩을 포함한 토큰 위치, 3열은 각 토큰의 벡터 차원입니다. 문장 세 개를 함께 처리하면 <b>(배치 3, 시퀀스 4, 차원 3)</b>의 3차원 텐서가 됩니다.</p><div class="tablewrap"><table><thead><tr><th>위치</th><th>벡터</th><th>마스크</th><th>평균에 포함?</th></tr></thead><tbody><tr><td>0</td><td>[0.8, 0.2, 0.1]</td><td>1</td><td>예</td></tr><tr><td>1</td><td>[0.3, 0.9, 0.4]</td><td>1</td><td>예</td></tr><tr><td>2</td><td>[0, 0, 0]</td><td>0</td><td>아니오</td></tr><tr><td>3</td><td>[0, 0, 0]</td><td>0</td><td>아니오</td></tr></tbody></table></div><p>패딩까지 네 행으로 나누면 <code>[0.275, 0.275, 0.125]</code>가 됩니다. 실제 토큰 두 행만으로 나누면 <b>[0.55, 0.55, 0.25]</b>입니다. 이 연산이 <b>Masked Mean Pooling</b>입니다. 여기서의 평균용 마스크와 Attention 계산에서 쓰는 마스크는 적용 위치가 다릅니다.</p><div class="codebox"><div class="codehead"><span>1-7 임베딩 행렬의 Masked Mean Pooling (1-6 코드 다음에 실행)</span><button class="copy" type="button">코드 복사</button></div><pre><code>attention_mask = np.array([1, 1, 0, 0])
+print('패딩 포함 평균:', result.mean(axis=0))
+selected = result * attention_mask[:, None]
+pooled = selected.sum(axis=0) / attention_mask.sum()
+print('패딩 제외 평균:', pooled)
+print('조회 행렬 shape:', result.shape)</code></pre></div><p class="hint">이 수치는 임의 행렬로 만든 교육용 평균이며, 실제 RAG 문장 임베딩 품질을 뜻하지 않습니다. 검색 모델의 학습 목표는 A2-M2에서 확인합니다.</p><div class="modelcode"><h3>▣ Transformer 모델에서는 여기에 해당합니다</h3><pre><code>import torch
+layer = torch.nn.Embedding(7, 3, padding_idx=0)
+ids = torch.tensor([[2,3,0,0]])
+print(layer(ids).shape)  # torch.Size([1,4,3])</code></pre></div><h2 class="merged-subheading">1-8. 토큰 벡터·문맥 벡터·문장 벡터 구분</h2><p><strong>토큰 임베딩(Token Embedding)</strong>은 특정 ID에 연결된 기본 벡터입니다. <strong>문맥 벡터(Contextual Hidden State)</strong>는 Transformer 층을 거친 뒤 주변 문장과 결합된 위치별 표현입니다. <strong>문장 임베딩(Sentence Embedding)</strong>은 문장 전체를 검색·비교하기 위해 만드는 하나의 벡터입니다.</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>구분</th>
+<th>대표 모양</th>
+<th>RAG에서</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>토큰 임베딩</td>
+<td>길이×차원</td>
+<td>모델 입력의 구성요소</td>
+</tr>
+<tr>
+<td>문맥 벡터</td>
+<td>길이×차원</td>
+<td>인코더/생성 모델의 내부 표현</td>
+</tr>
+<tr>
+<td>문장 임베딩</td>
+<td>차원</td>
+<td>검색 색인의 저장·비교 단위</td>
+</tr>
+</tbody>
+</table></div>
+<p>A1의 TF-IDF는 단어 통계에 기반한 벡터, 신경망 임베딩은 학습된 수치 표현입니다. 어느 것이든 검색 결과의 정확성은 별도 평가해야 합니다.</p>
+<div class="modelcode"><h3>▣ Transformer 모델에서는 여기에 해당합니다</h3><pre><code># 실제 모델 출력 예: [배치, 토큰 위치, hidden_size]
+# last_hidden_state.shape == (batch, sequence, hidden_size)
+# 문장 검색 벡터는 후속 풀링·학습 목표까지 확인해야 합니다.</code></pre></div></section><section aria-labelledby="unit-tab04" class="panel" hidden="" id="unit04" role="tabpanel"><div class="crumb">Part A · A2-M1 · Part 1</div><h1>1-4. 위치 정보가 필요한 이유</h1><h2 class="merged-subheading">1-9. 위치 정보가 필요한 이유: 다음 Part의 질문</h2><p><code>파이썬 좋아</code>의 <code>파이썬</code>은 위치 0, <code>함수 좋아 파이썬</code>의 <code>파이썬</code>은 위치 2입니다. 기본 Token Embedding은 둘 다 <code>[1,0]</code>이지만 문장에서 역할이 같다고 단정할 수 없습니다. <strong>단어 종류만으로 순서를 알 수 없기 때문입니다.</strong></p>
+<p>Transformer의 Self-Attention은 위치 표현 없이 두면 순서 정보를 충분히 구분하지 못합니다. 이를 보완하는 기법이 <strong>위치 인코딩(Positional Encoding)</strong>, <strong>학습형 위치 임베딩(Learned Positional Embedding)</strong>, 현대 모델의 <strong>RoPE</strong> 등입니다. 값이 어디서 오는지와 계산은 Part 2에서 다룹니다.</p>
+</section><section aria-labelledby="unit-tab05" class="panel" hidden="" id="unit05" role="tabpanel"><div class="crumb">Part A · A2-M1 · Part 2</div><h1>2-1. Transformer 구조·위치 표현</h1><h2 class="merged-subheading">2-1. Transformer 전체 구조를 먼저 보자</h2><div class="paper-figure">
+<h3>2017년 Transformer 원 논문 Figure 1 — 전체 구조</h3>
+<p>왼쪽은 <strong>Encoder</strong>, 오른쪽은 <strong>Decoder</strong>입니다. 아래쪽의 <strong>Input/Output Embedding + Positional Encoding</strong>에서 시작해 <strong>Multi-Head Attention</strong>, <strong>Add &amp; Norm</strong>, <strong>Feed Forward</strong>, 출력의 <strong>Linear + Softmax</strong>까지 살펴봅니다. 그림의 <strong>N×</strong>는 블록을 반복해 쌓는다는 의미입니다.</p>
+<figure><a href="https://commons.wikimedia.org/wiki/File:Attention_Is_All_You_Need_-_Encoder-decoder_Architecture.png" rel="noopener" target="_blank"><img alt="Attention Is All You Need 논문 Figure 1 Transformer 인코더-디코더 모델 구조. 왼쪽 Encoder 블록과 오른쪽 Decoder 블록, 양쪽 입력의 임베딩과 위치 인코딩, Multi-Head Attention, Add &amp; Norm, Feed Forward 및 최종 Linear Softmax 출력이 표시되어 있다." loading="lazy" src="https://commons.wikimedia.org/wiki/Special:FilePath/Attention_Is_All_You_Need_-_Encoder-decoder_Architecture.png"/></a><figcaption>출처: Vaswani 외, <em>Attention Is All You Need</em> (2017), Figure 1. <a href="https://commons.wikimedia.org/wiki/File:Attention_Is_All_You_Need_-_Encoder-decoder_Architecture.png" rel="noopener" target="_blank">그림 및 라이선스 확인</a> · <a href="https://arxiv.org/abs/1706.03762" rel="noopener" target="_blank">원 논문</a>. 이 그림은 인터넷 연결 시 표시됩니다.</figcaption></figure>
+<p><strong>그림 읽기:</strong> Encoder의 Self-Attention은 입력 토큰들 사이의 관계를 계산하고, Decoder의 Masked Self-Attention은 미래 토큰을 보지 않습니다. Decoder의 두 번째 Attention은 Encoder 출력을 참조하는 <strong>Cross-Attention</strong>입니다. GPT 계열의 Decoder-only 구성과 이 원본 Encoder–Decoder 그림은 구별해야 합니다.</p>
+</div><p>Transformer는 토큰 표현을 서로 참고하게 만드는 <strong>Attention</strong>과 각 위치를 변환하는 <strong>FFN</strong>, 그리고 정보·학습을 안정화하는 연결과 정규화 등으로 이루어진 신경망 구조입니다. 여기서 '모델'은 <strong>입력 → 여러 개의 층 → 출력</strong>을 수행하는 전체 계산 구조입니다.</p>
+<p>대표적인 처리 흐름은 <strong>토큰 ID → 임베딩/위치 정보 → Transformer 블록 여러 층 → 최종 표현 → 작업별 출력층</strong>입니다. 처음부터 QKV로 들어가지 말고 <strong>어디에서 무슨 일을 하는지</strong> 먼저 확인합니다.</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>구성</th>
+<th>핵심 기능</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Attention</td>
+<td>토큰들 사이의 정보 결합</td>
+</tr>
+<tr>
+<td>FFN / MLP</td>
+<td>각 토큰 위치의 특징 변환</td>
+</tr>
+<tr>
+<td>Residual + Normalization</td>
+<td>깊은 모델의 정보·학습 안정화</td>
+</tr>
+<tr>
+<td>Stacking</td>
+<td>블록을 여러 번 반복하여 표현 고도화</td>
+</tr>
+<tr>
+<td>Output Head</td>
+<td>분류 또는 다음 토큰 점수 생성</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>용어 주의:</strong> 원래 2017년 Transformer는 Encoder–Decoder 구조였습니다. 오늘날 BERT는 인코더 중심, GPT 계열은 디코더 중심 구조를 주로 사용합니다.</p>
+<h2 class="merged-subheading">2-2. Encoder·Decoder·Cross-Attention의 자리</h2><p><strong>Encoder</strong>는 입력 시퀀스의 표현을 만들어냅니다. BERT류 인코더는 보통 양방향 문맥을 참고합니다. <strong>Decoder</strong>는 출력을 단계적으로 생성할 수 있으며 GPT류 디코더는 대개 미래 토큰을 보지 못하게 <strong>Causal Mask</strong>를 사용합니다. 원래 Encoder–Decoder 모델의 디코더에는 <strong>입력 인코더 결과를 참고하는 Cross-Attention</strong>이 추가될 수 있습니다.</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>구조</th>
+<th>대표적 입력 참조</th>
+<th>출력 예</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Encoder-only</td>
+<td>입력의 좌우 문맥</td>
+<td>분류·벡터 표현</td>
+</tr>
+<tr>
+<td>Decoder-only</td>
+<td>앞쪽 토큰(인과 마스크)</td>
+<td>다음 토큰 점수·생성</td>
+</tr>
+<tr>
+<td>Encoder–Decoder</td>
+<td>인코더 입력 + 이전 출력</td>
+<td>번역·요약 등</td>
+</tr>
+</tbody>
+</table></div>
+<p>이 구분은 RAG의 <strong>검색용 임베딩 모델과 생성형 모델 역할 차이</strong>를 이해하는 토대가 됩니다.</p>
+<h2 class="merged-subheading">2-3. Positional Encoding·Learned Position·RoPE</h2><p><strong>왜 필요한가?</strong> 같은 단어 임베딩이 위치에 관계없이 같다면 단어 순서에 따른 차이를 표현하기 어렵습니다. 위치 정보를 모델 입력 계산에 반영합니다.</p><div class="matrix-demo">
+<h3>직접 보는 위치 행렬 — 4행 × 3열</h3>
+<p>Part 1에서 <code>input_ids = [2,3,0,0]</code>을 Embedding Lookup하면 <strong>4행 × 3열</strong>의 입력 행렬 X가 됩니다. 이제 같은 크기의 위치 행렬 P를 따로 준비해 위치별로 더합니다. <strong>숫자는 구조 이해를 위한 가상 값</strong>이며, 실제 모델의 학습 결과는 아닙니다.</p>
+<div class="tablewrap"><table><thead><tr><th>위치</th><th>Token ID</th><th>토큰 임베딩 X</th><th>위치 벡터 P</th><th>더한 결과 X+P</th></tr></thead><tbody>
+<tr><td>0</td><td>2 파이썬</td><td>[0.8, 0.2, 0.1]</td><td>[0.1, 0.0, 0.0]</td><td><strong>[0.9, 0.2, 0.1]</strong></td></tr>
+<tr><td>1</td><td>3 좋아</td><td>[0.3, 0.9, 0.4]</td><td>[0.0, 0.1, 0.0]</td><td><strong>[0.3, 1.0, 0.4]</strong></td></tr>
+<tr><td>2</td><td>0 PAD</td><td>[0.0, 0.0, 0.0]</td><td>[0.0, 0.0, 0.1]</td><td>[0.0, 0.0, 0.1]</td></tr>
+<tr><td>3</td><td>0 PAD</td><td>[0.0, 0.0, 0.0]</td><td>[0.1, 0.1, 0.0]</td><td>[0.1, 0.1, 0.0]</td></tr>
+</tbody></table></div>
+<p>이 예시는 위치 2·3의 PAD에도 위치 벡터가 더해지는 구성입니다. <strong>PAD에 값이 생겼다고 실제 단어가 되는 것은 아닙니다.</strong> Attention과 Pooling에서는 마스크 <code>[1,1,0,0]</code>로 해당 위치를 제외해야 합니다. 모델마다 위치 적용과 PAD 처리 방식은 다릅니다.</p>
+<div class="codebox"><div class="codehead"><span>위치 행렬을 직접 더해 보기 · NumPy</span><button class="copy" type="button">코드 복사</button></div><pre><code class="language-python">import numpy as np
+
+X = np.array([[0.8, 0.2, 0.1], [0.3, 0.9, 0.4],
+              [0.0, 0.0, 0.0], [0.0, 0.0, 0.0]])
+P = np.array([[0.1, 0.0, 0.0], [0.0, 0.1, 0.0],
+              [0.0, 0.0, 0.1], [0.1, 0.1, 0.0]])
+Y = X + P
+print('토큰 행렬:', X.shape)
+print('위치 행렬:', P.shape)
+print('Transformer 입력:', Y.shape)
+print(Y)
+# 모두 (4, 3) 모양이며, 같은 행과 열끼리 더합니다.</code></pre></div>
+<p><strong>위치 벡터는 어디서 오는가?</strong> 원 논문은 위치별 사인·코사인 값으로 생성했고, 다른 모델은 학습되는 위치 임베딩 테이블에서 가져옵니다. RoPE를 쓰는 모델은 이처럼 입력에 위치 행렬을 단순 덧셈하지 않고 Q·K에 회전 변환으로 위치 정보를 반영합니다.</p>
+</div>
+<p><strong>③ Learned Position:</strong> 위치별 별도 벡터를 파라미터로 갖고 학습합니다. <strong>④ RoPE:</strong> Q·K에 위치별 회전 변환을 적용하는 방식으로, 위처럼 단순 덧셈하는 방법과 다릅니다.</p>
+<div class="codebox"><div class="codehead"><span>Python 실습 · 예제 코드</span><button class="copy" type="button">코드 복사</button></div><pre><code class="language-python">from toy_core import encode, add_position
+for sentence in ['파이썬 좋아','함수 좋아 파이썬']:
+    _, ids, _ = encode(sentence)
+    print(sentence, add_position(ids))
+</code></pre></div>
+<p>실제 모델은 위치 처리 방식이 다양하므로 모델 설정을 확인해야 합니다.</p>
+<div class="modelcode"><h3>▣ Transformer 모델에서는 여기에 해당합니다</h3><pre><code>import torch
+position = torch.nn.Embedding(4, 3)
+position_ids = torch.arange(4)
+print(position(position_ids).shape)  # [4,3]
+# RoPE는 일반적으로 위 덧셈 방식과 다릅니다.</code></pre></div></section><section aria-labelledby="unit-tab06" class="panel" hidden="" id="unit06" role="tabpanel"><div class="crumb">Part A · A2-M1 · Part 2</div><h1>2-2. Attention 원리·QKV·점수 계산</h1><h2 class="merged-subheading">2-4. Attention이 필요한 이유부터</h2><p><code>파이썬 좋아</code>와 <code>하늘 파랗고 좋아</code>에서 <code>좋아</code>의 기본 임베딩은 같지만 주변 내용은 다릅니다. Attention은 <strong>현재 토큰의 표현을 만들 때 다른 토큰의 정보를 어떤 비율로 섞을지</strong> 정하는 계산입니다.</p>
+<p>정보검색과 비슷하게 '어떤 정보를 찾는가(질의)', '무엇과 비교하는가(키)', '무슨 내용을 가져오는가(값)'의 역할이 있습니다. 이 세 가지가 Q(Query), K(Key), V(Value)입니다. <strong>비유가 곧 모델의 인간적 해석은 아닙니다.</strong> 실제로는 가중치 행렬을 통해 만들어진 수치 벡터입니다.</p>
+<p><strong>중요:</strong> Attention 가중치는 정답 확률이나 인과적 설명을 뜻하지 않습니다. 이 장에서는 작동 원리를 이해하는 숫자로만 사용합니다.</p>
+<h2 class="merged-subheading">2-5. Q·K·V는 어디서 생기는가?</h2><p>입력 벡터를 <code>X</code>라고 할 때 <strong>Q=XWQ, K=XWK, V=XWV</strong>로 각각 다른 가중치 행렬을 곱합니다. 실제 가중치는 학습으로 조정됩니다. 이번 실습에서는 2×2 행렬을 임의로 고정하여 눈으로 계산합니다.</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>토큰</th>
+<th>X</th>
+<th>Q</th>
+<th>K</th>
+<th>V</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>파이썬</td>
+<td><code>[1,0]</code></td>
+<td><code>[0,1]</code></td>
+<td><code>[1,0]</code></td>
+<td><code>[2,0]</code></td>
+</tr>
+<tr>
+<td>좋아</td>
+<td><code>[0,1]</code></td>
+<td><code>[1,0]</code></td>
+<td><code>[0,1]</code></td>
+<td><code>[0,4]</code></td>
+</tr>
+</tbody>
+</table></div>
+<p><code>WQ=[[0,1],[1,0]]</code>, <code>WK=[[1,0],[0,1]]</code>, <code>WV=[[2,0],[0,4]]</code>인 교육용 설정입니다. 예를 들어 <code>좋아=[0,1]</code>에 WQ를 곱하면 <code>Q=[1,0]</code>이 됩니다. <strong>QKV는 토큰 ID가 아니라 입력 벡터로 계산</strong>합니다.</p>
+<div class="codebox"><div class="codehead"><span>Python 실습 · 예제 코드</span><button class="copy" type="button">코드 복사</button></div><pre><code class="language-python">from toy_core import qkv_from_x
+print(qkv_from_x([0.0, 1.0]))
+# Q=[1,0], K=[0,1], V=[0,4]
+</code></pre></div>
+<div class="modelcode"><h3>▣ Transformer 모델에서는 여기에 해당합니다</h3><pre><code>import torch
+x = torch.randn(1, 4, 8)
+q_proj = torch.nn.Linear(8, 8)
+k_proj = torch.nn.Linear(8, 8)
+v_proj = torch.nn.Linear(8, 8)
+print(q_proj(x).shape, k_proj(x).shape, v_proj(x).shape)</code></pre></div><h2 class="merged-subheading">2-6. Scaled Dot-Product Attention의 4단계</h2><p>이전 절의 <code>좋아</code> Query <code>[1,0]</code>이 두 Key와 비교하는 계산을 직접 수행합니다.</p>
+<ol>
+<li><strong>내적:</strong> <code>[1,0]·[1,0]=1</code>, <code>[1,0]·[0,1]=0</code> → 점수 <code>[1,0]</code>.</li>
+<li><strong>스케일링:</strong> Key 차원 <code>dₖ=2</code>이므로 각각 <code>√2</code>로 나눔 → <code>[0.7071,0]</code>. 점수가 지나치게 커지는 문제를 완화합니다.</li>
+<li><strong>Softmax:</strong> <code>exp(0.7071)/(exp(0.7071)+exp(0))≈0.6698</code>, 나머지 <code>≈0.3302</code>.</li>
+<li><strong>V 가중합:</strong> <code>0.6698×[2,0]+0.3302×[0,4]≈[1.3395,1.3210]</code>.</li>
+</ol>
+<p>수식은 <strong>Attention(Q,K,V)=softmax(QKᵀ/√dₖ)V</strong> 입니다. 이 수식은 행렬 형태로 여러 토큰을 함께 계산한 표현입니다.</p>
+<div class="codebox"><div class="codehead"><span>Python 실습 · 예제 코드</span><button class="copy" type="button">코드 복사</button></div><pre><code class="language-python">from toy_core import scaled_dot_attention
+q=[1.,0.]; keys=[[1.,0.],[0.,1.]]
+values=[[2.,0.],[0.,4.]]
+scores,weights,context=scaled_dot_attention(q,keys,values)
+print('scores',scores)
+print('weights',weights)
+print('context',context)
+</code></pre></div>
+<div class="modelcode"><h3>▣ Transformer 모델에서는 여기에 해당합니다</h3><pre><code>import torch
+import torch.nn.functional as F
+q = torch.randn(1, 2, 4, 4)
+k = torch.randn(1, 2, 4, 4)
+v = torch.randn(1, 2, 4, 4)
+out = F.scaled_dot_product_attention(q, k, v)
+print(out.shape)  # [1,2,4,4]</code></pre></div></section><section aria-labelledby="unit-tab07" class="panel" hidden="" id="unit07" role="tabpanel"><div class="crumb">Part A · A2-M1 · Part 2</div><h1>2-3. Self·Cross·Multi-Head·마스크</h1><h2 class="merged-subheading">2-7. Self-Attention과 Cross-Attention</h2><p><strong>Self-Attention</strong>은 Q·K·V가 같은 입력 시퀀스의 표현으로부터 만들어지는 방식입니다. <code>파이썬 좋아</code>의 각 위치가 같은 문장 안 토큰을 참고하는 것이 예시입니다.</p>
+<p><strong>Cross-Attention</strong>은 Q와 K·V의 출처가 다릅니다. 원래 Encoder–Decoder 구조에서 디코더의 현재 표현을 Q로, 인코더가 처리한 입력 표현을 K·V로 사용하여 입력 문장을 참고할 수 있습니다.</p>
+<p><strong>실무 연결:</strong> RAG에서 외부 문서를 검색하는 행위 자체가 Transformer의 Cross-Attention과 동의어는 아닙니다. RAG는 검색 시스템이 문서를 가져와 프롬프트에 포함시키는 외부 절차이고, Attention은 모델 안에서 작동하는 계산입니다.</p>
+<h2 class="merged-subheading">2-8. Multi-Head Attention·출력 투영</h2><p>한 번의 Attention 계산은 한 가지 투영 관점에 해당합니다. <strong>Multi-Head Attention</strong>은 서로 다른 Q·K·V 투영을 이용해 여러 Head에서 Attention을 계산하고, 그 결과를 이어 붙인 뒤 출력 행렬 <code>WO</code>로 다시 변환합니다.</p>
+<p>예를 들어 2개 Head가 각 2차원 결과를 내면 연결한 결과는 4차원이 됩니다. 이 4차원 값을 출력 투영으로 모델 차원에 맞춥니다. 다만 모든 모델에서 Head 차원과 개수의 관계가 동일한 것은 아닙니다.</p>
+<p><strong>학습 범위:</strong> Head를 두 개 만들어 전체 계산을 구현할 필요는 없습니다. 단일 Head 계산(2-6)을 완료한 뒤 '독립 투영 → 결과 연결 → 출력 투영' 순서를 이해하면 됩니다. 현대 변형인 <strong>MQA/GQA</strong>는 K·V Head를 공유·그룹화해 메모리·추론 효율을 높이는 방식으로 Part 3에서 소개합니다.</p>
+<div class="modelcode"><h3>▣ Transformer 모델에서는 여기에 해당합니다</h3><pre><code>import torch
+mha = torch.nn.MultiheadAttention(embed_dim=8, num_heads=2, batch_first=True)
+x = torch.randn(1, 4, 8)
+out, weights = mha(x, x, x)
+print(out.shape, weights.shape)  # [1,4,8], [1,4,4]</code></pre></div><h2 class="merged-subheading">2-9. Padding Mask와 Causal Mask 합치기</h2><p><strong>Padding Mask</strong>는 입력 뒤에 넣은 PAD를 참조하지 않도록 제한합니다. <strong>Causal Mask</strong>는 다음 토큰을 예측하는 위치에서 미래 위치를 보지 않도록 합니다. 점수를 Softmax로 정규화하기 전에 <strong>참조하면 안 되는 위치에 매우 작은 값(수학적으로 -∞)</strong>을 적용합니다.</p>
+<p>길이 4인 시퀀스 <code>[2,3,0,0]</code>에서 입력 유효성은 <code>[1,1,0,0]</code>입니다. 유효한 Query 위치 0은 Key 0만, 위치 1은 Key 0·1만 볼 수 있습니다. 위치 2·3은 패딩 Query이므로 결과 소비 시 별도 처리합니다. <strong>패딩 Query의 전부가 마스킹되면 Softmax가 정의되지 않도록 구현을 주의</strong>해야 합니다.</p>
+<div class="codebox"><div class="codehead"><span>Python 실습 · 예제 코드</span><button class="copy" type="button">코드 복사</button></div><pre><code class="language-python">from toy_core import causal_visibility
+for row in causal_visibility(4):
+    print(row)
+# [1,0,0,0] / [1,1,0,0] / ...
+</code></pre></div>
+<p><strong>차이:</strong> Causal Mask는 '시간상 볼 수 없는 미래', Padding Mask는 '실제로 존재하지 않는 자리'를 제어합니다.</p>
+</section><section aria-labelledby="unit-tab08" class="panel" hidden="" id="unit08" role="tabpanel"><div class="crumb">Part A · A2-M1 · Part 2</div><h1>2-4. FFN·잔차 연결·정규화</h1><h2 class="merged-subheading">2-10. FFN·MLP·활성화 함수</h2><p>Attention이 토큰 간 정보를 섞는다면 <strong>Feed-Forward Network(FFN, MLP)</strong>는 각 토큰 위치의 벡터를 독립적으로 비선형 변환합니다. 기본형은 <code>FFN(x)=W₂·activation(W₁x+b₁)+b₂</code>로 생각할 수 있습니다(열벡터 표기).</p>
+<p>예: <code>x=[1,-2]</code>, 첫 변환을 항등변환, 활성화 함수를 <strong>ReLU(z)=max(0,z)</strong>로 가정하면 중간값 <code>[1,0]</code>이 됩니다. 마지막 선형층에서 다시 모델 차원으로 투영합니다.</p>
+<p><strong>현대 변형:</strong> GELU, SwiGLU 등 활성화·게이트 형태가 사용됩니다. RAG 코드에서 직접 구현할 필요는 없지만 모델이 Attention만으로 구성된 것이 아니라는 점은 알아야 합니다.</p>
+<div class="modelcode"><h3>▣ Transformer 모델에서는 여기에 해당합니다</h3><pre><code>import torch
+ffn = torch.nn.Sequential(torch.nn.Linear(8, 16), torch.nn.GELU(), torch.nn.Linear(16, 8))
+print(ffn(torch.randn(1,4,8)).shape)  # [1,4,8]</code></pre></div><h2 class="merged-subheading">2-11. Residual Connection·LayerNorm·RMSNorm</h2><p><strong>Residual Connection</strong>은 변환 결과와 원래 입력을 더합니다. <code>x=[1,2]</code>, 하위층 출력 <code>F(x)=[0.2,-0.5]</code>라면 <code>x+F(x)=[1.2,1.5]</code>입니다. 이는 깊은 층에서 정보와 기울기가 흐르기 쉽게 돕습니다.</p>
+<p><strong>Layer Normalization</strong>은 한 토큰의 feature 차원에 대해 평균·분산을 이용해 정규화하고 학습 가능한 스케일·편향을 적용합니다. 예를 들어 <code>[1,3]</code>은 평균 2, 분산 1이므로 단순 표준화 시 <code>[-1,1]</code>입니다(ε·학습 파라미터 생략).</p>
+<p><strong>RMSNorm</strong>은 평균을 빼지 않고 제곱평균제곱근을 사용합니다. <strong>Post-LN</strong>은 Residual 뒤에 정규화, <strong>Pre-LN</strong>은 하위층 입력에 먼저 정규화를 적용하는 대표적 위치 차이입니다. 실제 구현의 순서와 Norm 방식은 모델마다 다릅니다.</p>
+<div class="modelcode"><h3>▣ Transformer 모델에서는 여기에 해당합니다</h3><pre><code>import torch
+norm = torch.nn.LayerNorm(8)
+x = torch.randn(1,4,8)
+branch = torch.randn(1,4,8)
+print(norm(x + branch).shape)  # [1,4,8] (Post-LN 설명용)</code></pre></div></section><section aria-labelledby="unit-tab09" class="panel" hidden="" id="unit09" role="tabpanel"><div class="crumb">Part A · A2-M1 · Part 2</div><h1>2-5. 블록 조립·층·은닉 상태·출력</h1><h2 class="merged-subheading">2-12. 블록 조립: Encoder·Decoder의 차이</h2><p>여기까지 배운 기술을 하나의 <strong>Transformer Block</strong>으로 합칩니다. 대표적인 Pre-LN Decoder-only 블록은 다음 순서로 설명할 수 있습니다.</p>
+<ol>
+<li>입력 Hidden State를 정규화합니다.</li>
+<li>Masked Self-Attention을 수행합니다(Q·K·V → Head 결합 → 출력 투영).</li>
+<li>Residual Addition으로 원래 입력을 더합니다.</li>
+<li>다시 정규화하고 FFN/MLP를 적용합니다.</li>
+<li>Residual Addition으로 블록 출력을 만듭니다.</li>
+</ol>
+<p><strong>Encoder-only</strong>는 보통 양방향 Self-Attention을 사용하고, 원래 <strong>Encoder–Decoder</strong>의 Decoder Block에는 Cross-Attention이 추가됩니다. 블록의 Norm 위치·활성화·Head 방식 등은 모델마다 다릅니다. 따라서 하나의 블록 그림이 모든 Transformer의 정확한 구현도를 뜻하지 않습니다.</p>
+<div class="modelcode"><h3>▣ Transformer 모델에서는 여기에 해당합니다</h3><pre><code>import torch
+layer = torch.nn.TransformerEncoderLayer(d_model=8, nhead=2, batch_first=True)
+print(layer(torch.randn(1,4,8)).shape)  # [1,4,8]</code></pre></div><h2 class="merged-subheading">2-13. Layer Stacking·Hidden State·차원 추적</h2><p>블록을 여러 층 쌓으면 각 토큰 위치의 표현(Hidden State)이 문맥에 따라 계속 갱신됩니다. 예를 들어 입력이 <code>[Batch=3, Length=4, d_model=2]</code>라면, 동일 차원을 유지하는 일반적인 블록의 입출력 모양은 <strong>3×4×2</strong>입니다. 숫자 값은 변하지만 모양은 유지될 수 있습니다.</p>
+<p><strong>중요:</strong> 최초 Embedding과 최종 Hidden State는 같은 차원일 수 있어도 같은 벡터는 아닙니다. 검색용 Sentence Embedding은 어느 층을 어떻게 풀링·정규화할지, 어떤 목적의 학습을 받았는지까지 중요합니다. RAG 모델 선정에서 이 차이를 알아야 합니다.</p>
+<h2 class="merged-subheading">2-14. LM Head·Logits·Softmax·학습 손실</h2><p>생성형 모델은 최종 Hidden State를 어휘 크기만큼의 점수로 바꾸는 <strong>LM Head(Output Projection)</strong>를 사용합니다. 이 점수가 <strong>Logits(정규화 전 점수)</strong>입니다. 예를 들어 후보 <code>함수</code>, <code>하늘</code>, <code>[EOS]</code>의 Logit이 <code>[2,1,0]</code>이면 Softmax 확률은 약 <code>[0.6652,0.2447,0.0900]</code>입니다.</p>
+<p><strong>다음 토큰 예측 학습</strong>에서는 정답 토큰에 낮은 확률을 주면 손실(Cross-Entropy)이 커지므로 파라미터를 조정합니다. 이번 과정은 출력 확률 계산만 실습하고 역전파·대규모 학습은 범위에 포함하지 않습니다.</p>
+<div class="codebox"><div class="codehead"><span>Python 실습 · 예제 코드</span><button class="copy" type="button">코드 복사</button></div><pre><code class="language-python">from toy_core import softmax
+words=['함수','하늘','[EOS]']
+for w,p in zip(words,softmax([2.,1.,0.])):
+    print(w,round(p,4))
+</code></pre></div>
+<div class="modelcode"><h3>▣ Transformer 모델에서는 여기에 해당합니다</h3><pre><code>import torch
+hidden = torch.randn(1,4,8)
+lm_head = torch.nn.Linear(8,7, bias=False)
+logits = lm_head(hidden)
+print(logits.shape)  # [1,4,7] : 각 위치별 어휘 7개의 점수</code></pre></div></section><section aria-labelledby="unit-tab10" class="panel" hidden="" id="unit10" role="tabpanel"><div class="crumb">Part A · A2-M1 · Part 2</div><h1>2-6. 자기회귀 생성과 KV Cache</h1><h2 class="merged-subheading">2-15. Autoregressive Generation·KV Cache</h2><p><strong>Autoregressive Generation</strong>은 앞에서 생성한 토큰을 다음 예측의 문맥으로 사용하여 한 토큰씩 출력을 이어가는 방식입니다. 생성할 때마다 과거 토큰의 Key·Value를 모두 다시 계산하면 비효율적이므로, <strong>KV Cache</strong>는 이전 계산 결과를 저장해 재사용합니다.</p>
+<p>KV Cache는 <strong>RAG 문서 저장용 벡터 DB가 아닙니다.</strong> 하나는 생성 중 Attention 계산을 빠르게 하는 메모리 기술이고, 다른 하나는 문서를 검색하기 위한 영속적 인덱스입니다. 실제 서버에서는 캐시의 메모리 사용량과 배치·문맥 길이의 상충관계를 운영 관점에서 이해해야 합니다.</p>
+<div class="modelcode"><h3>▣ Transformer 모델에서는 여기에 해당합니다</h3><pre><code># Hugging Face 생성 모델을 A2-M2에서 로딩한 뒤 확인
+# output = model.generate(**inputs, max_new_tokens=20, use_cache=True)
+# KV Cache는 이미 처리한 위치의 K/V를 재사용합니다.</code></pre></div></section></main></div><footer class="footer">© 2026 부성순. All rights reserved.<small>교안의 자체 해설 및 실습 예제에 대한 저작권 표시입니다. 외부 출처와 모델·라이브러리의 권리는 각 권리자에게 있으며, 교육용 가상 숫자는 실제 AI 모델 결과가 아닙니다.</small><small>개념 참고: Vaswani et al., <a href="https://arxiv.org/abs/1706.03762" rel="noopener" target="_blank">Attention Is All You Need</a> · Devlin et al., <a href="https://arxiv.org/abs/1810.04805" rel="noopener" target="_blank">BERT</a> · <a href="https://huggingface.co/docs/transformers" rel="noopener" target="_blank">Hugging Face Transformers Documentation</a></small></footer><script>(function(){
+const tabs=[...document.querySelectorAll('[role="tab"]')];
+function setTab(i,focus=false){tabs.forEach((t,j)=>{const on=i===j;t.setAttribute('aria-selected',on?'true':'false');t.tabIndex=on?0:-1;document.getElementById(t.getAttribute('aria-controls')).hidden=!on;});if(focus)tabs[i].focus({preventScroll:true});history.replaceState(null,'','#'+tabs[i].getAttribute('aria-controls'));window.scrollTo({top:0});}
+tabs.forEach((t,i)=>{t.addEventListener('click',()=>setTab(i));t.addEventListener('keydown',e=>{if(['ArrowDown','ArrowUp','ArrowLeft','ArrowRight'].includes(e.key)){e.preventDefault();setTab((i+(e.key==='ArrowDown'||e.key==='ArrowRight'?1:-1)+tabs.length)%tabs.length,true);}})});
+const index=tabs.findIndex(t=>'#'+t.getAttribute('aria-controls')===location.hash);if(index>=0)setTab(index);
+document.querySelectorAll('.copy').forEach(b=>b.addEventListener('click',async()=>{const code=b.closest('.codebox').querySelector('pre').textContent;try{await navigator.clipboard.writeText(code);b.textContent='복사됨';}catch(e){b.textContent='복사 실패';}setTimeout(()=>b.textContent='코드 복사',1500); }));
+})();</script></body></html>
