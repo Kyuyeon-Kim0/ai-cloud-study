@@ -1,0 +1,9 @@
+kiwipiepy
+tokenizers
+transformers
+torch
+tiktoken
+scikit-learn
+numpy
+openai
+python-dotenv
